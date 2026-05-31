@@ -5360,6 +5360,8 @@ function nav(id,btn){
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active')});
   var page=document.getElementById('page-'+id);if(page)page.classList.add('active');
   if(btn)btn.classList.add('active');
+  // Always reset scroll to top on page change so no page opens mid-scroll
+  var mainEl=document.querySelector('.main');if(mainEl)mainEl.scrollTop=0;
   var p=pageMap[id]||{title:id,sub:''};
   document.getElementById('topbar-title').textContent=p.title;
   document.getElementById('topbar-sub').textContent=p.sub;
@@ -8388,7 +8390,7 @@ function flowUpdateStepIndicators(){
 }
 
 // ── Flow back-navigation ──────────────────────────────────
-function flowBackToPreCheck(){
+async function flowBackToPreCheck(){
   // Go back to pre-trade check from calculator or log-trade — preserve flow state so
   // step indicators stay green and links remain active.
   // Save live checklist state before re-rendering so it survives the DOM rebuild.
@@ -8418,23 +8420,22 @@ function flowBackToPreCheck(){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   var page = document.getElementById('page-pre-checklist');
   if(page) page.classList.add('active');
+  var mainEl=document.querySelector('.main');if(mainEl)mainEl.scrollTop=0;
   _currentPage = 'pre-checklist';
   var _pm = pageMap['pre-checklist'] || {};
   document.getElementById('topbar-title').textContent = _pm.title || '';
   document.getElementById('topbar-sub').textContent = _pm.sub || '';
-  preClRender();
-  // Restore checklist state after render
+  // Await the async render so checklist DOM is guaranteed to exist before restoring state.
+  // No setTimeout needed — restore runs synchronously after the await resolves.
+  await preClRender();
   if(_pendingChecklistState){
     var savedState = _pendingChecklistState;
-    setTimeout(function(){
-      document.querySelectorAll('.pre-cl-item').forEach(function(c){
-        var v=savedState[c.dataset.k];
-        c.checked=v==='yes'||v===true;
-      });
-      preClUpdateStatus();
-      // Re-run step indicator update after checklist is restored so UI is consistent
-      flowUpdateStepIndicators();
-    },80);
+    document.querySelectorAll('.pre-cl-item').forEach(function(c){
+      var v=savedState[c.dataset.k];
+      c.checked=v==='yes'||v===true;
+    });
+    preClUpdateStatus();
+    flowUpdateStepIndicators();
   }
 }
 
@@ -8723,40 +8724,102 @@ async function calcLogTrade(){
 
 function captureLogFormSnapshot(){
   var snap={};
-  // Simple text/number/select fields
-  ['f-pair','f-type-val','f-entry','f-sl-price','f-tp-price','f-qty','f-acct','f-riskpct',
-   'f-trr','f-date','f-time','f-strategy','f-tags','f-notes','f-grade','f-session',
-   'f-commission','f-swap','f-spread','f-slippage'].forEach(function(id){
-    var el=document.getElementById(id);if(el)snap[id]=el.value;
+  // All scalar fields that exist in the actual DOM (inputs, selects, textareas).
+  // Phantom fields from old version removed; missing fields added.
+  [
+    // Tab 0 — trade info
+    'f-pair','f-asset-type','f-session','f-strategy','f-rating','f-error',
+    'f-entry','f-sl-price','f-exit','f-qty','f-acct','f-riskpct','f-trr','f-winloss',
+    'f-etime-date','f-etime-time','f-etime-time-24',
+    'f-xtime-date','f-xtime-time','f-xtime-time-24',
+    'partial-tp-desc',
+    // Hidden opt-pill value fields — tab 0
+    'f-type-val','f-model-val','f-ltf-val','f-method-val',
+    'tp-exit-a-val','tp-slplace-val','tp-tpplace-val','tp-criteria-val',
+    'f-trail-val','f-tpchg-val',
+    // Trail / TP-change detail sub-fields
+    'trail-notes','trail-trigger','trail-count','trail-final-sl',
+    'tpchg-notes','tpchg-orig','tpchg-new','tpchg-dir',
+    // Tab 2 — analysis
+    'setup-notes','led-to-trade','issues-notes','post-analysis',
+    'plan-if','plan-if-then','plan-elseif','plan-elseif-then',
+    'f-news',
+    // Tab 3 — reflection
+    'emo-before','emo-after','emo-complete',
+    'l-mistakes','l-lessons','l-good',
+  ].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) snap[id]=el.value;
   });
   // Checkboxes
   ['f-skipped'].forEach(function(id){
     var el=document.getElementById(id);if(el)snap[id+'_checked']=el.checked;
   });
-  // Opt pills (direction, grade, etc.) — store raw value fields
-  snap._optTypeVal=document.getElementById('f-type-val')?document.getElementById('f-type-val').value:'';
+  // In-memory state that lives outside the DOM
+  snap._biasState  = JSON.parse(JSON.stringify(biasState));
+  snap._tfState    = JSON.parse(JSON.stringify(tfState));
+  snap._partialTPs = JSON.parse(JSON.stringify(_partialTPs));
   return snap;
 }
 
 function restoreLogFormSnapshot(snap){
   if(!snap)return;
-  ['f-pair','f-entry','f-sl-price','f-tp-price','f-qty','f-acct','f-riskpct',
-   'f-trr','f-date','f-time','f-strategy','f-tags','f-notes','f-grade','f-session',
-   'f-commission','f-swap','f-spread','f-slippage'].forEach(function(id){
+  // Restore all scalar fields — same list as captureLogFormSnapshot.
+  // Skip readonly display-only fields (f-num, f-logged-at, f-asset-type set via onPairChange).
+  // Allow empty string restore so cleared fields aren't left with stale values.
+  [
+    'f-pair','f-session','f-strategy','f-rating','f-error',
+    'f-entry','f-sl-price','f-exit','f-qty','f-acct','f-riskpct','f-trr','f-winloss',
+    'f-etime-date','f-etime-time','f-etime-time-24',
+    'f-xtime-date','f-xtime-time','f-xtime-time-24',
+    'partial-tp-desc',
+    'f-type-val','f-model-val','f-ltf-val','f-method-val',
+    'tp-exit-a-val','tp-slplace-val','tp-tpplace-val','tp-criteria-val',
+    'f-trail-val','f-tpchg-val',
+    'trail-notes','trail-trigger','trail-count','trail-final-sl',
+    'tpchg-notes','tpchg-orig','tpchg-new','tpchg-dir',
+    'setup-notes','led-to-trade','issues-notes','post-analysis',
+    'plan-if','plan-if-then','plan-elseif','plan-elseif-then',
+    'f-news',
+    'emo-before','emo-after','emo-complete',
+    'l-mistakes','l-lessons','l-good',
+  ].forEach(function(id){
     var el=document.getElementById(id);
-    if(el&&snap[id]!==undefined&&snap[id]!=='')el.value=snap[id];
+    if(el && snap[id] !== undefined) el.value=snap[id];
   });
+  // Checkboxes
   if(snap['f-skipped_checked']!==undefined){
     var scb=document.getElementById('f-skipped');
     if(scb){scb.checked=snap['f-skipped_checked'];onSkippedChange();}
   }
-  if(snap._optTypeVal){
-    setOptPill('opt-type',snap._optTypeVal);
-    var tv=document.getElementById('f-type-val');if(tv)tv.value=snap._optTypeVal;
+  // Opt pills — re-apply visual selected state from the stored hidden-input values.
+  // For groups that have a wrapping opt-group id, use setOptPill.
+  // For inline pills without a group id (f-tpchg-val), target by onclick attribute.
+  var optPillMap={
+    'f-type-val':'opt-type','f-model-val':'opt-model','f-ltf-val':'opt-ltf',
+    'f-method-val':'opt-method','tp-exit-a-val':'opt-exit-a',
+    'tp-slplace-val':'opt-slplace','tp-tpplace-val':'opt-tpplace',
+    'tp-criteria-val':'opt-criteria','f-trail-val':'opt-trail',
+  };
+  Object.keys(optPillMap).forEach(function(valId){
+    var v=snap[valId];
+    if(v!==undefined) setOptPill(optPillMap[valId], v);
+  });
+  // f-tpchg-val pills have no wrapping opt-group — restore by data-val match
+  if(snap['f-tpchg-val']!==undefined){
+    document.querySelectorAll('.opt-pill[onclick*="f-tpchg-val"]').forEach(function(p){
+      p.classList.toggle('selected', p.dataset.val===snap['f-tpchg-val']);
+    });
   }
+  // Pair change updates asset-type display and pair-dependent UI
   if(snap['f-pair']){
-    var ps=document.getElementById('f-pair');if(ps){ps.value=snap['f-pair'];if(typeof onPairChange==='function')onPairChange();}
+    var ps=document.getElementById('f-pair');
+    if(ps){ps.value=snap['f-pair'];if(typeof onPairChange==='function')onPairChange();}
   }
+  // In-memory state
+  if(snap._biasState)  { biasState=JSON.parse(JSON.stringify(snap._biasState));  if(typeof renderBiasChips==='function')renderBiasChips(); }
+  if(snap._tfState)    { tfState  =JSON.parse(JSON.stringify(snap._tfState));    if(typeof renderTfState==='function')renderTfState(); }
+  if(snap._partialTPs) { _partialTPs=JSON.parse(JSON.stringify(snap._partialTPs)); if(typeof renderPartialTPs==='function')renderPartialTPs(); }
   if(typeof recalc==='function')recalc();
 }
 
