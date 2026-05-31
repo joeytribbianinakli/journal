@@ -1388,12 +1388,12 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
     <div class="page" id="page-log">
       <!-- Flow breadcrumb (shown when coming via pre-checklist flow) -->
       <div id="log-flow-banner" style="display:none;align-items:center;gap:8px;margin-bottom:16px;padding:9px 12px;background:rgba(77,127,255,.06);border:1px solid rgba(77,127,255,.18);border-radius:var(--radius-lg);font-size:11px;color:var(--text3)">
-        <span style="display:inline-flex;align-items:center;gap:5px;opacity:.5">
+        <span onclick="flowBackToPreCheck()" style="display:inline-flex;align-items:center;gap:5px;opacity:.5;cursor:pointer;transition:opacity .12s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'">
           <span style="width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">✓</span>
           Pre-trade check
         </span>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-        <span style="display:inline-flex;align-items:center;gap:5px;opacity:.5">
+        <span onclick="flowBackToCalc()" style="display:inline-flex;align-items:center;gap:5px;opacity:.5;cursor:pointer;transition:opacity .12s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'">
           <span style="width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">✓</span>
           Position calculator
         </span>
@@ -1402,7 +1402,13 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <span style="width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">3</span>
           Log trade
         </span>
-        <span style="margin-left:auto;color:var(--green);font-size:10px;font-weight:600">✓ Checklist loaded into Checklist tab</span>
+        <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
+          <span style="color:var(--green);font-size:10px;font-weight:600">✓ Checklist loaded</span>
+          <button onclick="flowBackToCalc()" style="padding:3px 9px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-size:10px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:4px;transition:all .12s" onmouseover="this.style.background='var(--bg4)';this.style.color='var(--text)'" onmouseout="this.style.background='var(--bg3)';this.style.color='var(--text2)'">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Calculator
+          </button>
+        </span>
       </div>
       <div class="edit-banner" id="edit-banner">
         <span id="edit-banner-text">Editing trade</span>
@@ -2627,6 +2633,13 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           </div>
           <!-- Log trade Button (backtest mode only) -->
           <div id="calc-log-trade-box" style="display:block;margin-top:10px">
+            <!-- Back to pre-trade check (shown only when in flow) -->
+            <div id="calc-flow-back" style="display:none;margin-bottom:8px">
+              <button onclick="flowBackToPreCheck()" style="width:100%;padding:7px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;color:var(--text3);font-size:11px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px" onmouseover="this.style.color='var(--text)';this.style.borderColor='var(--border2)'" onmouseout="this.style.color='var(--text3)'">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Back to Pre-trade check
+              </button>
+            </div>
             <button onclick="calcLogTrade()" style="width:100%;padding:10px;border-radius:var(--radius);border:1px solid rgba(77,127,255,.35);background:rgba(77,127,255,.1);color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;letter-spacing:.01em" onmouseover="this.style.background='rgba(77,127,255,.18)'" onmouseout="this.style.background='rgba(77,127,255,.1)'">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;margin-top:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Log This Trade
@@ -5300,7 +5313,20 @@ var _currentPage='dashboard';
 function nav(id,btn){
   // Reset log form when navigating away — always clear, including when editing
   if(_currentPage==='log'&&id!=='log'){if(editingId)cancelEdit();clearForm(true);}
-  if(_currentPage==='calculator'&&id!=='calculator'){calcReset();}
+  // Only reset calculator if NOT navigating within the flow
+  var flowPages=['pre-checklist','calculator','log'];
+  var leavingFlow=_flowActive&&flowPages.indexOf(id)===-1;
+  if(_currentPage==='calculator'&&id!=='calculator'){
+    if(!_flowActive||leavingFlow){calcReset();}
+  }
+  // Break the flow if navigating outside of it
+  if(leavingFlow){
+    _flowActive=false;
+    _pendingChecklistState=null;
+    _flowCalcSnapshot=null;
+    var flowBack=document.getElementById('calc-flow-back');
+    if(flowBack)flowBack.style.display='none';
+  }
   _currentPage=id;
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active')});
@@ -5311,9 +5337,11 @@ function nav(id,btn){
   document.getElementById('topbar-sub').textContent=p.sub;
   if(id==='dashboard')renderDashboard();
   if(id==='log'){
-    // Hide flow banner on direct navigation (calcLogTrade will re-show it if needed)
-    var fb = document.getElementById('log-flow-banner');
-    if(fb) fb.style.display = 'none';
+    // Hide flow banner only on direct navigation — calcLogTrade will re-show it when in flow
+    if(!_flowActive){
+      var fb = document.getElementById('log-flow-banner');
+      if(fb) fb.style.display = 'none';
+    }
   }
   if(id==='history'){populateSessionSelects().then(function(){populateFilters();renderHistory();});}
   if(id==='sessions')renderSessionsList();
@@ -8248,6 +8276,62 @@ async function calcOnBacktestSessionChange(){
 
 // ══ Pre-trade check flow ══════════════════════
 var _pendingChecklistState = null; // carries checklist state from pre-checklist → calc → log
+var _flowActive = false;           // true while in pre-check → calc → log flow
+var _flowCalcSnapshot = null;      // snapshot of calc-filled log fields for re-applying on forward
+
+// ── Flow back-navigation ──────────────────────────────────
+function flowBackToPreCheck(){
+  // Go back to pre-trade check from calculator — preserve checklist state
+  _flowActive = false;
+  var flowBack = document.getElementById('calc-flow-back');
+  if(flowBack) flowBack.style.display = 'none';
+  var btn = document.getElementById('nav-pre-checklist');
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  if(btn) btn.classList.add('active');
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  var page = document.getElementById('page-pre-checklist');
+  if(page) page.classList.add('active');
+  _currentPage = 'pre-checklist';
+  document.getElementById('topbar-title').textContent = 'Pre-trade check';
+  document.getElementById('topbar-sub').textContent = 'Verify your setup before sizing and logging';
+  preClRender();
+  // Restore checklist state if we have it
+  if(_pendingChecklistState){
+    setTimeout(function(){
+      document.querySelectorAll('.pre-cl-item').forEach(function(c){
+        var v=_pendingChecklistState[c.dataset.k];
+        c.checked=v==='yes'||v===true;
+      });
+      preClUpdateStatus();
+    },80);
+  }
+}
+
+function flowBackToCalc(){
+  // Go back to calculator from log trade — preserve log form, re-show calc with its values
+  var calcNavBtn = document.querySelector('.nav-item[onclick*="nav(\'calculator\'"]');
+  nav('calculator', calcNavBtn);
+  setTimeout(function(){
+    calcSetMode('backtest');
+    // Restore calc snapshot values
+    if(_flowCalcSnapshot){
+      var s = _flowCalcSnapshot;
+      if(s.entry){ var el=document.getElementById('calc-entry'); if(el) el.value=s.entry; }
+      if(s.sl)   { var el=document.getElementById('calc-sl');    if(el) el.value=s.sl;    }
+      if(s.balance){ var el=document.getElementById('calc-balance'); if(el) el.value=s.balance; }
+      if(s.riskPct){ var el=document.getElementById('calc-risk-pct'); if(el) el.value=s.riskPct; }
+      if(s.sessId){
+        var sel=document.getElementById('calc-backtest-session');
+        if(sel) sel.value=s.sessId;
+      }
+      calcUpdate();
+    }
+    // Show back button again
+    var flowBack = document.getElementById('calc-flow-back');
+    if(flowBack) flowBack.style.display = 'block';
+    _flowActive = true;
+  }, 80);
+}
 
 async function openPreChecklist() {
   // Update nav active state
@@ -8355,14 +8439,19 @@ function preClReset() {
 function preClProceedToCalc() {
   // Save the current checklist state so it can be applied to the log trade form later
   _pendingChecklistState = preClGetState();
+  _flowActive = true;
   // Navigate to calculator in backtest mode
   var calcNavBtn = null;
   document.querySelectorAll('.nav-item').forEach(function(btn){
     if(btn.textContent && btn.textContent.trim().indexOf('Calculator') !== -1) calcNavBtn = btn;
   });
   nav('calculator', calcNavBtn);
-  // Ensure backtest mode is on
-  setTimeout(function(){ calcSetMode('backtest'); }, 80);
+  // Ensure backtest mode is on and show back button
+  setTimeout(function(){
+    calcSetMode('backtest');
+    var flowBack = document.getElementById('calc-flow-back');
+    if(flowBack) flowBack.style.display = 'block';
+  }, 80);
   toast('Checklist saved — proceed to size your position', 'ok');
 }
 
@@ -8389,6 +8478,19 @@ async function calcLogTrade(){
 
   // Capture pending checklist state (set when coming via pre-checklist flow)
   var capturedChecklistState = _pendingChecklistState ? JSON.parse(JSON.stringify(_pendingChecklistState)) : null;
+
+  // Snapshot calc values so user can come back and tweak
+  _flowCalcSnapshot = {
+    entry: entry,
+    sl: sl,
+    balance: balance,
+    riskPct: riskPct,
+    sessId: sessId
+  };
+
+  // Hide calc back button (now on log page)
+  var flowBack = document.getElementById('calc-flow-back');
+  if(flowBack) flowBack.style.display = 'none';
 
   // Navigate to log page and pre-fill
   var logBtn=document.querySelector('.nav-item[onclick*="nav(\'log\'"]');
