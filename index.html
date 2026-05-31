@@ -6276,7 +6276,7 @@ async function saveTrade(){
 
   toast(editingId?'Trade updated ✓':'Trade saved ✓','ok');
   cancelEdit();clearForm();updateSidebarStats();
-  nav('history',document.querySelectorAll('.nav-item')[2]);
+  nav('history',document.querySelector('.nav-item[onclick*="nav(\'history\'"]'));
   // Auto-sync to GitHub (runs silently in background)
   ghAutoSync();
   } catch(err) { toast('Error saving: '+err.message,'err'); console.error(err); }
