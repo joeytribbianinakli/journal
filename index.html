@@ -4164,13 +4164,13 @@ async function saveChecklistEditor(){
   for(var t of trades){
     if(!t.checklist)continue;
     var newState={};
-    // For each old key, find what its text was, then find where that text ended up
-    Object.keys(t.checklist).forEach(function(k){
-      var oldText=oldTextMap[k];
-      if(!oldText)return; // key didn't exist in old config — drop it
-      // Find new key that matches this text
-      var newKey=Object.keys(newTextMap).find(function(nk){return newTextMap[nk]===oldText;});
-      if(newKey){newState[newKey]=t.checklist[k];} // text renamed/moved — remap; if not found, item was deleted — drop it
+    // Iterate by position: for each slot in old config, find the trade's stored value (by old text)
+    // and write it under the new text key (handles renames, deletions, reorders)
+    Object.keys(oldTextMap).forEach(function(pos){
+      var oldText=oldTextMap[pos];
+      var newText=newTextMap[pos]; // same position in new config
+      if(!newText)return; // item deleted at this position — drop it
+      if(oldText in t.checklist){newState[newText]=t.checklist[oldText];} // remap (rename or unchanged)
     });
     var changed=JSON.stringify(newState)!==JSON.stringify(t.checklist);
     if(changed){t.checklist=newState;await dbPut('trades',t);synced++;}
