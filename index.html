@@ -1062,7 +1062,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="dash-filter-row">
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session</div>
-              <select id="cal-session-filter" onchange="renderCalendar()"><option value="">All sessions</option></select>
+              <select id="cal-session-filter" onchange="calJumpToMostRecent().then(function(){renderCalendar();})"><option value="">All sessions</option></select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Trade type</div>
@@ -1406,7 +1406,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       </div>
       <div class="edit-banner" id="edit-banner">
         <span id="edit-banner-text">Editing trade</span>
-        <button class="btn btn-ghost btn-sm" onclick="cancelEdit()">Cancel edit</button>
+        <button class="btn btn-ghost btn-sm" onclick="cancelEdit(true)">Cancel edit</button>
       </div>
       <div class="form-tab-bar">
         <button class="form-tab active" onclick="switchTab(0,this)">Trade info</button>
@@ -5321,7 +5321,7 @@ function nav(id,btn){
   if(id==='pre-checklist'){preClRender();}
   if(id==='montecarlo'){resetMonteCarloResults();initMonteCarlo();}
   if(id==='calculator'){calcReset();calcSyncAssets();}
-  if(id==='calendar'){calPopulateSessionFilter().then(function(){renderCalendar();});}
+  if(id==='calendar'){calPopulateSessionFilter().then(function(){calJumpToMostRecent().then(function(){renderCalendar();});});}
   if(id==='ai-analyzer'){aiAnalyzerInit();}
 }
 function startNewTrade(){
@@ -6282,7 +6282,15 @@ async function saveTrade(){
   } catch(err) { toast('Error saving: '+err.message,'err'); console.error(err); }
 }
 
-function cancelEdit(){editingId=null;document.getElementById('edit-banner').classList.remove('visible');}
+function cancelEdit(goBack){
+  editingId=null;
+  document.getElementById('edit-banner').classList.remove('visible');
+  // Only navigate to history when the user explicitly clicks Cancel edit
+  if(goBack&&_currentPage==='log'){
+    var histBtn=document.querySelector('.nav-item[onclick*="nav(\'history\'"]');
+    nav('history',histBtn);
+  }
+}
 
 async function clearForm(skipCancelEdit){
   if(!skipCancelEdit)cancelEdit();
@@ -9993,6 +10001,26 @@ function calHeatClass(dayTrades,maxCount,maxAbsPl){
     if(pl>=0)return'heat-pl-pos-'+lvl;
     return'heat-pl-neg-'+lvl;
   }
+}
+
+// ── Jump _calDate to most recent trade for current session filter ─
+async function calJumpToMostRecent(){
+  var allTrades=await dbGetAllCached('trades');
+  var allSess=await dbGetAllCached('sessions');
+  var archivedIds=new Set(allSess.filter(function(s){return s.archived;}).map(function(s){return s.id;}));
+  var demoIds=new Set(allSess.filter(function(s){return !!s.isDemo;}).map(function(s){return s.id;}));
+  var demoOn=!!_dashDemoMode;
+  var sesF=(document.getElementById('cal-session-filter')||{}).value||'';
+  var filtered=allTrades.filter(function(t){
+    if(archivedIds.has(t.sessionId))return false;
+    if(demoOn&&!demoIds.has(t.sessionId))return false;
+    if(!demoOn&&demoIds.has(t.sessionId))return false;
+    if(sesF&&t.sessionId!==sesF)return false;
+    return !!t.entryTime;
+  });
+  if(!filtered.length)return;
+  filtered.sort(function(a,b){return new Date(b.entryTime)-new Date(a.entryTime);});
+  _calDate=new Date(filtered[0].entryTime);
 }
 
 // ── Populate session filter ───────────────────────────────
