@@ -2649,13 +2649,6 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           </div>
           <!-- Log trade Button (backtest mode only) -->
           <div id="calc-log-trade-box" style="display:block;margin-top:10px">
-            <!-- Back to pre-trade check (shown only when in flow) -->
-            <div id="calc-flow-back" style="display:none;margin-bottom:8px">
-              <button onclick="flowBackToPreCheck()" style="width:100%;padding:7px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;color:var(--text3);font-size:11px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px" onmouseover="this.style.color='var(--text)';this.style.borderColor='var(--border2)'" onmouseout="this.style.color='var(--text3)'">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                Back to Pre-trade check
-              </button>
-            </div>
             <button onclick="calcLogTrade()" style="width:100%;padding:10px;border-radius:var(--radius);border:1px solid rgba(77,127,255,.35);background:rgba(77,127,255,.1);color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;letter-spacing:.01em" onmouseover="this.style.background='rgba(77,127,255,.18)'" onmouseout="this.style.background='rgba(77,127,255,.1)'">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;margin-top:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Log This Trade
@@ -5350,8 +5343,6 @@ function nav(id,btn){
     _flowCalcSnapshot=null;
     _flowLogSnapshot=null;
     flowUpdateStepIndicators();
-    var flowBack=document.getElementById('calc-flow-back');
-    if(flowBack)flowBack.style.display='none';
     var calcBanner=document.getElementById('calc-flow-banner');
     if(calcBanner)calcBanner.style.display='none';
   }
@@ -8407,8 +8398,6 @@ async function flowBackToPreCheck(){
   // (_flowActive stays true, _flowCalcSnapshot and _flowLogSnapshot preserved)
   flowUpdateStepIndicators();
 
-  var flowBack = document.getElementById('calc-flow-back');
-  if(flowBack) flowBack.style.display = 'none';
   var calcBanner = document.getElementById('calc-flow-banner');
   if(calcBanner) calcBanner.style.display = 'none';
   var logBanner = document.getElementById('log-flow-banner');
@@ -8440,49 +8429,46 @@ async function flowBackToPreCheck(){
 }
 
 function flowGoToLog(){
-  // Navigate from pre-trade back to log trade — restore log form snapshot and show banner
+  // Navigate from pre-trade back to log trade — restore log form snapshot and show banner.
+  // Assert flow state before nav() so there's no gap where it could be considered broken.
+  _flowActive = true;
+  flowUpdateStepIndicators();
   var logBtn = document.querySelector('.nav-item[onclick*="nav(\'log\'"]');
   nav('log', logBtn);
-  setTimeout(function(){
-    if(_flowLogSnapshot){
-      restoreLogFormSnapshot(_flowLogSnapshot);
-      _flowLogSnapshot = null;
-    }
-    var flowBanner = document.getElementById('log-flow-banner');
-    if(flowBanner) flowBanner.style.display = _flowActive ? 'flex' : 'none';
-    flowUpdateStepIndicators();
-  }, 80);
+  // Show banner immediately — nav() won't hide it since _flowActive is true.
+  // restoreLogFormSnapshot is synchronous DOM writes, no deferral needed.
+  if(_flowLogSnapshot){
+    restoreLogFormSnapshot(_flowLogSnapshot);
+    _flowLogSnapshot = null;
+  }
+  var flowBanner = document.getElementById('log-flow-banner');
+  if(flowBanner) flowBanner.style.display = 'flex';
+  flowUpdateStepIndicators();
 }
 
 function flowBackToCalc(){
-  // Go back to calculator from log trade — preserve log form, re-show calc with its values
-  // Show banner BEFORE nav() so it's visible immediately (nav() doesn't hide it in flow)
+  // Go back to calculator from log trade — preserve log form, re-show calc with its values.
+  // Assert flow state synchronously BEFORE nav() so there's no window where it could be lost.
+  _flowActive = true;
+  flowUpdateStepIndicators();
   var calcBanner = document.getElementById('calc-flow-banner');
   if(calcBanner) calcBanner.style.display = 'flex';
-  var flowBack = document.getElementById('calc-flow-back');
-  if(flowBack) flowBack.style.display = 'block';
   var calcNavBtn = document.querySelector('.nav-item[onclick*="nav(\'calculator\'"]');
   nav('calculator', calcNavBtn);
+  // Restore calc field values after nav()/calcReset() have settled
+  // calcSyncAssets() is async and fire-and-forget inside nav() — it populates instrument
+  // lists and may reflow the calc UI. Defer field restore until it has settled.
   setTimeout(function(){
     calcSetMode('backtest');
-    // Restore calc snapshot values
     if(_flowCalcSnapshot){
       var s = _flowCalcSnapshot;
-      if(s.entry){ var el=document.getElementById('calc-entry'); if(el) el.value=s.entry; }
-      if(s.sl)   { var el=document.getElementById('calc-sl');    if(el) el.value=s.sl;    }
-      if(s.balance){ var el=document.getElementById('calc-balance'); if(el) el.value=s.balance; }
-      if(s.riskPct){ var el=document.getElementById('calc-risk-pct'); if(el) el.value=s.riskPct; }
-      if(s.sessId){
-        var sel=document.getElementById('calc-backtest-session');
-        if(sel) sel.value=s.sessId;
-      }
+      var entryEl=document.getElementById('calc-entry');        if(entryEl&&s.entry)   entryEl.value=s.entry;
+      var slEl   =document.getElementById('calc-sl');           if(slEl&&s.sl)         slEl.value=s.sl;
+      var balEl  =document.getElementById('calc-balance');      if(balEl&&s.balance)   balEl.value=s.balance;
+      var riskEl =document.getElementById('calc-risk-pct');     if(riskEl&&s.riskPct)  riskEl.value=s.riskPct;
+      var sessEl =document.getElementById('calc-backtest-session');if(sessEl&&s.sessId) sessEl.value=s.sessId;
       calcUpdate();
     }
-    // Re-assert banner visible after any async renders settle
-    var calcBanner2 = document.getElementById('calc-flow-banner');
-    if(calcBanner2) calcBanner2.style.display = 'flex';
-    _flowActive = true;
-    flowUpdateStepIndicators();
   }, 80);
 }
 
@@ -8495,9 +8481,14 @@ async function openPreChecklist() {
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   var page = document.getElementById('page-pre-checklist');
   if(page) page.classList.add('active');
+  var mainEl=document.querySelector('.main');if(mainEl)mainEl.scrollTop=0;
   _currentPage = 'pre-checklist';
-  document.getElementById('topbar-title').textContent = 'Pre-trade check';
-  document.getElementById('topbar-sub').textContent = 'Verify your setup before sizing and logging';
+  var _pm = pageMap['pre-checklist'] || {};
+  document.getElementById('topbar-title').textContent = _pm.title || '';
+  document.getElementById('topbar-sub').textContent = _pm.sub || '';
+  // Sync step indicators with actual flow state — covers the case where the flow was
+  // broken by navigating away (e.g. to dashboard) and the user then returns here directly.
+  flowUpdateStepIndicators();
   await preClRender();
 }
 
@@ -8594,25 +8585,12 @@ function preClProceedToCalc() {
   _pendingChecklistState = preClGetState();
   _flowActive = true;
   flowUpdateStepIndicators();
-  // Navigate to calculator in backtest mode
-  var calcNavBtn = null;
-  document.querySelectorAll('.nav-item').forEach(function(btn){
-    if(btn.textContent && btn.textContent.trim().indexOf('Calculator') !== -1) calcNavBtn = btn;
-  });
-  // Show banner before nav() so it survives any async resets
-  var calcBannerEarly = document.getElementById('calc-flow-banner');
-  if(calcBannerEarly) calcBannerEarly.style.display = 'flex';
-  var flowBackEarly = document.getElementById('calc-flow-back');
-  if(flowBackEarly) flowBackEarly.style.display = 'block';
+  // Show banner and set mode before nav() — nav() won't reset either since _flowActive is true
+  var calcBanner = document.getElementById('calc-flow-banner');
+  if(calcBanner) calcBanner.style.display = 'flex';
+  calcSetMode('backtest');
+  var calcNavBtn = document.querySelector('.nav-item[onclick*="nav(\'calculator\'"]');
   nav('calculator', calcNavBtn);
-  // Re-assert after async page renders settle
-  setTimeout(function(){
-    calcSetMode('backtest');
-    var calcBanner = document.getElementById('calc-flow-banner');
-    if(calcBanner) calcBanner.style.display = 'flex';
-    var flowBack = document.getElementById('calc-flow-back');
-    if(flowBack) flowBack.style.display = 'block';
-  }, 80);
   toast('Checklist saved — proceed to size your position', 'ok');
 }
 
@@ -8653,72 +8631,57 @@ async function calcLogTrade(){
   // Hide calc banners (now on log page)
   var calcBanner = document.getElementById('calc-flow-banner');
   if(calcBanner) calcBanner.style.display = 'none';
-  var flowBack = document.getElementById('calc-flow-back');
-  if(flowBack) flowBack.style.display = 'none';
-
-  // Navigate to log page and pre-fill
+  // Navigate to log page — all data captured above, nav() won't clear anything
+  // since _currentPage is 'calculator' (not 'log'), so clearForm() won't fire.
   var logBtn=document.querySelector('.nav-item[onclick*="nav(\'log\'"]');
   nav('log',logBtn);
 
-  // Show flow banner whenever in flow
-  setTimeout(function(){
-    var flowBanner = document.getElementById('log-flow-banner');
-    if(flowBanner) flowBanner.style.display = _flowActive ? 'flex' : 'none';
-  }, 50);
+  // Show flow banner immediately — _flowActive is already true, no need to defer.
+  var flowBanner = document.getElementById('log-flow-banner');
+  if(flowBanner) flowBanner.style.display = _flowActive ? 'flex' : 'none';
 
-  // Wait a tick for the page to render and session selects to populate
-  setTimeout(async function(){
-    // If we have a preserved log form snapshot (user went back to calc), restore it first,
-    // then overwrite only the calc-derived fields below
-    if(_flowLogSnapshot){
-      restoreLogFormSnapshot(_flowLogSnapshot);
-      _flowLogSnapshot = null;
+  // All form-fill is synchronous except populateSessionSelects (IDB read).
+  // Restore any saved log snapshot first, then overwrite with fresh calc values.
+  if(_flowLogSnapshot){
+    restoreLogFormSnapshot(_flowLogSnapshot);
+    _flowLogSnapshot = null;
+  }
+
+  // Populate session select (async IDB read), then fill remaining fields synchronously.
+  await populateSessionSelects(sessId);
+
+  var acctEl =document.getElementById('f-acct');      if(acctEl)  acctEl.value  = balance;
+  var riskEl =document.getElementById('f-riskpct');   if(riskEl)  riskEl.value  = riskPct;
+  var entryEl=document.getElementById('f-entry');     if(entryEl) entryEl.value = entry;
+  var slEl   =document.getElementById('f-sl-price');  if(slEl)    slEl.value    = sl;
+  var qtyEl  =document.getElementById('f-qty');       if(qtyEl)   qtyEl.value   = calcLastUnits;
+  var trrEl  =document.getElementById('f-trr');       if(trrEl&&capturedRR) trrEl.value = capturedRR;
+
+  // Pair select — exact match then case-insensitive fallback
+  if(pairSym){
+    var pairSel=document.getElementById('f-pair');
+    if(pairSel){
+      var matched=[].find.call(pairSel.options,function(o){return o.value===pairSym;})
+        ||[].find.call(pairSel.options,function(o){return o.value.toUpperCase()===pairSym.toUpperCase();});
+      if(matched){pairSel.value=matched.value;onPairChange();}
     }
-    // Set session
-    await populateSessionSelects(sessId);
-    // Overwrite account size and risk (populateSessionSelects + onSessionChange will set them from session,
-    // but we use the live calculator values which already reflect the session)
-    var acctEl=document.getElementById('f-acct');
-    var riskEl=document.getElementById('f-riskpct');
-    var entryEl=document.getElementById('f-entry');
-    var slEl=document.getElementById('f-sl-price');
-    var qtyEl=document.getElementById('f-qty');
-    if(acctEl)acctEl.value=balance;
-    if(riskEl)riskEl.value=riskPct;
-    if(entryEl)entryEl.value=entry;
-    if(slEl)slEl.value=sl;
-    // Quantity as units (not lots) — matches the f-qty field which expects units
-    if(qtyEl)qtyEl.value=calcLastUnits;
-    // Target RR — captured before nav() so it survives the page switch
-    var trrEl=document.getElementById('f-trr');
-    if(trrEl&&capturedRR)trrEl.value=capturedRR;
-    // Copy asset/pair to the pair select
-    if(pairSym){
-      var pairSel=document.getElementById('f-pair');
-      if(pairSel){
-        // Try exact match first, then case-insensitive
-        var matched=[].find.call(pairSel.options,function(o){return o.value===pairSym;})
-          ||[].find.call(pairSel.options,function(o){return o.value.toUpperCase()===pairSym.toUpperCase();});
-        if(matched){pairSel.value=matched.value;onPairChange();}
-      }
-    }
-    // Copy trade direction (Long / Short)
-    setOptPill('opt-type',tradeType);
-    document.getElementById('f-type-val').value=tradeType;
-    // Forward skipped state from calculator
-    var skippedCb=document.getElementById('f-skipped');
-    if(skippedCb){skippedCb.checked=calcIsSkipped;onSkippedChange();}
-    // Apply checklist state from pre-trade checklist (if available)
-    if(capturedChecklistState){
-      await renderChecklist(); // ensure checklist is freshly rendered
-      setTimeout(function(){
-        setChecklist_state(capturedChecklistState);
-        _pendingChecklistState = null; // clear after applying
-      }, 80);
-    }
-    recalc();
-    toast('Trade pre-filled from calculator','ok');
-  },150);
+  }
+
+  // Trade direction and skipped state
+  setOptPill('opt-type',tradeType);
+  document.getElementById('f-type-val').value=tradeType;
+  var skippedCb=document.getElementById('f-skipped');
+  if(skippedCb){skippedCb.checked=calcIsSkipped;onSkippedChange();}
+
+  // Apply pre-trade checklist state — renderChecklist is async (IDB), await it then apply synchronously.
+  if(capturedChecklistState){
+    await renderChecklist();
+    setChecklist_state(capturedChecklistState);
+    _pendingChecklistState = null;
+  }
+
+  recalc();
+  toast('Trade pre-filled from calculator','ok');
 }
 
 
@@ -8816,10 +8779,19 @@ function restoreLogFormSnapshot(snap){
     var ps=document.getElementById('f-pair');
     if(ps){ps.value=snap['f-pair'];if(typeof onPairChange==='function')onPairChange();}
   }
-  // In-memory state
-  if(snap._biasState)  { biasState=JSON.parse(JSON.stringify(snap._biasState));  if(typeof renderBiasChips==='function')renderBiasChips(); }
-  if(snap._tfState)    { tfState  =JSON.parse(JSON.stringify(snap._tfState));    if(typeof renderTfState==='function')renderTfState(); }
-  if(snap._partialTPs) { _partialTPs=JSON.parse(JSON.stringify(snap._partialTPs)); if(typeof renderPartialTPs==='function')renderPartialTPs(); }
+  // In-memory state — restore data then call the correct UI-render functions
+  if(snap._biasState && snap._biasState.narrative){
+    // setBiasFromData rebuilds the chip UI and sets biasState internally
+    setBiasFromData(snap._biasState.narrative);
+  }
+  if(snap._tfState){
+    // Reset pill UI then re-apply each role that has a selection
+    resetTfPills();
+    ['htf','mtf','ltf'].forEach(function(role){
+      if(snap._tfState[role]) applyTfPillUI(role, snap._tfState[role]);
+    });
+  }
+  if(snap._partialTPs){ _partialTPs=JSON.parse(JSON.stringify(snap._partialTPs)); renderPartialTPs(); }
   if(typeof recalc==='function')recalc();
 }
 
@@ -10748,7 +10720,7 @@ function calRenderMonth(){
         '<div class="js-stat-cell"><div class="js-stat-lbl">Win Rate</div><div class="js-val-lg">'+moWinRate+'%</div><div class="js-hint-mt"><span style="color:var(--green)">'+moWins+'W</span> / <span style="color:var(--red)">'+moLosses+'L</span></div></div>'+
         (moAvgRR!=null?'<div class="js-stat-cell"><div class="js-stat-lbl">Avg RR</div><div class="js-val-lg">'+moAvgRR.toFixed(2)+'R</div></div>':'')+
         (moBestDay!==null?'<div class="js-stat-cell"><div class="js-stat-lbl">Best Day</div><div style="font-size:20px;font-weight:700;font-family:\'DM Mono\',monospace;color:var(--green)">'+calPlFmt(moBestDay)+'</div></div>':'')+
-        (moWorstDay!==null?'<div style="padding:12px 14px"><div class="js-stat-lbl">Worst Day</div><div style="font-size:20px;font-weight:700;font-family:\'DM Mono\',monospace;color:var(--red)">'+calPlFmt(moWorstDay)+'</div></div>':'')+
+        (moWorstDay!==null?'<div style="padding:12px 14px"><div class="js-stat-lbl">Worst Day</div><div style="font-size:20px;font-weight:700;font-family:\'DM Mono\',monospace;color:'+(moWorstDay>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(moWorstDay)+'</div></div>':'')+
       '</div>'+
     '</div>';
     monthSummaryHtml='<details class="cal-summary-details" style="margin-top:12px">'+
@@ -10883,7 +10855,7 @@ function calRenderWeek(){
       '<div class="js-stat-cell"><div class="js-stat-lbl">Win Rate</div><div class="js-val-lg">'+wWinRate+'%</div><div class="js-hint-mt"><span style="color:var(--green)">'+wWins+'W</span> / <span style="color:var(--red)">'+wLosses+'L</span></div></div>'+
       (avgRR!=null?'<div class="js-stat-cell"><div class="js-stat-lbl">Avg RR</div><div class="js-val-lg">'+avgRR.toFixed(2)+'R</div></div>':'')+
       (wBestDay!==null?'<div class="js-stat-cell"><div class="js-stat-lbl">Best Day</div><div style="font-size:20px;font-weight:700;font-family:\'DM Mono\',monospace;color:var(--green)">'+calPlFmt(wBestDay)+'</div></div>':'')+
-      (wWorstDay!==null?'<div style="padding:12px 14px"><div class="js-stat-lbl">Worst Day</div><div style="font-size:20px;font-weight:700;font-family:\'DM Mono\',monospace;color:var(--red)">'+calPlFmt(wWorstDay)+'</div></div>':'')+
+      (wWorstDay!==null?'<div style="padding:12px 14px"><div class="js-stat-lbl">Worst Day</div><div style="font-size:20px;font-weight:700;font-family:\'DM Mono\',monospace;color:'+(wWorstDay>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(wWorstDay)+'</div></div>':'')+
     '</div>'+
   '</div>';
 
@@ -11050,7 +11022,7 @@ function calRenderYear(){
         (yrAvgRR!=null?'<div class="js-stat-cell"><div class="js-stat-lbl">Avg RR</div><div class="js-val-lg">'+yrAvgRR.toFixed(2)+'R</div></div>':'')+
         '<div class="js-stat-cell"><div class="js-stat-lbl">Active Months</div><div class="js-val-lg">'+activeMonths.length+' / 12</div></div>'+
         (yrBestMo!==null?'<div class="js-stat-cell"><div class="js-stat-lbl">Best Month</div><div style="font-size:14px;font-weight:700;font-family:\'DM Mono\',monospace;color:var(--green)">'+calPlFmt(yrBestMo)+'</div><div class="js-hint-mt">'+yrBestMoName+'</div></div>':'')+
-        (yrWorstMo!==null?'<div style="padding:12px 14px"><div class="js-stat-lbl">Worst Month</div><div style="font-size:14px;font-weight:700;font-family:\'DM Mono\',monospace;color:var(--red)">'+calPlFmt(yrWorstMo)+'</div><div class="js-hint-mt">'+yrWorstMoName+'</div></div>':'')+
+        (yrWorstMo!==null?'<div style="padding:12px 14px"><div class="js-stat-lbl">Worst Month</div><div style="font-size:14px;font-weight:700;font-family:\'DM Mono\',monospace;color:'+(yrWorstMo>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(yrWorstMo)+'</div><div class="js-hint-mt">'+yrWorstMoName+'</div></div>':'')+
       '</div>'+
     '</div>';
     html+='<details class="cal-summary-details" style="margin-top:12px">'+
