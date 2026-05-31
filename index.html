@@ -5325,7 +5325,7 @@ function nav(id,btn){
   if(id==='ai-analyzer'){aiAnalyzerInit();}
 }
 function startNewTrade(){
-  var logBtn=document.querySelector('.nav-item:nth-of-type(2)');
+  var logBtn=document.querySelector('.nav-item[onclick*="nav(\'log\'"]');
   nav('log',logBtn);
 }
 
@@ -6440,7 +6440,7 @@ async function editTrade(id){
     fla.value=d.toLocaleDateString()+' '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
     fla.title='Logged at: '+trade.loggedAt;
   }
-  var logBtn=document.querySelector('.nav-item:nth-of-type(2)');
+  var logBtn=document.querySelector('.nav-item[onclick*="nav(\'log\'"]');
   nav('log',logBtn);closeDetail();
 }
 
@@ -8383,7 +8383,7 @@ async function calcLogTrade(){
   var capturedChecklistState = _pendingChecklistState ? JSON.parse(JSON.stringify(_pendingChecklistState)) : null;
 
   // Navigate to log page and pre-fill
-  var logBtn=document.querySelector('.nav-item:nth-of-type(2)');
+  var logBtn=document.querySelector('.nav-item[onclick*="nav(\'log\'"]');
   nav('log',logBtn);
 
   // Show flow banner if we have a checklist state
