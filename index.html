@@ -528,6 +528,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .cl-drag-handle svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
 .cl-card-title-row{display:flex;align-items:center;gap:5px;margin-bottom:8px}
 .cl-drag-over{border:1px dashed var(--accent)!important;opacity:.7}
+.cl-item-drag-handle{display:flex;align-items:center;padding:2px 3px 2px 0;color:var(--text3);cursor:grab;flex-shrink:0;opacity:.5;transition:opacity .15s}
+.cl-item-drag-handle:hover{opacity:1}
+.cl-item-drag-handle svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2}
+.cl-items-container{display:flex;flex-direction:column;min-height:10px}
 .stars{color:var(--amber);font-size:12px;letter-spacing:1px}
 .edit-banner{background:rgba(77,127,255,.06);border:1px solid rgba(77,127,255,.2);border-radius:var(--radius);padding:8px 12px;margin-bottom:14px;font-size:12px;color:var(--accent);display:none;align-items:center;justify-content:space-between}
 .edit-banner.visible{display:flex}
@@ -1980,10 +1984,14 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
     <!-- CHECKLIST EDITOR -->
     <div class="page" id="page-checklist-editor">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
-        <div><div style="font-size:15px;font-weight:600">Checklist editor</div><div style="font-size:12px;color:var(--text3);margin-top:2px">Edit items globally · Drag blocks to reorder — auto-reflects in trade logs</div></div>
+        <div><div style="font-size:15px;font-weight:600">Checklist editor</div><div style="font-size:12px;color:var(--text3);margin-top:2px">Edit items globally · Drag blocks to reorder · Drag items to move within or across blocks — auto-reflects in trade logs</div></div>
         <button class="btn btn-primary" onclick="saveChecklistEditor()">
           <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save checklist
         </button>
+      </div>
+      <div id="cl-unsaved-banner" style="display:none;background:rgba(232,160,48,.1);border:1px solid rgba(232,160,48,.35);border-radius:var(--radius);padding:7px 12px;margin-bottom:12px;font-size:11px;color:var(--amber);display:none;align-items:center;gap:8px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Unsaved changes — will be discarded if you leave this page
       </div>
       <div id="cl-editor-area"></div>
     </div>
@@ -4111,9 +4119,23 @@ async function populateStrategySelect(){
 }
 
 // ══ Checklist editor ══════════════════════════════
-var clDragSrcIdx=null;
+var clDragSrcIdx=null;          // block-level drag: source block index
+var clItemDragSrc=null;         // item-level drag: {secIdx, itemIdx}
+var _clWorkingCopy=null;        // in-memory draft; null = no unsaved changes
+function clMarkUnsaved(){
+  var b=document.getElementById('cl-unsaved-banner');
+  if(b)b.style.display='flex';
+}
+function clDiscardWorkingCopy(){
+  _clWorkingCopy=null;
+  var b=document.getElementById('cl-unsaved-banner');
+  if(b)b.style.display='none';
+}
 async function renderChecklistEditor(){
-  var cl=await getChecklist();
+  // Use working copy if one exists, otherwise load from IDB and start a fresh copy
+  if(!_clWorkingCopy){_clWorkingCopy=JSON.parse(JSON.stringify(await getChecklist()));}
+  else{clMarkUnsaved();} // working copy already existed = unsaved changes present
+  var cl=_clWorkingCopy;
   var el=document.getElementById('cl-editor-area');
   el.innerHTML='';
   var grid=document.createElement('div');
@@ -4126,36 +4148,200 @@ function buildEditorCard(sec,idx,total){
   var div=document.createElement('div');
   div.className='cl-card cl-card-draggable';
   div.dataset.idx=idx;
-  div.draggable=true;
-  div.addEventListener('dragstart',function(e){clDragSrcIdx=idx;div.style.opacity='.45';e.dataTransfer.effectAllowed='move';});
-  div.addEventListener('dragend',function(){div.style.opacity='1';document.querySelectorAll('.cl-drag-over').forEach(function(d){d.classList.remove('cl-drag-over')});});
-  div.addEventListener('dragover',function(e){e.preventDefault();div.classList.add('cl-drag-over');e.dataTransfer.dropEffect='move';});
-  div.addEventListener('dragleave',function(){div.classList.remove('cl-drag-over');});
+  // draggable only activated via block handle mousedown
+
+  // Block-level drag handle
+  var blockHandle=document.createElement('div');
+  blockHandle.className='cl-drag-handle';
+  blockHandle.title='Drag block to reorder';
+  blockHandle.innerHTML='<svg viewBox="0 0 24 24"><circle cx="9" cy="5" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="19" r="1"/></svg>';
+  blockHandle.addEventListener('mousedown',function(){div.draggable=true;});
+
+  var titleRow=document.createElement('div');
+  titleRow.className='cl-card-title-row';
+  titleRow.appendChild(blockHandle);
+  var titleSpan=document.createElement('span');
+  titleSpan.className='cl-card-title';
+  titleSpan.style.marginBottom='0';
+  titleSpan.textContent=sec.section;
+  titleRow.appendChild(titleSpan);
+  div.appendChild(titleRow);
+
+  div.addEventListener('dragstart',function(e){
+    if(clItemDragSrc!==null){e.preventDefault();return;}
+    clDragSrcIdx=idx;
+    div.style.opacity='.45';
+    e.dataTransfer.effectAllowed='move';
+    e.dataTransfer.setData('text/plain','block:'+idx);
+  });
+  div.addEventListener('dragend',function(){
+    div.style.opacity='1';
+    div.draggable=false;
+    clDragSrcIdx=null;
+    document.querySelectorAll('.cl-drag-over').forEach(function(d){d.classList.remove('cl-drag-over');});
+  });
+  div.addEventListener('dragover',function(e){
+    if(clDragSrcIdx===null||clItemDragSrc!==null)return;
+    e.preventDefault();
+    div.classList.add('cl-drag-over');
+    e.dataTransfer.dropEffect='move';
+  });
+  div.addEventListener('dragleave',function(e){
+    if(!div.contains(e.relatedTarget))div.classList.remove('cl-drag-over');
+  });
   div.addEventListener('drop',async function(e){
-    e.preventDefault();div.classList.remove('cl-drag-over');
+    e.preventDefault();
+    div.classList.remove('cl-drag-over');
     if(clDragSrcIdx===null||clDragSrcIdx===idx)return;
-    var cl=await getChecklist();
-    var moved=cl.splice(clDragSrcIdx,1)[0];
-    cl.splice(idx,0,moved);
-    await setSetting('checklist',cl);
+    var moved=_clWorkingCopy.splice(clDragSrcIdx,1)[0];
+    _clWorkingCopy.splice(idx,0,moved);
     clDragSrcIdx=null;
     renderChecklistEditor();
-    renderChecklist();
-    toast('Block order saved','ok');
-    ghAutoSyncConfig();
   });
-  div.innerHTML='<div class="cl-card-title-row">'
-    +'<div class="cl-drag-handle" title="Drag to reorder"><svg viewBox="0 0 24 24"><circle cx="9" cy="5" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="19" r="1"/></svg></div>'
-    +'<span class="cl-card-title" style="margin-bottom:0">'+escHtml(sec.section)+'</span>'
-    +'</div>';
+
+  // Item container
+  var itemsContainer=document.createElement('div');
+  itemsContainer.className='cl-items-container';
+  itemsContainer.dataset.secIdx=idx;
+
   sec.items.forEach(function(item,j){
-    var row=document.createElement('div');row.className='cl-item-edit';
-    row.innerHTML='<input type="text" value="'+escHtml(item)+'" id="cli-'+idx+'-'+j+'" style="flex:1">'
-      +'<button class="btn btn-danger btn-sm cl-del" onclick="removeClItem('+idx+','+j+')">✕</button>';
-    div.appendChild(row);
+    var row=document.createElement('div');
+    row.className='cl-item-edit';
+    row.dataset.secIdx=idx;
+    row.dataset.itemIdx=j;
+
+    var itemHandle=document.createElement('div');
+    itemHandle.className='cl-item-drag-handle';
+    itemHandle.title='Drag to move item';
+    itemHandle.draggable=true;
+    itemHandle.innerHTML='<svg viewBox="0 0 10 16"><circle cx="3" cy="3" r="1"/><circle cx="7" cy="3" r="1"/><circle cx="3" cy="8" r="1"/><circle cx="7" cy="8" r="1"/><circle cx="3" cy="13" r="1"/><circle cx="7" cy="13" r="1"/></svg>';
+
+    itemHandle.addEventListener('dragstart',function(e){
+      e.stopPropagation();
+      clItemDragSrc={secIdx:idx,itemIdx:j};
+      div.draggable=false;
+      row.style.opacity='.4';
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain','item:'+idx+':'+j);
+    });
+    itemHandle.addEventListener('dragend',function(){
+      row.style.opacity='';
+      clItemDragSrc=null;
+      // Clear all drop indicators
+      document.querySelectorAll('.cl-item-edit').forEach(function(r){
+        r.style.borderTop='';r.style.borderBottom='';
+      });
+      document.querySelectorAll('.cl-items-container').forEach(function(c){
+        c.style.borderTop='';
+      });
+    });
+
+    // Each row is a drop target: dragover shows insert line above or below
+    row.addEventListener('dragover',function(e){
+      if(clItemDragSrc===null)return;
+      e.preventDefault();e.stopPropagation();
+      e.dataTransfer.dropEffect='move';
+      // Clear all indicators first
+      document.querySelectorAll('.cl-item-edit').forEach(function(r){r.style.borderTop='';r.style.borderBottom='';});
+      // Show insert line: top half = insert before, bottom half = insert after
+      var rect=row.getBoundingClientRect();
+      var mid=rect.top+rect.height/2;
+      if(e.clientY<mid){row.style.borderTop='2px solid var(--accent)';}
+      else{row.style.borderBottom='2px solid var(--accent)';}
+    });
+    row.addEventListener('dragleave',function(e){
+      if(!row.contains(e.relatedTarget)){row.style.borderTop='';row.style.borderBottom='';}
+    });
+    row.addEventListener('drop',async function(e){
+      e.preventDefault();e.stopPropagation();
+      row.style.borderTop='';row.style.borderBottom='';
+      if(clItemDragSrc===null)return;
+      var src=clItemDragSrc;
+      clItemDragSrc=null;
+      var destSecIdx=idx;
+      var destItemIdx=j;
+      // Determine insert before or after based on mouse position
+      var rect=row.getBoundingClientRect();
+      var insertBefore=(e.clientY<rect.top+rect.height/2);
+      var insertAfter=insertBefore?destItemIdx-1:destItemIdx;
+      // No-op: same position
+      if(src.secIdx===destSecIdx){
+        if(insertBefore&&src.itemIdx===destItemIdx)return;
+        if(!insertBefore&&src.itemIdx===destItemIdx)return;
+        if(insertBefore&&src.itemIdx===destItemIdx-1)return;
+        if(!insertBefore&&src.itemIdx===destItemIdx+1)return;
+      }
+      // Flush unsaved text edits into working copy before moving
+      _clWorkingCopy.forEach(function(s,si){
+        s.items.forEach(function(it,ii){
+          var inp=document.getElementById('cli-'+si+'-'+ii);
+          if(inp){var v=inp.value.trim();if(v)s.items[ii]=v;}
+        });
+      });
+      var movedText=_clWorkingCopy[src.secIdx].items[src.itemIdx];
+      _clWorkingCopy[src.secIdx].items.splice(src.itemIdx,1);
+      var adj=insertAfter;
+      if(src.secIdx===destSecIdx&&src.itemIdx<=insertAfter)adj--;
+      _clWorkingCopy[destSecIdx].items.splice(adj+1,0,movedText);
+      renderChecklistEditor();
+    });
+
+    var inp=document.createElement('input');
+    inp.type='text';
+    inp.value=item;
+    inp.id='cli-'+idx+'-'+j;
+    inp.style.flex='1';
+
+    var delBtn=document.createElement('button');
+    delBtn.className='btn btn-danger btn-sm cl-del';
+    delBtn.textContent='\u2715';
+    delBtn.onclick=function(){removeClItem(idx,j);};
+
+    row.appendChild(itemHandle);
+    row.appendChild(inp);
+    row.appendChild(delBtn);
+    itemsContainer.appendChild(row);
   });
-  var addBtn=document.createElement('button');addBtn.className='btn btn-ghost btn-sm';addBtn.style.marginTop='7px';addBtn.textContent='+ Add item';
-  addBtn.onclick=function(){addClItem(idx)};
+
+  // Drop target on the container itself for dropping onto empty blocks or after last item
+  itemsContainer.addEventListener('dragover',function(e){
+    if(clItemDragSrc===null)return;
+    // Only handle if not hovering over a child row
+    if(e.target!==itemsContainer&&itemsContainer.contains(e.target))return;
+    e.preventDefault();e.stopPropagation();
+    e.dataTransfer.dropEffect='move';
+    document.querySelectorAll('.cl-item-edit').forEach(function(r){r.style.borderTop='';r.style.borderBottom='';});
+    itemsContainer.style.outline='2px dashed var(--accent)';
+  });
+  itemsContainer.addEventListener('dragleave',function(e){
+    if(!itemsContainer.contains(e.relatedTarget))itemsContainer.style.outline='';
+  });
+  itemsContainer.addEventListener('drop',async function(e){
+    if(e.target!==itemsContainer&&itemsContainer.contains(e.target))return;
+    e.preventDefault();e.stopPropagation();
+    itemsContainer.style.outline='';
+    if(clItemDragSrc===null)return;
+    var src=clItemDragSrc;
+    clItemDragSrc=null;
+    _clWorkingCopy.forEach(function(s,si){
+      s.items.forEach(function(it,ii){
+        var inp=document.getElementById('cli-'+si+'-'+ii);
+        if(inp){var v=inp.value.trim();if(v)s.items[ii]=v;}
+      });
+    });
+    var movedText=_clWorkingCopy[src.secIdx].items[src.itemIdx];
+    _clWorkingCopy[src.secIdx].items.splice(src.itemIdx,1);
+    _clWorkingCopy[idx].items.push(movedText);
+    renderChecklistEditor();
+  });
+
+  div.appendChild(itemsContainer);
+
+  var addBtn=document.createElement('button');
+  addBtn.className='btn btn-ghost btn-sm';
+  addBtn.style.marginTop='7px';
+  addBtn.textContent='+ Add item';
+  addBtn.onclick=function(){addClItem(idx);};
   div.appendChild(addBtn);
   return div;
 }
@@ -4165,80 +4351,77 @@ async function saveChecklistEditor(){
   var oldTextMap={};
   oldCl.forEach(function(sec,si){sec.items.forEach(function(item,ii){oldTextMap[si+'-'+ii]=item;});});
 
-  var cl=await getChecklist();
+  // Flush current input values into working copy
+  var cl=_clWorkingCopy||JSON.parse(JSON.stringify(oldCl));
   cl.forEach(function(sec,idx){
     var updated=[];
     sec.items.forEach(function(item,j){
       var inp=document.getElementById('cli-'+idx+'-'+j);
       if(inp){var v=inp.value.trim();if(v)updated.push(v);}
+      else if(item.trim())updated.push(item.trim());
     });
     sec.items=updated;
   });
+  _clWorkingCopy=null; // clear draft before writing to IDB
   await setSetting('checklist',cl);
 
-  // Build new text map: "secIdx-itemIdx" -> new text (after save)
-  var newTextMap={};
-  cl.forEach(function(sec,si){sec.items.forEach(function(item,ii){newTextMap[si+'-'+ii]=item;});});
+  // Build set of all text keys in new config (for existence check)
+  var newTextSet={};
+  cl.forEach(function(sec){sec.items.forEach(function(item){newTextSet[item]=true;});});
 
-  // Sync all trades: rename keys where text changed, remove keys that no longer exist
+  // Build rename map: oldText -> newText for items whose text changed at the same position
+  // (pure renames — same slot, different text). Moves are detected by oldText still existing
+  // in the new config under a different position, so they need no remapping at all.
+  var renameMap={};
+  Object.keys(oldTextMap).forEach(function(pos){
+    var oldText=oldTextMap[pos];
+    if(newTextSet[oldText])return; // text still exists somewhere — not a rename, skip
+    // oldText gone from new config entirely — check if same position has new text (rename)
+    var parts=pos.split('-');
+    var si=parseInt(parts[0]),ii=parseInt(parts[1]);
+    var newAtPos=cl[si]&&cl[si].items[ii]!==undefined?cl[si].items[ii]:null;
+    if(newAtPos&&newAtPos!==oldText){
+      renameMap[oldText]=newAtPos; // renamed at this position
+    }
+  });
+
+  // Sync all trades:
+  // - keys whose text still exists in new config: keep as-is (covers moves, unchanged items)
+  // - keys whose text was renamed (same position, text changed): remap to new text
+  // - keys whose text is gone entirely and not a rename: drop
   var trades=await dbGetAll('trades');
   var synced=0;
   for(var t of trades){
     if(!t.checklist)continue;
     var newState={};
-    // Iterate by position: for each slot in old config, find the trade's stored value (by old text)
-    // and write it under the new text key (handles renames, deletions, reorders)
-    Object.keys(oldTextMap).forEach(function(pos){
-      var oldText=oldTextMap[pos];
-      var newText=newTextMap[pos]; // same position in new config
-      if(!newText)return; // item deleted at this position — drop it
-      if(oldText in t.checklist){newState[newText]=t.checklist[oldText];} // remap (rename or unchanged)
+    Object.keys(t.checklist).forEach(function(text){
+      if(newTextSet[text]){
+        newState[text]=t.checklist[text]; // still exists (including moved items)
+      } else if(renameMap[text]){
+        newState[renameMap[text]]=t.checklist[text]; // renamed: carry value under new text
+      }
+      // else: deleted — drop it
     });
     var changed=JSON.stringify(newState)!==JSON.stringify(t.checklist);
     if(changed){t.checklist=newState;await dbPut('trades',t);synced++;}
   }
 
   renderChecklist();
+  clDiscardWorkingCopy(); // clear draft, hide banner
   var msg='Checklist saved';
   if(synced)msg+=' — synced '+synced+' trade'+(synced>1?'s':'');
   toast(msg,'ok');
   ghAutoSyncConfig();
 }
 async function addClItem(secIdx){
-  var cl=await getChecklist();
-  cl[secIdx].items.push('New item');
-  await setSetting('checklist',cl);renderChecklistEditor();ghAutoSyncConfig();
+  if(!_clWorkingCopy){_clWorkingCopy=JSON.parse(JSON.stringify(await getChecklist()));}
+  _clWorkingCopy[secIdx].items.push('New item');
+  renderChecklistEditor();
 }
 async function removeClItem(secIdx,itemIdx){
-  var cl=await getChecklist();
-  var removedText=cl[secIdx].items[itemIdx];
-  cl[secIdx].items.splice(itemIdx,1);
-  await setSetting('checklist',cl);
-
-  // Remove this item's key from all trades (find by text match against old config)
-  // After splice the indices shifted, so we work from the removed text directly.
-  // We need to find the old key for this text — before splice it was secIdx+'-'+itemIdx
-  var oldKey=secIdx+'-'+itemIdx;
-  var trades=await dbGetAll('trades');
-  var synced=0;
-  for(var t of trades){
-    if(!t.checklist||!(oldKey in t.checklist))continue;
-    delete t.checklist[oldKey];
-    // Also remap all keys in this section that had index > itemIdx (they shifted down by 1)
-    var reindexed={};
-    Object.keys(t.checklist).forEach(function(k){
-      var parts=k.split('-');
-      var si=parseInt(parts[0]),ii=parseInt(parts[1]);
-      if(si===secIdx&&ii>itemIdx){reindexed[si+'-'+(ii-1)]=t.checklist[k];}
-      else{reindexed[k]=t.checklist[k];}
-    });
-    t.checklist=reindexed;
-    await dbPut('trades',t);synced++;
-  }
-
+  if(!_clWorkingCopy){_clWorkingCopy=JSON.parse(JSON.stringify(await getChecklist()));}
+  _clWorkingCopy[secIdx].items.splice(itemIdx,1);
   renderChecklistEditor();
-  if(synced)toast('Item removed — updated '+synced+' trade'+(synced>1?'s':''),'ok');
-  ghAutoSyncConfig();
 }
 
 // Render checklist in log-trade tab
@@ -5346,6 +5529,7 @@ function nav(id,btn){
     var calcBanner=document.getElementById('calc-flow-banner');
     if(calcBanner)calcBanner.style.display='none';
   }
+  if(_currentPage==='checklist-editor'&&id!=='checklist-editor'){clDiscardWorkingCopy();}
   _currentPage=id;
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active')});
@@ -5366,7 +5550,7 @@ function nav(id,btn){
   }
   if(id==='history'){populateSessionSelects().then(function(){populateFilters();renderHistory();});}
   if(id==='sessions')renderSessionsList();
-  if(id==='checklist-editor')renderChecklistEditor();
+  if(id==='checklist-editor'){renderChecklistEditor();}
   if(id==='pre-checklist'){preClRender();}
   if(id==='montecarlo'){resetMonteCarloResults();initMonteCarlo();}
   if(id==='calculator'){if(!_flowActive){calcReset();}calcSyncAssets();}
