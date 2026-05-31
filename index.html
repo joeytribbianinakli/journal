@@ -1066,7 +1066,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Trade type</div>
-              <select id="cal-skipped-filter" onchange="renderCalendar()">
+              <select id="cal-skipped-filter" onchange="calJumpToMostRecent().then(function(){renderCalendar();})">
                 <option value="taken">Taken trades</option>
                 <option value="skipped">Skipped trades</option>
               </select>
@@ -7299,7 +7299,7 @@ function toggleCalDemoMode(){
   _syncDemoButtons(_dashDemoMode);
   var calF=document.getElementById('cal-session-filter');
   if(calF)calF.value='';
-  populateSessionSelects().then(function(){renderCalendar();});
+  populateSessionSelects().then(function(){calPopulateSessionFilter().then(function(){calJumpToMostRecent().then(function(){renderCalendar();});});});
 }
 
 function toggleHistDemoMode(){
@@ -10011,11 +10011,14 @@ async function calJumpToMostRecent(){
   var demoIds=new Set(allSess.filter(function(s){return !!s.isDemo;}).map(function(s){return s.id;}));
   var demoOn=!!_dashDemoMode;
   var sesF=(document.getElementById('cal-session-filter')||{}).value||'';
+  var calSkipF=(document.getElementById('cal-skipped-filter')||{}).value||'taken';
   var filtered=allTrades.filter(function(t){
     if(archivedIds.has(t.sessionId))return false;
     if(demoOn&&!demoIds.has(t.sessionId))return false;
     if(!demoOn&&demoIds.has(t.sessionId))return false;
     if(sesF&&t.sessionId!==sesF)return false;
+    if(calSkipF==='taken'&&t.skipped)return false;
+    if(calSkipF==='skipped'&&!t.skipped)return false;
     return !!t.entryTime;
   });
   if(!filtered.length)return;
