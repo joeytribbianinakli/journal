@@ -658,6 +658,14 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .pair-chip-del{width:13px;height:13px;border-radius:50%;background:rgba(232,85,85,.15);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0;transition:opacity .12s;padding:0;font-family:inherit}
 .pair-chip-del svg{width:7px;height:7px;stroke:var(--red);stroke-width:2.5;fill:none;stroke-linecap:round}
 .pair-chips-empty{font-size:11px;color:var(--text3);font-style:italic;padding:8px 0}
+/* ── Partial TPs ── */
+.partial-tp-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px}
+.partial-tp-row input{flex:1;min-width:0}
+.partial-tp-row .partial-tp-label{font-size:10px;font-weight:700;color:var(--text3);white-space:nowrap;min-width:18px;text-align:center;font-family:'DM Mono',monospace}
+.partial-tp-add-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:var(--radius);font-size:11px;font-weight:600;cursor:pointer;border:1px dashed var(--border2);background:transparent;color:var(--text3);transition:all .12s;font-family:inherit}
+.partial-tp-add-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(77,127,255,.06)}
+.partial-tp-section{margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.partial-tp-desc-row{margin-top:8px}
 /* ── Global placeholder color ── */
 ::placeholder{color:var(--text3);opacity:1}
 /* ── color-scheme so native date pickers match the active theme ── */
@@ -1420,6 +1428,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                   <span class="opt-pill opt-green" data-val="TP" onclick="pickOpt(this,'tp-exit-a-val')">TP</span>
                   <span class="opt-pill opt-red" data-val="SL" onclick="pickOpt(this,'tp-exit-a-val')">SL</span>
                   <span class="opt-pill opt-amber" data-val="TSL" onclick="pickOpt(this,'tp-exit-a-val')">TSL</span>
+                  <span class="opt-pill opt-blue" data-val="Partial" onclick="pickOpt(this,'tp-exit-a-val')">Partial</span>
                   <span class="opt-pill opt-gray" data-val="Manual" onclick="pickOpt(this,'tp-exit-a-val')">Manual</span>
                 </div>
                 <input type="hidden" id="tp-exit-a-val" value="">
@@ -1427,7 +1436,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               <div class="frow">
                 <label class="flabel">SL placement <span style="color:var(--red);margin-left:2px">*</span></label>
                 <div class="opt-group" id="opt-slplace">
-                  <span class="opt-pill opt-blue" data-val="Confirmation" onclick="pickOpt(this,'tp-slplace-val')">Confirmation</span>
+                  <span class="opt-pill opt-amber" data-val="Confirmation" onclick="pickOpt(this,'tp-slplace-val')">Confirmation</span>
                   <span class="opt-pill opt-purple" data-val="Zone" onclick="pickOpt(this,'tp-slplace-val')">Zone</span>
                   <span class="opt-pill opt-amber" data-val="Candle H/L" onclick="pickOpt(this,'tp-slplace-val')">Candle H/L</span>
                 </div>
@@ -1456,8 +1465,27 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="frow-inline">
             <div class="frow"><label class="flabel">Entry price <span style="color:var(--red);margin-left:2px">*</span></label><input type="number" id="f-entry" step="any" placeholder="e.g. 1.07477" oninput="recalc()"></div>
             <div class="frow"><label class="flabel">Stop Loss <span style="color:var(--red);margin-left:2px">*</span></label><input type="number" id="f-sl-price" step="any" placeholder="e.g. 1.07200" oninput="recalc()"></div>
-            <div class="frow"><label class="flabel">Exit price <span style="color:var(--red);margin-left:2px">*</span></label><input type="number" id="f-exit" step="any" placeholder="e.g. 1.07714" oninput="recalc()"></div>
-            <div class="frow"><label class="flabel">Quantity (units / lots) <span style="color:var(--red);margin-left:2px">*</span></label><input type="number" id="f-qty" step="any" placeholder="e.g. 4653" oninput="recalc()"></div>
+            <div class="frow"><label class="flabel" id="exit-price-label">Exit price <span style="color:var(--red);margin-left:2px">*</span> <span id="exit-price-hint" style="display:none;font-size:9px;color:var(--accent);font-weight:500">(remainder / last TP)</span></label><input type="number" id="f-exit" step="any" placeholder="e.g. 1.07714" oninput="recalc()"></div>
+            <div class="frow">
+              <label class="flabel">Total Quantity (units) <span style="color:var(--red);margin-left:2px">*</span></label>
+              <input type="number" id="f-qty" step="any" placeholder="e.g. 100000" oninput="recalc();_validatePartialQty()">
+              <div id="qty-partial-validation" style="display:none;font-size:10px;margin-top:4px;font-weight:600"></div>
+            </div>
+          </div>
+          <!-- Partial TPs -->
+          <div class="partial-tp-section">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase">Partial TPs <span style="font-size:9px;font-weight:500;color:var(--text3);text-transform:none;letter-spacing:0">(optional)</span></div>
+              <button class="partial-tp-add-btn" onclick="addPartialTP()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add partial
+              </button>
+            </div>
+            <div id="partial-tp-list"></div>
+            <div class="partial-tp-desc-row" id="partial-tp-desc-row" style="display:none">
+              <label class="flabel" style="margin-bottom:4px">How were partials taken?</label>
+              <textarea id="partial-tp-desc" rows="2" placeholder="e.g. Took 50% at 1R (key resistance), remaining 50% at TP1 zone..."></textarea>
+            </div>
           </div>
           <!-- Row 3: Entry time | Exit time | Win/Loss (auto) -->
           <div class="frow-inline">
@@ -1517,7 +1545,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               </div>
               <!-- P/L section -->
               <div class="computed-section" style="margin-top:10px">
-                <div class="computed-section-label">P / L</div>
+                <div class="computed-section-label">P / L <span id="c-partial-note" style="font-size:9px;font-weight:600;color:var(--accent);display:none"> · partials</span></div>
                 <div class="computed-section-items">
                   <div class="computed-item"><div class="ci-label">P/L ($)</div><div class="ci-val" id="c-pl">—</div></div>
                   <div class="computed-item"><div class="ci-label">P/L (%)</div><div class="ci-val" id="c-plpct">—</div></div>
@@ -5524,6 +5552,177 @@ function setDT(dateId,timeId,iso){
 }
 
 // ══ Recalc (corrected) ════════════════════════════
+// ══ Partial TPs ═══════════════════════════════════════
+var _partialTPs = []; // [{price, qty, id}]
+
+function addPartialTP(data){
+  var id='ptp-'+(Date.now().toString(36)+Math.random().toString(36).slice(2,5));
+  _partialTPs.push({id:id, price:data?data.price:'', qty:data?data.qty:''});
+  renderPartialTPs();
+}
+function removePartialTP(id){
+  _partialTPs=_partialTPs.filter(function(p){return p.id!==id;});
+  renderPartialTPs(); // calls recalc internally when list becomes empty; _validatePartialQty otherwise
+  if(_partialTPs.length>0)recalc(); // still needed for non-empty case (renderPartialTPs only calls recalc on empty)
+}
+function renderPartialTPs(){
+  var list=document.getElementById('partial-tp-list');
+  var descRow=document.getElementById('partial-tp-desc-row');
+  var exitEl=document.getElementById('f-exit');
+  var exitLabel=document.getElementById('exit-price-label');
+  if(!list)return;
+
+  if(_partialTPs.length===0){
+    list.innerHTML='';
+    if(descRow)descRow.style.display='none';
+    // Re-enable exit price field and restore any value saved when partial mode was activated
+    if(exitEl){
+      if(exitEl._partialModeActive){
+        exitEl.value=exitEl._savedExitVal||'';
+        exitEl._savedExitVal='';
+        exitEl._partialModeActive=false;
+      }
+      exitEl.disabled=false;exitEl.style.opacity='';exitEl.style.cursor='';
+    }
+    if(exitLabel){
+      exitLabel.innerHTML='Exit price <span style="color:var(--red);margin-left:2px">*</span>'
+        +' <span id="exit-price-hint" style="display:none;font-size:9px;color:var(--accent);font-weight:500">(remainder / last TP)</span>';
+    }
+    var qv=document.getElementById('qty-partial-validation');if(qv)qv.style.display='none';
+    recalc();
+    return;
+  }
+
+  if(descRow)descRow.style.display='';
+  // Disable exit price — all exits entered via partial rows; last partial row = final exit
+  if(exitEl){
+    exitEl.disabled=true;
+    exitEl.style.opacity='0.45';
+    exitEl.style.cursor='not-allowed';
+    // Clear the stale exit value so no misleading number shows in the disabled field
+    if(!exitEl._partialModeActive){exitEl._savedExitVal=exitEl.value;exitEl.value='';exitEl._partialModeActive=true;}
+  }
+  if(exitLabel){
+    exitLabel.innerHTML='Exit price'
+      +' <span style="font-size:9px;color:var(--amber);font-weight:600;margin-left:4px">↳ set by last partial TP</span>'
+      +' <span id="exit-price-hint" style="display:none"></span>';
+  }
+
+  var html='';
+  _partialTPs.forEach(function(p,i){
+    var isLast=i===_partialTPs.length-1;
+    html+='<div class="partial-tp-row" id="row-'+p.id+'">'
+      +'<span class="partial-tp-label">#'+(i+1)+'</span>'
+      +'<input type="number" step="any" placeholder="TP price" value="'+escHtml(String(p.price||''))+'" oninput="_ptpSync(\''+p.id+'\',\'price\',this.value);recalc()" style="max-width:130px">'
+      +'<input type="number" step="any" placeholder="Qty (units)" value="'+escHtml(String(p.qty||''))+'" oninput="_ptpSync(\''+p.id+'\',\'qty\',this.value);recalc();_validatePartialQty()" style="max-width:120px">'
+      +(isLast?'<span style="font-size:9px;font-weight:700;color:var(--amber);white-space:nowrap;flex-shrink:0">← last TP</span>':'<span style="min-width:52px"></span>')
+      +'<button class="btn btn-ghost btn-sm btn-icon" onclick="removePartialTP(\''+p.id+'\')" title="Remove partial" style="color:var(--red);flex-shrink:0">'
+        +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+      +'</button>'
+    +'</div>';
+  });
+  list.innerHTML=html;
+  _validatePartialQty();
+}
+function _ptpSync(id,field,val){
+  var p=_partialTPs.find(function(x){return x.id===id;});
+  if(p)p[field]=val;
+}
+function _validatePartialQty(){
+  var qvEl=document.getElementById('qty-partial-validation');
+  if(!qvEl)return;
+  if(_partialTPs.length===0){qvEl.style.display='none';return;}
+  var totalQty=parseFloat(document.getElementById('f-qty').value)||0;
+  var sumPartials=_partialTPs.reduce(function(s,p){return s+(parseFloat(p.qty)||0);},0);
+  // Only show validation when there is something to compare
+  if(!totalQty&&!sumPartials){qvEl.style.display='none';return;}
+  qvEl.style.display='';
+  var diff=Math.abs(totalQty-sumPartials);
+  var match=diff<0.000001;
+  if(match){
+    qvEl.style.color='var(--green)';
+    qvEl.textContent='✓ Partial qty sum matches total ('+sumPartials.toLocaleString(undefined,{maximumFractionDigits:4})+' units)';
+  } else if(sumPartials<totalQty){
+    qvEl.style.color='var(--amber)';
+    qvEl.textContent='⚠ Partial sum '+sumPartials.toLocaleString(undefined,{maximumFractionDigits:4})+' — still '+parseFloat((totalQty-sumPartials).toFixed(4)).toLocaleString(undefined,{maximumFractionDigits:4})+' units unallocated';
+  } else {
+    qvEl.style.color='var(--red)';
+    qvEl.textContent='✕ Partial sum '+sumPartials.toLocaleString(undefined,{maximumFractionDigits:4})+' exceeds total qty by '+parseFloat((sumPartials-totalQty).toFixed(4)).toLocaleString(undefined,{maximumFractionDigits:4});
+  }
+}
+function clearPartialTPs(){
+  _partialTPs=[];
+  renderPartialTPs(); // handles value restore, re-enable, and label reset
+  var descEl=document.getElementById('partial-tp-desc');if(descEl)descEl.value='';
+  var qvEl=document.getElementById('qty-partial-validation');if(qvEl)qvEl.style.display='none';
+}
+
+// Compute blended P/L when partials exist.
+// Returns {pl, plPct, arr, winLoss, effectiveExitPrice} or null if insufficient data.
+function computePartialPL(entry, sl, qty, type, acct, riskDollar){
+  if(!entry||!qty||!acct)return null;
+  // Filter valid partials
+  var partials=_partialTPs.filter(function(p){return parseFloat(p.price)>0&&parseFloat(p.qty)>0;});
+  if(!partials.length)return null;
+
+  // Total partial qty
+  var totalPartialQty=partials.reduce(function(s,p){return s+parseFloat(p.qty);},0);
+  var remainderQty=qty-totalPartialQty;
+  if(remainderQty<-0.000001)remainderQty=0; // clamp floating point
+
+  // Get final exit price for the remainder
+  var finalExitEl=document.getElementById('f-exit');
+  var finalExit=finalExitEl?parseFloat(finalExitEl.value)||0:0;
+
+  // Compute total PL
+  var totalPL=0;
+  partials.forEach(function(p){
+    var pPrice=parseFloat(p.price);
+    var pQty=parseFloat(p.qty);
+    var diff=type==='Long'?(pPrice-entry):(entry-pPrice);
+    totalPL+=diff*pQty;
+  });
+  // Add remainder if final exit is set
+  if(remainderQty>0.000001&&finalExit){
+    var remDiff=type==='Long'?(finalExit-entry):(entry-finalExit);
+    totalPL+=remDiff*remainderQty;
+  }
+
+  var plPct=(totalPL/acct)*100;
+  var slDist=sl&&sl!==entry?Math.abs(entry-sl):0;
+  var arr=null;
+  if(slDist>0){
+    // RR = weighted average by qty
+    var rrSum=0;
+    var rrQty=0;
+    partials.forEach(function(p){
+      var pPrice=parseFloat(p.price);
+      var pQty=parseFloat(p.qty);
+      var dist=Math.abs(pPrice-entry);
+      var sign=type==='Long'?(pPrice-entry):(entry-pPrice);
+      rrSum+=(sign>=0?1:-1)*(dist/slDist)*pQty;
+      rrQty+=pQty;
+    });
+    if(remainderQty>0.000001&&finalExit){
+      var remDist=Math.abs(finalExit-entry);
+      var remSign=type==='Long'?(finalExit-entry):(entry-finalExit);
+      rrSum+=(remSign>=0?1:-1)*(remDist/slDist)*remainderQty;
+      rrQty+=remainderQty;
+    }
+    if(rrQty>0)arr=rrSum/rrQty;
+  } else if(riskDollar>0){
+    arr=totalPL/riskDollar;
+  }
+
+  // Effective exit price (weighted average)
+  var wSum=0;var wQty=0;
+  partials.forEach(function(p){wSum+=parseFloat(p.price)*parseFloat(p.qty);wQty+=parseFloat(p.qty);});
+  if(remainderQty>0.000001&&finalExit){wSum+=finalExit*remainderQty;wQty+=remainderQty;}
+  var effectiveExit=wQty>0?wSum/wQty:0;
+
+  return{pl:totalPL,plPct:plPct,arr:arr,winLoss:totalPL>0?1:(totalPL<0?0:0.5),effectiveExit:effectiveExit};
+}
+
 function recalc(){
   var entry=parseFloat(document.getElementById('f-entry').value)||0;
   var slPrice=parseFloat(document.getElementById('f-sl-price').value)||0;
@@ -5559,32 +5758,46 @@ function recalc(){
     set('c-posval','$'+posVal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}));
   } else set('c-posval','—');
 
-  // Actual RR — use SL if available, else fallback to risk$
+  // Check if partials override the calculation
+  var partialResult=entry&&qty?computePartialPL(entry,slPrice,qty,type,acct,riskDollar):null;
+  var pNote=document.getElementById('c-partial-note');
+  if(pNote)pNote.style.display=partialResult?'':'none';
+
+  // Actual RR — use partials if available, else standard
   var arr=null;
-  if(entry&&exit&&qty){
+  if(partialResult){
+    arr=partialResult.arr;
+  } else if(entry&&exit&&qty){
     var exitDiff=type==='Long'?exit-entry:entry-exit;
     var pl=exitDiff*qty;
     if(entry&&slPrice&&slDist>0){
-      // Proper RR: (exit distance) / (SL distance)
       var exitDist=Math.abs(exit-entry);
       arr=(exitDiff>=0?1:-1)*(exitDist/slDist);
     } else if(riskDollar>0){
-      // Fallback: P/L / risk$
       arr=pl/riskDollar;
     }
-    if(arr!=null){
-      var arrCls=arr>=0?'pos':'neg';
-      set('c-arr',arr.toFixed(2)+'R',arrCls);
-      var ad=document.getElementById('tp-arr-display');if(ad)ad.value=arr.toFixed(2)+'R';
-    }
   }
-  if(arr==null){
+  if(arr!=null){
+    var arrCls=arr>=0?'pos':'neg';
+    set('c-arr',arr.toFixed(2)+'R',arrCls);
+    var ad=document.getElementById('tp-arr-display');if(ad)ad.value=arr.toFixed(2)+'R';
+  } else {
     set('c-arr','—');
     var ad=document.getElementById('tp-arr-display');if(ad)ad.value='';
   }
 
   // P/L + Auto Win/Loss
-  if(entry&&exit){
+  if(partialResult){
+    var pl2=partialResult.pl;var plPct=partialResult.plPct;
+    var isWin=pl2>0;
+    var winLossDisplay=isWin?'Win':(pl2<0?'Loss':'Break-even');
+    var cls2=pl2>=0?'pos':'neg';
+    var wld=document.getElementById('f-winloss-display');if(wld){wld.value=winLossDisplay+' (partial)';wld.style.color=isWin?'var(--green)':(pl2<0?'var(--red)':'var(--amber)');}
+    var wlh=document.getElementById('f-winloss');if(wlh)wlh.value=isWin?'1':(pl2<0?'0':'0.5');
+    set('c-pl',(pl2>=0?'+':'')+pl2.toFixed(2),cls2);
+    set('c-plpct',(plPct>=0?'+':'')+plPct.toFixed(2)+'%',cls2);
+    set('c-status',winLossDisplay,cls2);
+  } else if(entry&&exit){
     var diff=type==='Long'?exit-entry:entry-exit;
     var isWin=diff>0;
     var winLossDisplay=isWin?'Win':(diff<0?'Loss':'Break-even');
@@ -5768,9 +5981,23 @@ async function saveTrade(){
   var slVal=document.getElementById('f-sl-price').value;
   if(!slVal){toast('Stop loss price is required','err');switchTab(0,null);return;}
   var exitVal=document.getElementById('f-exit').value;
-  if(!exitVal){toast('Exit price is required','err');switchTab(0,null);return;}
+  // When partials are active, exit price is derived from the last partial — don't require the field
+  var hasPartialInputs=_partialTPs.filter(function(p){return parseFloat(p.price)>0&&parseFloat(p.qty)>0;}).length>0;
+  if(!hasPartialInputs&&!exitVal){toast('Exit price is required','err');switchTab(0,null);return;}
   var qtyVal=document.getElementById('f-qty').value;
   if(!qtyVal){toast('Quantity is required','err');switchTab(0,null);return;}
+  // Validate partial qty sums match total qty
+  if(hasPartialInputs){
+    var _totalQtyForVal=parseFloat(qtyVal)||0;
+    var _sumPartials=_partialTPs.filter(function(p){return parseFloat(p.price)>0&&parseFloat(p.qty)>0;}).reduce(function(s,p){return s+(parseFloat(p.qty)||0);},0);
+    if(Math.abs(_totalQtyForVal-_sumPartials)>0.000001){
+      if(_sumPartials<_totalQtyForVal){toast('Partial qty sum ('+_sumPartials.toLocaleString(undefined,{maximumFractionDigits:4})+') is less than total qty — allocate all units across partials','err');switchTab(0,null);return;}
+      else{toast('Partial qty sum ('+_sumPartials.toLocaleString(undefined,{maximumFractionDigits:4})+') exceeds total qty ('+_totalQtyForVal.toLocaleString(undefined,{maximumFractionDigits:4})+')','err');switchTab(0,null);return;}
+    }
+    // Also require at least one partial to have a price
+    var lastPartial=_partialTPs.filter(function(p){return parseFloat(p.price)>0&&parseFloat(p.qty)>0;}).slice(-1)[0];
+    if(!lastPartial){toast('Enter at least one partial TP with a price and quantity','err');switchTab(0,null);return;}
+  }
   var etimeDate=document.getElementById('f-etime-date').value;
   if(!etimeDate){toast('Entry date is required','err');switchTab(0,null);return;}
   var xtimeDate=document.getElementById('f-xtime-date').value;
@@ -5835,27 +6062,41 @@ async function saveTrade(){
   var riskDollar=acct*(riskpct/100);
   var calcQty=qty;
   var actualQty=qty||calcQty;
-  var diff=entry&&exit?(type==='Long'?exit-entry:entry-exit):0;
-  var pl=actualQty?diff*actualQty:0;
-  var plPct=acct?(pl/acct)*100:0;
-  // RR: prefer SL-based calculation, fallback to risk$ based
-  var arr=null;
-  if(entry&&exit&&actualQty&&diff!==0){
-    if(sl&&sl!==entry){
-      var slDist=Math.abs(entry-sl);
-      var exitDist=Math.abs(exit-entry);
-      arr=(diff>=0?1:-1)*(exitDist/slDist);
-    } else if(riskDollar>0){
-      arr=diff*actualQty/riskDollar;
+
+  // Build partials list from _partialTPs
+  var partialTPsSaved=_partialTPs
+    .filter(function(p){return parseFloat(p.price)>0&&parseFloat(p.qty)>0;})
+    .map(function(p){return{price:parseFloat(p.price),qty:parseFloat(p.qty)};});
+  var partialDesc=(document.getElementById('partial-tp-desc')||{}).value||'';
+
+  // Compute P/L: use partial-aware if partials exist, else standard
+  var pl, plPct, arr, winLoss;
+  var partialResult=partialTPsSaved.length>0?computePartialPL(entry,sl,actualQty,type,acct,riskDollar):null;
+  if(partialResult){
+    pl=partialResult.pl;
+    plPct=partialResult.plPct;
+    arr=partialResult.arr;
+    winLoss=partialResult.winLoss;
+    // When partials cover full qty, use weighted-average as stored exitPrice
+    if(partialResult.effectiveExit>0)exit=parseFloat(partialResult.effectiveExit.toFixed(5));
+  } else {
+    var diff=entry&&exit?(type==='Long'?exit-entry:entry-exit):0;
+    pl=actualQty?diff*actualQty:0;
+    plPct=acct?(pl/acct)*100:0;
+    arr=null;
+    if(entry&&exit&&actualQty&&diff!==0){
+      if(sl&&sl!==entry){
+        var slDist=Math.abs(entry-sl);
+        var exitDist=Math.abs(exit-entry);
+        arr=(diff>=0?1:-1)*(exitDist/slDist);
+      } else if(riskDollar>0){
+        arr=diff*actualQty/riskDollar;
+      }
     }
+    var wlVal=document.getElementById('f-winloss').value;
+    winLoss=wlVal!==''?parseFloat(wlVal):(pl>=0?1:0);
   }
   var durMs=edt&&xdt?new Date(xdt)-new Date(edt):0;
-
-  // Win/loss override
-  var wlVal=document.getElementById('f-winloss').value;
-  var winLoss=wlVal!==''?parseFloat(wlVal):(pl>=0?1:0);
-
-  // Images
   var _emptyIds={'htf-W':[],'htf-D':[],'htf-4h':[],'mtf-1h':[],'mtf-30m':[],'ltf-15m':[],'ltf-5m':[],'setup':[],'postanalysis':[]};
   var imageIds=JSON.parse(JSON.stringify(_emptyIds));
   var oldSessionId=null; // track original session when editing, to rebalance it if the trade is moved
@@ -5914,6 +6155,8 @@ async function saveTrade(){
     imageIds,savedAt:new Date().toISOString(),
     skipped:document.getElementById('f-skipped')?document.getElementById('f-skipped').checked:false,
     whySkipped:document.getElementById('why-skipped-notes')?document.getElementById('why-skipped-notes').value:'',
+    partialTPs:partialTPsSaved,
+    partialDesc:partialDesc,
     htfTf:tfState.htf,mtfTf:tfState.mtf,ltfTf:tfState.ltf,
     loggedAt:editingId?(_oldLoggedAt||new Date().toISOString()):new Date().toISOString()
   };
@@ -5981,6 +6224,7 @@ async function clearForm(skipCancelEdit){
   document.querySelectorAll('[data-custom-zone]').forEach(function(el){el.remove();});
   SS_ZONES=['htf-W','htf-D','htf-4h','mtf-1h','mtf-30m','ltf-15m','ltf-5m','setup','postanalysis'];
   pendingImages={'htf-W':[],'htf-D':[],'htf-4h':[],'mtf-1h':[],'mtf-30m':[],'ltf-15m':[],'ltf-5m':[],'setup':[],'postanalysis':[]};
+  clearPartialTPs();
   SS_ZONES.forEach(function(z){var g=document.getElementById('imgs-'+z);if(g)g.innerHTML='';});
   activePasteZone=null;
   // Reset skipped trade
@@ -6077,6 +6321,13 @@ async function editTrade(id){
   // Restore TF pills (legacy — no-op if elements absent)
   resetTfPills();
   if(trade.imageIds)SS_ZONES.forEach(function(z){renderStoredImages(trade.imageIds[z]||[],z);});
+  // Restore partial TPs
+  clearPartialTPs();
+  if(trade.partialTPs&&trade.partialTPs.length){
+    trade.partialTPs.forEach(function(p){addPartialTP(p);});
+    var pdesc=document.getElementById('partial-tp-desc');
+    if(pdesc)pdesc.value=trade.partialDesc||'';
+  }
   recalc();
   var eb=document.getElementById('edit-banner');eb.classList.add('visible');
   document.getElementById('edit-banner-text').textContent='Editing: #'+trade.num+' — '+trade.pair;
@@ -6163,7 +6414,7 @@ var ALL_HISTORY_COLS=[
   {key:'assetType', label:'Asset',     sortVal:function(t){return t.assetType||'';},              render:function(t){return'<td style="color:var(--text2)">'+escHtml(t.assetType||'—')+'</td>';}},
   {key:'type',      label:'Direction', sortVal:function(t){return t.type||'';},                   render:function(t){var typ=t.type||'';return'<td>'+(typ?'<span class="badge '+(typ==='Long'?'badge-green':'badge-red')+'">'+typ+'</span>':'—')+'</td>';}},
   {key:'result',    label:'Result',    sortVal:function(t){return t.winLoss||0;},                 render:function(t){var win=t.winLoss===1;return'<td><span class="badge '+(win?'badge-green':'badge-red')+'">'+(win?'Win':'Loss')+'</span></td>';}},
-  {key:'plDollar',  label:'P/L ($)',   sortVal:function(t){return parseFloat(t.plDollar)||0;},    render:function(t){var pl=parseFloat(t.plDollar)||0;return'<td class="mono" style="color:'+(pl>=0?'var(--green)':'var(--red)')+'">'+((pl>=0?'+':'')+pl.toFixed(2))+'</td>';}},
+  {key:'plDollar',  label:'P/L ($)',   sortVal:function(t){return parseFloat(t.plDollar)||0;},    render:function(t){var pl=parseFloat(t.plDollar)||0;var ptag=(t.partialTPs&&t.partialTPs.length)?'<span style="font-size:8px;font-weight:700;vertical-align:middle;background:rgba(77,127,255,.12);color:var(--accent);border-radius:3px;padding:1px 4px;margin-left:4px">P</span>':'';return'<td class="mono" style="color:'+(pl>=0?'var(--green)':'var(--red)')+'">'+((pl>=0?'+':'')+pl.toFixed(2))+ptag+'</td>';}},
   {key:'plPct',     label:'P/L (%)',   sortVal:function(t){return parseFloat(t.plPct)||0;},       render:function(t){var p=parseFloat(t.plPct)||0;return'<td class="mono" style="color:'+(p>=0?'var(--green)':'var(--red)')+'">'+((p>=0?'+':'')+p.toFixed(2))+'%</td>';}},
   {key:'actualRR',  label:'RR',        sortVal:function(t){return t.actualRR!=null?parseFloat(t.actualRR):-999;},render:function(t){return'<td class="mono">'+(t.actualRR!=null?parseFloat(t.actualRR).toFixed(2)+'R':'—')+'</td>';}},
   {key:'entryTime', label:'Date',      sortVal:function(t){return t.entryTime||t.savedAt||'';},   render:function(t){if(!t.entryTime)return'<td style="color:var(--text3);font-size:12px">—</td>';var timeStr=t.entryTime.length>10?' <span style="color:var(--text3);font-size:10px">'+to12h(t.entryTime.slice(11,16))+'</span>':'';return'<td style="color:var(--text3);font-size:12px;white-space:nowrap">'+t.entryTime.slice(0,10)+timeStr+'</td>';}},
@@ -6288,16 +6539,59 @@ function enrichSkippedPL(trades){
     var sl=parseFloat(t.stopLoss)||0;
     var qty=parseFloat(t.qty)||0;
     var acct=parseFloat(t.acct)||0;
-    if(!entry||!exit||!qty)return t; // not enough data — leave as-is
+    if(!entry||!qty)return t; // not enough data — leave as-is
     var isLong=(t.type||'').toLowerCase()==='long';
-    var priceDiff=isLong?(exit-entry):(entry-exit);
-    var plDollar=parseFloat((priceDiff*qty).toFixed(2));
-    var plPct=acct?parseFloat(((plDollar/acct)*100).toFixed(4)):0;
+    var riskDollar=acct&&t.riskpct?acct*(parseFloat(t.riskpct)/100):0;
     var slDist=entry&&sl?Math.abs(entry-sl):0;
-    var actualRR=(slDist&&plDollar!=null&&plDollar!==0)
-      ?parseFloat((priceDiff/slDist).toFixed(3))
-      :null;
-    var winLoss=plDollar>0?1:(plDollar<0?0:0.5);
+    // Use partial TPs if present (same logic as computePartialPL but self-contained)
+    var partials=(t.partialTPs||[]).filter(function(p){return parseFloat(p.price)>0&&parseFloat(p.qty)>0;});
+    var plDollar, plPct, actualRR, winLoss;
+    if(partials.length){
+      var totalPartialQty=partials.reduce(function(s,p){return s+parseFloat(p.qty);},0);
+      var remainderQty=Math.max(0,qty-totalPartialQty);
+      var totalPL=0;
+      partials.forEach(function(p){
+        var pPrice=parseFloat(p.price);
+        var pQty=parseFloat(p.qty);
+        var diff=isLong?(pPrice-entry):(entry-pPrice);
+        totalPL+=diff*pQty;
+      });
+      if(remainderQty>0.000001&&exit){
+        var remDiff=isLong?(exit-entry):(entry-exit);
+        totalPL+=remDiff*remainderQty;
+      }
+      plDollar=parseFloat(totalPL.toFixed(2));
+      plPct=acct?parseFloat(((plDollar/acct)*100).toFixed(4)):0;
+      winLoss=plDollar>0?1:(plDollar<0?0:0.5);
+      // Weighted-average RR
+      if(slDist>0){
+        var rrSum=0,rrQty=0;
+        partials.forEach(function(p){
+          var pPrice=parseFloat(p.price);
+          var pQty=parseFloat(p.qty);
+          var sign=isLong?(pPrice-entry):(entry-pPrice);
+          rrSum+=(sign>=0?1:-1)*(Math.abs(pPrice-entry)/slDist)*pQty;
+          rrQty+=pQty;
+        });
+        if(remainderQty>0.000001&&exit){
+          var remSign=isLong?(exit-entry):(entry-exit);
+          rrSum+=(remSign>=0?1:-1)*(Math.abs(exit-entry)/slDist)*remainderQty;
+          rrQty+=remainderQty;
+        }
+        actualRR=rrQty>0?parseFloat((rrSum/rrQty).toFixed(3)):null;
+      } else if(riskDollar>0){
+        actualRR=parseFloat((plDollar/riskDollar).toFixed(3));
+      } else {
+        actualRR=null;
+      }
+    } else {
+      if(!exit)return t; // no exit price and no partials — leave as-is
+      var priceDiff=isLong?(exit-entry):(entry-exit);
+      plDollar=parseFloat((priceDiff*qty).toFixed(2));
+      plPct=acct?parseFloat(((plDollar/acct)*100).toFixed(4)):0;
+      actualRR=(slDist&&priceDiff!==0)?parseFloat((priceDiff/slDist).toFixed(3)):null;
+      winLoss=plDollar>0?1:(plDollar<0?0:0.5);
+    }
     return Object.assign({},t,{plDollar:plDollar,plPct:plPct,winLoss:winLoss,actualRR:actualRR});
   });
 }
@@ -6534,7 +6828,7 @@ async function openDetail(id){
     +'<div class="detail-item"><div class="di-label">P/L (%)</div><div class="di-val mono" style="color:'+plColor+'">'+(trade.plPct>=0?'+':'')+trade.plPct.toFixed(2)+'%</div></div>'
     +'<div class="detail-item"><div class="di-label">Actual RR</div><div class="di-val mono">'+(trade.actualRR!=null?trade.actualRR.toFixed(2)+'R':'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Risk</div><div class="di-val mono">$'+trade.riskDollar+' / '+trade.riskpct+'%</div></div>'
-    +'<div class="detail-item"><div class="di-label">Qty / Size</div><div class="di-val mono">'+(trade.qty||'—')+'</div></div>'
+    +'<div class="detail-item"><div class="di-label">Qty (units)</div><div class="di-val mono">'+(trade.qty||'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Acct balance</div><div class="di-val mono">'+(trade.acct?'$'+parseFloat(trade.acct).toLocaleString():'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Duration</div><div class="di-val">'+(function(){if(!trade.durationMin)return'—';var tot=trade.durationMin,d=Math.floor(tot/1440),h=Math.floor((tot%1440)/60),m=tot%60;if(d>0)return'<span style="color:var(--purple);font-weight:700">'+d+'d'+(h>0?' '+h+'h':'')+(m>0?' '+m+'m':'')+'</span>';return(h>0?h+'h ':'')+m+'m';})()+'</div></div>'
     +'<div class="detail-item"><div class="di-label">LTF entry</div><div class="di-val">'+(trade.ltf||'—')+'</div></div>'
@@ -6550,6 +6844,18 @@ async function openDetail(id){
     +'<div class="detail-item"><div class="di-label">SL trailing</div><div class="di-val">'+(trade.tpTrail||'No')+(trade.trailDetail?' ('+trade.trailDetail.trigger+')':'')+'</div></div>'
     +(trade.trailDetail&&trade.trailDetail.notes?'<div class="detail-item" style="grid-column:1/-1"><div class="di-label">SL trail description</div><div class="di-val js-pre">'+escHtml(trade.trailDetail.notes)+'</div></div>':'')
     +'<div class="detail-item"><div class="di-label">TP changed</div><div class="di-val">'+(trade.tpTpChg||'No')+(trade.tpChangeDetail?' → '+trade.tpChangeDetail.dir:'')+'</div></div>'
+    +(trade.partialTPs&&trade.partialTPs.length?
+      '<div class="detail-item" style="grid-column:1/-1"><div class="di-label">Partial TPs ('+trade.partialTPs.length+')</div>'
+      +'<div class="di-val" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:3px">'
+      +trade.partialTPs.map(function(p,i){return'<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;font-family:\'DM Mono\',monospace;background:rgba(77,127,255,.1);border:1px solid rgba(77,127,255,.2);color:var(--accent)">'
+        +'<span style="font-size:9px;font-weight:700;color:var(--accent);opacity:.7">#'+(i+1)+'</span>'
+        +' TP @ '+p.price+' · '+p.qty+' units'
+      +'</span>';}).join('')
+      +'</div></div>'
+    :'')
+    +(trade.partialTPs&&trade.partialTPs.length&&trade.partialDesc?
+      '<div class="detail-item" style="grid-column:1/-1"><div class="di-label">Partial TPs — how taken</div><div class="di-val js-pre">'+escHtml(trade.partialDesc)+'</div></div>'
+    :'')
     +'<div class="detail-item"><div class="di-label">Mistake/error</div><div class="di-val">'+(trade.error||'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Rating</div><div class="di-val">'+(trade.rating?'★ '+trade.rating:'—')+'</div></div>'
     +'</div>'
@@ -10184,6 +10490,7 @@ function calShowDayDetail(key){
       '<span style="font-weight:700;color:var(--text);font-family:\'DM Mono\',monospace">#'+escHtml(t.num||'')+'</span>'+
       '<span style="color:var(--text);font-weight:600">'+escHtml(t.pair||'')+'</span>'+
       '<span style="color:var(--text2);font-size:11px">'+escHtml(t.strategy||'—')+'</span>'+
+      (t.partialTPs&&t.partialTPs.length?'<span style="font-size:9px;font-weight:700;background:rgba(77,127,255,.12);color:var(--accent);border-radius:3px;padding:1px 5px">'+t.partialTPs.length+' partial'+(t.partialTPs.length>1?'s':'')+'</span>':'')+
       '<span class="mono" style="color:'+(pl2>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(pl2)+'</span>'+
       '<span class="mono" style="color:var(--text3);font-size:11px">'+rr+'</span>'+
       '</div>';
