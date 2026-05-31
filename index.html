@@ -871,6 +871,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendar
     </button>
     <div class="nav-section-label">Trades</div>
+    <button class="nav-item" id="nav-pre-checklist" onclick="openPreChecklist()">
+      <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Pre-Trade Check
+    </button>
     <button class="nav-item" onclick="nav('calculator',this)">
       <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>Calculator
     </button>
@@ -1306,8 +1309,101 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       </div>
     </div>
 
+    <!-- PRE-TRADE CHECKLIST -->
+    <div class="page" id="page-pre-checklist">
+      <!-- Progress breadcrumb -->
+      <div id="pre-cl-breadcrumb" style="display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:11px;color:var(--text3)">
+        <span style="display:inline-flex;align-items:center;gap:5px;color:var(--accent);font-weight:700">
+          <span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">1</span>
+          Pre-Trade Checklist
+        </span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        <span style="display:inline-flex;align-items:center;gap:5px;opacity:.45">
+          <span style="width:20px;height:20px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">2</span>
+          Position Calculator
+        </span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        <span style="display:inline-flex;align-items:center;gap:5px;opacity:.45">
+          <span style="width:20px;height:20px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">3</span>
+          Log Trade
+        </span>
+      </div>
+
+      <!-- Checklist area -->
+      <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+        <div style="flex:1;min-width:280px">
+          <div id="pre-cl-status" class="cl-status-badge cl-fail" style="margin-bottom:14px">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="pre-cl-status-text">0 / 0 complete</span>
+          </div>
+          <div id="pre-cl-render-area" class="checklist-cols"></div>
+        </div>
+
+        <!-- Action panel -->
+        <div style="width:260px;flex-shrink:0;position:sticky;top:16px">
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:2px">Next step</div>
+
+            <!-- Score ring -->
+            <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg)">
+              <svg width="52" height="52" viewBox="0 0 52 52" style="flex-shrink:0">
+                <circle cx="26" cy="26" r="22" fill="none" stroke="var(--bg4)" stroke-width="5"/>
+                <circle id="pre-cl-ring" cx="26" cy="26" r="22" fill="none" stroke="var(--red)" stroke-width="5"
+                  stroke-dasharray="138.2" stroke-dashoffset="138.2"
+                  stroke-linecap="round" transform="rotate(-90 26 26)"
+                  style="transition:stroke-dashoffset .35s,stroke .35s"/>
+              </svg>
+              <div>
+                <div id="pre-cl-score-num" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;line-height:1;color:var(--red);transition:color .35s">0%</div>
+                <div style="font-size:10px;color:var(--text3);margin-top:3px">Setup score</div>
+              </div>
+            </div>
+
+            <div id="pre-cl-warning" style="background:rgba(232,85,85,.06);border:1px solid rgba(232,85,85,.18);border-radius:var(--radius);padding:9px 11px;font-size:11px;color:var(--red);line-height:1.5;display:none">
+              Not all conditions checked. You can still proceed, but incomplete setups carry higher risk.
+            </div>
+            <div id="pre-cl-all-good" style="background:rgba(52,201,122,.06);border:1px solid rgba(52,201,122,.18);border-radius:var(--radius);padding:9px 11px;font-size:11px;color:var(--green);line-height:1.5;display:none">
+              ✓ All conditions met — this looks like a quality setup!
+            </div>
+
+            <button id="pre-cl-proceed-btn" onclick="preClProceedToCalc()"
+              style="width:100%;padding:11px;border-radius:var(--radius);border:1px solid var(--accent);background:rgba(77,127,255,.12);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;letter-spacing:.01em;display:flex;align-items:center;justify-content:center;gap:8px"
+              onmouseover="this.style.background='rgba(77,127,255,.22)'" onmouseout="this.style.background='rgba(77,127,255,.12)'">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              Proceed to Calculator
+            </button>
+            <div style="font-size:10px;color:var(--text3);text-align:center;line-height:1.5">Checklist state will carry through<br>to the log trade form automatically</div>
+
+            <div style="border-top:1px solid var(--border);padding-top:10px">
+              <button onclick="preClReset()" style="width:100%;padding:7px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;color:var(--text3);font-size:11px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">
+                Reset checklist
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- LOG TRADE -->
     <div class="page" id="page-log">
+      <!-- Flow breadcrumb (shown when coming via pre-checklist flow) -->
+      <div id="log-flow-banner" style="display:none;align-items:center;gap:8px;margin-bottom:16px;padding:9px 12px;background:rgba(77,127,255,.06);border:1px solid rgba(77,127,255,.18);border-radius:var(--radius-lg);font-size:11px;color:var(--text3)">
+        <span style="display:inline-flex;align-items:center;gap:5px;opacity:.5">
+          <span style="width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">✓</span>
+          Pre-Trade Checklist
+        </span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        <span style="display:inline-flex;align-items:center;gap:5px;opacity:.5">
+          <span style="width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">✓</span>
+          Position Calculator
+        </span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        <span style="display:inline-flex;align-items:center;gap:5px;color:var(--accent);font-weight:700">
+          <span style="width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">3</span>
+          Log Trade
+        </span>
+        <span style="margin-left:auto;color:var(--green);font-size:10px;font-weight:600">✓ Checklist loaded into Checklist tab</span>
+      </div>
       <div class="edit-banner" id="edit-banner">
         <span id="edit-banner-text">Editing trade</span>
         <button class="btn btn-ghost btn-sm" onclick="cancelEdit()">Cancel edit</button>
@@ -5199,7 +5295,7 @@ async function populateSessionSelects(restoreSessionId){
 }
 
 // ══ Navigation ════════════════════════════════════
-var pageMap={dashboard:{title:'Dashboard',sub:'Overview of your trading performance'},log:{title:'Log trade',sub:'Record a new trade entry'},history:{title:'Trade history',sub:'Browse and filter all your trades'},sessions:{title:'Sessions',sub:'Manage your trading session periods'},'checklist-editor':{title:'Checklist editor',sub:'Edit checklist items globally'},backup:{title:'Backup & restore',sub:'Export, import or clear your journal data'},montecarlo:{title:'Monte Carlo',sub:'Simulate future equity paths from historical trade data'},calculator:{title:'Position Size Calculator',sub:'Forex · Crypto · Gold · Stocks · Indices'},calendar:{title:'Calendar view',sub:'Visual trade activity by day, week and year'},'ai-analyzer':{title:'AI Trade Analyzer',sub:'Intelligent session review powered by AI'},'price-alerts':{title:'Price Alerts',sub:'Get notified on your phone when a price target is hit'}};;
+var pageMap={'pre-checklist':{title:'Pre-Trade Checklist',sub:'Verify your setup before sizing and logging'},dashboard:{title:'Dashboard',sub:'Overview of your trading performance'},log:{title:'Log trade',sub:'Record a new trade entry'},history:{title:'Trade history',sub:'Browse and filter all your trades'},sessions:{title:'Sessions',sub:'Manage your trading session periods'},'checklist-editor':{title:'Checklist editor',sub:'Edit checklist items globally'},backup:{title:'Backup & restore',sub:'Export, import or clear your journal data'},montecarlo:{title:'Monte Carlo',sub:'Simulate future equity paths from historical trade data'},calculator:{title:'Position Size Calculator',sub:'Forex · Crypto · Gold · Stocks · Indices'},calendar:{title:'Calendar view',sub:'Visual trade activity by day, week and year'},'ai-analyzer':{title:'AI Trade Analyzer',sub:'Intelligent session review powered by AI'},'price-alerts':{title:'Price Alerts',sub:'Get notified on your phone when a price target is hit'}};;
 var _currentPage='dashboard';
 function nav(id,btn){
   // Reset log form when navigating away — always clear, including when editing
@@ -5214,9 +5310,15 @@ function nav(id,btn){
   document.getElementById('topbar-title').textContent=p.title;
   document.getElementById('topbar-sub').textContent=p.sub;
   if(id==='dashboard')renderDashboard();
+  if(id==='log'){
+    // Hide flow banner on direct navigation (calcLogTrade will re-show it if needed)
+    var fb = document.getElementById('log-flow-banner');
+    if(fb) fb.style.display = 'none';
+  }
   if(id==='history'){populateSessionSelects().then(function(){populateFilters();renderHistory();});}
   if(id==='sessions')renderSessionsList();
   if(id==='checklist-editor')renderChecklistEditor();
+  if(id==='pre-checklist'){preClRender();}
   if(id==='montecarlo'){resetMonteCarloResults();initMonteCarlo();}
   if(id==='calculator'){calcReset();calcSyncAssets();}
   if(id==='calendar'){calPopulateSessionFilter().then(function(){renderCalendar();});}
@@ -8136,6 +8238,126 @@ async function calcOnBacktestSessionChange(){
   calcCalc();
 }
 
+// ══ Pre-Trade Checklist flow ══════════════════════
+var _pendingChecklistState = null; // carries checklist state from pre-checklist → calc → log
+
+async function openPreChecklist() {
+  // Update nav active state
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  var btn = document.getElementById('nav-pre-checklist');
+  if(btn) btn.classList.add('active');
+  // Navigate
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  var page = document.getElementById('page-pre-checklist');
+  if(page) page.classList.add('active');
+  _currentPage = 'pre-checklist';
+  document.getElementById('topbar-title').textContent = 'Pre-Trade Checklist';
+  document.getElementById('topbar-sub').textContent = 'Verify your setup before sizing and logging';
+  await preClRender();
+}
+
+async function preClRender() {
+  var cl = await getChecklist();
+  var area = document.getElementById('pre-cl-render-area');
+  if(!area) return;
+  var icons = ['<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>',
+    '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
+    '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+    '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+    '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>',
+    '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'];
+  function renderSec(sec, idx) {
+    var icon = icons[idx % icons.length] || '<circle cx="12" cy="12" r="10"/>';
+    return '<div class="cl-card" style="margin-bottom:0" id="pre-cl-block-'+idx+'">'
+      + '<div class="cl-card-title" style="display:flex;align-items:center;justify-content:space-between">'
+        + '<span style="display:flex;align-items:center;gap:7px"><svg viewBox="0 0 24 24">'+icon+'</svg>'+escHtml(sec.section)+'</span>'
+        + '<button class="btn btn-ghost btn-sm" style="font-size:11px;padding:3px 8px" onclick="preClCheckAll('+idx+')" title="Check all">✓ All</button>'
+      + '</div>'
+      + sec.items.map(function(item, j) {
+        return '<label class="cl-row"><input type="checkbox" class="pre-cl-item" data-k="'+escHtml(item)+'" data-sec="'+idx+'" onchange="preClUpdateStatus()"><span>'+escHtml(item)+'</span></label>';
+      }).join('')
+      + '</div>';
+  }
+  var html = '';
+  cl.forEach(function(sec, idx) { html += renderSec(sec, idx); });
+  area.innerHTML = html;
+  preClUpdateStatus();
+}
+
+function preClCheckAll(secIdx) {
+  var boxes = document.querySelectorAll('.pre-cl-item[data-sec="'+secIdx+'"]');
+  var allChecked = [].every.call(boxes, function(b){return b.checked;});
+  boxes.forEach(function(b){b.checked = !allChecked;});
+  preClUpdateStatus();
+}
+
+function preClUpdateStatus() {
+  var all = document.querySelectorAll('.pre-cl-item');
+  var checked = [].filter.call(all, function(c){return c.checked;});
+  var total = all.length;
+  var n = checked.length;
+  var pct = total > 0 ? Math.round((n/total)*100) : 0;
+  var circ = 138.2; // 2*π*22
+  var offset = circ - (circ * pct / 100);
+  // Ring
+  var ring = document.getElementById('pre-cl-ring');
+  if(ring) {
+    ring.style.strokeDashoffset = offset;
+    ring.style.stroke = pct === 100 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
+  }
+  // Score num
+  var scoreEl = document.getElementById('pre-cl-score-num');
+  if(scoreEl) {
+    scoreEl.textContent = pct + '%';
+    scoreEl.style.color = pct === 100 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
+  }
+  // Status badge
+  var badge = document.getElementById('pre-cl-status');
+  var badgeText = document.getElementById('pre-cl-status-text');
+  if(badge && badgeText) {
+    if(n === total && total > 0) {
+      badge.className = 'cl-status-badge cl-pass';
+      badge.querySelector('svg').style.display = 'none';
+      badge.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Checklist complete ✓';
+    } else {
+      badge.className = 'cl-status-badge cl-fail';
+      badge.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> '+n+'/'+total+' complete';
+    }
+  }
+  // Warning / all-good
+  var warn = document.getElementById('pre-cl-warning');
+  var good = document.getElementById('pre-cl-all-good');
+  if(warn) warn.style.display = (total > 0 && n < total) ? 'block' : 'none';
+  if(good) good.style.display = (total > 0 && n === total) ? 'block' : 'none';
+}
+
+function preClGetState() {
+  var state = {};
+  document.querySelectorAll('.pre-cl-item').forEach(function(c){
+    state[c.dataset.k] = c.checked ? 'yes' : 'no';
+  });
+  return state;
+}
+
+function preClReset() {
+  document.querySelectorAll('.pre-cl-item').forEach(function(c){c.checked = false;});
+  preClUpdateStatus();
+}
+
+function preClProceedToCalc() {
+  // Save the current checklist state so it can be applied to the log trade form later
+  _pendingChecklistState = preClGetState();
+  // Navigate to calculator in backtest mode
+  var calcNavBtn = null;
+  document.querySelectorAll('.nav-item').forEach(function(btn){
+    if(btn.textContent && btn.textContent.trim().indexOf('Calculator') !== -1) calcNavBtn = btn;
+  });
+  nav('calculator', calcNavBtn);
+  // Ensure backtest mode is on
+  setTimeout(function(){ calcSetMode('backtest'); }, 80);
+  toast('Checklist saved — proceed to size your position', 'ok');
+}
+
 async function calcLogTrade(){
   // Validate we have minimum required values
   var entry=parseFloat((document.getElementById('calc-entry')||{}).value)||0;
@@ -8157,9 +8379,18 @@ async function calcLogTrade(){
   var capturedRR=calcLastRR;
   var calcIsSkipped=!!(document.getElementById('calc-skipped')&&document.getElementById('calc-skipped').checked);
 
+  // Capture pending checklist state (set when coming via pre-checklist flow)
+  var capturedChecklistState = _pendingChecklistState ? JSON.parse(JSON.stringify(_pendingChecklistState)) : null;
+
   // Navigate to log page and pre-fill
   var logBtn=document.querySelector('.nav-item:nth-of-type(2)');
   nav('log',logBtn);
+
+  // Show flow banner if we have a checklist state
+  setTimeout(function(){
+    var flowBanner = document.getElementById('log-flow-banner');
+    if(flowBanner) flowBanner.style.display = capturedChecklistState ? 'flex' : 'none';
+  }, 50);
 
   // Wait a tick for the page to render and session selects to populate
   setTimeout(async function(){
@@ -8197,10 +8428,19 @@ async function calcLogTrade(){
     // Forward skipped state from calculator
     var skippedCb=document.getElementById('f-skipped');
     if(skippedCb){skippedCb.checked=calcIsSkipped;onSkippedChange();}
+    // Apply checklist state from pre-trade checklist (if available)
+    if(capturedChecklistState){
+      await renderChecklist(); // ensure checklist is freshly rendered
+      setTimeout(function(){
+        setChecklist_state(capturedChecklistState);
+        _pendingChecklistState = null; // clear after applying
+      }, 80);
+    }
     recalc();
     toast('Trade pre-filled from calculator','ok');
   },150);
 }
+
 
 function calcReset(){
   // Clear price fields
