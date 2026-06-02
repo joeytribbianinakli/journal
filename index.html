@@ -46,7 +46,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .topbar-sub{font-size:11px;color:var(--text3);margin-top:1px}
 .topbar-actions{display:flex;gap:6px;align-items:center}
 .page-content{padding:20px 24px;flex:1}
-.page{display:none}.page.active{display:block}
+.page{display:none}.page.active{display:block}#page-fxstreet.active{display:flex}
 
 /* ── Buttons ── */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:var(--radius);font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);transition:all .12s;font-family:inherit;white-space:nowrap}
@@ -68,7 +68,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
 .stat-card.green::after{background:var(--green)}.stat-card.red::after{background:var(--red)}.stat-card.purple::after{background:var(--purple)}.stat-card.amber::after{background:var(--amber)}
 .stat-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
-.stat-value{font-size:22px;font-weight:600;font-family:'DM Mono',monospace;line-height:1;letter-spacing:-.02em}
+.stat-value{font-size:22px;font-weight:600;font-family:DM Mono,monospace;line-height:1;letter-spacing:-.02em}
 .stat-value.pos{color:var(--green)}.stat-value.neg{color:var(--red)}
 .stat-sub{font-size:10px;color:var(--text3);margin-top:5px}
 
@@ -88,7 +88,7 @@ table.data td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(-
 table.data tr:last-child td{border-bottom:none}
 table.data tbody tr{cursor:pointer;transition:background .1s}
 table.data tbody tr:hover td{background:var(--bg3);color:var(--text)}
-.mono{font-family:'DM Mono',monospace;font-size:11px}
+.mono{font-family:DM Mono,monospace;font-size:11px}
 
 .col-mgr-row{display:flex;align-items:center;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);cursor:default;transition:background .1s}
 .col-mgr-row:hover{background:var(--bg4)}
@@ -129,8 +129,8 @@ table.data tbody tr:hover td{background:var(--bg3);color:var(--text)}
 .cal-trade-dot.win{background:var(--green)}
 .cal-trade-dot.loss{background:var(--red)}
 .cal-trade-dot.skip{background:var(--amber)}
-.cal-cell-count{position:absolute;bottom:5px;right:6px;font-size:9px;font-weight:700;color:var(--text3);font-family:'DM Mono',monospace}
-.cal-cell-pl{font-size:9px;font-weight:700;font-family:'DM Mono',monospace;margin-top:3px}
+.cal-cell-count{position:absolute;bottom:5px;right:6px;font-size:9px;font-weight:700;color:var(--text3);font-family:DM Mono,monospace}
+.cal-cell-pl{font-size:9px;font-weight:700;font-family:DM Mono,monospace;margin-top:3px}
 .cal-cell-pl.pos{color:var(--green)}.cal-cell-pl.neg{color:var(--red)}
 /* Heat intensity */
 .cal-cell.heat-1,.cal-week-cell.heat-1{background:rgba(77,127,255,.06)}
@@ -154,7 +154,7 @@ table.data tbody tr:hover td{background:var(--bg3);color:var(--text)}
 .cal-week-dow{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:7px}
 .cal-week-trade-row{display:flex;align-items:center;gap:5px;padding:2px 0;border-bottom:1px solid var(--border);font-size:10px}
 .cal-week-trade-row:last-child{border-bottom:none}
-.cal-week-pl{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;margin-left:auto}
+.cal-week-pl{font-family:DM Mono,monospace;font-size:10px;font-weight:700;margin-left:auto}
 /* Year view */
 .cal-year-months{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .cal-year-month{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:border-color .12s,background .12s;position:relative}
@@ -172,7 +172,7 @@ table.data tbody tr:hover td{background:var(--bg3);color:var(--text)}
 .cal-year-month.heat-pl-neg-3{background:rgba(232,85,85,.20)}
 .cal-year-month-header{padding:9px 11px 7px;border-bottom:1px solid var(--border)}
 .cal-year-month-name{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;line-height:1}
-.cal-year-month-pl{font-size:13px;font-weight:700;font-family:'DM Mono',monospace;margin-top:3px}
+.cal-year-month-pl{font-size:13px;font-weight:700;font-family:DM Mono,monospace;margin-top:3px}
 .cal-year-month-pl.pos{color:var(--green)}.cal-year-month-pl.neg{color:var(--red)}
 .cal-year-month-body{padding:8px 11px}
 .cal-year-mini-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:8px}
@@ -184,12 +184,12 @@ table.data tbody tr:hover td{background:var(--bg3);color:var(--text)}
 .cal-year-month-stats{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
 .cal-year-month-stat{display:flex;flex-direction:column;gap:1px}
 .cal-year-month-stat-lbl{font-size:8px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em}
-.cal-year-month-stat-val{font-size:13px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text)}
+.cal-year-month-stat-val{font-size:13px;font-weight:700;font-family:DM Mono,monospace;color:var(--text)}
 .cal-year-month-empty{padding:11px;display:flex;align-items:center;justify-content:center;min-height:80px;color:var(--text3);font-size:11px}
 /* Legacy — kept for streak bar */
 .cal-year-stats{margin-top:8px;font-size:10px;color:var(--text3);display:flex;gap:8px;flex-wrap:wrap}
 .cal-year-stat{display:flex;flex-direction:column;align-items:center;gap:1px}
-.cal-year-stat-val{font-size:12px;font-weight:700;font-family:'DM Mono',monospace}
+.cal-year-stat-val{font-size:12px;font-weight:700;font-family:DM Mono,monospace}
 /* Collapsible summaries */
 .cal-summary-details{margin-top:12px}
 .cal-summary-details summary{list-style:none;display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:600;color:var(--text2);transition:background .12s,border-color .12s;user-select:none}
@@ -219,7 +219,7 @@ table.data tbody tr:hover td{background:var(--bg3);color:var(--text)}
 .cal-streak-bar.streak-week{gap:5px}
 .cal-streak-bar.streak-week .cal-streak-day{width:52px;height:56px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
 .cal-streak-bar.streak-week .streak-dow{font-size:9px;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.06em;line-height:1}
-.cal-streak-bar.streak-week .streak-date{font-size:13px;font-weight:700;color:rgba(255,255,255,.9);line-height:1;font-family:'DM Mono',monospace}
+.cal-streak-bar.streak-week .streak-date{font-size:13px;font-weight:700;color:rgba(255,255,255,.9);line-height:1;font-family:DM Mono,monospace}
 .cal-streak-bar.streak-week .cal-streak-day.s-off .streak-dow{color:var(--text3)}
 .cal-streak-bar.streak-week .cal-streak-day.s-off .streak-date{color:var(--text2)}
 /* Month view streak — medium blocks */
@@ -237,7 +237,7 @@ table.data tbody tr:hover td{background:var(--bg3);color:var(--text)}
 /* Week summary row */
 .cal-week-summary{display:flex;gap:14px;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;flex-wrap:wrap;font-size:11px}
 .cal-week-summary span{color:var(--text3)}
-.cal-week-summary strong{color:var(--text);font-family:'DM Mono',monospace}
+.cal-week-summary strong{color:var(--text);font-family:DM Mono,monospace}
 /* Month cells styled like week cards */
 .cal-cell.week-style{min-height:130px;padding:8px 9px}
 .cal-cell.week-style .cal-week-date{font-size:9px;margin-bottom:1px}
@@ -245,7 +245,7 @@ table.data tbody tr:hover td{background:var(--bg3);color:var(--text)}
 .cal-cell.week-style .cal-week-trade-row{font-size:9px;gap:3px;padding:1px 0}
 .cal-cell.week-style .cal-week-pl{font-size:9px}
 .cal-cell.week-style .cal-pl-footer{margin-top:5px;padding-top:4px;border-top:1px solid var(--border)}
-.cal-cell.week-style .cal-pl-footer-val{font-size:10px;font-weight:700;font-family:'DM Mono',monospace}
+.cal-cell.week-style .cal-pl-footer-val{font-size:10px;font-weight:700;font-family:DM Mono,monospace}
 .cal-cell.week-style .cal-pl-footer-meta{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px}
 .cal-cell.week-style .cal-pl-footer-meta span{font-size:8px;color:var(--text3)}
 
@@ -305,7 +305,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .computed-item:first-child{padding-left:0}
 .computed-item:not(:last-child){border-right:1px solid var(--border)}
 .ci-label{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
-.ci-val{font-size:14px;font-weight:600;font-family:'DM Mono',monospace}
+.ci-val{font-size:14px;font-weight:600;font-family:DM Mono,monospace}
 .ci-val.pos{color:var(--green)}.ci-val.neg{color:var(--red)}
 
 /* ── Checklist ── */
@@ -348,14 +348,14 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .tf-input-row input{max-width:75px;padding:3px 7px;font-size:11px}
 
 /* Plan block */
-.plan-block{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:11px 13px;font-family:'DM Mono',monospace;font-size:11px;line-height:1.9}
+.plan-block{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:11px 13px;font-family:DM Mono,monospace;font-size:11px;line-height:1.9}
 .plan-line{display:flex;gap:7px;align-items:flex-start;margin-bottom:3px}
 .plan-kw{color:var(--green);font-weight:700;white-space:nowrap;padding-top:1px}
 .plan-kw.then{color:var(--accent)}
-.plan-kw-code{display:inline-flex;align-items:center;border-radius:5px;padding:2px 8px;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.03em;flex-shrink:0;margin-top:1px;color:var(--green);border:1px solid rgba(52,201,122,.25);background:rgba(52,201,122,.05)}
+.plan-kw-code{display:inline-flex;align-items:center;border-radius:5px;padding:2px 8px;font-family:DM Mono,monospace;font-size:11px;font-weight:700;letter-spacing:.03em;flex-shrink:0;margin-top:1px;color:var(--green);border:1px solid rgba(52,201,122,.25);background:rgba(52,201,122,.05)}
 .plan-kw-code.then{color:var(--accent);border-color:rgba(77,127,255,.25);background:rgba(77,127,255,.05)}
 .plan-kw-code.plan-kw-elseif{color:#4d7fff;border-color:rgba(77,127,255,.25);background:rgba(77,127,255,.05)}
-.plan-editable{background:transparent;border:none;border-bottom:1px solid var(--border2);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:2px 3px;outline:none;width:100%;resize:none;min-height:18px;line-height:1.55}
+.plan-editable{background:transparent;border:none;border-bottom:1px solid var(--border2);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:2px 3px;outline:none;width:100%;resize:none;min-height:18px;line-height:1.55}
 .plan-editable:focus{border-bottom-color:var(--accent)}
 
 /* Screenshots */
@@ -366,18 +366,18 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .tf-add-btn{font-size:10px;font-weight:600;color:var(--text3);background:transparent;border:1px dashed var(--border);border-radius:var(--radius);padding:3px 10px;cursor:pointer;transition:color .15s,border-color .15s}
 .tf-add-btn:hover{color:var(--accent);border-color:var(--accent)}
 /* TF pills */
-.tf-pill{padding:5px 13px;font-size:12px;font-weight:700;border:1.5px solid var(--border);border-radius:6px;cursor:pointer;background:var(--bg2);color:var(--text2);transition:all .15s;letter-spacing:.05em;font-family:'DM Mono',monospace}
+.tf-pill{padding:5px 13px;font-size:12px;font-weight:700;border:1.5px solid var(--border);border-radius:6px;cursor:pointer;background:var(--bg2);color:var(--text2);transition:all .15s;letter-spacing:.05em;font-family:DM Mono,monospace}
 .tf-pill:hover{border-color:var(--blue);color:var(--blue);background:rgba(77,127,255,.08)}
 .tf-pill.selected{background:var(--blue);border-color:var(--blue);color:#fff}
 /* TF bar — the prominent selected-TF display */
 .tf-bar{display:flex;align-items:center;gap:10px;padding:8px 11px;background:rgba(77,127,255,.08);border:1.5px solid rgba(77,127,255,.35);border-radius:8px;margin-bottom:10px}
 .tf-bar-label{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;flex-shrink:0}
-.tf-bar-value{font-size:16px;font-weight:800;color:var(--blue);font-family:'DM Mono',monospace;letter-spacing:.05em;flex:1}
+.tf-bar-value{font-size:16px;font-weight:800;color:var(--blue);font-family:DM Mono,monospace;letter-spacing:.05em;flex:1}
 .tf-bar-change{background:none;border:1px solid rgba(77,127,255,.3);border-radius:4px;cursor:pointer;color:var(--text3);font-size:10px;padding:2px 8px;transition:all .15s}
 .tf-bar-change:hover{border-color:var(--blue);color:var(--blue)}
 .tf-pill-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
 /* Inline TF label shown next to screenshot header after TF selected */
-.ss-tf-label{font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--accent);letter-spacing:.04em;margin-left:auto;margin-right:8px}
+.ss-tf-label{font-family:DM Mono,monospace;font-size:14px;font-weight:700;color:var(--accent);letter-spacing:.04em;margin-left:auto;margin-right:8px}
 /* Skipped trade */
 .skipped-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:10px;font-weight:700;border-radius:20px;background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.3);letter-spacing:.04em;text-transform:uppercase}
 .skipped-row{display:flex;align-items:center;gap:10px;padding:8px 11px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:var(--radius-lg);margin-bottom:8px}
@@ -389,7 +389,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 @keyframes pG{0%{box-shadow:0 0 0 0 rgba(52,201,122,.25)}100%{box-shadow:0 0 0 6px transparent}}
 .img-paste-zone svg{width:18px;height:18px;stroke:var(--text3);fill:none;stroke-width:1.5}
 .img-paste-zone p{font-size:10px;color:var(--text3);line-height:1.5}
-.img-paste-zone kbd{background:var(--bg4);border:1px solid var(--border2);border-radius:3px;padding:1px 4px;font-size:9px;font-family:'DM Mono',monospace;color:var(--text2)}
+.img-paste-zone kbd{background:var(--bg4);border:1px solid var(--border2);border-radius:3px;padding:1px 4px;font-size:9px;font-family:DM Mono,monospace;color:var(--text2)}
 .img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:7px;margin-bottom:7px}
 .img-thumb{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);aspect-ratio:16/10}
 .img-thumb img{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer;transition:opacity .12s}
@@ -601,7 +601,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .ai-result-card-body strong{color:var(--text);font-weight:600}
 .ai-score-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
 .ai-score-card{flex:1;min-width:130px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;text-align:center;display:flex;flex-direction:column;align-items:center}
-.ai-score-val{font-size:28px;font-weight:800;font-family:'DM Mono',monospace;line-height:1;margin-bottom:4px}
+.ai-score-val{font-size:28px;font-weight:800;font-family:DM Mono,monospace;line-height:1;margin-bottom:4px}
 .ai-score-lbl{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
 .ai-score-val.grade-a{color:var(--green)}
 .ai-score-val.grade-b{color:var(--accent)}
@@ -614,7 +614,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .ai-empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:12px;color:var(--text3)}
 .ai-empty-state svg{width:36px;height:36px;stroke:var(--text3);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;opacity:.5}
 .ai-empty-state p{font-size:12px;text-align:center;line-height:1.6;max-width:360px}
-.ai-stat-mini{display:inline-flex;gap:4px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:11px;font-family:'DM Mono',monospace;color:var(--text2)}
+.ai-stat-mini{display:inline-flex;gap:4px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:11px;font-family:DM Mono,monospace;color:var(--text2)}
 .ai-tag{display:inline-flex;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;margin:2px}
 .ai-tag.good{background:rgba(52,201,122,.1);color:var(--green)}
 .ai-tag.warn{background:rgba(232,160,48,.1);color:var(--amber)}
@@ -624,7 +624,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .ai-progress-label{font-size:11px;color:var(--text2);min-width:160px;flex-shrink:0}
 .ai-progress-bar-wrap{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
 .ai-progress-bar{height:100%;border-radius:3px;transition:width .3s}
-.ai-progress-val{font-size:11px;font-family:'DM Mono',monospace;color:var(--text2);min-width:40px;text-align:right}
+.ai-progress-val{font-size:11px;font-family:DM Mono,monospace;color:var(--text2);min-width:40px;text-align:right}
 .ai-error-box{background:rgba(232,85,85,.06);border:1px solid rgba(232,85,85,.2);border-radius:var(--radius);padding:12px 14px;font-size:12px;color:var(--red);line-height:1.6}
 .ai-tip-box{background:rgba(77,127,255,.06);border:1px solid rgba(77,127,255,.2);border-radius:var(--radius);padding:12px 14px;font-size:12px;color:var(--accent);line-height:1.6;margin-top:10px}
 .ai-model-tabs{display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px}
@@ -650,13 +650,13 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .pairs-tab{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:var(--radius);font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text3);transition:all .12s;white-space:nowrap;font-family:inherit}
 .pairs-tab:hover{background:var(--bg4);color:var(--text);border-color:var(--border2)}
 .pairs-tab.active{color:#fff;border-color:transparent}
-.pairs-tab .pairs-tab-count{font-size:9px;font-weight:700;opacity:.75;font-family:'DM Mono',monospace}
+.pairs-tab .pairs-tab-count{font-size:9px;font-weight:700;opacity:.75;font-family:DM Mono,monospace}
 /* ── Pair chips ── */
 .pair-chip-group{margin-bottom:10px}
 .pair-chip-group-label{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;display:flex;align-items:center;gap:5px}
 .pair-chip-group-label::after{content:'';flex:1;height:1px;background:var(--border)}
 .pair-chips{display:flex;flex-wrap:wrap;gap:5px}
-.pair-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;font-family:'DM Mono',monospace;background:var(--bg4);border:1px solid var(--border2);color:var(--text2);transition:all .12s;cursor:default}
+.pair-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;font-family:DM Mono,monospace;background:var(--bg4);border:1px solid var(--border2);color:var(--text2);transition:all .12s;cursor:default}
 .pair-chip:hover{border-color:rgba(232,85,85,.35);background:rgba(232,85,85,.06)}
 .pair-chip:hover .pair-chip-del{opacity:1}
 .pair-chip-del{width:13px;height:13px;border-radius:50%;background:rgba(232,85,85,.15);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0;transition:opacity .12s;padding:0;font-family:inherit}
@@ -665,7 +665,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 /* ── Partial TPs ── */
 .partial-tp-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px}
 .partial-tp-row input{flex:1;min-width:0}
-.partial-tp-row .partial-tp-label{font-size:10px;font-weight:700;color:var(--text3);white-space:nowrap;min-width:18px;text-align:center;font-family:'DM Mono',monospace}
+.partial-tp-row .partial-tp-label{font-size:10px;font-weight:700;color:var(--text3);white-space:nowrap;min-width:18px;text-align:center;font-family:DM Mono,monospace}
 .partial-tp-add-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:var(--radius);font-size:11px;font-weight:600;cursor:pointer;border:1px dashed var(--border2);background:transparent;color:var(--text3);transition:all .12s;font-family:inherit}
 .partial-tp-add-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(77,127,255,.06)}
 .partial-tp-section{margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
@@ -682,7 +682,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 /* ── JS-render utility classes ── */
 .js-stat-lbl{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
 .js-stat-cell{padding:12px 14px;border-right:1px solid var(--border)}
-.js-val-lg{font-size:20px;font-weight:700;font-family:'DM Mono',monospace}
+.js-val-lg{font-size:20px;font-weight:700;font-family:DM Mono,monospace}
 .js-pre{font-size:12px;color:var(--text2);white-space:pre-wrap}
 .js-hint{font-size:11px;color:var(--text3)}
 .js-hint-mt{font-size:10px;color:var(--text3);margin-top:2px}
@@ -876,7 +876,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
     </button>
     <div class="nav-section-label">Trades</div>
     <button class="nav-item" id="nav-pre-checklist" onclick="openPreChecklist()">
-      <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Pre-trade check
+      <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Full trade flow
     </button>
     <button class="nav-item" onclick="nav('calculator',this)">
       <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>Calculator
@@ -901,6 +901,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Assets &amp; pairs
     </button>
     <div class="nav-section-label">Tools</div>
+    <button class="nav-item" id="nav-fxstreet" onclick="_flowActive=false;nav('fxstreet',this)">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Economic events
+    </button>
     <button class="nav-item" onclick="nav('ai-analyzer',this)">
       <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M21.17 8H12V2.83"/><circle cx="12" cy="12" r="2"/></svg>AI Analyzer
     </button>
@@ -1140,7 +1143,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
             <span style="font-size:12px;font-weight:600">AI Provider</span>
             <span class="ai-provider-badge disconnected" id="ai-provider-status-badge">Not configured</span>
-            <span id="ai-provider-model-label" style="display:none;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+            <span id="ai-provider-model-label" style="display:none;font-size:10px;color:var(--text3);font-family:DM Mono,monospace;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
           </div>
           <svg id="ai-config-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
@@ -1316,19 +1319,24 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
     <!-- PRE-TRADE CHECKLIST -->
     <div class="page" id="page-pre-checklist">
       <!-- Progress breadcrumb -->
-      <div id="pre-cl-breadcrumb" style="display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:11px;color:var(--text3)">
+      <div id="pre-cl-breadcrumb" style="display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:11px;color:var(--text3);flex-wrap:wrap">
+        <span onclick="nav('fxstreet',document.getElementById('nav-fxstreet'))" style="display:inline-flex;align-items:center;gap:5px;opacity:.6;cursor:pointer;transition:opacity .12s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'">
+          <span style="width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">✓</span>
+          Calendar
+        </span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
         <span style="display:inline-flex;align-items:center;gap:5px;color:var(--accent);font-weight:700">
-          <span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">1</span>
-          Pre-trade check
+          <span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">2</span>
+          Pre-trade checklist
         </span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
         <span id="pre-cl-step2" style="display:inline-flex;align-items:center;gap:5px;opacity:.45;cursor:default;transition:opacity .15s">
-          <span id="pre-cl-step2-dot" style="width:20px;height:20px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);color:var(--text3);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">2</span>
+          <span id="pre-cl-step2-dot" style="width:20px;height:20px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);color:var(--text3);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">3</span>
           Position calculator
         </span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
         <span id="pre-cl-step3" style="display:inline-flex;align-items:center;gap:5px;opacity:.45;cursor:default;transition:opacity .15s">
-          <span id="pre-cl-step3-dot" style="width:20px;height:20px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);color:var(--text3);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">3</span>
+          <span id="pre-cl-step3-dot" style="width:20px;height:20px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);color:var(--text3);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">4</span>
           Log trade
         </span>
       </div>
@@ -1358,7 +1366,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                   style="transition:stroke-dashoffset .35s,stroke .35s"/>
               </svg>
               <div>
-                <div id="pre-cl-score-num" style="font-size:22px;font-weight:800;font-family:'DM Mono',monospace;line-height:1;color:var(--red);transition:color .35s">0%</div>
+                <div id="pre-cl-score-num" style="font-size:22px;font-weight:800;font-family:DM Mono,monospace;line-height:1;color:var(--red);transition:color .35s">0%</div>
                 <div style="font-size:10px;color:var(--text3);margin-top:3px">Setup score</div>
               </div>
             </div>
@@ -1391,10 +1399,15 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
     <!-- LOG TRADE -->
     <div class="page" id="page-log">
       <!-- Flow breadcrumb (shown when coming via pre-checklist flow) -->
-      <div id="log-flow-banner" style="display:none;align-items:center;gap:8px;margin-bottom:16px;padding:9px 12px;background:rgba(77,127,255,.06);border:1px solid rgba(77,127,255,.18);border-radius:var(--radius-lg);font-size:11px;color:var(--text3)">
+      <div id="log-flow-banner" style="display:none;align-items:center;gap:8px;margin-bottom:20px;font-size:11px;color:var(--text3);flex-wrap:wrap">
+        <span onclick="nav('fxstreet',document.getElementById('nav-fxstreet'))" style="display:inline-flex;align-items:center;gap:5px;opacity:.5;cursor:pointer;transition:opacity .12s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'">
+          <span style="width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">✓</span>
+          Economic calendar
+        </span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
         <span onclick="flowBackToPreCheck()" style="display:inline-flex;align-items:center;gap:5px;opacity:.5;cursor:pointer;transition:opacity .12s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'">
           <span style="width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">✓</span>
-          Pre-trade check
+          Pre-trade checklist
         </span>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
         <span onclick="flowBackToCalc()" style="display:inline-flex;align-items:center;gap:5px;opacity:.5;cursor:pointer;transition:opacity .12s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'">
@@ -1403,7 +1416,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         </span>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
         <span style="display:inline-flex;align-items:center;gap:5px;color:var(--accent);font-weight:700">
-          <span style="width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">3</span>
+          <span style="width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">4</span>
           Log trade
         </span>
         <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
@@ -1437,7 +1450,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="frow-inline">
             <div class="frow" style="max-width:80px">
               <label class="flabel">Trade #</label>
-              <input type="text" id="f-num" readonly style="color:var(--text3);cursor:default;text-align:center;font-family:'DM Mono',monospace;font-weight:600">
+              <input type="text" id="f-num" readonly style="color:var(--text3);cursor:default;text-align:center;font-family:DM Mono,monospace;font-weight:600">
             </div>
             <div class="frow" style="max-width:160px">
               <label class="flabel">Asset type</label>
@@ -1445,7 +1458,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="frow" style="max-width:170px">
               <label class="flabel">Logged at <span style="font-size:9px;color:var(--text3);font-weight:400;letter-spacing:0;text-transform:none">(auto)</span></label>
-              <input type="text" id="f-logged-at" readonly style="color:var(--text3);cursor:default;font-family:'DM Mono',monospace;font-size:11px" placeholder="set on first save">
+              <input type="text" id="f-logged-at" readonly style="color:var(--text3);cursor:default;font-family:DM Mono,monospace;font-size:11px" placeholder="set on first save">
             </div>
             <div class="frow" style="flex:1.2">
               <label class="flabel">Pair <span style="color:var(--red);margin-left:2px">*</span></label>
@@ -1607,7 +1620,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="frow">
               <label class="flabel">Win / Loss <span style="color:var(--text3);font-weight:400">(auto)</span></label>
-              <input type="text" id="f-winloss-display" readonly style="color:var(--text3);cursor:default;font-family:'DM Mono',monospace;font-weight:600">
+              <input type="text" id="f-winloss-display" readonly style="color:var(--text3);cursor:default;font-family:DM Mono,monospace;font-weight:600">
               <input type="hidden" id="f-winloss" value="">
             </div>
           </div>
@@ -1923,6 +1936,22 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <svg class="ah-toggle" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
           <div class="analysis-body">
+            <!-- Fetch bar -->
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:9px;flex-wrap:wrap;">
+              <button class="btn btn-sm" id="ec-fetch-btn" onclick="ecFetchEvents()" style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap;">
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Fetch events for entry date
+              </button>
+              <span id="ec-fetch-status" style="font-size:10px;color:var(--text3);"></span>
+            </div>
+            <!-- Events preview: clicking an event appends it to the textarea -->
+            <div id="ec-events-panel" style="display:none;margin-bottom:9px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;max-height:220px;overflow-y:auto;">
+              <div style="padding:6px 10px;background:var(--bg4);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;">Events — click row to append to notes</span>
+                <button class="btn btn-ghost btn-sm" onclick="ecAppendAll()" style="font-size:10px;padding:2px 7px;">Append all</button>
+              </div>
+              <div id="ec-events-list" style="display:flex;flex-direction:column;"></div>
+            </div>
             <div class="frow"><textarea id="f-news">1. </textarea></div>
           </div>
         </div>
@@ -2468,7 +2497,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       /* Big result */
       #page-calculator .calc-big-result{border-radius:var(--radius-lg);padding:14px;text-align:center;margin-bottom:12px;border:1px solid rgba(52,201,122,.3);background:rgba(52,201,122,.07);transition:all 0.2s;}
       #page-calculator .calc-big-result.short-mode{border-color:rgba(232,85,85,.3);background:rgba(232,85,85,.07);}
-      #page-calculator .calc-big-num{font-size:36px;font-weight:600;font-family:'DM Mono',monospace;line-height:1;color:var(--green);transition:color 0.2s;}
+      #page-calculator .calc-big-num{font-size:36px;font-weight:600;font-family:DM Mono,monospace;line-height:1;color:var(--green);transition:color 0.2s;}
       #page-calculator .short-mode .calc-big-num{color:var(--red);}
       #page-calculator .calc-big-unit{font-size:9px;letter-spacing:.1em;text-transform:uppercase;margin-top:2px;color:var(--green);opacity:0.7;}
       #page-calculator .short-mode .calc-big-unit{color:var(--red);}
@@ -2476,7 +2505,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       /* Breakdown */
       #page-calculator .calc-breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:12px;}
       #page-calculator .calc-bk-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:7px 5px;text-align:center;}
-      #page-calculator .calc-bk-num{font-size:18px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text);}
+      #page-calculator .calc-bk-num{font-size:18px;font-weight:600;font-family:DM Mono,monospace;color:var(--text);}
       #page-calculator .calc-bk-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:1px;}
       /* Section boxes */
       #page-calculator .calc-section-box{border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;}
@@ -2490,7 +2519,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       #page-calculator .calc-srow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);}
       #page-calculator .calc-srow:last-child{border-bottom:none;}
       #page-calculator .calc-sl2{font-size:11px;color:var(--text2);}
-      #page-calculator .calc-sv{font-size:12px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text);}
+      #page-calculator .calc-sv{font-size:12px;font-weight:600;font-family:DM Mono,monospace;color:var(--text);}
       #page-calculator .calc-sv.r{color:var(--red);} #page-calculator .calc-sv.g{color:var(--green);} #page-calculator .calc-sv.a{color:var(--amber);} #page-calculator .calc-sv.b{color:var(--accent);}
       /* Risk bar */
       #page-calculator .calc-risk-track{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;border:1px solid var(--border);margin:8px 0 6px;}
@@ -2516,13 +2545,13 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       #page-calculator .calc-rr-side.win-side{background:rgba(52,201,122,.08);border:1px solid rgba(52,201,122,.18);}
       #page-calculator .calc-rr-side-lbl{font-size:10px;font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;}
       #page-calculator .calc-rr-side-lbl.r{color:rgba(232,85,85,.75);} #page-calculator .calc-rr-side-lbl.g{color:rgba(52,201,122,.75);}
-      #page-calculator .calc-rr-side-val{font-size:16px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;}
+      #page-calculator .calc-rr-side-val{font-size:16px;font-weight:700;font-family:DM Mono,monospace;line-height:1;}
       #page-calculator .calc-rr-side-val.r{color:var(--red);} #page-calculator .calc-rr-side-val.g{color:var(--green);}
-      #page-calculator .calc-rr-side-pct{font-size:11px;font-weight:600;margin-top:3px;opacity:.7;font-family:'DM Mono',monospace;}
+      #page-calculator .calc-rr-side-pct{font-size:11px;font-weight:600;margin-top:3px;opacity:.7;font-family:DM Mono,monospace;}
       #page-calculator .calc-rr-side-pct.r{color:var(--red);} #page-calculator .calc-rr-side-pct.g{color:var(--green);}
       #page-calculator .calc-rr-divider{text-align:center;font-size:14px;color:var(--text3);}
       #page-calculator .calc-rr-ratio-row{display:flex;align-items:center;justify-content:center;gap:8px;}
-      #page-calculator .calc-rr-ratio-badge{background:rgba(77,127,255,.12);border:1px solid rgba(77,127,255,.3);border-radius:var(--radius);padding:6px 18px;font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--accent);}
+      #page-calculator .calc-rr-ratio-badge{background:rgba(77,127,255,.12);border:1px solid rgba(77,127,255,.3);border-radius:var(--radius);padding:6px 18px;font-size:22px;font-weight:700;font-family:DM Mono,monospace;color:var(--accent);}
       #page-calculator .calc-rr-ratio-label{font-size:11px;color:var(--text3);}
       /* Info collapsible */
       #page-calculator .calc-info-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:5px;user-select:none;}
@@ -2538,20 +2567,25 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       #page-calculator .calc-iv{font-size:11px;font-weight:600;color:var(--text);}
       </style>
 
-      <!-- Flow banner (shown only when arriving from pre-trade check flow) -->
-      <div id="calc-flow-banner" style="display:none;align-items:center;gap:8px;margin-bottom:16px;padding:9px 12px;background:rgba(77,127,255,.06);border:1px solid rgba(77,127,255,.18);border-radius:var(--radius-lg);font-size:11px;color:var(--text3)">
+      <!-- Flow banner (shown only when arriving from full trade flow flow) -->
+      <div id="calc-flow-banner" style="display:none;align-items:center;gap:8px;margin-bottom:20px;font-size:11px;color:var(--text3);flex-wrap:wrap">
+        <span onclick="nav('fxstreet',document.getElementById('nav-fxstreet'))" style="display:inline-flex;align-items:center;gap:5px;opacity:.5;cursor:pointer;transition:opacity .12s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'">
+          <span style="width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">✓</span>
+          Economic calendar
+        </span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
         <span onclick="flowBackToPreCheck()" style="display:inline-flex;align-items:center;gap:5px;opacity:.5;cursor:pointer;transition:opacity .12s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'">
           <span style="width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">✓</span>
-          Pre-trade check
+          Pre-trade checklist
         </span>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
         <span style="display:inline-flex;align-items:center;gap:5px;color:var(--accent);font-weight:700">
-          <span style="width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">2</span>
+          <span style="width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">3</span>
           Position calculator
         </span>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
         <span id="calc-banner-step3" style="display:inline-flex;align-items:center;gap:5px;opacity:.35;cursor:default;transition:opacity .15s">
-          <span id="calc-banner-step3-dot" style="width:18px;height:18px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);color:var(--text3);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">3</span>
+          <span id="calc-banner-step3-dot" style="width:18px;height:18px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);color:var(--text3);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">4</span>
           Log trade
         </span>
         <span style="margin-left:auto">
@@ -2766,19 +2800,19 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       #page-price-alerts .pa-alert-card.fired{border-color:rgba(52,201,122,.45);background:rgba(14,20,14,.85);box-shadow:0 0 0 1px rgba(52,201,122,.2) inset;}
       #page-price-alerts .pa-alert-card.fired.fired-below{border-color:rgba(232,85,85,.45);background:rgba(20,10,10,.85);box-shadow:0 0 0 1px rgba(232,85,85,.2) inset;}
       #page-price-alerts .pa-alert-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
-      #page-price-alerts .pa-alert-symbol{font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--text);background:var(--bg4);border:1px solid var(--border2);border-radius:5px;padding:3px 8px;}
+      #page-price-alerts .pa-alert-symbol{font-family:DM Mono,monospace;font-size:13px;font-weight:700;color:var(--text);background:var(--bg4);border:1px solid var(--border2);border-radius:5px;padding:3px 8px;}
       #page-price-alerts .pa-alert-dir{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:4px;}
       #page-price-alerts .pa-alert-dir.above{background:rgba(52,201,122,.1);color:var(--green);}
       #page-price-alerts .pa-alert-dir.below{background:rgba(232,85,85,.1);color:var(--red);}
-      #page-price-alerts .pa-alert-price{font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:var(--text);margin-left:auto;}
+      #page-price-alerts .pa-alert-price{font-family:DM Mono,monospace;font-size:16px;font-weight:700;color:var(--text);margin-left:auto;}
       #page-price-alerts .pa-alert-meta{font-size:10px;color:var(--text3);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
       #page-price-alerts .pa-alert-note{font-size:11px;color:var(--text2);margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-style:italic;}
       #page-price-alerts .pa-alert-actions{display:flex;gap:5px;margin-left:auto;}
-      #page-price-alerts .pa-current-price{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);}
+      #page-price-alerts .pa-current-price{font-family:DM Mono,monospace;font-size:11px;color:var(--text3);}
       #page-price-alerts .pa-progress-bar{height:3px;background:var(--bg4);border-radius:2px;margin-top:8px;overflow:hidden;}
       #page-price-alerts .pa-progress-fill{height:100%;border-radius:2px;transition:width .5s;}
       #page-price-alerts .pa-card-footer{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap;}
-      #page-price-alerts .pa-updated-ago{font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;margin-left:auto;}
+      #page-price-alerts .pa-updated-ago{font-size:9px;color:var(--text3);font-family:DM Mono,monospace;margin-left:auto;}
       #page-price-alerts .pa-routing-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;}
       #page-price-alerts .pa-routing-toggle{display:flex;align-items:center;gap:7px;width:100%;padding:8px 11px;background:var(--bg3);border:none;color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:left;transition:background .12s;}
       #page-price-alerts .pa-routing-toggle:hover{background:var(--bg4);color:var(--text);}
@@ -2804,7 +2838,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       #page-price-alerts .pa-setup-text{font-size:12px;color:var(--text2);line-height:1.6;}
       #page-price-alerts .pa-setup-text a{color:var(--accent);text-decoration:none;}
       #page-price-alerts .pa-setup-text a:hover{text-decoration:underline;}
-      #page-price-alerts .pa-setup-text code{background:var(--bg4);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text);}
+      #page-price-alerts .pa-setup-text code{background:var(--bg4);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-family:DM Mono,monospace;font-size:11px;color:var(--text);}
       #page-price-alerts .pa-connected-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.04em;}
       #page-price-alerts .pa-connected-badge.ok{background:rgba(52,201,122,.1);color:var(--green);border:1px solid rgba(52,201,122,.25);}
       #page-price-alerts .pa-connected-badge.not{background:rgba(232,160,48,.1);color:var(--amber);border:1px solid rgba(232,160,48,.25);}
@@ -2822,7 +2856,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       #page-price-alerts .pa-monitor-dot{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;flex-shrink:0;}
       #page-price-alerts .pa-monitoring-bar:not(.off) .pa-monitor-dot{animation:paBlink 1.5s infinite;}
       #page-price-alerts .pa-monitoring-bar.off .pa-monitor-dot{animation:none;}
-      #page-price-alerts .pa-ticker-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 7px;border-radius:4px;background:var(--bg4);border:1px solid var(--border);color:var(--text2);font-family:'DM Mono',monospace;}
+      #page-price-alerts .pa-ticker-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 7px;border-radius:4px;background:var(--bg4);border:1px solid var(--border);color:var(--text2);font-family:DM Mono,monospace;}
       </style>
 
       <!-- Telegram Setup + Add Alert -->
@@ -2853,7 +2887,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                 </button>
                 <div id="pa-sending-box" style="display:none;padding:10px;background:var(--bg);border-top:1px solid var(--border);">
                   <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
-                    <div style="font-size:11px;color:var(--text2);">Chat ID: <span id="pa-tg-chat-label" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text)"></span></div>
+                    <div style="font-size:11px;color:var(--text2);">Chat ID: <span id="pa-tg-chat-label" style="font-family:DM Mono,monospace;font-size:11px;color:var(--text)"></span></div>
                     <button class="btn btn-ghost btn-sm" onclick="paTgEdit()">Edit</button>
                   </div>
                   <button class="btn btn-sm" style="width:100%" onclick="paTgTest()">
@@ -2935,7 +2969,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                   </button>
                   <div id="pa-discord-sending-box" style="display:none;padding:10px;background:var(--bg);border-top:1px solid var(--border);">
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
-                      <div style="font-size:11px;color:var(--text2);">Webhook: <span id="pa-discord-webhook-label" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text)"></span></div>
+                      <div style="font-size:11px;color:var(--text2);">Webhook: <span id="pa-discord-webhook-label" style="font-family:DM Mono,monospace;font-size:11px;color:var(--text)"></span></div>
                       <button class="btn btn-ghost btn-sm" onclick="paDiscordEdit()">Edit</button>
                     </div>
                     <button class="btn btn-sm" style="width:100%" onclick="paDiscordTest()">
@@ -2954,16 +2988,16 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                   </button>
                   <div id="pa-discord-embed-box" style="display:none;padding:12px;background:var(--bg);border-top:1px solid var(--border);">
                     <div style="display:grid;grid-template-columns:90px 1fr;gap:6px 8px;align-items:center;margin-bottom:10px;">
-                      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">Title prefix</div>
+                      <div style="font-size:10px;color:var(--text3);font-family:DM Mono,monospace;">Title prefix</div>
                       <input type="text" id="pa-discord-title-prefix" placeholder="🔔 Price Alert: " style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 8px;outline:none;width:100%;box-sizing:border-box;">
-                      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">Footer text</div>
+                      <div style="font-size:10px;color:var(--text3);font-family:DM Mono,monospace;">Footer text</div>
                       <input type="text" id="pa-discord-footer" placeholder="JournUp Price Alerts (cloud)" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 8px;outline:none;width:100%;box-sizing:border-box;">
-                      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">Color ↑ above</div>
+                      <div style="font-size:10px;color:var(--text3);font-family:DM Mono,monospace;">Color ↑ above</div>
                       <div style="display:flex;align-items:center;gap:7px;">
                         <input type="color" id="pa-discord-color-above" value="#34c97a" style="width:32px;height:28px;padding:2px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3);cursor:pointer;">
                         <span style="font-size:10px;color:var(--text3);">Default: green</span>
                       </div>
-                      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">Color ↓ below</div>
+                      <div style="font-size:10px;color:var(--text3);font-family:DM Mono,monospace;">Color ↓ below</div>
                       <div style="display:flex;align-items:center;gap:7px;">
                         <input type="color" id="pa-discord-color-below" value="#e85555" style="width:32px;height:28px;padding:2px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3);cursor:pointer;">
                         <span style="font-size:10px;color:var(--text3);">Default: red</span>
@@ -3023,7 +3057,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               <!-- Telegram template -->
               <div class="pa-field" style="margin-bottom:6px;">
                 <label>Telegram message template</label>
-                <textarea id="pa-tpl-input" rows="7" spellcheck="false" oninput="paTplPreview()" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:7px 10px;outline:none;resize:vertical;line-height:1.6;transition:border-color .12s;box-sizing:border-box;"></textarea>
+                <textarea id="pa-tpl-input" rows="7" spellcheck="false" oninput="paTplPreview()" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:7px 10px;outline:none;resize:vertical;line-height:1.6;transition:border-color .12s;box-sizing:border-box;"></textarea>
               </div>
               <div style="display:flex;gap:6px;margin-bottom:14px;">
                 <button class="btn btn-ghost btn-sm" style="flex:1" onclick="paTplReset()">Reset to default</button>
@@ -3034,17 +3068,17 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               <div style="border-top:1px solid var(--border);padding-top:12px;margin-bottom:8px;">
                 <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;">Placeholder values <span style="font-weight:400;text-transform:none;font-size:9px;">(apply to Telegram &amp; Discord)</span></div>
                 <div style="display:grid;grid-template-columns:90px 1fr;gap:6px 8px;align-items:center;margin-bottom:8px;">
-                  <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">{direction}</div>
+                  <div style="font-size:10px;color:var(--text3);font-family:DM Mono,monospace;">{direction}</div>
                   <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
                     <input type="text" id="pa-ph-dir-above" placeholder="📈 rose above" oninput="paTplPreview()" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 8px;outline:none;width:100%;box-sizing:border-box;">
                     <input type="text" id="pa-ph-dir-below" placeholder="📉 dropped below" oninput="paTplPreview()" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 8px;outline:none;width:100%;box-sizing:border-box;">
                   </div>
                   <div style="font-size:9px;color:var(--text3);grid-column:2;margin-top:-3px;display:grid;grid-template-columns:1fr 1fr;gap:5px;"><span>↑ above label</span><span>↓ below label</span></div>
 
-                  <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">{note} prefix</div>
+                  <div style="font-size:10px;color:var(--text3);font-family:DM Mono,monospace;">{note} prefix</div>
                   <input type="text" id="pa-ph-note-prefix" placeholder="📝 " oninput="paTplPreview()" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 8px;outline:none;width:100%;box-sizing:border-box;">
 
-                  <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">{datetime}</div>
+                  <div style="font-size:10px;color:var(--text3);font-family:DM Mono,monospace;">{datetime}</div>
                   <select id="pa-ph-datetime-fmt" onchange="paTplPreview()" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 8px;outline:none;appearance:none;-webkit-appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 7px center;padding-right:22px;">
                     <option value="locale">Date &amp; time (locale)</option>
                     <option value="iso">2026-05-27 14:34 (ISO)</option>
@@ -3052,13 +3086,13 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                     <option value="time-only">Time only</option>
                   </select>
 
-                  <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">{symbol}</div>
+                  <div style="font-size:10px;color:var(--text3);font-family:DM Mono,monospace;">{symbol}</div>
                   <div style="font-size:11px;color:var(--text3);font-style:italic;">Dynamic — the alert asset (e.g. EURUSD)</div>
-                  <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">{target}</div>
+                  <div style="font-size:10px;color:var(--text3);font-family:DM Mono,monospace;">{target}</div>
                   <div style="font-size:11px;color:var(--text3);font-style:italic;">Dynamic — target price you set</div>
-                  <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">{price}</div>
+                  <div style="font-size:10px;color:var(--text3);font-family:DM Mono,monospace;">{price}</div>
                   <div style="font-size:11px;color:var(--text3);font-style:italic;">Dynamic — current price when fired</div>
-                  <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">{note}</div>
+                  <div style="font-size:10px;color:var(--text3);font-family:DM Mono,monospace;">{note}</div>
                   <div style="font-size:11px;color:var(--text3);font-style:italic;">Dynamic — note you added to alert</div>
                 </div>
                 <div style="display:flex;gap:6px;margin-bottom:10px;">
@@ -3070,7 +3104,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               <!-- Live preview -->
               <div style="border-top:1px solid var(--border);padding-top:10px;">
                 <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px;">Live preview (Telegram)</div>
-                <div id="pa-tpl-preview" style="font-size:11px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;white-space:pre-wrap;font-family:'DM Mono',monospace;line-height:1.6;min-height:40px;"></div>
+                <div id="pa-tpl-preview" style="font-size:11px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;white-space:pre-wrap;font-family:DM Mono,monospace;line-height:1.6;min-height:40px;"></div>
               </div>
 
             </div>
@@ -3200,7 +3234,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
                       Test Fetch (BTC/USDT)
                     </button>
-                    <div id="pa-test-binance-result" style="display:none;margin-top:6px;padding:6px 9px;border-radius:var(--radius);font-size:10px;font-family:'DM Mono',monospace;line-height:1.5;"></div>
+                    <div id="pa-test-binance-result" style="display:none;margin-top:6px;padding:6px 9px;border-radius:var(--radius);font-size:10px;font-family:DM Mono,monospace;line-height:1.5;"></div>
                   </div>
                 </div>
 
@@ -3223,7 +3257,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
                       Test Fetch (AAPL)
                     </button>
-                    <div id="pa-test-yahoo-result" style="display:none;margin-top:6px;padding:6px 9px;border-radius:var(--radius);font-size:10px;font-family:'DM Mono',monospace;line-height:1.5;"></div>
+                    <div id="pa-test-yahoo-result" style="display:none;margin-top:6px;padding:6px 9px;border-radius:var(--radius);font-size:10px;font-family:DM Mono,monospace;line-height:1.5;"></div>
                   </div>
                 </div>
 
@@ -3250,7 +3284,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                         Test Fetch
                       </button>
                     </div>
-                    <div id="pa-test-cg-result" style="display:none;margin-top:6px;padding:6px 9px;border-radius:var(--radius);font-size:10px;font-family:'DM Mono',monospace;line-height:1.5;"></div>
+                    <div id="pa-test-cg-result" style="display:none;margin-top:6px;padding:6px 9px;border-radius:var(--radius);font-size:10px;font-family:DM Mono,monospace;line-height:1.5;"></div>
                   </div>
                 </div>
 
@@ -3273,7 +3307,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                       </a>
                     </div>
                     <div style="display:flex;gap:6px;margin-bottom:5px;"><input type="password" id="pa-oanda-key" placeholder="Oanda API token" autocomplete="off" spellcheck="false" oninput="paProviderKeyChange('oanda')" style="flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:6px 8px;outline:none;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('pa-oanda-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
-                    <div id="pa-oanda-debug" style="display:none;margin-top:6px;margin-bottom:5px;padding:7px 9px;background:rgba(232,85,85,.07);border:1px solid rgba(232,85,85,.2);border-radius:var(--radius);font-size:10px;font-family:'DM Mono',monospace;color:var(--red);white-space:pre-wrap;word-break:break-all;line-height:1.5;"></div>
+                    <div id="pa-oanda-debug" style="display:none;margin-top:6px;margin-bottom:5px;padding:7px 9px;background:rgba(232,85,85,.07);border:1px solid rgba(232,85,85,.2);border-radius:var(--radius);font-size:10px;font-family:DM Mono,monospace;color:var(--red);white-space:pre-wrap;word-break:break-all;line-height:1.5;"></div>
                     <select id="pa-oanda-env" style="width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:11px;padding:6px 8px;outline:none;appearance:none;-webkit-appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 7px center;padding-right:22px;margin-bottom:5px;">
                       <option value="practice">Practice</option>
                       <option value="live">Live</option>
@@ -3285,7 +3319,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                         Test Fetch
                       </button>
                     </div>
-                    <div id="pa-test-oanda-result" style="display:none;margin-top:6px;padding:6px 9px;border-radius:var(--radius);font-size:10px;font-family:'DM Mono',monospace;line-height:1.5;"></div>
+                    <div id="pa-test-oanda-result" style="display:none;margin-top:6px;padding:6px 9px;border-radius:var(--radius);font-size:10px;font-family:DM Mono,monospace;line-height:1.5;"></div>
                   </div>
                 </div>
 
@@ -3312,7 +3346,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                         Test Fetch
                       </button>
                     </div>
-                    <div id="pa-test-finnhub-result" style="display:none;margin-top:6px;padding:6px 9px;border-radius:var(--radius);font-size:10px;font-family:'DM Mono',monospace;line-height:1.5;"></div>
+                    <div id="pa-test-finnhub-result" style="display:none;margin-top:6px;padding:6px 9px;border-radius:var(--radius);font-size:10px;font-family:DM Mono,monospace;line-height:1.5;"></div>
                   </div>
                 </div>
 
@@ -3339,7 +3373,49 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                         Test Fetch
                       </button>
                     </div>
-                    <div id="pa-test-av-result" style="display:none;margin-top:6px;padding:6px 9px;border-radius:var(--radius);font-size:10px;font-family:'DM Mono',monospace;line-height:1.5;"></div>
+                    <div id="pa-test-av-result" style="display:none;margin-top:6px;padding:6px 9px;border-radius:var(--radius);font-size:10px;font-family:DM Mono,monospace;line-height:1.5;"></div>
+                  </div>
+                </div>
+
+                <!-- FCS API collapsible -->
+                <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+                  <button onclick="paKeyToggle('fcs')" style="display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;width:100%;padding:7px 10px;background:var(--bg4);border:none;color:var(--text2);font-size:10px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:left;transition:background .12s;">
+                    <span>📅 FCS API <span style="font-size:9px;font-weight:400;color:var(--text3)">(Econ Calendar)</span></span>
+                    <span style="font-size:9px;font-weight:500;color:var(--text3);white-space:nowrap;">Optional</span>
+                    <span style="display:flex;align-items:center;gap:5px;"><span id="pa-key-fcs-status" style="font-size:9px;color:var(--green);white-space:nowrap;"></span><svg id="pa-key-fcs-chev" viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg></span>
+                  </button>
+                  <div id="pa-key-fcs-body" style="display:none;padding:10px;background:var(--bg3);border-top:1px solid var(--border);">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+                      <a href="https://fcsapi.com/document/forex-api" target="_blank" rel="noopener" style="font-size:10px;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:3px;">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        Get free key
+                      </a>
+                      <span style="font-size:10px;color:var(--amber);">500 req/mo free</span>
+                    </div>
+                    <div style="font-size:10px;color:var(--text3);margin-bottom:7px;">Used for economic calendar events (NFP, CPI, rate decisions) in the Log Trade form.</div>
+                    <div style="display:flex;gap:6px;margin-bottom:5px;"><input type="password" id="pa-fcs-key" placeholder="FCS API key" autocomplete="off" spellcheck="false" style="flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:6px 8px;outline:none;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('pa-fcs-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+                    <button class="btn btn-sm" style="width:100%" onclick="ecSaveKey('fcs')">Save</button>
+                  </div>
+                </div>
+
+                <!-- Marketaux collapsible -->
+                <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+                  <button onclick="paKeyToggle('marketaux')" style="display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;width:100%;padding:7px 10px;background:var(--bg4);border:none;color:var(--text2);font-size:10px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:left;transition:background .12s;">
+                    <span>📰 Marketaux <span style="font-size:9px;font-weight:400;color:var(--text3)">(Fallback news)</span></span>
+                    <span style="font-size:9px;font-weight:500;color:var(--text3);white-space:nowrap;">Optional</span>
+                    <span style="display:flex;align-items:center;gap:5px;"><span id="pa-key-marketaux-status" style="font-size:9px;color:var(--green);white-space:nowrap;"></span><svg id="pa-key-marketaux-chev" viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg></span>
+                  </button>
+                  <div id="pa-key-marketaux-body" style="display:none;padding:10px;background:var(--bg3);border-top:1px solid var(--border);">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+                      <a href="https://www.marketaux.com" target="_blank" rel="noopener" style="font-size:10px;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:3px;">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        Get free key
+                      </a>
+                      <span style="font-size:10px;color:var(--amber);">100 req/day free</span>
+                    </div>
+                    <div style="font-size:10px;color:var(--text3);margin-bottom:7px;">Fallback when FCS API has no results. Returns forex news headlines for the asset.</div>
+                    <div style="display:flex;gap:6px;margin-bottom:5px;"><input type="password" id="pa-marketaux-key" placeholder="Marketaux API token" autocomplete="off" spellcheck="false" style="flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:6px 8px;outline:none;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('pa-marketaux-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+                    <button class="btn btn-sm" style="width:100%" onclick="ecSaveKey('marketaux')">Save</button>
                   </div>
                 </div>
 
@@ -3403,7 +3479,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <span style="display:flex;align-items:center;gap:7px;">
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
               Active Alerts
-              <span id="pa-alert-count-badge" style="display:none;font-size:9px;font-weight:700;background:var(--accent);color:#fff;border-radius:10px;padding:1px 6px;letter-spacing:.03em;font-family:'DM Mono',monospace;"></span>
+              <span id="pa-alert-count-badge" style="display:none;font-size:9px;font-weight:700;background:var(--accent);color:#fff;border-radius:10px;padding:1px 6px;letter-spacing:.03em;font-family:DM Mono,monospace;"></span>
             </span>
             <span style="display:flex;align-items:center;gap:6px;">
               <button class="btn btn-ghost btn-sm" onclick="paClearFired()" title="Remove triggered alerts">Clear fired</button>
@@ -3438,7 +3514,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       .pa-cloud-body{padding:14px;border-top:1px solid var(--border);display:none}
       .pa-cloud-field{margin-bottom:10px}
       .pa-cloud-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
-      .pa-cloud-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:12px;font-family:'DM Mono',monospace;padding:6px 10px;outline:none}
+      .pa-cloud-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:12px;font-family:DM Mono,monospace;padding:6px 10px;outline:none}
       .pa-cloud-input:focus{border-color:var(--accent)}
       .pa-cloud-input::placeholder{color:var(--text3);font-family:'DM Sans',sans-serif}
       .pa-cloud-hint{font-size:10px;color:var(--text3);margin-top:4px;line-height:1.5}
@@ -3558,7 +3634,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 
             <!-- Endpoints -->
             <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px">Worker endpoints</div>
-            <div style="margin-bottom:12px;display:flex;flex-direction:column;gap:3px;font-family:'DM Mono',monospace;font-size:11px">
+            <div style="margin-bottom:12px;display:flex;flex-direction:column;gap:3px;font-family:DM Mono,monospace;font-size:11px">
               <div><span style="color:var(--green)">POST</span> <span style="color:var(--text2)">/config</span> <span style="color:var(--text3);font-family:'DM Sans',sans-serif">— push tokens, keys &amp; settings</span></div>
               <div><span style="color:var(--accent)">GET</span>&nbsp; <span style="color:var(--text2)">/config</span> <span style="color:var(--text3);font-family:'DM Sans',sans-serif">— read config from KV</span></div>
               <div><span style="color:var(--green)">POST</span> <span style="color:var(--text2)">/alerts</span> <span style="color:var(--text3);font-family:'DM Sans',sans-serif">— sync active alerts array</span></div>
@@ -3587,6 +3663,229 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 
       </div>
     </div><!-- /page-price-alerts -->
+
+    <!-- FXSTREET -->
+    <div class="page" id="page-fxstreet" style="flex-direction:column">
+
+      <!-- Flow breadcrumb (only shown in full trade flow) -->
+      <div id="fxs-flow-ui" style="display:none">
+      <div id="fxs-breadcrumb" style="display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:11px;color:var(--text3);flex-wrap:wrap">
+        <span style="display:inline-flex;align-items:center;gap:5px;color:var(--accent);font-weight:700">
+          <span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">1</span>
+          Economic calendar
+        </span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        <span style="display:inline-flex;align-items:center;gap:5px;opacity:.4">
+          <span style="width:20px;height:20px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);color:var(--text3);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">2</span>
+          Pre-trade checklist
+        </span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        <span style="display:inline-flex;align-items:center;gap:5px;opacity:.4">
+          <span style="width:20px;height:20px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);color:var(--text3);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">3</span>
+          Position calculator
+        </span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        <span style="display:inline-flex;align-items:center;gap:5px;opacity:.4">
+          <span style="width:20px;height:20px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);color:var(--text3);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">4</span>
+          Log trade
+        </span>
+      </div>
+      </div><!-- /fxs-flow-ui breadcrumb wrapper -->
+
+      <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+
+        <!-- Left: date picker + launch cards -->
+        <div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:12px">
+
+          <!-- Date row -->
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:5px 10px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <input type="date" id="fxs-date-input" style="background:transparent;border:none;outline:none;color:var(--text);font-family:DM Mono,monospace;font-size:12px;font-weight:600;cursor:pointer;color-scheme:dark" onchange="fxsUpdateLinks()">
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="fxsSetToday()">Today</button>
+            <button class="btn btn-ghost btn-sm" id="fxs-use-cal-btn" onclick="fxsUseCalDate()" style="display:none" title="Use date selected in your Journal Calendar">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Use calendar date&nbsp;<span id="fxs-cal-date-label" style="font-family:DM Mono,monospace;font-size:10px;opacity:.7"></span>
+            </button>
+          </div>
+
+          <!-- ForexFactory card -->
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <div style="width:30px;height:30px;background:#f97316;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <div>
+                <div style="font-weight:700;font-size:13px;color:var(--text)">ForexFactory Calendar</div>
+                <div style="font-size:10px;color:var(--text3)">Opens directly to selected date</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <a id="ff-day-btn" href="#" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="flex:1;min-width:80px;justify-content:center" onclick="fxsMarkChecked()">
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                Day view
+              </a>
+              <a id="ff-week-btn" href="#" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="flex:1;min-width:60px;justify-content:center" onclick="fxsMarkChecked()">Week</a>
+              <a id="ff-month-btn" href="#" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="flex:1;min-width:60px;justify-content:center" onclick="fxsMarkChecked()">Month</a>
+            </div>
+            <div id="fxs-url-display" style="margin-top:10px;font-family:DM Mono,monospace;font-size:10px;color:var(--text3);word-break:break-all;line-height:1.5;padding:6px 8px;background:var(--bg3);border-radius:var(--radius)"></div>
+          </div>
+
+          <!-- Confirmation toggle (flow only) -->
+          <div id="fxs-confirm-wrapper" style="display:none">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);transition:border-color .15s" id="fxs-confirm-row">
+            <input type="checkbox" id="fxs-confirmed" onchange="fxsOnConfirmChange()" style="width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;cursor:pointer">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--text)">I&apos;ve checked the economic calendar</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">No high-impact news conflicts with my trade window</div>
+            </div>
+          </label>
+          </div>
+
+        </div>
+
+        <!-- Right: next step panel (flow only) -->
+        <div id="fxs-next-panel" style="display:none;width:240px;flex-shrink:0;position:sticky;top:16px">
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:2px">Next step</div>
+
+            <div style="padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);font-size:11px;color:var(--text3);line-height:1.6">
+              Open ForexFactory for your trade date, scan for high-impact events, then confirm below.
+            </div>
+
+            <div id="fxs-skip-warning" style="background:rgba(232,85,85,.06);border:1px solid rgba(232,85,85,.18);border-radius:var(--radius);padding:9px 11px;font-size:11px;color:var(--red);line-height:1.5">
+              Tick the checkbox before proceeding.
+            </div>
+            <div id="fxs-ready-msg" style="background:rgba(52,201,122,.06);border:1px solid rgba(52,201,122,.18);border-radius:var(--radius);padding:9px 11px;font-size:11px;color:var(--green);line-height:1.5;display:none">
+              ✓ Calendar checked — ready for full trade flow!
+            </div>
+
+            <button id="fxs-proceed-btn" onclick="fxsProceedToChecklist()"
+              style="width:100%;padding:11px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text3);font-size:12px;font-weight:700;cursor:not-allowed;font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px"
+              disabled>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              Proceed to Full trade flow
+            </button>
+
+            <div style="border-top:1px solid var(--border);padding-top:10px">
+              <button onclick="fxsProceedToChecklist(true)"
+                style="width:100%;padding:7px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;color:var(--text3);font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s"
+                onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">
+                Skip calendar check
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /page-fxstreet -->
+
+<script>
+function fxsTodayStr(){
+  var d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function fxsToFF(ds){
+  var mn=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  var p=ds.split('-');return mn[parseInt(p[1])-1]+parseInt(p[2])+'.'+p[0];
+}
+function fxsToFFWeek(ds){
+  var mn=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  var d=new Date(ds+'T12:00:00');d.setDate(d.getDate()-d.getDay());
+  return mn[d.getMonth()]+d.getDate()+'.'+d.getFullYear();
+}
+function fxsToFFMonth(ds){
+  var mn=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  var p=ds.split('-');return mn[parseInt(p[1])-1]+'.'+p[0];
+}
+function fxsUpdateLinks(){
+  var inp=document.getElementById('fxs-date-input');
+  var ds=(inp&&inp.value)?inp.value:fxsTodayStr();
+  var ffDay='https://www.forexfactory.com/calendar?day='+fxsToFF(ds);
+  var el=function(id){return document.getElementById(id);};
+  if(el('ff-day-btn'))   el('ff-day-btn').href=ffDay;
+  if(el('ff-week-btn'))  el('ff-week-btn').href='https://www.forexfactory.com/calendar?week='+fxsToFFWeek(ds);
+  if(el('ff-month-btn')) el('ff-month-btn').href='https://www.forexfactory.com/calendar?month='+fxsToFFMonth(ds);
+  if(el('fxs-url-display')) el('fxs-url-display').textContent=ffDay;
+}
+function fxsSetToday(){
+  var inp=document.getElementById('fxs-date-input');
+  if(inp){inp.value=fxsTodayStr();fxsUpdateLinks();}
+}
+function fxsUseCalDate(){
+  var ds=null;
+  if(typeof _calSelectedDay==='string'&&_calSelectedDay) ds=_calSelectedDay;
+  else if(typeof _calDate!=='undefined'&&_calDate){var cd=_calDate;ds=cd.getFullYear()+'-'+String(cd.getMonth()+1).padStart(2,'0')+'-'+String(cd.getDate()).padStart(2,'0');}
+  if(ds){var inp=document.getElementById('fxs-date-input');if(inp)inp.value=ds;fxsUpdateLinks();}
+}
+function fxsMarkChecked(){
+  // Auto-tick the confirmation when they actually open a link
+  var cb=document.getElementById('fxs-confirmed');
+  if(cb&&!cb.checked){cb.checked=true;fxsOnConfirmChange();}
+}
+function fxsOnConfirmChange(){
+  var cb=document.getElementById('fxs-confirmed');
+  var checked=cb&&cb.checked;
+  var btn=document.getElementById('fxs-proceed-btn');
+  var warn=document.getElementById('fxs-skip-warning');
+  var ready=document.getElementById('fxs-ready-msg');
+  var row=document.getElementById('fxs-confirm-row');
+  if(checked){
+    if(btn){btn.disabled=false;btn.style.cursor='pointer';btn.style.border='1px solid var(--accent)';btn.style.background='rgba(77,127,255,.12)';btn.style.color='var(--accent)';}
+    if(warn) warn.style.display='none';
+    if(ready) ready.style.display='block';
+    if(row) row.style.borderColor='var(--green)';
+  } else {
+    if(btn){btn.disabled=true;btn.style.cursor='not-allowed';btn.style.border='1px solid var(--border2)';btn.style.background='var(--bg3)';btn.style.color='var(--text3)';}
+    if(warn) warn.style.display='block';
+    if(ready) ready.style.display='none';
+    if(row) row.style.borderColor='var(--border)';
+  }
+}
+function fxsProceedToChecklist(skip){
+  _flowActive=true;
+  // Navigate to pre-checklist as step 2
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  var btn=document.getElementById('nav-pre-checklist');if(btn)btn.classList.add('active');
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  var page=document.getElementById('page-pre-checklist');if(page)page.classList.add('active');
+  var mainEl=document.querySelector('.main');if(mainEl)mainEl.scrollTop=0;
+  _currentPage='pre-checklist';
+  var pm=pageMap['pre-checklist']||{};
+  document.getElementById('topbar-title').textContent=pm.title||'';
+  document.getElementById('topbar-sub').textContent=pm.sub||'';
+  // Update step 1 in the checklist breadcrumb to show done
+  flowUpdateStepIndicators();
+  preClRender();
+}
+function fxsOnPageEnter(){
+  var inp=document.getElementById('fxs-date-input');
+  if(inp&&!inp.value) inp.value=fxsTodayStr();
+  var ds=null;
+  if(typeof _calSelectedDay==='string'&&_calSelectedDay) ds=_calSelectedDay;
+  else if(typeof _calDate!=='undefined'&&_calDate){var cd=_calDate;ds=cd.getFullYear()+'-'+String(cd.getMonth()+1).padStart(2,'0')+'-'+String(cd.getDate()).padStart(2,'0');}
+  var calBtn=document.getElementById('fxs-use-cal-btn');
+  var calLbl=document.getElementById('fxs-cal-date-label');
+  if(calBtn) calBtn.style.display=ds?'inline-flex':'none';
+  if(calLbl&&ds) calLbl.textContent='('+ds+')';
+  fxsUpdateLinks();
+
+  // Show flow-only UI only when arriving via Full trade flow
+  var inFlow=typeof _flowActive!=='undefined'&&_flowActive;
+  var flowUi=document.getElementById('fxs-flow-ui');
+  var confirmWrap=document.getElementById('fxs-confirm-wrapper');
+  var nextPanel=document.getElementById('fxs-next-panel');
+  if(flowUi)    flowUi.style.display   = inFlow ? 'flex'   : 'none';
+  if(confirmWrap) confirmWrap.style.display = inFlow ? 'block'  : 'none';
+  if(nextPanel) nextPanel.style.display = inFlow ? 'block'  : 'none';
+}
+document.addEventListener('DOMContentLoaded',function(){
+  var inp=document.getElementById('fxs-date-input');
+  if(inp) inp.value=fxsTodayStr();
+  fxsUpdateLinks();
+});
+</script>
 
   </div>
 </div>
@@ -3664,17 +3963,17 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               <div class="frow-inline" style="margin-bottom:12px">
                 <div class="frow" style="max-width:110px">
                   <label class="flabel">Taken trades</label>
-                  <input type="number" id="sm-demo-count" value="10" min="1" max="100" step="1" style="text-align:center;font-family:'DM Mono',monospace;font-weight:600" oninput="this.value=Math.max(1,Math.min(100,parseInt(this.value)||1))">
+                  <input type="number" id="sm-demo-count" value="10" min="1" max="100" step="1" style="text-align:center;font-family:DM Mono,monospace;font-weight:600" oninput="this.value=Math.max(1,Math.min(100,parseInt(this.value)||1))">
                   <div style="font-size:10px;color:var(--text3);margin-top:4px;line-height:1.4">+ ½ skipped trades auto-added</div>
                 </div>
                 <div class="frow" style="max-width:90px">
                   <label class="flabel">Risk %</label>
-                  <input type="number" id="sm-demo-risk" value="1" min="0.1" max="100" step="0.1" style="text-align:center;font-family:'DM Mono',monospace;font-weight:600" oninput="this.value=Math.max(0.1,Math.min(100,parseFloat(this.value)||1))">
+                  <input type="number" id="sm-demo-risk" value="1" min="0.1" max="100" step="0.1" style="text-align:center;font-family:DM Mono,monospace;font-weight:600" oninput="this.value=Math.max(0.1,Math.min(100,parseFloat(this.value)||1))">
                   <div style="font-size:10px;color:var(--text3);margin-top:4px;line-height:1.4">per trade</div>
                 </div>
                 <div class="frow" style="max-width:90px">
                   <label class="flabel">Target RR</label>
-                  <input type="number" id="sm-demo-rr" value="3" min="0.5" max="20" step="0.1" style="text-align:center;font-family:'DM Mono',monospace;font-weight:600" oninput="this.value=Math.max(0.5,Math.min(20,parseFloat(this.value)||3))">
+                  <input type="number" id="sm-demo-rr" value="3" min="0.5" max="20" step="0.1" style="text-align:center;font-family:DM Mono,monospace;font-weight:600" oninput="this.value=Math.max(0.5,Math.min(20,parseFloat(this.value)||3))">
                   <div style="font-size:10px;color:var(--text3);margin-top:4px;line-height:1.4">per trade</div>
                 </div>
               </div>
@@ -3700,7 +3999,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                     </span>
                     <span style="display:flex;align-items:center;gap:5px">
                       <span style="font-size:10px;color:var(--text3)">max</span>
-                      <input type="number" id="demo-dur-hours-max" value="24" min="1" max="24" step="1" style="width:52px;text-align:center;font-family:'DM Mono',monospace;font-weight:600;font-size:12px;padding:3px 6px" oninput="this.value=Math.max(1,Math.min(24,parseInt(this.value)||1))" onclick="event.stopPropagation();document.getElementById('demo-dur-hours').checked=true;onDemoDurationModeChange()">
+                      <input type="number" id="demo-dur-hours-max" value="24" min="1" max="24" step="1" style="width:52px;text-align:center;font-family:DM Mono,monospace;font-weight:600;font-size:12px;padding:3px 6px" oninput="this.value=Math.max(1,Math.min(24,parseInt(this.value)||1))" onclick="event.stopPropagation();document.getElementById('demo-dur-hours').checked=true;onDemoDurationModeChange()">
                       <span style="font-size:10px;color:var(--text3)">h</span>
                     </span>
                   </label>
@@ -3712,7 +4011,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                     </span>
                     <span style="display:flex;align-items:center;gap:5px">
                       <span style="font-size:10px;color:var(--text3)">max</span>
-                      <input type="number" id="demo-dur-days-max" value="7" min="2" max="90" step="1" style="width:52px;text-align:center;font-family:'DM Mono',monospace;font-weight:600;font-size:12px;padding:3px 6px" oninput="this.value=Math.max(2,Math.min(90,parseInt(this.value)||2))" onclick="event.stopPropagation();document.getElementById('demo-dur-days').checked=true;onDemoDurationModeChange()">
+                      <input type="number" id="demo-dur-days-max" value="7" min="2" max="90" step="1" style="width:52px;text-align:center;font-family:DM Mono,monospace;font-weight:600;font-size:12px;padding:3px 6px" oninput="this.value=Math.max(2,Math.min(90,parseInt(this.value)||2))" onclick="event.stopPropagation();document.getElementById('demo-dur-days').checked=true;onDemoDurationModeChange()">
                       <span style="font-size:10px;color:var(--text3)">d</span>
                     </span>
                   </label>
@@ -3724,10 +4023,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                     </span>
                     <span style="display:flex;align-items:center;gap:5px;flex-shrink:0" id="demo-dur-mix-inputs">
                       <span style="font-size:10px;color:var(--text3)">≤</span>
-                      <input type="number" id="demo-dur-mix-hours" value="24" min="1" max="24" step="1" style="width:42px;text-align:center;font-family:'DM Mono',monospace;font-weight:600;font-size:12px;padding:3px 6px" oninput="this.value=Math.max(1,Math.min(24,parseInt(this.value)||1))" onclick="event.stopPropagation();document.getElementById('demo-dur-mix').checked=true;onDemoDurationModeChange()">
+                      <input type="number" id="demo-dur-mix-hours" value="24" min="1" max="24" step="1" style="width:42px;text-align:center;font-family:DM Mono,monospace;font-weight:600;font-size:12px;padding:3px 6px" oninput="this.value=Math.max(1,Math.min(24,parseInt(this.value)||1))" onclick="event.stopPropagation();document.getElementById('demo-dur-mix').checked=true;onDemoDurationModeChange()">
                       <span style="font-size:10px;color:var(--text3)">h &amp;</span>
                       <span style="font-size:10px;color:var(--text3)">≤</span>
-                      <input type="number" id="demo-dur-mix-days" value="7" min="2" max="90" step="1" style="width:42px;text-align:center;font-family:'DM Mono',monospace;font-weight:600;font-size:12px;padding:3px 6px" oninput="this.value=Math.max(2,Math.min(90,parseInt(this.value)||2))" onclick="event.stopPropagation();document.getElementById('demo-dur-mix').checked=true;onDemoDurationModeChange()">
+                      <input type="number" id="demo-dur-mix-days" value="7" min="2" max="90" step="1" style="width:42px;text-align:center;font-family:DM Mono,monospace;font-weight:600;font-size:12px;padding:3px 6px" oninput="this.value=Math.max(2,Math.min(90,parseInt(this.value)||2))" onclick="event.stopPropagation();document.getElementById('demo-dur-mix').checked=true;onDemoDurationModeChange()">
                       <span style="font-size:10px;color:var(--text3)">d</span>
                     </span>
                   </label>
@@ -3917,7 +4216,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
             <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">Pairs / Instruments</span>
           </div>
-          <span id="pairs-total-count" style="font-size:10px;font-weight:600;color:var(--text3);font-family:'DM Mono',monospace;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:1px 7px"></span>
+          <span id="pairs-total-count" style="font-size:10px;font-weight:600;color:var(--text3);font-family:DM Mono,monospace;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:1px 7px"></span>
         </div>
         <!-- Asset type filter tabs -->
         <div id="pairs-tab-bar" style="display:flex;gap:4px;flex-wrap:wrap;min-height:24px;flex-shrink:0"></div>
@@ -5500,7 +5799,7 @@ async function populateSessionSelects(restoreSessionId){
 }
 
 // ══ Navigation ════════════════════════════════════
-var pageMap={'pre-checklist':{title:'Pre-trade check',sub:'Verify your setup before sizing and logging'},dashboard:{title:'Dashboard',sub:'Overview of your trading performance'},log:{title:'Log trade',sub:'Record a new trade entry'},history:{title:'Trade history',sub:'Browse and filter all your trades'},sessions:{title:'Sessions',sub:'Manage your trading session periods'},'checklist-editor':{title:'Checklist editor',sub:'Edit checklist items globally'},backup:{title:'Backup & restore',sub:'Export, import or clear your journal data'},montecarlo:{title:'Monte Carlo',sub:'Simulate future equity paths from historical trade data'},calculator:{title:'Position Size Calculator',sub:'Forex · Crypto · Gold · Stocks · Indices'},calendar:{title:'Calendar view',sub:'Visual trade activity by day, week and year'},'ai-analyzer':{title:'AI Trade Analyzer',sub:'Intelligent session review powered by AI'},'price-alerts':{title:'Price Alerts',sub:'Get notified on your phone when a price target is hit'}};;
+var pageMap={'pre-checklist':{title:'Pre-trade checklist',sub:'Calendar → Checklist → Calculator → Log trade'},dashboard:{title:'Dashboard',sub:'Overview of your trading performance'},log:{title:'Log trade',sub:'Record a new trade entry'},history:{title:'Trade history',sub:'Browse and filter all your trades'},sessions:{title:'Sessions',sub:'Manage your trading session periods'},'checklist-editor':{title:'Checklist editor',sub:'Edit checklist items globally'},backup:{title:'Backup & restore',sub:'Export, import or clear your journal data'},montecarlo:{title:'Monte Carlo',sub:'Simulate future equity paths from historical trade data'},calculator:{title:'Position Size Calculator',sub:'Forex · Crypto · Gold · Stocks · Indices'},calendar:{title:'Calendar view',sub:'Visual trade activity by day, week and year'},'ai-analyzer':{title:'AI Trade Analyzer',sub:'Intelligent session review powered by AI'},'price-alerts':{title:'Price Alerts',sub:'Get notified on your phone when a price target is hit'},fxstreet:{title:'Economic events',sub:'ForexFactory calendar — check before trading'}};;
 var _currentPage='dashboard';
 function nav(id,btn){
   // Reset log form when navigating away — but preserve it if going back to calc within the flow
@@ -5514,7 +5813,7 @@ function nav(id,btn){
     }
   }
   // Only reset calculator if NOT navigating within the flow
-  var flowPages=['pre-checklist','calculator','log'];
+  var flowPages=['fxstreet','pre-checklist','calculator','log'];
   var leavingFlow=_flowActive&&flowPages.indexOf(id)===-1;
   if(_currentPage==='calculator'&&id!=='calculator'){
     if(!_flowActive||leavingFlow){calcReset();}
@@ -5556,6 +5855,7 @@ function nav(id,btn){
   if(id==='calculator'){if(!_flowActive){calcReset();}calcSyncAssets();}
   if(id==='calendar'){calPopulateSessionFilter().then(function(){calJumpToMostRecent().then(function(){renderCalendar();});});}
   if(id==='ai-analyzer'){aiAnalyzerInit();}
+  if(id==='fxstreet'){fxsOnPageEnter();}
 }
 function startNewTrade(){
   var logBtn=document.querySelector('.nav-item[onclick*="nav(\'log\'"]');
@@ -6751,7 +7051,7 @@ async function deleteTrade(id){
 
 // ══ History columns ════════════════════════════════
 var ALL_HISTORY_COLS=[
-  {key:'num',       label:'Trade #',   sortVal:function(t){return parseInt(t.num)||0;},           render:function(t){return'<td style="font-weight:600;color:var(--text);font-family:\'DM Mono\',monospace">#'+escHtml(t.num||'')+'</td>';}},
+  {key:'num',       label:'Trade #',   sortVal:function(t){return parseInt(t.num)||0;},           render:function(t){return'<td style="font-weight:600;color:var(--text);font-family:DM Mono,monospace">#'+escHtml(t.num||'')+'</td>';}},
   {key:'sessionName',label:'Session',  sortVal:function(t){return(t._sessionName||'').toLowerCase();},render:function(t){return'<td style="font-size:11px;color:var(--text3);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+escHtml(t._sessionName||'')+'">'+escHtml(t._sessionName||'—')+'</td>';}},
   {key:'pair',      label:'Pair',      sortVal:function(t){return t.pair||'';},                   render:function(t){return'<td style="font-weight:600;color:var(--text)">'+escHtml(t.pair||'')+'</td>';}},
   {key:'assetType', label:'Asset',     sortVal:function(t){return t.assetType||'';},              render:function(t){return'<td style="color:var(--text2)">'+escHtml(t.assetType||'—')+'</td>';}},
@@ -6768,7 +7068,7 @@ var ALL_HISTORY_COLS=[
   {key:'riskpct',   label:'Risk %',    sortVal:function(t){return parseFloat(t.riskpct)||0;},     render:function(t){return'<td class="mono">'+(t.riskpct?t.riskpct+'%':'—')+'</td>';}},
   {key:'riskDollar',label:'Risk $',    sortVal:function(t){return parseFloat(t.riskDollar)||0;},  render:function(t){return'<td class="mono">'+(t.riskDollar?'$'+parseFloat(t.riskDollar).toFixed(2):'—')+'</td>';}},
   {key:'strategy',  label:'Strategy',  sortVal:function(t){return t.strategy||'';},               render:function(t){return'<td style="font-size:11px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(t.strategy||'—')+'</td>';}},
-  {key:'durationMin',label:'Duration', sortVal:function(t){return t.durationMin||0;},             render:function(t){if(!t.durationMin)return'<td>—</td>';var total=t.durationMin,days=Math.floor(total/1440),h=Math.floor((total%1440)/60),m=total%60;if(days>0){var label=days+'d'+(h>0?' '+h+'h':'');return'<td><span style="display:inline-flex;align-items:center;gap:4px;background:rgba(155,127,240,.12);border:1px solid rgba(155,127,240,.25);color:var(--purple);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;font-family:\'DM Mono\',monospace;white-space:nowrap">⏱ '+label+'</span></td>';}return'<td style="font-size:12px;color:var(--text2)">'+(h>0?h+'h ':'')+m+'m</td>';}},
+  {key:'durationMin',label:'Duration', sortVal:function(t){return t.durationMin||0;},             render:function(t){if(!t.durationMin)return'<td>—</td>';var total=t.durationMin,days=Math.floor(total/1440),h=Math.floor((total%1440)/60),m=total%60;if(days>0){var label=days+'d'+(h>0?' '+h+'h':'');return'<td><span style="display:inline-flex;align-items:center;gap:4px;background:rgba(155,127,240,.12);border:1px solid rgba(155,127,240,.25);color:var(--purple);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;font-family:DM Mono,monospace;white-space:nowrap">⏱ '+label+'</span></td>';}return'<td style="font-size:12px;color:var(--text2)">'+(h>0?h+'h ':'')+m+'m</td>';}},
   {key:'rating',    label:'Rating',    sortVal:function(t){return(t.rating||'').length;},         render:function(t){return'<td><span class="stars">'+(t.rating||'')+'</span></td>';}},
   {key:'error',     label:'Error type',sortVal:function(t){return t.error||'';},                  render:function(t){return'<td style="font-size:11px;color:var(--text2)">'+escHtml(t.error||'—')+'</td>';}},
   {key:'model',     label:'Model',     sortVal:function(t){return t.model||'';},                  render:function(t){return'<td style="font-size:11px;color:var(--text2)">'+escHtml(t.model||'—')+'</td>';}},
@@ -7190,7 +7490,7 @@ async function openDetail(id){
     +(trade.partialTPs&&trade.partialTPs.length?
       '<div class="detail-item" style="grid-column:1/-1"><div class="di-label">Partial TPs ('+trade.partialTPs.length+')</div>'
       +'<div class="di-val" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:3px">'
-      +trade.partialTPs.map(function(p,i){return'<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;font-family:\'DM Mono\',monospace;background:rgba(77,127,255,.1);border:1px solid rgba(77,127,255,.2);color:var(--accent)">'
+      +trade.partialTPs.map(function(p,i){return'<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;font-family:DM Mono,monospace;background:rgba(77,127,255,.1);border:1px solid rgba(77,127,255,.2);color:var(--accent)">'
         +'<span style="font-size:9px;font-weight:700;color:var(--accent);opacity:.7">#'+(i+1)+'</span>'
         +' TP @ '+p.price+' · '+p.qty+' units'
       +'</span>';}).join('')
@@ -7367,7 +7667,7 @@ async function _renderDashboardImpl(){
     var win=t.winLoss===1;
     var pl=parseFloat(t.plDollar)||0;
     var typ=t.type||'';
-    return'<tr onclick="openDetail(\''+t.id+'\')">'      +'<td style="color:var(--text);font-weight:600;font-family:\'DM Mono\',monospace">#'+escHtml(t.num||'')+'</td>'      +'<td style="color:var(--text);font-weight:600">'+escHtml(t.pair||'')+'</td>'      +'<td>'+(typ?'<span class="badge '+(typ==='Long'?'badge-green':'badge-red')+'">'+typ+'</span>':'—')+'</td>'      +'<td><span class="badge '+(win?'badge-green':'badge-red')+'">'+(win?'Win':'Loss')+'</span></td>'      +'<td class="mono" style="color:'+(pl>=0?'var(--green)':'var(--red)')+'">'+((pl>=0?'+':'')+pl.toFixed(2))+'</td>'      +'<td class="mono">'+(t.actualRR!=null?parseFloat(t.actualRR).toFixed(2)+'R':'—')+'</td>'      +'</tr>';
+    return'<tr onclick="openDetail(\''+t.id+'\')">'      +'<td style="color:var(--text);font-weight:600;font-family:DM Mono,monospace">#'+escHtml(t.num||'')+'</td>'      +'<td style="color:var(--text);font-weight:600">'+escHtml(t.pair||'')+'</td>'      +'<td>'+(typ?'<span class="badge '+(typ==='Long'?'badge-green':'badge-red')+'">'+typ+'</span>':'—')+'</td>'      +'<td><span class="badge '+(win?'badge-green':'badge-red')+'">'+(win?'Win':'Loss')+'</span></td>'      +'<td class="mono" style="color:'+(pl>=0?'var(--green)':'var(--red)')+'">'+((pl>=0?'+':'')+pl.toFixed(2))+'</td>'      +'<td class="mono">'+(t.actualRR!=null?parseFloat(t.actualRR).toFixed(2)+'R':'—')+'</td>'      +'</tr>';
   }).join('');
   document.getElementById('dash-recent').innerHTML=!recent.length?'<div class="empty-state"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><p>No trades yet</p><button class="btn btn-primary" onclick="startNewTrade()">Log your first trade</button></div>':'<table class="data"><thead><tr><th>Trade #</th><th>Pair</th><th>Type</th><th>Result</th><th>P/L ($)</th><th>RR</th></tr></thead><tbody>'+recentRows+'</tbody></table>';
 }
@@ -8000,7 +8300,7 @@ async function renderAssetTypeList(){
       return'<div class="strat-card" style="cursor:default">'
         +'<div class="strat-card-bar" style="background:'+color+'"></div>'
         +'<span contenteditable="true" id="ate-'+i+'" class="strat-card-name" onblur="updateAssetTypeName('+i+',this.textContent.trim())" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur()}">'+escHtml(at.name)+'</span>'
-        +'<span style="font-size:10px;font-weight:700;color:var(--text3);font-family:\'DM Mono\',monospace;flex-shrink:0;margin-right:4px">'+count+' pair'+(count!==1?'s':'')+'</span>'
+        +'<span style="font-size:10px;font-weight:700;color:var(--text3);font-family:DM Mono,monospace;flex-shrink:0;margin-right:4px">'+count+' pair'+(count!==1?'s':'')+'</span>'
         +'<div class="strat-card-actions">'
         +'<button class="btn btn-ghost btn-sm btn-icon" title="Rename" onclick="var n=document.getElementById(\'ate-'+i+'\');n.focus();var r=window.getSelection();var rng=document.createRange();rng.selectNodeContents(n);r.removeAllRanges();r.addRange(rng)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>'
         +'<button class="btn btn-danger btn-sm btn-icon" title="Delete" onclick="deleteAssetType('+i+')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>'
@@ -8479,7 +8779,7 @@ async function calcOnBacktestSessionChange(){
   calcCalc();
 }
 
-// ══ Pre-trade check flow ══════════════════════
+// ══ Full trade flow flow ══════════════════════
 var _pendingChecklistState = null; // carries checklist state from pre-checklist → calc → log
 var _flowActive = false;           // true while in pre-check → calc → log flow
 var _flowCalcSnapshot = null;      // snapshot of calc-filled log fields for re-applying on forward
@@ -8514,9 +8814,9 @@ function flowUpdateStepIndicators(){
       dot.style.border = 'none';
       dot.style.color = '#fff';
       // restore number
-      if(dotId==='pre-cl-step2-dot') dot.textContent='2';
-      if(dotId==='pre-cl-step3-dot') dot.textContent='3';
-      if(dotId==='calc-banner-step3-dot') dot.textContent='3';
+      if(dotId==='pre-cl-step2-dot') dot.textContent='3';
+      if(dotId==='pre-cl-step3-dot') dot.textContent='4';
+      if(dotId==='calc-banner-step3-dot') dot.textContent='4';
     } else {
       span.style.opacity = '.45';
       span.style.color = '';
@@ -8525,9 +8825,9 @@ function flowUpdateStepIndicators(){
       dot.style.background = 'var(--bg4)';
       dot.style.border = '1px solid var(--border2)';
       dot.style.color = 'var(--text3)';
-      if(dotId==='pre-cl-step2-dot') dot.textContent='2';
-      if(dotId==='pre-cl-step3-dot') dot.textContent='3';
-      if(dotId==='calc-banner-step3-dot') dot.textContent='3';
+      if(dotId==='pre-cl-step2-dot') dot.textContent='3';
+      if(dotId==='pre-cl-step3-dot') dot.textContent='4';
+      if(dotId==='calc-banner-step3-dot') dot.textContent='4';
     }
   }
 
@@ -8566,7 +8866,7 @@ function flowUpdateStepIndicators(){
 
 // ── Flow back-navigation ──────────────────────────────────
 async function flowBackToPreCheck(){
-  // Go back to pre-trade check from calculator or log-trade — preserve flow state so
+  // Go back to full trade flow from calculator or log-trade — preserve flow state so
   // step indicators stay green and links remain active.
   // Save live checklist state before re-rendering so it survives the DOM rebuild.
   // Only skip if the checklist DOM hasn't been rendered yet (no items found).
@@ -8657,23 +8957,9 @@ function flowBackToCalc(){
 }
 
 async function openPreChecklist() {
-  // Update nav active state
-  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
-  var btn = document.getElementById('nav-pre-checklist');
-  if(btn) btn.classList.add('active');
-  // Navigate
-  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
-  var page = document.getElementById('page-pre-checklist');
-  if(page) page.classList.add('active');
-  var mainEl=document.querySelector('.main');if(mainEl)mainEl.scrollTop=0;
-  _currentPage = 'pre-checklist';
-  var _pm = pageMap['pre-checklist'] || {};
-  document.getElementById('topbar-title').textContent = _pm.title || '';
-  document.getElementById('topbar-sub').textContent = _pm.sub || '';
-  // Sync step indicators with actual flow state — covers the case where the flow was
-  // broken by navigating away (e.g. to dashboard) and the user then returns here directly.
-  flowUpdateStepIndicators();
-  await preClRender();
+  // Step 1 of flow is now the economic calendar
+  _flowActive = true;
+  nav('fxstreet', document.getElementById('nav-fxstreet'));
 }
 
 async function preClRender() {
@@ -8857,7 +9143,7 @@ async function calcLogTrade(){
   var skippedCb=document.getElementById('f-skipped');
   if(skippedCb){skippedCb.checked=calcIsSkipped;onSkippedChange();}
 
-  // Apply pre-trade checklist state — renderChecklist is async (IDB), await it then apply synchronously.
+  // Apply full trade flowlist state — renderChecklist is async (IDB), await it then apply synchronously.
   if(capturedChecklistState){
     await renderChecklist();
     setChecklist_state(capturedChecklistState);
@@ -10809,7 +11095,7 @@ function calRenderMonth(){
         footerHtml='<div class="cal-pl-footer">'+
           '<div style="display:flex;align-items:baseline;gap:4px">'+
             '<div class="cal-pl-footer-val" style="color:'+(dayPl>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(dayPl)+'</div>'+
-            (dayPlPct!==0?'<div style="font-size:8px;font-weight:600;font-family:\'DM Mono\',monospace;color:'+(dayPlPct>=0?'var(--green)':'var(--red)')+'">'+calPctFmt(dayPlPct)+'</div>':'')+
+            (dayPlPct!==0?'<div style="font-size:8px;font-weight:600;font-family:DM Mono,monospace;color:'+(dayPlPct>=0?'var(--green)':'var(--red)')+'">'+calPctFmt(dayPlPct)+'</div>':'')+
           '</div>'+
           '<div class="cal-pl-footer-meta">'+
             '<span>'+c.trades.length+' trade'+(c.trades.length>1?'s':'')+'</span>'+
@@ -10895,16 +11181,16 @@ function calRenderMonth(){
       '<div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'+
         '<span style="font-size:12px;font-weight:700;color:var(--text2)">'+moTitle+'</span>'+
         '<div style="display:flex;align-items:baseline;gap:7px">'+
-          '<span style="font-size:18px;font-weight:700;font-family:\'DM Mono\',monospace;color:'+(moPl>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(moPl)+'</span>'+
-          (moPlPct!==0?'<span style="font-size:12px;font-weight:600;font-family:\'DM Mono\',monospace;color:'+(moPlPct>=0?'var(--green)':'var(--red)')+'">'+calPctFmt(moPlPct)+'</span>':'')+
+          '<span style="font-size:18px;font-weight:700;font-family:DM Mono,monospace;color:'+(moPl>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(moPl)+'</span>'+
+          (moPlPct!==0?'<span style="font-size:12px;font-weight:600;font-family:DM Mono,monospace;color:'+(moPlPct>=0?'var(--green)':'var(--red)')+'">'+calPctFmt(moPlPct)+'</span>':'')+
         '</div>'+
       '</div>'+
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:0;padding:0">'+
         '<div class="js-stat-cell"><div class="js-stat-lbl">Trades</div><div class="js-val-lg">'+monthTrades.length+'</div></div>'+
         '<div class="js-stat-cell"><div class="js-stat-lbl">Win Rate</div><div class="js-val-lg">'+moWinRate+'%</div><div class="js-hint-mt"><span style="color:var(--green)">'+moWins+'W</span> / <span style="color:var(--red)">'+moLosses+'L</span></div></div>'+
         (moAvgRR!=null?'<div class="js-stat-cell"><div class="js-stat-lbl">Avg RR</div><div class="js-val-lg">'+moAvgRR.toFixed(2)+'R</div></div>':'')+
-        (moBestDay!==null?'<div class="js-stat-cell"><div class="js-stat-lbl">Best Day</div><div style="font-size:20px;font-weight:700;font-family:\'DM Mono\',monospace;color:var(--green)">'+calPlFmt(moBestDay)+'</div></div>':'')+
-        (moWorstDay!==null?'<div style="padding:12px 14px"><div class="js-stat-lbl">Worst Day</div><div style="font-size:20px;font-weight:700;font-family:\'DM Mono\',monospace;color:'+(moWorstDay>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(moWorstDay)+'</div></div>':'')+
+        (moBestDay!==null?'<div class="js-stat-cell"><div class="js-stat-lbl">Best Day</div><div style="font-size:20px;font-weight:700;font-family:DM Mono,monospace;color:var(--green)">'+calPlFmt(moBestDay)+'</div></div>':'')+
+        (moWorstDay!==null?'<div style="padding:12px 14px"><div class="js-stat-lbl">Worst Day</div><div style="font-size:20px;font-weight:700;font-family:DM Mono,monospace;color:'+(moWorstDay>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(moWorstDay)+'</div></div>':'')+
       '</div>'+
     '</div>';
     monthSummaryHtml='<details class="cal-summary-details" style="margin-top:12px">'+
@@ -10984,8 +11270,8 @@ function calRenderWeek(){
     if(dayTrades.length){
       dayPlHtml='<div style="margin-top:6px;padding-top:5px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px">'+
         '<div style="display:flex;align-items:baseline;gap:5px">'+
-          '<span style="font-size:10px;font-weight:700;font-family:\'DM Mono\',monospace;color:'+(dayPl>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(dayPl)+'</span>'+
-          (dayPlPct!==0?'<span style="font-size:9px;font-weight:600;font-family:\'DM Mono\',monospace;color:'+(dayPlPct>=0?'var(--green)':'var(--red)')+'">'+calPctFmt(dayPlPct)+'</span>':'')+
+          '<span style="font-size:10px;font-weight:700;font-family:DM Mono,monospace;color:'+(dayPl>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(dayPl)+'</span>'+
+          (dayPlPct!==0?'<span style="font-size:9px;font-weight:600;font-family:DM Mono,monospace;color:'+(dayPlPct>=0?'var(--green)':'var(--red)')+'">'+calPctFmt(dayPlPct)+'</span>':'')+
         '</div>'+
         '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
           '<span style="font-size:9px;color:var(--text3)">'+dayTrades.length+' trade'+(dayTrades.length>1?'s':'')+'</span>'+
@@ -11030,16 +11316,16 @@ function calRenderWeek(){
     '<div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'+
       '<span style="font-size:12px;font-weight:700;color:var(--text2)">Week Summary — '+titleStr+'</span>'+
       '<div style="display:flex;align-items:baseline;gap:7px">'+
-        '<span style="font-size:18px;font-weight:700;font-family:\'DM Mono\',monospace;color:'+(wPl>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(wPl)+'</span>'+
-        (wPlPct!==0?'<span style="font-size:12px;font-weight:600;font-family:\'DM Mono\',monospace;color:'+(wPlPct>=0?'var(--green)':'var(--red)')+'">'+calPctFmt(wPlPct)+'</span>':'')+
+        '<span style="font-size:18px;font-weight:700;font-family:DM Mono,monospace;color:'+(wPl>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(wPl)+'</span>'+
+        (wPlPct!==0?'<span style="font-size:12px;font-weight:600;font-family:DM Mono,monospace;color:'+(wPlPct>=0?'var(--green)':'var(--red)')+'">'+calPctFmt(wPlPct)+'</span>':'')+
       '</div>'+
     '</div>'+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:0;padding:0">'+
       '<div class="js-stat-cell"><div class="js-stat-lbl">Trades</div><div class="js-val-lg">'+weekTrades.length+'</div></div>'+
       '<div class="js-stat-cell"><div class="js-stat-lbl">Win Rate</div><div class="js-val-lg">'+wWinRate+'%</div><div class="js-hint-mt"><span style="color:var(--green)">'+wWins+'W</span> / <span style="color:var(--red)">'+wLosses+'L</span></div></div>'+
       (avgRR!=null?'<div class="js-stat-cell"><div class="js-stat-lbl">Avg RR</div><div class="js-val-lg">'+avgRR.toFixed(2)+'R</div></div>':'')+
-      (wBestDay!==null?'<div class="js-stat-cell"><div class="js-stat-lbl">Best Day</div><div style="font-size:20px;font-weight:700;font-family:\'DM Mono\',monospace;color:var(--green)">'+calPlFmt(wBestDay)+'</div></div>':'')+
-      (wWorstDay!==null?'<div style="padding:12px 14px"><div class="js-stat-lbl">Worst Day</div><div style="font-size:20px;font-weight:700;font-family:\'DM Mono\',monospace;color:'+(wWorstDay>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(wWorstDay)+'</div></div>':'')+
+      (wBestDay!==null?'<div class="js-stat-cell"><div class="js-stat-lbl">Best Day</div><div style="font-size:20px;font-weight:700;font-family:DM Mono,monospace;color:var(--green)">'+calPlFmt(wBestDay)+'</div></div>':'')+
+      (wWorstDay!==null?'<div style="padding:12px 14px"><div class="js-stat-lbl">Worst Day</div><div style="font-size:20px;font-weight:700;font-family:DM Mono,monospace;color:'+(wWorstDay>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(wWorstDay)+'</div></div>':'')+
     '</div>'+
   '</div>';
 
@@ -11143,7 +11429,7 @@ function calRenderYear(){
     html+='<div class="'+cardCls+'" onclick="calClickYearMonth('+y+','+mo+')">'+
       '<div class="cal-year-month-header">'+
         '<div class="cal-year-month-name">'+monthName+' '+y+'</div>'+
-        (moCnt?'<div style="display:flex;align-items:baseline;gap:5px"><div class="cal-year-month-pl '+(moPl>=0?'pos':'neg')+'">'+calPlFmt(moPl)+'</div>'+(moPlPct!==0?'<div style="font-size:10px;font-weight:600;font-family:\'DM Mono\',monospace;color:'+(moPlPct>=0?'var(--green)':'var(--red)')+'">'+calPctFmt(moPlPct)+'</div>':'')+'</div>':'')+
+        (moCnt?'<div style="display:flex;align-items:baseline;gap:5px"><div class="cal-year-month-pl '+(moPl>=0?'pos':'neg')+'">'+calPlFmt(moPl)+'</div>'+(moPlPct!==0?'<div style="font-size:10px;font-weight:600;font-family:DM Mono,monospace;color:'+(moPlPct>=0?'var(--green)':'var(--red)')+'">'+calPctFmt(moPlPct)+'</div>':'')+'</div>':'')+
       '</div>'+
       cardBody+
     '</div>';
@@ -11196,8 +11482,8 @@ function calRenderYear(){
       '<div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'+
         '<span style="font-size:12px;font-weight:700;color:var(--text2)">'+y+'</span>'+
         '<div style="display:flex;align-items:baseline;gap:7px">'+
-          '<span style="font-size:18px;font-weight:700;font-family:\'DM Mono\',monospace;color:'+(yrPl>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(yrPl)+'</span>'+
-          (yrPlPct!==0?'<span style="font-size:12px;font-weight:600;font-family:\'DM Mono\',monospace;color:'+(yrPlPct>=0?'var(--green)':'var(--red)')+'">'+calPctFmt(yrPlPct)+'</span>':'')+
+          '<span style="font-size:18px;font-weight:700;font-family:DM Mono,monospace;color:'+(yrPl>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(yrPl)+'</span>'+
+          (yrPlPct!==0?'<span style="font-size:12px;font-weight:600;font-family:DM Mono,monospace;color:'+(yrPlPct>=0?'var(--green)':'var(--red)')+'">'+calPctFmt(yrPlPct)+'</span>':'')+
         '</div>'+
       '</div>'+
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:0;padding:0">'+
@@ -11205,8 +11491,8 @@ function calRenderYear(){
         '<div class="js-stat-cell"><div class="js-stat-lbl">Win Rate</div><div class="js-val-lg">'+yrWinRate+'%</div><div class="js-hint-mt"><span style="color:var(--green)">'+yrWins+'W</span> / <span style="color:var(--red)">'+yrLosses+'L</span></div></div>'+
         (yrAvgRR!=null?'<div class="js-stat-cell"><div class="js-stat-lbl">Avg RR</div><div class="js-val-lg">'+yrAvgRR.toFixed(2)+'R</div></div>':'')+
         '<div class="js-stat-cell"><div class="js-stat-lbl">Active Months</div><div class="js-val-lg">'+activeMonths.length+' / 12</div></div>'+
-        (yrBestMo!==null?'<div class="js-stat-cell"><div class="js-stat-lbl">Best Month</div><div style="font-size:14px;font-weight:700;font-family:\'DM Mono\',monospace;color:var(--green)">'+calPlFmt(yrBestMo)+'</div><div class="js-hint-mt">'+yrBestMoName+'</div></div>':'')+
-        (yrWorstMo!==null?'<div style="padding:12px 14px"><div class="js-stat-lbl">Worst Month</div><div style="font-size:14px;font-weight:700;font-family:\'DM Mono\',monospace;color:'+(yrWorstMo>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(yrWorstMo)+'</div><div class="js-hint-mt">'+yrWorstMoName+'</div></div>':'')+
+        (yrBestMo!==null?'<div class="js-stat-cell"><div class="js-stat-lbl">Best Month</div><div style="font-size:14px;font-weight:700;font-family:DM Mono,monospace;color:var(--green)">'+calPlFmt(yrBestMo)+'</div><div class="js-hint-mt">'+yrBestMoName+'</div></div>':'')+
+        (yrWorstMo!==null?'<div style="padding:12px 14px"><div class="js-stat-lbl">Worst Month</div><div style="font-size:14px;font-weight:700;font-family:DM Mono,monospace;color:'+(yrWorstMo>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(yrWorstMo)+'</div><div class="js-hint-mt">'+yrWorstMoName+'</div></div>':'')+
       '</div>'+
     '</div>';
     html+='<details class="cal-summary-details" style="margin-top:12px">'+
@@ -11275,10 +11561,10 @@ function calShowDayDetail(key){
   }
 
   var summaryHtml='<div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap">'+
-    '<div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:700">Trades</div><div style="font-size:18px;font-weight:700;font-family:\'DM Mono\',monospace">'+dayTrades.length+'</div></div>'+
-    '<div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:700">P/L</div><div style="font-size:18px;font-weight:700;font-family:\'DM Mono\',monospace;color:'+(pl>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(pl)+'</div></div>'+
-    '<div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:700">Win rate</div><div style="font-size:18px;font-weight:700;font-family:\'DM Mono\',monospace">'+(dayTrades.length?(wins/dayTrades.length*100).toFixed(0):0)+'%</div></div>'+
-    (avgRR!=null?'<div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:700">Avg RR</div><div style="font-size:18px;font-weight:700;font-family:\'DM Mono\',monospace">'+avgRR.toFixed(2)+'R</div></div>':'')+
+    '<div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:700">Trades</div><div style="font-size:18px;font-weight:700;font-family:DM Mono,monospace">'+dayTrades.length+'</div></div>'+
+    '<div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:700">P/L</div><div style="font-size:18px;font-weight:700;font-family:DM Mono,monospace;color:'+(pl>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(pl)+'</div></div>'+
+    '<div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:700">Win rate</div><div style="font-size:18px;font-weight:700;font-family:DM Mono,monospace">'+(dayTrades.length?(wins/dayTrades.length*100).toFixed(0):0)+'%</div></div>'+
+    (avgRR!=null?'<div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:700">Avg RR</div><div style="font-size:18px;font-weight:700;font-family:DM Mono,monospace">'+avgRR.toFixed(2)+'R</div></div>':'')+
     '</div>';
 
   var tradesHtml='<div class="cal-detail-trades">'+dayTrades.map(function(t){
@@ -11287,7 +11573,7 @@ function calShowDayDetail(key){
     var rr=t.actualRR!=null?parseFloat(t.actualRR).toFixed(2)+'R':'—';
     return'<div class="cal-detail-trade" onclick="openDetail(\''+t.id+'\')">'+
       '<span class="badge '+(win?'badge-green':'badge-red')+'">'+(win?'Win':'Loss')+'</span>'+
-      '<span style="font-weight:700;color:var(--text);font-family:\'DM Mono\',monospace">#'+escHtml(t.num||'')+'</span>'+
+      '<span style="font-weight:700;color:var(--text);font-family:DM Mono,monospace">#'+escHtml(t.num||'')+'</span>'+
       '<span style="color:var(--text);font-weight:600">'+escHtml(t.pair||'')+'</span>'+
       '<span style="color:var(--text2);font-size:11px">'+escHtml(t.strategy||'—')+'</span>'+
       (t.partialTPs&&t.partialTPs.length?'<span style="font-size:9px;font-weight:700;background:rgba(77,127,255,.12);color:var(--accent);border-radius:3px;padding:1px 5px">'+t.partialTPs.length+' partial'+(t.partialTPs.length>1?'s':'')+'</span>':'')+
@@ -12146,7 +12432,7 @@ function aiRenderResults(m,scores,aiText,sessionInfo,totalCount,typeF){
     var tags=scoreTags[si.key]||[];
     html+='<div class="ai-score-card">';
     html+='<div class="ai-score-val '+aiGradeClass(g)+'">'+g+'</div>';
-    html+='<div style="font-size:11px;font-family:\'DM Mono\',monospace;color:var(--text3);margin-bottom:3px">'+si.score+'/100</div>';
+    html+='<div style="font-size:11px;font-family:DM Mono,monospace;color:var(--text3);margin-bottom:3px">'+si.score+'/100</div>';
     html+='<div class="ai-score-lbl">'+si.label+'</div>';
     if(tags.length){
       html+='<div style="margin-top:7px;display:flex;flex-wrap:wrap;gap:3px;justify-content:center;border-top:1px solid var(--border);padding-top:7px">';
@@ -14865,7 +15151,7 @@ function cfDownloadPatch(){
       .pa-cloud-body{padding:14px;border-top:1px solid var(--border);display:none}
       .pa-cloud-field{margin-bottom:10px}
       .pa-cloud-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
-      .pa-cloud-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:12px;font-family:'DM Mono',monospace;padding:6px 10px;outline:none}
+      .pa-cloud-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:12px;font-family:DM Mono,monospace;padding:6px 10px;outline:none}
       .pa-cloud-input:focus{border-color:var(--accent)}
       .pa-cloud-input::placeholder{color:var(--text3);font-family:'DM Sans',sans-serif}
       .pa-cloud-hint{font-size:10px;color:var(--text3);margin-top:4px;line-height:1.5}
@@ -15585,5 +15871,246 @@ document.addEventListener('DOMContentLoaded',function(){
   });
 });
 </script>
+
+<script>
+// ══ Economic Calendar Fetch (News & macro context panel) ══════════════════
+// localStorage keys
+var EC_KEY_FCS        = 'tj-ec-fcs-key';
+var EC_KEY_MARKETAUX  = 'tj-ec-marketaux-key';
+
+// Persisted fetch results for the current form session (cleared on clearForm)
+var _ecLastEvents = [];
+
+function ecSaveKey(provider) {
+  var el = document.getElementById('pa-' + provider + '-key');
+  if (!el) return;
+  var key = el.value.trim();
+  if (!key) { toast('Enter your ' + (provider === 'fcs' ? 'FCS API' : 'Marketaux') + ' key', 'err'); return; }
+  localStorage.setItem(provider === 'fcs' ? EC_KEY_FCS : EC_KEY_MARKETAUX, key);
+  toast((provider === 'fcs' ? 'FCS API' : 'Marketaux') + ' key saved', 'ok');
+  // Refresh status badge
+  var statusEl = document.getElementById('pa-key-' + provider + '-status');
+  if (statusEl) statusEl.textContent = '✓ saved';
+}
+
+// Extract currency codes from a forex pair string like "EURUSD", "EUR/USD", "XAU/USD"
+function ecPairToCurrencies(pair) {
+  if (!pair) return [];
+  var clean = pair.replace('/', '').toUpperCase();
+  if (clean.length === 6) return [clean.slice(0, 3), clean.slice(3, 6)];
+  if (clean.length >= 6) return [clean.slice(0, 3), clean.slice(3, 6)]; // handle XAUUSD etc
+  return [clean];
+}
+
+// Impact label helper
+function ecImpactLabel(impact) {
+  if (!impact && impact !== 0) return '';
+  var i = parseInt(impact, 10);
+  if (i >= 3) return '🔴 High';
+  if (i === 2) return '🟡 Medium';
+  return '⚪ Low';
+}
+
+async function ecFetchEvents() {
+  var btn = document.getElementById('ec-fetch-btn');
+  var statusEl = document.getElementById('ec-fetch-status');
+  var panel = document.getElementById('ec-events-panel');
+  var list = document.getElementById('ec-events-list');
+
+  // Read entry date from form
+  var dateEl = document.getElementById('f-etime-date');
+  var date = dateEl ? dateEl.value : '';
+  if (!date) { toast('Set an entry date first', 'err'); return; }
+
+  var pair = (document.getElementById('f-pair') ? document.getElementById('f-pair').value : '') || '';
+  var currencies = ecPairToCurrencies(pair);
+
+  btn.disabled = true;
+  statusEl.textContent = 'Fetching…';
+  statusEl.style.color = 'var(--text3)';
+  panel.style.display = 'none';
+  list.innerHTML = '';
+  _ecLastEvents = [];
+
+  var fcsKey        = localStorage.getItem(EC_KEY_FCS)       || '';
+  var marketauxKey  = localStorage.getItem(EC_KEY_MARKETAUX)  || '';
+
+  var events = null;
+  var source = '';
+
+  // ── Attempt 1: FCS API economic calendar ──────────────────────────
+  if (fcsKey) {
+    try {
+      // FCS calendar endpoint: date range same day
+      var fcsUrl = 'https://fcsapi.com/api-v3/forex/economic_cal'
+        + '?from=' + date + '&to=' + date
+        + '&access_key=' + encodeURIComponent(fcsKey);
+      var fcsResp = await fetch(fcsUrl);
+      if (fcsResp.ok) {
+        var fcsData = await fcsResp.json();
+        if (fcsData && fcsData.response && Array.isArray(fcsData.response) && fcsData.response.length > 0) {
+          // Filter by currency if we have a pair
+          var raw = fcsData.response;
+          if (currencies.length > 0) {
+            var filtered = raw.filter(function(e) {
+              return currencies.some(function(c) { return (e.country || '').toUpperCase() === c || (e.currency || '').toUpperCase() === c; });
+            });
+            events = filtered.length > 0 ? filtered : raw; // fall back to all if nothing matches
+          } else {
+            events = raw;
+          }
+          source = 'FCS API';
+          // Normalise to common shape
+          events = events.map(function(e) {
+            return {
+              time:    e.time || '',
+              title:   e.event || e.title || '(event)',
+              country: e.country || e.currency || '',
+              impact:  e.impact !== undefined ? e.impact : e.volatility,
+              actual:  e.actual !== undefined ? e.actual : '',
+              prev:    e.previous !== undefined ? e.previous : '',
+              forecast:e.forecast !== undefined ? e.forecast : ''
+            };
+          });
+        }
+      }
+    } catch(e) { /* fall through */ }
+  }
+
+  // ── Attempt 2: Marketaux headlines ────────────────────────────────
+  if (!events && marketauxKey) {
+    try {
+      var searchTerms = currencies.length > 0 ? currencies.join(',') : (pair || 'forex');
+      var mxUrl = 'https://api.marketaux.com/v1/news/all'
+        + '?symbols=' + encodeURIComponent(searchTerms)
+        + '&filter_entities=true'
+        + '&published_on=' + date
+        + '&language=en'
+        + '&api_token=' + encodeURIComponent(marketauxKey);
+      var mxResp = await fetch(mxUrl);
+      if (mxResp.ok) {
+        var mxData = await mxResp.json();
+        if (mxData && mxData.data && Array.isArray(mxData.data) && mxData.data.length > 0) {
+          source = 'Marketaux';
+          events = mxData.data.slice(0, 10).map(function(a) {
+            return {
+              time:    (a.published_at || '').slice(11, 16),
+              title:   a.title || '(no title)',
+              country: '',
+              impact:  null,
+              actual:  '',
+              prev:    '',
+              forecast:''
+            };
+          });
+        }
+      }
+    } catch(e) { /* fall through */ }
+  }
+
+  btn.disabled = false;
+
+  if (!events || events.length === 0) {
+    if (!fcsKey && !marketauxKey) {
+      statusEl.innerHTML = 'No API keys set — add FCS API or Marketaux keys in <strong style="color:var(--accent)">Settings → Price Alerts → Providers</strong>';
+    } else {
+      statusEl.textContent = 'No events found for ' + date + (currencies.length ? ' (' + currencies.join('/') + ')' : '');
+    }
+    statusEl.style.color = 'var(--amber)';
+    return;
+  }
+
+  _ecLastEvents = events;
+  statusEl.textContent = source + ' · ' + events.length + ' event' + (events.length === 1 ? '' : 's') + ' for ' + date;
+  statusEl.style.color = 'var(--green)';
+
+  // Render event rows
+  events.forEach(function(ev, idx) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:flex-start;gap:10px;padding:7px 10px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;font-size:11px;';
+    row.onmouseenter = function(){ row.style.background = 'var(--bg4)'; };
+    row.onmouseleave = function(){ row.style.background = ''; };
+
+    var impactHtml = ev.impact !== null && ev.impact !== undefined && ev.impact !== ''
+      ? '<span style="flex-shrink:0;font-size:10px;">' + ecImpactLabel(ev.impact) + '</span>' : '';
+    var metaHtml = '';
+    if (ev.actual !== '' || ev.forecast !== '' || ev.prev !== '') {
+      var parts = [];
+      if (ev.forecast !== '') parts.push('F: ' + ev.forecast);
+      if (ev.actual !== '')   parts.push('A: ' + ev.actual);
+      if (ev.prev !== '')     parts.push('P: ' + ev.prev);
+      metaHtml = '<span style="color:var(--text3);font-family:DM Mono,monospace;font-size:10px;">' + parts.join(' · ') + '</span>';
+    }
+
+    row.innerHTML = ''
+      + (ev.time ? '<span style="color:var(--text3);font-family:DM Mono,monospace;font-size:10px;flex-shrink:0;min-width:36px;">' + ev.time + '</span>' : '')
+      + (ev.country ? '<span style="font-weight:700;color:var(--text2);flex-shrink:0;min-width:28px;font-size:10px;">' + ev.country + '</span>' : '')
+      + '<span style="flex:1;color:var(--text);line-height:1.4;">' + ev.title + '</span>'
+      + impactHtml
+      + metaHtml;
+
+    row.onclick = function() { ecAppendEvent(idx); row.style.background = 'rgba(77,127,255,.1)'; };
+    list.appendChild(row);
+  });
+
+  panel.style.display = 'block';
+}
+
+function ecFormatEventLine(ev) {
+  var line = '';
+  if (ev.country) line += '[' + ev.country + '] ';
+  line += ev.title;
+  var parts = [];
+  if (ev.forecast !== '') parts.push('Forecast: ' + ev.forecast);
+  if (ev.actual !== '')   parts.push('Actual: '   + ev.actual);
+  if (ev.prev !== '')     parts.push('Prev: '     + ev.prev);
+  if (parts.length) line += ' — ' + parts.join(', ');
+  if (ev.impact !== null && ev.impact !== undefined && ev.impact !== '') {
+    var i = parseInt(ev.impact, 10);
+    line += ' (' + (i >= 3 ? 'High impact' : i === 2 ? 'Medium impact' : 'Low impact') + ')';
+  }
+  return line;
+}
+
+function ecAppendEvent(idx) {
+  var ev = _ecLastEvents[idx];
+  if (!ev) return;
+  var ta = document.getElementById('f-news');
+  if (!ta) return;
+  var cur = ta.value;
+  // Strip placeholder default
+  if (cur === '1. ') cur = '';
+  var line = ecFormatEventLine(ev);
+  ta.value = cur + (cur && !cur.endsWith('\n') ? '\n' : '') + line;
+}
+
+function ecAppendAll() {
+  if (!_ecLastEvents || !_ecLastEvents.length) return;
+  var ta = document.getElementById('f-news');
+  if (!ta) return;
+  var cur = ta.value;
+  if (cur === '1. ') cur = '';
+  var lines = _ecLastEvents.map(ecFormatEventLine);
+  ta.value = cur + (cur && !cur.endsWith('\n') ? '\n' : '') + lines.join('\n');
+}
+
+// Clear fetch state when the form is cleared
+var _ecOrigClearForm = typeof clearForm === 'function' ? clearForm : null;
+document.addEventListener('DOMContentLoaded', function() {
+  // Restore key status badges on page load
+  var fcsKey  = localStorage.getItem(EC_KEY_FCS)      || '';
+  var mxKey   = localStorage.getItem(EC_KEY_MARKETAUX) || '';
+  var fcsEl   = document.getElementById('pa-key-fcs-status');
+  var mxEl    = document.getElementById('pa-key-marketaux-status');
+  if (fcsEl  && fcsKey)  fcsEl.textContent  = '✓ saved';
+  if (mxEl   && mxKey)   mxEl.textContent   = '✓ saved';
+  // Also pre-fill the key inputs if already saved
+  var fcsInput = document.getElementById('pa-fcs-key');
+  var mxInput  = document.getElementById('pa-marketaux-key');
+  if (fcsInput  && fcsKey)  fcsInput.value  = fcsKey;
+  if (mxInput   && mxKey)   mxInput.value   = mxKey;
+});
+</script>
+
 </body>
 </html>
