@@ -1937,22 +1937,6 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <svg class="ah-toggle" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
           <div class="analysis-body">
-            <!-- Fetch bar -->
-            <div style="display:flex;align-items:center;gap:7px;margin-bottom:9px;flex-wrap:wrap;">
-              <button class="btn btn-sm" id="ec-fetch-btn" onclick="ecFetchEvents()" style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap;">
-                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                Fetch events for entry date
-              </button>
-              <span id="ec-fetch-status" style="font-size:10px;color:var(--text3);"></span>
-            </div>
-            <!-- Events preview: clicking an event appends it to the textarea -->
-            <div id="ec-events-panel" style="display:none;margin-bottom:9px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;max-height:220px;overflow-y:auto;">
-              <div style="padding:6px 10px;background:var(--bg4);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-                <span style="font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;">Events — click row to append to notes</span>
-                <button class="btn btn-ghost btn-sm" onclick="ecAppendAll()" style="font-size:10px;padding:2px 7px;">Append all</button>
-              </div>
-              <div id="ec-events-list" style="display:flex;flex-direction:column;"></div>
-            </div>
             <div class="frow"><textarea id="f-news">1. </textarea></div>
           </div>
         </div>
