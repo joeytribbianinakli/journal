@@ -7638,7 +7638,7 @@ async function openDetail(id){
       '<div class="detail-item" style="grid-column:1/-1"><div class="di-label">Partial TPs — how taken</div><div class="di-val js-pre">'+escHtml(trade.partialDesc)+'</div></div>'
     :'')
     +'<div class="detail-item"><div class="di-label">Mistake/error</div><div class="di-val">'+(trade.error||'—')+'</div></div>'
-    +'<div class="detail-item"><div class="di-label">Rating</div><div class="di-val">'+(trade.rating?'★ '+trade.rating:'—')+'</div></div>'
+    +'<div class="detail-item"><div class="di-label">Rating</div><div class="di-val">'+(trade.rating||'—')+'</div></div>'
     +'</div>'
     +biasHtml
     +checklistUnmetHtml
