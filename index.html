@@ -902,7 +902,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
     </button>
     <div class="nav-section-label">Tools</div>
     <button class="nav-item" id="nav-fxstreet" onclick="_flowActive=false;nav('fxstreet',this)">
-      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Economic events
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Economic calendar
     </button>
     <button class="nav-item" onclick="nav('ai-analyzer',this)">
       <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M21.17 8H12V2.83"/><circle cx="12" cy="12" r="2"/></svg>AI Analyzer
@@ -3719,11 +3719,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               </div>
             </div>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <a id="ff-day-btn" href="#" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="flex:1;min-width:80px;justify-content:center" onclick="fxsMarkChecked()">
+              <a id="ff-day-btn" href="#" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="flex:1;min-width:80px;justify-content:center" onclick="fxsMarkChecked()">
                 <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 Day view
               </a>
-              <a id="ff-week-btn" href="#" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="flex:1;min-width:60px;justify-content:center" onclick="fxsMarkChecked()">Week</a>
+              <a id="ff-week-btn" href="#" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="flex:1;min-width:60px;justify-content:center" onclick="fxsMarkChecked()">Week</a>
               <a id="ff-month-btn" href="#" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="flex:1;min-width:60px;justify-content:center" onclick="fxsMarkChecked()">Month</a>
             </div>
             <div id="fxs-url-display" style="margin-top:10px;font-family:DM Mono,monospace;font-size:10px;color:var(--text3);word-break:break-all;line-height:1.5;padding:6px 8px;background:var(--bg3);border-radius:var(--radius)"></div>
@@ -5819,7 +5819,7 @@ async function populateSessionSelects(restoreSessionId){
 }
 
 // ══ Navigation ════════════════════════════════════
-var pageMap={'pre-checklist':{title:'Pre-trade checklist',sub:'Calendar → Checklist → Calculator → Log trade'},dashboard:{title:'Dashboard',sub:'Overview of your trading performance'},log:{title:'Log trade',sub:'Record a new trade entry'},history:{title:'Trade history',sub:'Browse and filter all your trades'},sessions:{title:'Sessions',sub:'Manage your trading session periods'},'checklist-editor':{title:'Checklist editor',sub:'Edit checklist items globally'},backup:{title:'Backup & restore',sub:'Export, import or clear your journal data'},montecarlo:{title:'Monte Carlo',sub:'Simulate future equity paths from historical trade data'},calculator:{title:'Position Size Calculator',sub:'Forex · Crypto · Gold · Stocks · Indices'},calendar:{title:'Calendar view',sub:'Visual trade activity by day, week and year'},'ai-analyzer':{title:'AI Trade Analyzer',sub:'Intelligent session review powered by AI'},'price-alerts':{title:'Price Alerts',sub:'Get notified on your phone when a price target is hit'},fxstreet:{title:'Economic events',sub:'ForexFactory calendar — check before trading'}};;
+var pageMap={'pre-checklist':{title:'Pre-trade checklist',sub:'Calendar → Checklist → Calculator → Log trade'},dashboard:{title:'Dashboard',sub:'Overview of your trading performance'},log:{title:'Log trade',sub:'Record a new trade entry'},history:{title:'Trade history',sub:'Browse and filter all your trades'},sessions:{title:'Sessions',sub:'Manage your trading session periods'},'checklist-editor':{title:'Checklist editor',sub:'Edit checklist items globally'},backup:{title:'Backup & restore',sub:'Export, import or clear your journal data'},montecarlo:{title:'Monte Carlo',sub:'Simulate future equity paths from historical trade data'},calculator:{title:'Position Size Calculator',sub:'Forex · Crypto · Gold · Stocks · Indices'},calendar:{title:'Calendar view',sub:'Visual trade activity by day, week and year'},'ai-analyzer':{title:'AI Trade Analyzer',sub:'Intelligent session review powered by AI'},'price-alerts':{title:'Price Alerts',sub:'Get notified on your phone when a price target is hit'},fxstreet:{title:'Economic calendar',sub:'ForexFactory calendar — check before trading'}};;
 var _currentPage='dashboard';
 function nav(id,btn){
   // Reset log form when navigating away — but preserve it if going back to calc within the flow
@@ -7638,7 +7638,7 @@ async function openDetail(id){
       '<div class="detail-item" style="grid-column:1/-1"><div class="di-label">Partial TPs — how taken</div><div class="di-val js-pre">'+escHtml(trade.partialDesc)+'</div></div>'
     :'')
     +'<div class="detail-item"><div class="di-label">Mistake/error</div><div class="di-val">'+(trade.error||'—')+'</div></div>'
-    +'<div class="detail-item"><div class="di-label">Rating</div><div class="di-val">'+(trade.rating||'—')+'</div></div>'
+    +'<div class="detail-item"><div class="di-label">Rating</div><div class="di-val">'+(trade.rating?'★ '+trade.rating:'—')+'</div></div>'
     +'</div>'
     +biasHtml
     +checklistUnmetHtml
