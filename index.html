@@ -63,8 +63,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .btn:disabled{opacity:.4;cursor:not-allowed}
 
 /* ── Stats ── */
-.stats-grid{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:10px;margin-bottom:18px}
-.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;position:relative;overflow:hidden}
+.stats-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 12px;position:relative;overflow:hidden}
 .stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
 .stat-card.green::after{background:var(--green)}.stat-card.red::after{background:var(--red)}.stat-card.purple::after{background:var(--purple)}.stat-card.amber::after{background:var(--amber)}
 .stat-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
@@ -700,7 +700,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 ══════════════════════════════════════ */
 @media(max-width:1280px){
   :root{--sidebar-w:180px}
-  .stats-grid{grid-template-columns:repeat(3,1fr)}
+  .stats-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
   .charts-grid{grid-template-columns:1fr 1fr}
   .page-content{padding:16px 18px}
 }
@@ -1659,11 +1659,23 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                   <div class="computed-item"><div class="ci-label">Duration</div><div class="ci-val" id="c-dur">—</div></div>
                 </div>
               </div>
+              <!-- Fees section -->
+              <div class="computed-section" id="c-fees-section" style="margin-top:10px;display:none">
+                <div class="computed-section-label">Fees</div>
+                <div class="computed-section-items">
+                  <div class="computed-item">
+                    <div class="ci-label">Total Fees</div>
+                    <div class="ci-val" id="c-fees-total" style="color:var(--amber)">—</div>
+                    <div id="c-fees-breakdown" style="font-size:10px;color:var(--text3);margin-top:2px;line-height:1.5"></div>
+                  </div>
+                  <div class="computed-item"><div class="ci-label">Net P/L</div><div class="ci-val" id="c-fees-net">—</div></div>
+                </div>
+              </div>
               <!-- P/L section -->
               <div class="computed-section" style="margin-top:10px">
                 <div class="computed-section-label">P / L <span id="c-partial-note" style="font-size:9px;font-weight:600;color:var(--accent);display:none"> · partials</span></div>
                 <div class="computed-section-items">
-                  <div class="computed-item"><div class="ci-label">P/L ($)</div><div class="ci-val" id="c-pl">—</div></div>
+                  <div class="computed-item"><div class="ci-label">Gross P/L ($)</div><div class="ci-val" id="c-pl">—</div></div>
                   <div class="computed-item"><div class="ci-label">P/L (%)</div><div class="ci-val" id="c-plpct">—</div></div>
                   <div class="computed-item" style="display:none"><div class="ci-label">Status</div><div class="ci-val" id="c-status">—</div></div>
                 </div>
@@ -4193,7 +4205,7 @@ document.addEventListener('DOMContentLoaded',function(){
         </div>
       </div>
 
-      <!-- ── Right: Pairs / Instruments ── -->
+      <!-- ── Right: Pairs / Instruments + Fees ── -->
       <div style="display:flex;flex-direction:column;gap:10px;min-width:0;min-height:0">
         <!-- Section header -->
         <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--border)">
@@ -4208,7 +4220,7 @@ document.addEventListener('DOMContentLoaded',function(){
         <!-- Hidden legacy select kept for JS compat -->
         <select id="asset-type-filter" onchange="renderPairList()" style="display:none"><option value="">All types</option></select>
         <!-- Chip grid -->
-        <div id="pair-list" style="flex:1;overflow-y:auto;min-height:60px;max-height:200px"></div>
+        <div id="pair-list" style="flex:1;overflow-y:auto;min-height:60px;max-height:140px"></div>
         <!-- Add pair row -->
         <div id="add-pair-row" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:9px 10px;display:flex;flex-direction:column;gap:7px;flex-shrink:0">
           <div style="font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase">Add pair to <span id="add-pair-type-label" style="color:var(--accent)">—</span></div>
@@ -4219,6 +4231,17 @@ document.addEventListener('DOMContentLoaded',function(){
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add
             </button>
           </div>
+        </div>
+        <!-- Fees editor (shown for active tab) -->
+        <div id="asset-fees-panel" style="display:none;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:10px;flex-shrink:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em">Fees — <span id="fees-panel-type-name" style="color:var(--accent)"></span></span>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="font-size:9px;padding:2px 7px" onclick="resetFeesToDefaults()">Reset defaults</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr;gap:6px" id="fees-editor-rows"></div>
         </div>
       </div>
 
@@ -4763,6 +4786,14 @@ function onPairChange(){
   var opt=sel.options[sel.selectedIndex];
   var asset=opt?opt.getAttribute('data-asset'):'';
   document.getElementById('f-asset-type').value=asset||'';
+  // Re-trigger fee calc on pair change (asset type may have changed)
+  var entry=parseFloat((document.getElementById('f-entry')||{}).value)||0;
+  var qty=parseFloat((document.getElementById('f-qty')||{}).value)||0;
+  var edt=getDT?getDT('f-etime-date','f-etime-time'):null;
+  var xdt=getDT?getDT('f-xtime-date','f-xtime-time'):null;
+  var durMin=0;
+  if(edt&&xdt){var ms2=new Date(xdt)-new Date(edt);if(ms2>0)durMin=Math.round(ms2/60000);}
+  if(typeof recalcFeesAsync==='function') recalcFeesAsync(entry, qty, durMin);
 }
 
 // ══ Option pills ══════════════════════════════════
@@ -5667,10 +5698,14 @@ async function renderSessionsList(){
   sessions.sort(function(a,b){return new Date(b.startDate)-new Date(a.startDate)});
   var el=document.getElementById('sessions-list');
   if(!sessions.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><p>No sessions yet</p><button class="btn btn-primary" onclick="openNewSessionModal()">Create your first session</button></div>';return;}
+  // Pre-compute net equity for all sessions
+  var netEquityMap={};
+  for(var _s of sessions){ netEquityMap[_s.id]=await computeSessionNetEquityAsync(_s,trades); }
   el.innerHTML=sessions.map(function(s){
     var count=trades.filter(function(t){return t.sessionId===s.id}).length;
     var dateStr=s.startDate+(s.endDate?' → '+s.endDate:'');
-    var equityStr=s.startingEquity?(' · Equity: $'+(s.currentEquity||s.startingEquity).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+' (start: $'+s.startingEquity.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+')'):'';
+    var netEq=netEquityMap[s.id]!==undefined?netEquityMap[s.id]:(s.currentEquity||s.startingEquity);
+    var equityStr=s.startingEquity?(' · Equity: $'+netEq.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+' (start: $'+s.startingEquity.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+')'):'';
     var active=isSessionActive(s);
     var activeBadge=active&&!s.archived?'<span class="sess-badge sess-badge-active">● Active</span>':'';
     var archivedBadge=s.archived?'<span class="sess-badge sess-badge-archived">Archived</span>':'';
@@ -5762,7 +5797,7 @@ async function populateSessionSelects(restoreSessionId){
     _defaultHistSessionId=histDefaultSession?histDefaultSession.id:'';
     hF.innerHTML='<option value="">All sessions</option>'+histDemoSessions.map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');
     if(hv&&histDemoSessions.find(function(s){return s.id===hv;})){hF.value=hv;}
-    else if(histDefaultSession){hF.value=histDefaultSession.id;}
+    else if(hv===''){hF.value='';}
     else{hF.value='';}
   }
   // Monte Carlo session select — also demo-aware (mirrors dashboard mode)
@@ -6440,8 +6475,74 @@ function recalc(){
   // Duration
   var edt=getDT('f-etime-date','f-etime-time');
   var xdt=getDT('f-xtime-date','f-xtime-time');
-  if(edt&&xdt){var ms=new Date(xdt)-new Date(edt);if(ms>0){var d=Math.floor(ms/86400000),h=Math.floor((ms%86400000)/3600000),m=Math.floor((ms%3600000)/60000);var durStr=d>0?d+'d'+(h>0?' '+h+'h':'')+(m>0?' '+m+'m':''):(h>0?h+'h ':'')+m+'m';set('c-dur',durStr);}else set('c-dur','—');}
+  var durMin=0;
+  if(edt&&xdt){var ms=new Date(xdt)-new Date(edt);if(ms>0){durMin=Math.round(ms/60000);var d=Math.floor(ms/86400000),h=Math.floor((ms%86400000)/3600000),m=Math.floor((ms%3600000)/60000);var durStr=d>0?d+'d'+(h>0?' '+h+'h':'')+(m>0?' '+m+'m':''):(h>0?h+'h ':'')+m+'m';set('c-dur',durStr);}else set('c-dur','—');}
   else set('c-dur','—');
+
+  // Async fee update (debounced to avoid rapid IDB reads)
+  recalcFeesAsync(entry, qty, durMin);
+}
+
+// Debounced async fee updater — reads asset fees from IDB then updates fee strip
+var _recalcFeesTimer = null;
+function recalcFeesAsync(entry, qty, durMin){
+  clearTimeout(_recalcFeesTimer);
+  _recalcFeesTimer = setTimeout(function(){
+    var assetTypeName = (document.getElementById('f-asset-type')||{}).value || '';
+    if(!assetTypeName || !entry || !qty){
+      var sec = document.getElementById('c-fees-section');
+      if(sec) sec.style.display = 'none';
+      _lastCalcFees = null;
+      return;
+    }
+    _getAssetFeesForType(assetTypeName).then(function(fees){
+      if(!fees){ var sec=document.getElementById('c-fees-section'); if(sec)sec.style.display='none'; _lastCalcFees=null; return; }
+      var feeResult = calcTradeFees(fees, qty, entry, durMin);
+      _lastCalcFees = feeResult;
+      _renderFeeStrip(feeResult, qty > 0 ? entry : 0);
+    });
+  }, 80);
+}
+
+var _lastCalcFees = null; // expose for saveTrade()
+
+function _renderFeeStrip(feeResult, entry){
+  var sec = document.getElementById('c-fees-section');
+  var totalEl = document.getElementById('c-fees-total');
+  var netEl = document.getElementById('c-fees-net');
+  var bkEl = document.getElementById('c-fees-breakdown');
+  if(!sec) return;
+
+  if(!feeResult || feeResult.total === 0){
+    sec.style.display = 'none';
+    _lastCalcFees = null;
+    return;
+  }
+  sec.style.display = '';
+
+  if(totalEl) totalEl.textContent = '-$' + feeResult.total.toFixed(4);
+  if(totalEl) totalEl.style.color = 'var(--amber)';
+
+  // Net P/L: read current gross P/L
+  var grossPlEl = document.getElementById('c-pl');
+  if(grossPlEl && netEl){
+    var grossText = grossPlEl.textContent;
+    var grossVal = parseFloat(grossText.replace(/[^0-9.\-]/g,'')) || 0;
+    if(grossText.startsWith('+')) grossVal = Math.abs(grossVal);
+    else if(grossText.startsWith('-')) grossVal = -Math.abs(grossVal);
+    var netVal = grossVal - feeResult.total;
+    netEl.textContent = (netVal >= 0 ? '+' : '') + netVal.toFixed(2);
+    netEl.className = 'ci-val ' + (netVal >= 0 ? 'pos' : 'neg');
+  }
+
+  // Breakdown as quiet small gray text
+  if(bkEl){
+    bkEl.innerHTML = '<span style="font-size:10px;color:var(--text3);line-height:1.6">'
+      + feeResult.breakdown.map(function(b){
+          return escHtml(b.label) + ': $' + b.value.toFixed(4);
+        }).join(' \u00b7 ')
+      + '</span>';
+  }
 }
 
 // ══ Paste zones ═══════════════════════════════════
@@ -6736,6 +6837,8 @@ async function saveTrade(){
     }
   }
 
+  // Fees are NOT stored — they are computed live from current asset settings when displayed.
+
   var trade={
     id:editingId||(Date.now().toString(36)+Math.random().toString(36).slice(2)),
     num,pair,assetType:document.getElementById('f-asset-type').value,
@@ -6995,7 +7098,11 @@ async function rebalanceSession(sessionIds){
     var runningEquity=startEq;
     var skippedRunningEquity=startEq;
     for(var t of sessTrades){
-      var pl=parseFloat(t.plDollar)||0;
+      var grossPl=parseFloat(t.plDollar)||0;
+      // Deduct estimated fees so equity compounds on net P/L
+      var feeRes=await computeTradeFeesAsync(t);
+      var fees=feeRes?feeRes.total:0;
+      var pl=parseFloat((grossPl-fees).toFixed(2));
       var correctAcct, correctPlPct;
       if(t.skipped){
         correctAcct=parseFloat(skippedRunningEquity.toFixed(2));
@@ -7061,11 +7168,15 @@ var ALL_HISTORY_COLS=[
   {key:'ltf',       label:'LTF',       sortVal:function(t){return t.ltf||'';},                    render:function(t){return'<td style="font-size:11px;color:var(--text2)">'+escHtml(t.ltf||'—')+'</td>';}},
   {key:'targetRR',  label:'Target RR', sortVal:function(t){return parseFloat(t.targetRR)||0;},    render:function(t){return'<td class="mono">'+(t.targetRR?t.targetRR+'R':'—')+'</td>';}},
   {key:'loggedAt',  label:'Logged at', sortVal:function(t){return t.loggedAt||t.savedAt||'';},    render:function(t){var d=t.loggedAt||t.savedAt;if(!d)return'<td>—</td>';var dt=new Date(d);return'<td style="color:var(--text3);font-size:11px;white-space:nowrap" title="'+escHtml(d)+'">'+dt.toLocaleDateString()+' '+dt.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})+'</td>';}},
+  {key:'fees',      label:'Fees (est.)',sortVal:function(t){return 0;}, render:function(t){return'<td class="mono hist-fee-cell" data-trade-id="'+escHtml(t.id||'')+'" data-asset="'+escHtml(t.assetType||'')+'" data-entry="'+escHtml(String(t.entryPrice||''))+'" data-qty="'+escHtml(String(t.qty||''))+'" data-dur="'+escHtml(String(t.durationMin||0))+'"><span style="color:var(--text3);font-size:10px">…</span></td>';}},
+  {key:'netPL',     label:'Net P/L ($)',sortVal:function(t){return parseFloat(t.plDollar)||0;}, render:function(t){return'<td class="mono hist-netpl-cell" data-trade-id="'+escHtml(t.id||'')+'" data-pl="'+escHtml(String(t.plDollar||0))+'"><span style="color:var(--text3);font-size:10px">…</span></td>';}},
 ];
-var DEFAULT_HIST_COL_KEYS=['num','sessionName','pair','type','result','plDollar','plPct','actualRR','entryTime','loggedAt','rating'];
 
 // ── Sort state ──────────────────────────────────────
 var _histSort={key:'loggedAt',dir:-1}; // default: session desc + loggedAt desc
+
+// Default visible columns for history table (used when no saved config exists)
+var DEFAULT_HIST_COL_KEYS=['num','sessionName','pair','assetType','type','result','plDollar','plPct','actualRR','entryTime','entryPrice','exitPrice','stopLoss','qty','riskpct','strategy','durationMin','rating','error','loggedAt','fees','netPL'];
 
 var _histColConfigCache=null;
 async function getHistColConfig(){
@@ -7361,6 +7472,47 @@ async function _renderHistoryImpl(){
     return'<tr onclick="openDetail(\''+t.id+'\')">'+cells+actions+'</tr>';
   }).join('');
   wrap.innerHTML='<table class="data"><thead><tr>'+headers+'</tr></thead><tbody>'+rows+'</tbody></table>';
+
+  // Async: fill fees & net P/L cells using current asset fee settings
+  // Use a render-generation token so a stale async fill doesn't overwrite a newer render
+  if(!window._histRenderGen) window._histRenderGen = 0;
+  var myGen = ++window._histRenderGen;
+  (async function(){
+    var feeMap = {}; // assetType -> fees object (promise resolved)
+    var feeCells = wrap.querySelectorAll('.hist-fee-cell');
+    for(var i=0;i<feeCells.length;i++){
+      if(window._histRenderGen !== myGen) return; // abort — a newer render has started
+      var cell = feeCells[i];
+      var asset = cell.dataset.asset;
+      var entry = parseFloat(cell.dataset.entry)||0;
+      var qty   = parseFloat(cell.dataset.qty)||0;
+      var dur   = parseFloat(cell.dataset.dur)||0;
+      var tid   = cell.dataset.tradeId;
+      if(!asset||!entry||!qty){cell.innerHTML='<span style="color:var(--text3)">—</span>';continue;}
+      if(!feeMap[asset]) feeMap[asset] = _getAssetFeesForType(asset);
+      var assetFees = await feeMap[asset];
+      if(window._histRenderGen !== myGen) return; // abort after await
+      var feeResult = assetFees ? calcTradeFees(assetFees, qty, entry, dur) : null;
+      var feeTotal  = (feeResult && feeResult.total > 0) ? feeResult.total : 0;
+      cell.innerHTML = feeTotal > 0
+        ? '<span style="color:var(--amber)">-$'+feeTotal.toFixed(4)+'</span>'
+        : '<span style="color:var(--text3)">—</span>';
+      // Populate matching netPL cell
+      var netCells = wrap.querySelectorAll('.hist-netpl-cell[data-trade-id="'+tid+'"]');
+      for(var j=0;j<netCells.length;j++){
+        var nc = netCells[j];
+        var grossPL = parseFloat(nc.dataset.pl)||0;
+        if(feeTotal === 0){
+          // No fees configured — show gross P/L directly
+          if(grossPL === 0){ nc.innerHTML='<span style="color:var(--text3)">—</span>'; continue; }
+          nc.innerHTML='<span style="color:'+(grossPL>=0?'var(--green)':'var(--red)')+'">'+( grossPL>=0?'+':'')+grossPL.toFixed(2)+'</span>';
+          continue;
+        }
+        var netPL = parseFloat((grossPL - feeTotal).toFixed(2));
+        nc.innerHTML='<span style="color:'+(netPL>=0?'var(--green)':'var(--red)')+'">'+( netPL>=0?'+':'')+netPL.toFixed(2)+'</span>';
+      }
+    }
+  })();
 }
 async function populateFilters(){
   var trades=await dbGetAll('trades');
@@ -7452,8 +7604,9 @@ async function openDetail(id){
     +'<div class="detail-item"><div class="di-label">Exit</div><div class="di-val mono">'+trade.exitPrice+'</div></div>'
     +'<div class="detail-item"><div class="di-label">SL</div><div class="di-val mono">'+(trade.stopLoss||'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Target RR</div><div class="di-val mono">'+(trade.targetRR?trade.targetRR+'R':'—')+'</div></div>'
-    +'<div class="detail-item"><div class="di-label">P/L ($)</div><div class="di-val mono" style="color:'+plColor+'">'+plStr+'</div></div>'
+    +'<div class="detail-item"><div class="di-label">Gross P/L ($)</div><div class="di-val mono" style="color:'+plColor+'">'+plStr+'</div></div>'
     +'<div class="detail-item"><div class="di-label">P/L (%)</div><div class="di-val mono" style="color:'+plColor+'">'+(trade.plPct>=0?'+':'')+trade.plPct.toFixed(2)+'%</div></div>'
+    +'<div id="dm-fees-inject" style="grid-column:1/-1"></div>'
     +'<div class="detail-item"><div class="di-label">Actual RR</div><div class="di-val mono">'+(trade.actualRR!=null?trade.actualRR.toFixed(2)+'R':'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Risk</div><div class="di-val mono">$'+trade.riskDollar+' / '+trade.riskpct+'%</div></div>'
     +'<div class="detail-item"><div class="di-label">Qty (units)</div><div class="di-val mono">'+(trade.qty||'—')+'</div></div>'
@@ -7507,6 +7660,21 @@ async function openDetail(id){
     +(trade.news&&trade.news!='1. '?'<div class="detail-section-title">News</div><div class="js-pre">'+escHtml(trade.news)+'</div>':'')
     +'<div style="height:16px"></div>';
   document.getElementById('detail-overlay').classList.add('open');
+
+  // Async: compute fees from current asset settings and inject into detail panel
+  computeTradeFeesAsync(trade).then(function(feeResult){
+    var inj = document.getElementById('dm-fees-inject');
+    if(!inj) return;
+    if(!feeResult || feeResult.total === 0){ inj.innerHTML = ''; return; }
+    var grossPL = parseFloat(trade.plDollar) || 0;
+    var netPL = parseFloat((grossPL - feeResult.total).toFixed(2));
+    var netColor = netPL >= 0 ? 'var(--green)' : 'var(--red)';
+    inj.innerHTML =
+      '<div style="font-size:10px;color:var(--text3);padding:4px 0 2px;line-height:1.5">'
+      +'Fees (est.): -$'+feeResult.total.toFixed(4)
+      +'</div>'
+      +'<div class="detail-item"><div class="di-label">Net P/L ($)</div><div class="di-val mono" style="color:'+netColor+'">'+(netPL>=0?'+':'')+netPL.toFixed(2)+'</div></div>';
+  });
 }
 function closeDetail(e){if(e&&e.target!==document.getElementById('detail-overlay'))return;document.getElementById('detail-overlay').classList.remove('open');}
 
@@ -7572,12 +7740,37 @@ async function _renderDashboardImpl(){
   var totalPLpct=baselineForStats>0?(totalPL/baselineForStats*100):0;
 
   var finalEquity=baselineForStats+totalPL;
+  var plColor=totalPL>=0?'green':'red';
+  var plSign=totalPL>=0?'+':'';
   document.getElementById('dash-stats').innerHTML=
     '<div class="stat-card"><div class="stat-label">Total trades</div><div class="stat-value">'+n+'</div><div class="stat-sub">'+wins.length+' wins · '+(n-wins.length)+' losses</div></div>'+
     '<div class="stat-card '+(parseFloat(wr)>=50?'green':'red')+'"><div class="stat-label">Win rate</div><div class="stat-value '+(parseFloat(wr)>=50?'pos':'neg')+'">'+wr+'%</div><div class="stat-sub">of '+n+' trades</div></div>'+
-    '<div class="stat-card '+(totalPL>=0?'green':'red')+'"><div class="stat-label">Total P/L</div><div class="stat-value '+(totalPL>=0?'pos':'neg')+'">'+(totalPL>=0?'+':'')+totalPL.toFixed(2)+'</div><div class="stat-sub">'+(totalPLpct>=0?'+':'')+totalPLpct.toFixed(2)+'% · $'+baselineForStats.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+' → $'+finalEquity.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+'</div></div>'+
+    '<div class="stat-card '+plColor+'" id="dash-pl-card"><div class="stat-label">Total P/L</div><div class="stat-value '+(totalPL>=0?'pos':'neg')+'" id="dash-pl-val">'+plSign+totalPL.toFixed(2)+'</div><div class="stat-sub" id="dash-pl-sub">'+(totalPLpct>=0?'+':'')+totalPLpct.toFixed(2)+'% · $'+baselineForStats.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+' \u2192 $'+finalEquity.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+'</div><div class="stat-sub" id="dash-fees-line" style="color:var(--text3);font-size:10px;margin-top:2px"></div></div>'+
     '<div class="stat-card purple"><div class="stat-label">Avg RR · PF</div><div class="stat-value '+(avgRR!=null?(avgRR>=0?'pos':'neg'):'')+'">'+( avgRR!=null?avgRR.toFixed(2)+'R':'—')+'</div><div class="stat-sub">PF: '+pf+'</div></div>'+
     '<div class="stat-card amber"><div class="stat-label">Avg hold time</div><div class="stat-value" style="font-size:20px">'+durDisplay+'</div><div class="stat-sub">'+durSub+'</div></div>';
+
+  // Async: compute total fees, then update Total P/L card to show net figures
+  (async function(){
+    var totalFees = 0;
+    for(var i=0;i<trades.length;i++){
+      var feeResult = await computeTradeFeesAsync(trades[i]);
+      if(feeResult) totalFees += feeResult.total;
+    }
+    if(totalFees <= 0) return; // no fees configured — leave card as-is
+    var netPL = totalPL - totalFees;
+    var netPct = baselineForStats > 0 ? (netPL / baselineForStats * 100) : 0;
+    var netEquity = baselineForStats + netPL;
+    var netSign = netPL >= 0 ? '+' : '';
+    var plValEl  = document.getElementById('dash-pl-val');
+    var plSubEl  = document.getElementById('dash-pl-sub');
+    var feesLine = document.getElementById('dash-fees-line');
+    var plCard   = document.getElementById('dash-pl-card');
+    if(plValEl)  plValEl.textContent = netSign + netPL.toFixed(2);
+    if(plValEl)  plValEl.className   = 'stat-value ' + (netPL >= 0 ? 'pos' : 'neg');
+    if(plCard){  plCard.className    = 'stat-card ' + (netPL >= 0 ? 'green' : 'red'); }
+    if(plSubEl)  plSubEl.textContent = (netPct>=0?'+':'')+netPct.toFixed(2)+'% · $'+baselineForStats.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+' \u2192 $'+netEquity.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+    if(feesLine) feesLine.textContent = 'est. fees: -$'+totalFees.toFixed(2);
+  })();
 
   var sorted=trades.slice().sort(function(a,b){return new Date(a.entryTime||a.savedAt)-new Date(b.entryTime||b.savedAt)});
 
@@ -8042,8 +8235,10 @@ async function initMonteCarlo(){
   if(mcEqEl&&!mcEqEl._userSet){
     var sesId=sel?sel.value:'';
     var sesForEquity=sesId?sessions.find(function(s){return s.id===sesId;}):sessions[0];
-    if(sesForEquity)mcEqEl.value=sesForEquity.currentEquity||sesForEquity.startingEquity||5000;
-    else if(sessions.length)mcEqEl.value=sessions[0].currentEquity||sessions[0].startingEquity||5000;
+    var mcAllTrades=await dbGetAll('trades');
+    if(sesForEquity)mcEqEl.value=await computeSessionNetEquityAsync(sesForEquity,mcAllTrades);
+    else if(sessions.length)mcEqEl.value=await computeSessionNetEquityAsync(sessions[0],mcAllTrades);
+    else mcEqEl.value=5000;
     mcEqEl.addEventListener('input',function(){mcEqEl._userSet=true;},{once:true});
   }
 }
@@ -8232,16 +8427,135 @@ async function runMonteCarlo(){
 }
 
 
+// ── Default fee templates per asset class ──────────────────────────────────
+// feeType: 'spread' | 'commission' | 'overnight' | 'exchange'
+// Fees are stored on each asset type object under the `fees` key.
+// spread: pips/points per unit (applied on entry + exit)
+// commission: $ per unit (round-trip, so applied once)
+// overnight: $ per unit per night (applied based on duration)
+// exchange: $ flat per trade
+var DEFAULT_FEES_BY_CLASS = {
+  'Forex Major':   { spread:{ enabled:true, value:1.2, unit:'pips' }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:true, value:0.00003, unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' } },
+  'Forex Minor':   { spread:{ enabled:true, value:2.0, unit:'pips' }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:true, value:0.00004, unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' } },
+  'Forex Exotic':  { spread:{ enabled:true, value:5.0, unit:'pips' }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:true, value:0.0001,  unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' } },
+  'Commodity':     { spread:{ enabled:true, value:0.3, unit:'pips' }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:true, value:0.0005,  unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' } },
+  'Index':         { spread:{ enabled:true, value:1.0, unit:'pts'  }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:true, value:0.002,   unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' } },
+  'Stocks':        { spread:{ enabled:false, value:0,  unit:'pips' }, commission:{ enabled:true,  value:0.005, unit:'$/unit' }, overnight:{ enabled:false, value:0, unit:'$/unit/night' }, exchange:{ enabled:true, value:0, unit:'$/trade' } },
+  'Crypto':        { spread:{ enabled:true, value:0.1, unit:'%'   }, commission:{ enabled:true, value:0.001, unit:'% notional' }, overnight:{ enabled:false, value:0, unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' } },
+  'Futures':       { spread:{ enabled:false, value:0,  unit:'pts'  }, commission:{ enabled:true, value:0.85, unit:'$/contract' }, overnight:{ enabled:false, value:0, unit:'$/unit/night' }, exchange:{ enabled:true, value:0.02, unit:'$/trade' } },
+  'default':       { spread:{ enabled:true, value:1.0, unit:'pips' }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:false, value:0, unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' } }
+};
+
+function _getDefaultFees(typeName){
+  var n=(typeName||'').toLowerCase();
+  if(n.includes('forex') && (n.includes('major')||n.includes('eur')||n.includes('gbp')||n.includes('usd'))) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Forex Major']));
+  if(n.includes('forex') && n.includes('minor')) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Forex Minor']));
+  if(n.includes('forex') && n.includes('exotic')) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Forex Exotic']));
+  if(n.includes('forex')) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Forex Major']));
+  if(n.includes('gold')||n.includes('silver')||n.includes('commodi')||n.includes('metal')||n.includes('oil')) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Commodity']));
+  if(n.includes('index')||n.includes('indic')) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Index']));
+  if(n.includes('stock')||n.includes('etf')||n.includes('share')||n.includes('equity')) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Stocks']));
+  if(n.includes('crypto')) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Crypto']));
+  if(n.includes('future')||n.includes('contract')) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Futures']));
+  return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['default']));
+}
+
 var DEFAULT_ASSET_TYPES=[
-  {name:'Forex Major',pairs:['EUR/USD','GBP/USD','USD/JPY','USD/CHF','AUD/USD','USD/CAD','NZD/USD']},
-  {name:'Commodity',pairs:['XAU/USD','XAG/USD','OIL/USD']},
-  {name:'Index',pairs:['MNQ','MES','US30','NAS100','US500','UK100']},
-  {name:'Stocks',pairs:['QQQ','QQQM','MSFT','GOOG','AMZN','NVDA','TSLA','AAPL','NFLX','RDDT','HOOD']},
-  {name:'Crypto',pairs:['BTC/USD','ETH/USD']}
+  {name:'Forex Major',pairs:['EUR/USD','GBP/USD','USD/JPY','USD/CHF','AUD/USD','USD/CAD','NZD/USD'], fees:JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Forex Major']))},
+  {name:'Commodity',pairs:['XAU/USD','XAG/USD','OIL/USD'], fees:JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Commodity']))},
+  {name:'Index',pairs:['MNQ','MES','US30','NAS100','US500','UK100'], fees:JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Index']))},
+  {name:'Stocks',pairs:['QQQ','QQQM','MSFT','GOOG','AMZN','NVDA','TSLA','AAPL','NFLX','RDDT','HOOD'], fees:JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Stocks']))},
+  {name:'Crypto',pairs:['BTC/USD','ETH/USD'], fees:JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Crypto']))}
 ];
 
-async function getAssets(){return await getSetting('assets',JSON.parse(JSON.stringify(DEFAULT_ASSET_TYPES)));}
-async function saveAssetsData(data){await setSetting('assets',data);}
+async function getAssets(){
+  var assets = await getSetting('assets', JSON.parse(JSON.stringify(DEFAULT_ASSET_TYPES)));
+  // Ensure all loaded asset types have a fees object (migrate old data without fees)
+  var dirty = false;
+  assets.forEach(function(at){ if(!at.fees){ at.fees = _getDefaultFees(at.name); dirty = true; } });
+  if(dirty) await setSetting('assets', assets);
+  return assets;
+}
+async function saveAssetsData(data){ _invalidateAssetFeesCache(); await setSetting('assets',data); }
+
+// ── Fee calculation engine ─────────────────────────────────────────────────
+// Returns { total, spread, commission, overnight, exchange, breakdown }
+// qty = units (not lots), entry/exit = prices, durationMin = minutes held
+function calcTradeFees(assetFees, qty, entry, durationMin){
+  var result = { total:0, spread:0, commission:0, overnight:0, exchange:0, breakdown:[] };
+  if(!assetFees || !qty || !entry) return result;
+  var fees = assetFees;
+  // Detect pip size from entry price
+  var pipSize = entry >= 100 ? 0.01 : entry >= 10 ? 0.001 : entry >= 1 ? 0.0001 : 0.000001;
+  // 1. Spread
+  if(fees.spread && fees.spread.enabled && fees.spread.value > 0){
+    var spreadVal = 0, unit = (fees.spread.unit||'pips').toLowerCase();
+    if(unit === '%') { spreadVal = (fees.spread.value/100)*entry*qty; }
+    else if(unit === 'pts' || unit === 'pips') { spreadVal = fees.spread.value * pipSize * qty; }
+    else { spreadVal = fees.spread.value * qty; }
+    result.spread = parseFloat(spreadVal.toFixed(4));
+    if(result.spread > 0) result.breakdown.push({ label:'Spread', value:result.spread });
+  }
+  // 2. Commission
+  if(fees.commission && fees.commission.enabled && fees.commission.value > 0){
+    var commVal = 0, cunit = (fees.commission.unit||'$/unit').toLowerCase();
+    if(cunit.includes('%')) { commVal = (fees.commission.value/100)*entry*qty*2; }
+    else { commVal = fees.commission.value * qty; }
+    result.commission = parseFloat(commVal.toFixed(4));
+    if(result.commission > 0) result.breakdown.push({ label:'Commission', value:result.commission });
+  }
+  // 3. Overnight / swap
+  if(fees.overnight && fees.overnight.enabled && fees.overnight.value > 0 && durationMin > 0){
+    var nights = durationMin / (60*24);
+    var overnightVal = fees.overnight.value * qty * nights;
+    result.overnight = parseFloat(overnightVal.toFixed(4));
+    if(result.overnight > 0) result.breakdown.push({ label:'Overnight ('+nights.toFixed(1)+'n)', value:result.overnight });
+  }
+  // 4. Exchange fee (flat per trade)
+  if(fees.exchange && fees.exchange.enabled && fees.exchange.value > 0){
+    result.exchange = parseFloat(fees.exchange.value.toFixed(4));
+    if(result.exchange > 0) result.breakdown.push({ label:'Exchange', value:result.exchange });
+  }
+  result.total = parseFloat((result.spread+result.commission+result.overnight+result.exchange).toFixed(4));
+  return result;
+}
+
+// Cache: map of assetType name -> fees object. Refreshed when assets saved.
+var _assetFeesCache = null;
+async function _getAssetFeesForType(assetTypeName){
+  if(!_assetFeesCache){
+    var assets = await getAssets();
+    _assetFeesCache = {};
+    assets.forEach(function(at){ _assetFeesCache[at.name] = at.fees || null; });
+  }
+  return _assetFeesCache[assetTypeName] || null;
+}
+function _invalidateAssetFeesCache(){ _assetFeesCache = null; }
+
+// Compute fees for any trade object on-the-fly using the CURRENT asset fee settings.
+// Returns { total, breakdown } or null if no fee config found.
+async function computeTradeFeesAsync(trade){
+  if(!trade || !trade.assetType || !trade.entryPrice || !trade.qty) return null;
+  var fees = await _getAssetFeesForType(trade.assetType);
+  if(!fees) return null;
+  return calcTradeFees(fees, parseFloat(trade.qty), parseFloat(trade.entryPrice), trade.durationMin || 0);
+}
+
+// Compute net equity for a session by summing (grossPL - fees) across its trades.
+// Falls back to sess.currentEquity if no fees are configured for any trade.
+async function computeSessionNetEquityAsync(sess, allTrades){
+  var sessTrades = allTrades.filter(function(t){return t.sessionId===sess.id && !t.skipped;});
+  sessTrades.sort(function(a,b){return new Date(a.entryTime||a.savedAt||0)-new Date(b.entryTime||b.savedAt||0);});
+  var start = parseFloat(sess.startingEquity)||5000;
+  var equity = start;
+  for(var t of sessTrades){
+    var gross = parseFloat(t.plDollar)||0;
+    var feeRes = await computeTradeFeesAsync(t);
+    var fees = feeRes ? feeRes.total : 0;
+    equity = parseFloat((equity + gross - fees).toFixed(2));
+  }
+  return equity;
+}
 
 // ── Staging draft for asset modal ────────────────────────────────
 // All mutations inside the modal work on _assetsDraft (a deep copy).
@@ -8320,12 +8634,75 @@ function _renderPairsTabBar(assets){
 function setPairsTab(name){
   _activePairsTab=name;
   var assets=_assetsDraft!==null?_assetsDraft:null;
-  if(assets){_renderPairsTabBar(assets);_renderPairChips(assets);_updateAddPairLabel(assets);}
+  if(assets){_renderPairsTabBar(assets);_renderPairChips(assets);_updateAddPairLabel(assets);renderAssetFeesPanel(assets);}
   else{getAssets().then(function(assets){
     _renderPairsTabBar(assets);
     _renderPairChips(assets);
     _updateAddPairLabel(assets);
+    renderAssetFeesPanel(assets);
   });}
+}
+
+// ── Fees panel for active asset tab ─────────────────────────────────────────
+function renderAssetFeesPanel(assets){
+  var panel = document.getElementById('asset-fees-panel');
+  var nameEl = document.getElementById('fees-panel-type-name');
+  var rowsEl = document.getElementById('fees-editor-rows');
+  if(!panel || !rowsEl) return;
+  if(!_activePairsTab || !assets || !assets.length){ panel.style.display='none'; return; }
+  var at = assets.find(function(a){ return a.name === _activePairsTab; });
+  if(!at){ panel.style.display='none'; return; }
+  // Ensure fees exist
+  if(!at.fees) at.fees = _getDefaultFees(at.name);
+  panel.style.display = '';
+  if(nameEl) nameEl.textContent = at.name;
+
+  var fees = at.fees;
+  var FEE_DEFS = [
+    { key:'spread',     label:'Spread',     icon:'≈', hint:'Cost to enter/exit (round-trip). Unit: pips, pts, or % of notional.' },
+    { key:'commission', label:'Commission',  icon:'$', hint:'Broker commission per unit (round-trip) or % of notional.' },
+    { key:'overnight',  label:'Overnight/Swap', icon:'🌙', hint:'Holding cost per unit per night (applied based on trade duration).' },
+    { key:'exchange',   label:'Exchange fee', icon:'⚡', hint:'Flat fee per trade (e.g. exchange clearing fee).' }
+  ];
+
+  rowsEl.innerHTML = FEE_DEFS.map(function(fd){
+    var f = fees[fd.key] || { enabled:false, value:0, unit:'' };
+    return '<div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">'
+      + '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap">'
+      +   '<input type="checkbox" id="fee-en-'+fd.key+'" '+(f.enabled?'checked':'')+' onchange="updateDraftFee(\''+fd.key+'\')" style="cursor:pointer">'
+      +   '<span style="font-size:10px;font-weight:700;color:var(--text2)">' + fd.icon + ' ' + fd.label + '</span>'
+      + '</label>'
+      + '<div style="position:relative" title="'+escHtml(fd.hint)+'">'
+      +   '<input type="number" id="fee-val-'+fd.key+'" value="'+parseFloat(f.value||0)+'" step="any" min="0" style="width:100%;font-size:11px;padding-right:2px;font-family:DM Mono,monospace" '+(f.enabled?'':'disabled')+' oninput="updateDraftFee(\''+fd.key+'\')">'
+      + '</div>'
+      + '<span style="font-size:9px;color:var(--text3);white-space:nowrap;min-width:80px">'+escHtml(f.unit||'')+'</span>'
+      + '</div>';
+  }).join('');
+}
+
+function updateDraftFee(feeKey){
+  if(_assetsDraft === null) return;
+  var at = _assetsDraft.find(function(a){ return a.name === _activePairsTab; });
+  if(!at) return;
+  if(!at.fees) at.fees = _getDefaultFees(at.name);
+  var enabled = (document.getElementById('fee-en-'+feeKey)||{}).checked || false;
+  var val = parseFloat((document.getElementById('fee-val-'+feeKey)||{}).value) || 0;
+  at.fees[feeKey] = at.fees[feeKey] || { enabled:false, value:0, unit:'' };
+  at.fees[feeKey].enabled = enabled;
+  at.fees[feeKey].value = val;
+  // Enable/disable the value input
+  var valInput = document.getElementById('fee-val-'+feeKey);
+  if(valInput) valInput.disabled = !enabled;
+  _assetsDraftDirty();
+}
+
+function resetFeesToDefaults(){
+  if(_assetsDraft === null) return;
+  var at = _assetsDraft.find(function(a){ return a.name === _activePairsTab; });
+  if(!at) return;
+  at.fees = _getDefaultFees(at.name);
+  _assetsDraftDirty();
+  renderAssetFeesPanel(_assetsDraft);
 }
 
 function _updateAddPairLabel(assets){
@@ -8384,13 +8761,14 @@ async function renderPairList(){
   _renderPairsTabBar(assets);
   _renderPairChips(assets);
   _updateAddPairLabel(assets);
+  renderAssetFeesPanel(assets);
 }
 async function addAssetType(){
   var inp=document.getElementById('new-asset-type-inp');var name=inp.value.trim();
   if(!name){toast('Enter a type name','err');return;}
   var assets=_assetsDraft!==null?_assetsDraft:await getAssets();
   if(assets.find(function(a){return a.name===name})){toast('Already exists','err');return;}
-  assets.push({name,pairs:[]});
+  assets.push({name,pairs:[],fees:_getDefaultFees(name)});
   if(_assetsDraft!==null){_assetsDraft=assets;_assetsDraftDirty();}
   else{await saveAssetsData(assets);}
   inp.value='';
@@ -8467,6 +8845,7 @@ async function addPair(){
   await renderAssetTypeList();await renderPairList();
 }
 async function saveAssets(){
+  _invalidateAssetFeesCache();
   if(_assetsDraft!==null){
     // Detect renames vs previously saved data and update trades accordingly
     var savedAssets=await getAssets();
@@ -8754,13 +9133,14 @@ async function calcOnBacktestSessionChange(){
   var sess=sessions.find(function(s){return s.id===sel.value;});
   if(!sess){return;}
   var isSkipped=document.getElementById('calc-skipped')&&document.getElementById('calc-skipped').checked;
-  var equity=isSkipped?(sess.skippedCurrentEquity||sess.startingEquity||5000):(sess.currentEquity||sess.startingEquity||5000);
+  var allTradesForCalc=await dbGetAll('trades');
+  var equity=isSkipped?(sess.skippedCurrentEquity||sess.startingEquity||5000):(await computeSessionNetEquityAsync(sess,allTradesForCalc));
   var riskPct=sess.defaultRisk||1;
   var balEl=document.getElementById('calc-balance');
   var riskEl=document.getElementById('calc-risk-pct');
   if(balEl){balEl.value=equity;}
   if(riskEl){riskEl.value=riskPct;}
-  if(hint){hint.textContent='Balance $'+equity.toLocaleString()+' · Risk '+riskPct+'%'+(isSkipped?' (base equity — skipped)':' (running equity)')+' auto-filled';hint.style.display='block';}
+  if(hint){hint.textContent='Balance $'+equity.toLocaleString()+' · Risk '+riskPct+'%'+(isSkipped?' (base equity — skipped)':' (running equity, after fees)')+' auto-filled';hint.style.display='block';}
   calcCalc();
 }
 
@@ -9518,7 +9898,7 @@ async function ghPushConfigFile(cfg){
 async function ghApplyConfigData(data){
   if(data.checklist)await setSetting('checklist',data.checklist);
   if(data.strategies)await setSetting('strategies',data.strategies);
-  if(data.assets)await setSetting('assets',data.assets);
+  if(data.assets){await setSetting('assets',data.assets);_invalidateAssetFeesCache();}
   if(data.histCols){await setSetting('hist-cols',data.histCols);_histColConfigCache=null;}
   if(data.theme){await setSetting('tj-theme',data.theme);localStorage.setItem('tj-theme',data.theme);if(typeof applyThemeVars==='function'&&typeof THEMES!=='undefined'&&THEMES[data.theme])applyThemeVars(data.theme);}
   if(data.calView){await setSetting('tj-cal-default-view',data.calView);localStorage.setItem('tj-cal-default-view',data.calView);}
@@ -10300,7 +10680,7 @@ async function syncConfigFromTrades(importedTrades){
     // Asset type
     if(t.assetType){
       var at=assets.find(function(a){return a.name===t.assetType;});
-      if(!at){at={name:t.assetType,pairs:[]};assets.push(at);addedTypes.push(t.assetType);}
+      if(!at){at={name:t.assetType,pairs:[],fees:_getDefaultFees(t.assetType)};assets.push(at);addedTypes.push(t.assetType);}
       // Pair
       if(t.pair&&!at.pairs.includes(t.pair)){at.pairs.push(t.pair);addedPairs.push(t.pair);}
     } else if(t.pair){
