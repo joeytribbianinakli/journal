@@ -7112,7 +7112,45 @@ async function editTrade(id){
   s('why-skipped-notes',trade.whySkipped||'');
   // Restore TF pills (legacy — no-op if elements absent)
   resetTfPills();
-  if(trade.imageIds)SS_ZONES.forEach(function(z){renderStoredImages(trade.imageIds[z]||[],z);});
+  // Restore custom TF zones that were saved with this trade
+  if(trade.imageIds){
+    var _defaultZones=['htf-W','htf-D','htf-4h','mtf-1h','mtf-30m','ltf-15m','ltf-5m','setup','postanalysis'];
+    Object.keys(trade.imageIds).forEach(function(z){
+      if(!_defaultZones.includes(z)&&(trade.imageIds[z]||[]).length>0){
+        // Determine group prefix (htf/mtf/ltf) and label
+        var _parts=z.split('-');
+        var _group=_parts[0];
+        var _label=_parts.slice(1).join('-');
+        // Only rebuild if container exists and zone not already present
+        if(!document.getElementById('paste-zone-'+z)&&document.getElementById('tf-zones-'+_group)){
+          if(!SS_ZONES.includes(z))SS_ZONES.push(z);
+          if(!pendingImages[z])pendingImages[z]=[];
+          var _container=document.getElementById('tf-zones-'+_group);
+          var _sec=document.createElement('div');
+          _sec.className='tf-sub-section';
+          _sec.dataset.customZone=z;
+          _sec.innerHTML='<div class="tf-sub-label" style="justify-content:space-between">'
+            +'<span>'+escHtml(_label)+'</span>'
+            +'<button style="font-size:10px;color:var(--text3);background:none;border:none;cursor:pointer;padding:0" onclick="removeCustomTfZone(\''+z+'\',this)" title="Remove">✕</button>'
+            +'</div>'
+            +'<div class="img-grid" id="imgs-'+z+'"></div>'
+            +'<div class="img-paste-zone" id="paste-zone-'+z+'" tabindex="0"'
+            +' onclick="focusPasteZone(\''+z+'\')"'
+            +' ondragover="onDragOver(event,\''+z+'\')"'
+            +' ondragleave="onDragLeave(event,\''+z+'\')"'
+            +' ondrop="onDrop(event,\''+z+'\')">'
+            +'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
+            +'<p>Click then <kbd>Ctrl+V</kbd> / drop</p>'
+            +'</div>';
+          // Insert before the "+ Add TF" row so it appears with other zones
+          var _addRow=_container.querySelector('.tf-add-row');
+          if(_addRow)_container.insertBefore(_sec,_addRow);
+          else _container.appendChild(_sec);
+        }
+      }
+    });
+    SS_ZONES.forEach(function(z){renderStoredImages(trade.imageIds[z]||[],z);});
+  }
   // Restore partial TPs
   clearPartialTPs();
   if(trade.partialTPs&&trade.partialTPs.length){
@@ -7617,7 +7655,9 @@ async function openDetail(id){
   if(trade.imageIds){
     var allImgHtml=[];
     var _zoneLabel=function(z){var m={'htf-W':'HTF — W','htf-D':'HTF — D','htf-4h':'HTF — 4h','mtf-1h':'MTF — 1h','mtf-30m':'MTF — 30m','ltf-15m':'LTF — 15m','ltf-5m':'LTF — 5m','setup':'Setup','postanalysis':'Post-journal'};return m[z]||z.toUpperCase();};
-    for(var zone of SS_ZONES){
+    var _allDetailZones=['setup'].concat(SS_ZONES.filter(function(z){return z!=='setup'}));
+    Object.keys(trade.imageIds).forEach(function(z){if(!_allDetailZones.includes(z))_allDetailZones.push(z);});
+    for(var zone of _allDetailZones){
       var zImgs=[];
       for(var imgId of(trade.imageIds[zone]||[])){var img=await dbGet('images',imgId);if(img){var src=img.cloudUrl||img.dataUrl;zImgs.push('<div class="img-thumb" style="aspect-ratio:16/10"><img src="'+src+'" onclick="openLightbox(\''+src+'\')"></div>');}}
       if(zImgs.length){allImgHtml.push('<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">'+_zoneLabel(zone)+'</div><div class="img-grid">'+zImgs.join('')+'</div></div>');}
