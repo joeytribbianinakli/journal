@@ -663,9 +663,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .pair-chip-del svg{width:7px;height:7px;stroke:var(--red);stroke-width:2.5;fill:none;stroke-linecap:round}
 .pair-chips-empty{font-size:11px;color:var(--text3);font-style:italic;padding:8px 0}
 /* ── Partial TPs ── */
-.partial-tp-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px}
+.partial-tp-row{display:flex;align-items:center;gap:7px;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;flex-wrap:wrap}
 .partial-tp-row input{flex:1;min-width:0}
 .partial-tp-row .partial-tp-label{font-size:10px;font-weight:700;color:var(--text3);white-space:nowrap;min-width:18px;text-align:center;font-family:DM Mono,monospace}
+.bias-chip-remove{display:inline-flex;align-items:center;justify-content:center;margin-left:4px;width:14px;height:14px;border-radius:50%;font-size:12px;line-height:1;font-weight:700;color:var(--text3);background:none;border:none;cursor:pointer;padding:0;vertical-align:middle;flex-shrink:0;transition:color .1s,background .1s}
+.bias-chip-remove:hover{color:var(--red);background:rgba(255,80,80,.12)}
 .partial-tp-add-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:var(--radius);font-size:11px;font-weight:600;cursor:pointer;border:1px dashed var(--border2);background:transparent;color:var(--text3);transition:all .12s;font-family:inherit}
 .partial-tp-add-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(77,127,255,.06)}
 .partial-tp-section{margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
@@ -1893,6 +1895,14 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                   <div class="tf-sub-label">15m</div>
                   <div class="img-grid" id="imgs-ltf-15m"></div>
                   <div class="img-paste-zone" id="paste-zone-ltf-15m" tabindex="0" onclick="focusPasteZone('ltf-15m')" ondragover="onDragOver(event,'ltf-15m')" ondragleave="onDragLeave(event,'ltf-15m')" ondrop="onDrop(event,'ltf-15m')">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <p>Click then <kbd>Ctrl+V</kbd> / drop</p>
+                  </div>
+                </div>
+                <div class="tf-sub-section">
+                  <div class="tf-sub-label">5m</div>
+                  <div class="img-grid" id="imgs-ltf-5m"></div>
+                  <div class="img-paste-zone" id="paste-zone-ltf-5m" tabindex="0" onclick="focusPasteZone('ltf-5m')" ondragover="onDragOver(event,'ltf-5m')" ondragleave="onDragLeave(event,'ltf-5m')" ondrop="onDrop(event,'ltf-5m')">
                     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                     <p>Click then <kbd>Ctrl+V</kbd> / drop</p>
                   </div>
@@ -6095,12 +6105,26 @@ function addTfChip(group){
   var row=document.getElementById('bias-'+group);
   if([].some.call(row.querySelectorAll('.bias-chip'),function(c){return c.dataset.tf===tf})){toast('TF exists','err');return;}
   if(!biasState[group])biasState[group]={};biasState[group][tf]='neutral';
-  var chip=document.createElement('div');chip.className='bias-chip';chip.dataset.tf=tf;
-  chip.setAttribute('onclick','toggleBias(this,\''+group+'\')');
-  chip.innerHTML='<span class="bc-tf">'+escHtml(tf)+'</span>&nbsp;<span class="bc-dir">Neutral</span>';
+  var chip=_makeBiasChip(tf,group,'neutral',true);
   row.insertBefore(chip,row.querySelector('.add-tf-btn'));
   hideAddTf(group);
 }
+function removeTfChip(tf,group,btn){
+  var chip=btn.closest('.bias-chip');
+  if(chip)chip.remove();
+  if(biasState[group])delete biasState[group][tf];
+}
+function _makeBiasChip(tf,group,state,isCustom){
+  var chip=document.createElement('div');chip.className='bias-chip';
+  if(state==='bull')chip.classList.add('bull');else if(state==='bear')chip.classList.add('bear');
+  chip.dataset.tf=tf;
+  chip.setAttribute('onclick','toggleBias(this,\''+group+'\')');
+  var dirLabel=state==='bull'?'Bullish':state==='bear'?'Bearish':'Neutral';
+  chip.innerHTML='<span class="bc-tf">'+escHtml(tf)+'</span>\u00a0<span class="bc-dir">'+dirLabel+'</span>'
+    +(isCustom?'<button class="bias-chip-remove" onclick="event.stopPropagation();removeTfChip(\''+tf+'\',\''+group+'\',this)" title="Remove TF">\u00d7</button>':'');
+  return chip;
+}
+var _DEFAULT_BIAS_TFS=['W','D','4h','1h','15m'];
 function setBiasFromData(narrative){
   biasState={narrative:narrative||{W:'neutral',D:'neutral','4h':'neutral','1h':'neutral','15m':'neutral'}};
   var row=document.getElementById('bias-narrative');
@@ -6108,10 +6132,8 @@ function setBiasFromData(narrative){
   row.querySelectorAll('.bias-chip').forEach(function(c){c.remove()});
   Object.keys(biasState.narrative).forEach(function(tf){
     var state=biasState.narrative[tf]||'neutral';
-    var chip=document.createElement('div');chip.className='bias-chip';
-    if(state==='bull')chip.classList.add('bull');else if(state==='bear')chip.classList.add('bear');
-    chip.dataset.tf=tf;chip.setAttribute('onclick','toggleBias(this,\'narrative\')');
-    chip.innerHTML='<span class="bc-tf">'+escHtml(tf)+'</span>&nbsp;<span class="bc-dir">'+(state==='bull'?'Bullish':state==='bear'?'Bearish':'Neutral')+'</span>';
+    var isCustom=_DEFAULT_BIAS_TFS.indexOf(tf)===-1;
+    var chip=_makeBiasChip(tf,'narrative',state,isCustom);
     row.insertBefore(chip,addBtn);
   });
 }
@@ -6208,11 +6230,11 @@ function setDT(dateId,timeId,iso){
 
 // ══ Recalc (corrected) ════════════════════════════
 // ══ Partial TPs ═══════════════════════════════════════
-var _partialTPs = []; // [{price, qty, id}]
+var _partialTPs = []; // [{price, qty, pct, id}]
 
 function addPartialTP(data){
   var id='ptp-'+(Date.now().toString(36)+Math.random().toString(36).slice(2,5));
-  _partialTPs.push({id:id, price:data?data.price:'', qty:data?data.qty:''});
+  _partialTPs.push({id:id, price:data?data.price:'', qty:data?data.qty:'', pct:data?data.pct:''});
   renderPartialTPs();
 }
 function removePartialTP(id){
@@ -6268,9 +6290,14 @@ function renderPartialTPs(){
     var isLast=i===_partialTPs.length-1;
     html+='<div class="partial-tp-row" id="row-'+p.id+'">'
       +'<span class="partial-tp-label">#'+(i+1)+'</span>'
-      +'<input type="number" step="any" placeholder="TP price" value="'+escHtml(String(p.price||''))+'" oninput="_ptpSync(\''+p.id+'\',\'price\',this.value);recalc()" style="max-width:130px">'
-      +'<input type="number" step="any" placeholder="Qty (units)" value="'+escHtml(String(p.qty||''))+'" oninput="_ptpSync(\''+p.id+'\',\'qty\',this.value);recalc();_validatePartialQty()" style="max-width:120px">'
-      +(isLast?'<span style="font-size:9px;font-weight:700;color:var(--amber);white-space:nowrap;flex-shrink:0">← last TP</span>':'<span style="min-width:52px"></span>')
+      +'<input type="number" step="any" placeholder="TP price" value="'+escHtml(String(p.price||''))+'" oninput="_ptpSync(\''+p.id+'\',\'price\',this.value);recalc()" style="max-width:110px">'
+      +'<input type="number" step="any" placeholder="Qty (units)" value="'+escHtml(String(p.qty||''))+'" id="ptp-qty-'+p.id+'" oninput="_ptpSyncQty(\''+p.id+'\',this.value)" style="max-width:98px">'
+      +'<span style="font-size:10px;font-weight:700;color:var(--text3);flex-shrink:0">or</span>'
+      +'<div style="position:relative;display:flex;align-items:center;max-width:78px;flex-shrink:0">'
+        +'<input type="number" step="any" min="0" max="100" placeholder="%" value="'+escHtml(String(p.pct||''))+'" id="ptp-pct-'+p.id+'" oninput="_ptpSyncPct(\''+p.id+'\',this.value)" style="width:100%;padding-right:18px">'
+        +'<span style="position:absolute;right:7px;font-size:11px;font-weight:700;color:var(--text3);pointer-events:none">%</span>'
+      +'</div>'
+      +(isLast?'<span style="font-size:9px;font-weight:700;color:var(--amber);white-space:nowrap;flex-shrink:0">← last TP</span>':'<span style="min-width:48px"></span>')
       +'<button class="btn btn-ghost btn-sm btn-icon" onclick="removePartialTP(\''+p.id+'\')" title="Remove partial" style="color:var(--red);flex-shrink:0">'
         +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
       +'</button>'
@@ -6282,6 +6309,40 @@ function renderPartialTPs(){
 function _ptpSync(id,field,val){
   var p=_partialTPs.find(function(x){return x.id===id;});
   if(p)p[field]=val;
+}
+function _ptpSyncQty(id,val){
+  var p=_partialTPs.find(function(x){return x.id===id;});
+  if(!p)return;
+  p.qty=val;
+  var totalQty=parseFloat((document.getElementById('f-qty')||{}).value)||0;
+  var qty=parseFloat(val)||0;
+  var pctEl=document.getElementById('ptp-pct-'+id);
+  if(totalQty>0&&qty>=0){
+    var pct=qty/totalQty*100;
+    p.pct=parseFloat(pct.toFixed(4));
+    if(pctEl&&document.activeElement!==pctEl)pctEl.value=parseFloat(pct.toFixed(2));
+  } else {
+    p.pct='';
+    if(pctEl&&document.activeElement!==pctEl)pctEl.value='';
+  }
+  recalc();_validatePartialQty();
+}
+function _ptpSyncPct(id,val){
+  var p=_partialTPs.find(function(x){return x.id===id;});
+  if(!p)return;
+  p.pct=val;
+  var totalQty=parseFloat((document.getElementById('f-qty')||{}).value)||0;
+  var pct=parseFloat(val)||0;
+  var qtyEl=document.getElementById('ptp-qty-'+id);
+  if(totalQty>0&&pct>=0){
+    var qty=totalQty*(pct/100);
+    p.qty=parseFloat(qty.toFixed(8));
+    if(qtyEl&&document.activeElement!==qtyEl)qtyEl.value=parseFloat(qty.toFixed(4));
+  } else {
+    p.qty='';
+    if(qtyEl&&document.activeElement!==qtyEl)qtyEl.value='';
+  }
+  recalc();_validatePartialQty();
 }
 function _validatePartialQty(){
   var qvEl=document.getElementById('qty-partial-validation');
@@ -7638,7 +7699,7 @@ async function openDetail(id){
       '<div class="detail-item" style="grid-column:1/-1"><div class="di-label">Partial TPs — how taken</div><div class="di-val js-pre">'+escHtml(trade.partialDesc)+'</div></div>'
     :'')
     +'<div class="detail-item"><div class="di-label">Mistake/error</div><div class="di-val">'+(trade.error||'—')+'</div></div>'
-    +'<div class="detail-item"><div class="di-label">Rating</div><div class="di-val">'+(trade.rating?'★ '+trade.rating:'—')+'</div></div>'
+    +'<div class="detail-item"><div class="di-label">Rating</div><div class="di-val">'+(trade.rating||'—')+'</div></div>'
     +'</div>'
     +biasHtml
     +checklistUnmetHtml
@@ -9866,7 +9927,7 @@ async function ghBuildConfigPayload(){
   // Cloudinary config — cloud name + upload preset are safe to store (non-secret)
   var cloudinaryConfig=cloudinaryGetConfig();
   return{
-    version:2,exportedAt:new Date().toISOString(),
+    version:2,
     checklist,strategies,assets,histCols,
     theme,calView,mcDefaults,calcCapital,demoDefaults,
     aiConfig,cloudinaryConfig
@@ -9884,8 +9945,26 @@ async function ghGetFileSHAByPath(cfg,path){
 async function ghPushConfigFile(cfg){
   try{
     var payload=await ghBuildConfigPayload();
+    // Compare new payload vs existing file — skip push if only exportedAt differs
+    var sha=null;
+    try{
+      var existingResp=await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/'+GH_CONFIG_FILE,{
+        headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json'}
+      });
+      if(existingResp.ok){
+        var existingFile=await existingResp.json();
+        sha=existingFile.sha||null;
+        var existingText=decodeURIComponent(escape(atob(existingFile.content.replace(/\n/g,''))));
+        var existingData=JSON.parse(existingText);
+        // Strip exportedAt from both before comparing
+        var newCopy=Object.assign({},payload);delete newCopy.exportedAt;
+        var oldCopy=Object.assign({},existingData);delete oldCopy.exportedAt;
+        if(JSON.stringify(newCopy)===JSON.stringify(oldCopy))return; // no real change — skip push
+      }
+    }catch(e){ sha=await ghGetFileSHAByPath(cfg,GH_CONFIG_FILE); }
+    // Stamp exportedAt at the moment we actually push (real change confirmed above)
+    payload.exportedAt=new Date().toISOString();
     var content=btoa(unescape(encodeURIComponent(JSON.stringify(payload,null,2))));
-    var sha=await ghGetFileSHAByPath(cfg,GH_CONFIG_FILE);
     var body={message:'TJ config — '+new Date().toISOString().slice(0,16).replace('T',' '),content:content};
     if(sha)body.sha=sha;
     await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/'+GH_CONFIG_FILE,{
