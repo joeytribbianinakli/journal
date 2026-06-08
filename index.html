@@ -2801,7 +2801,17 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       #page-price-alerts .pa-dir-btn.above-on{background:rgba(52,201,122,.1);border-color:rgba(52,201,122,.3);color:var(--green);}
       #page-price-alerts .pa-dir-btn.below-on{background:rgba(232,85,85,.1);border-color:rgba(232,85,85,.3);color:var(--red);}
       /* Alert cards */
-      #page-price-alerts .pa-alert-list{display:flex;flex-direction:column;gap:8px;}
+      #page-price-alerts .pa-alert-list{display:flex;flex-direction:column;gap:0;}
+      #page-price-alerts .pa-asset-group{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+      #page-price-alerts .pa-asset-group:last-child{margin-bottom:0;}
+      #page-price-alerts .pa-group-header{display:flex;align-items:center;gap:7px;padding:4px 0 6px;border-bottom:1px solid var(--border);margin-bottom:8px;cursor:pointer;user-select:none;}
+      #page-price-alerts .pa-group-header:hover .pa-group-label{color:var(--text2);}
+      #page-price-alerts .pa-group-label{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.09em;text-transform:uppercase;transition:color .12s;}
+      #page-price-alerts .pa-group-count{font-size:9px;font-weight:700;font-family:DM Mono,monospace;background:var(--bg4);border:1px solid var(--border2);color:var(--text3);border-radius:10px;padding:1px 6px;line-height:1.5;}
+      #page-price-alerts .pa-group-chev{margin-left:auto;color:var(--text3);transition:transform .18s;flex-shrink:0;}
+      #page-price-alerts .pa-asset-group.collapsed .pa-group-chev{transform:rotate(-90deg);}
+      #page-price-alerts .pa-asset-group.collapsed .pa-group-cards{display:none;}
+      #page-price-alerts .pa-asset-group.collapsed{margin-bottom:8px;}
       #page-price-alerts .pa-alert-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;position:relative;transition:border-color .18s,background .18s;}
       #page-price-alerts .pa-alert-card.triggered{border-color:rgba(232,160,48,.4);background:rgba(232,160,48,.05);}
       #page-price-alerts .pa-alert-card.fired{border-color:rgba(52,201,122,.45);background:rgba(14,20,14,.85);box-shadow:0 0 0 1px rgba(52,201,122,.2) inset;}
@@ -2863,6 +2873,8 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       #page-price-alerts .pa-monitor-dot{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;flex-shrink:0;}
       #page-price-alerts .pa-monitoring-bar:not(.off) .pa-monitor-dot{animation:paBlink 1.5s infinite;}
       #page-price-alerts .pa-monitoring-bar.off .pa-monitor-dot{animation:none;}
+      #page-price-alerts .pa-tickers-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+      #page-price-alerts .pa-tickers-row:empty{display:none;}
       #page-price-alerts .pa-ticker-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 7px;border-radius:4px;background:var(--bg4);border:1px solid var(--border);color:var(--text2);font-family:DM Mono,monospace;}
       </style>
 
@@ -3494,9 +3506,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           </p>
 
 
-          <div id="pa-tickers-row" style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-bottom:6px;min-height:0;">
-            <span id="pa-last-updated" style="font-size:10px;color:var(--text3);margin-left:auto;"></span>
-          </div>
+          <span id="pa-last-updated" style="display:block;font-size:10px;color:var(--text3);text-align:right;margin-bottom:4px;min-height:13px;"></span>
 
           <div id="pa-alerts-list" class="pa-alert-list">
             <div class="pa-empty" id="pa-empty-state">
@@ -14108,8 +14118,13 @@ function paComputePriceFields(a, price){
   return { hasPrice: hasPrice, isFailed: isFailed, pct: pct, fillW: fillW, fillColor: fillColor };
 }
 
+function paToggleGroup(assetType){
+  var el = document.getElementById('pa-group-' + assetType);
+  if(el) el.classList.toggle('collapsed');
+}
+
 // ── Full structural render (used when cards are added/removed/reordered) ──
-function paRender(){
+async function paRender(){
   var list   = document.getElementById('pa-alerts-list');
   var empty  = document.getElementById('pa-empty-state');
   var badge  = document.getElementById('pa-alert-count-badge');
@@ -14138,9 +14153,48 @@ function paRender(){
   if(empty) empty.style.display='none';
 
   var html = '';
-  // active first, then fired
+  // active first, then fired; group by asset type
   var sorted = active.concat(fired);
+
+  var groupMap = {}; // detectedKey -> [alert, ...]
   sorted.forEach(function(a){
+    var at = paDetectAssetType(a.symbol.toUpperCase());
+    if(!groupMap[at]) groupMap[at] = [];
+    groupMap[at].push(a);
+  });
+
+  // Order groups the same way the asset type dropdown does: by getAssets() order.
+  // Each asset type's key is detected from its first pair, same as paDetectAssetType.
+  var assets = await getAssets();
+  var groupOrder = [];
+  assets.forEach(function(at){
+    var sample = at.pairs && at.pairs.length ? at.pairs[0].replace(/\//g,'').toUpperCase() : '';
+    var key = sample ? paDetectAssetType(sample) : null;
+    if(key && groupMap[key] && groupOrder.indexOf(key) === -1) groupOrder.push(key);
+  });
+  // Append any remaining groups not covered (e.g. alerts for unregistered symbols)
+  Object.keys(groupMap).forEach(function(key){
+    if(groupOrder.indexOf(key) === -1) groupOrder.push(key);
+  });
+
+  var PA_GROUP_LABELS = { forex:'Forex', crypto:'Crypto', commodity:'Commodities', stock:'Stocks / ETFs', index:'Indices' };
+
+  groupOrder.forEach(function(assetType){
+    var group  = groupMap[assetType];
+    var label  = PA_GROUP_LABELS[assetType] || assetType;
+    var activeCnt = group.filter(function(a){ return !a.fired; }).length;
+    var countLabel = activeCnt > 0 ? activeCnt + ' active' : group.length + ' fired';
+
+    html += '<div class="pa-asset-group" id="pa-group-' + assetType + '">';
+    html += '<div class="pa-group-header" onclick="paToggleGroup(\'' + assetType + '\')">'; 
+    html += '<span class="pa-group-label">' + escHtml(label) + '</span>';
+    html += '<span class="pa-group-count">' + escHtml(countLabel) + '</span>';
+    html += '<svg class="pa-group-chev" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+    html += '</div>';
+    html += '<div class="pa-group-cards">';
+    html += '<div class="pa-tickers-row" id="pa-tickers-' + assetType + '"></div>';
+
+    group.forEach(function(a){
     var price  = _paPrices[a.symbol];
     var f = paComputePriceFields(a, price);
 
@@ -14218,7 +14272,11 @@ function paRender(){
     }
 
     html += '</div>'; // .pa-alert-card
-  });
+    }); // end group.forEach
+
+    html += '</div>'; // .pa-group-cards
+    html += '</div>'; // .pa-asset-group
+  }); // end groupOrder.forEach
 
   list.innerHTML = html;
   paRenderTickers();
@@ -14320,32 +14378,40 @@ function paRefreshAllAgoLabels(){
 }
 
 function paRenderTickers(){
-  var row = document.getElementById('pa-tickers-row');
-  if(!row) return;
-  var lastUpdatedEl = document.getElementById('pa-last-updated');
-  var symbols = paGetActiveSymbols();
-  if(symbols.length === 0){
-    row.querySelectorAll('.pa-ticker-badge').forEach(function(el){ el.remove(); });
-    return;
-  }
-  var existing = row.querySelectorAll('.pa-ticker-badge');
-  if(existing.length !== symbols.length){
-    row.querySelectorAll('.pa-ticker-badge').forEach(function(el){ el.remove(); });
+  // Group active (non-fired) alerts by asset type, render per-group ticker rows.
+  // Each group has a <div id="pa-tickers-{assetType}"> injected by paRender().
+  var byType = {};
+  _paAlerts.forEach(function(a){
+    if(a.fired) return;
+    var at = paDetectAssetType(a.symbol.toUpperCase());
+    if(!byType[at]) byType[at] = [];
+    if(byType[at].indexOf(a.symbol) === -1) byType[at].push(a.symbol);
+  });
+
+  Object.keys(byType).forEach(function(assetType){
+    var row = document.getElementById('pa-tickers-' + assetType);
+    if(!row) return;
+    var symbols = byType[assetType] || [];
+    if(symbols.length === 0){ row.innerHTML = ''; return; }
+
+    var existing = row.querySelectorAll('.pa-ticker-badge');
+    if(existing.length !== symbols.length){
+      row.innerHTML = '';
+      symbols.forEach(function(sym){
+        var p = _paPrices[sym];
+        var span = document.createElement('span');
+        span.className = 'pa-ticker-badge';
+        span.setAttribute('data-pa-ticker', sym);
+        span.textContent = sym + (p !== undefined ? ': ' + paFmtPrice(p) : ': …');
+        row.appendChild(span);
+      });
+      return;
+    }
     symbols.forEach(function(sym){
+      var el = row.querySelector('[data-pa-ticker="' + sym + '"]');
       var p = _paPrices[sym];
-      var span = document.createElement('span');
-      span.className = 'pa-ticker-badge';
-      span.setAttribute('data-pa-ticker', sym);
-      span.textContent = sym + (p !== undefined ? ': ' + paFmtPrice(p) : ': \u2026');
-      // Insert before the label so badges are left, label stays right
-      row.insertBefore(span, lastUpdatedEl);
+      if(el) el.textContent = sym + (p !== undefined ? ': ' + paFmtPrice(p) : ': …');
     });
-    return;
-  }
-  symbols.forEach(function(sym){
-    var el = row.querySelector('[data-pa-ticker="' + sym + '"]');
-    var p = _paPrices[sym];
-    if(el) el.textContent = sym + (p !== undefined ? ': ' + paFmtPrice(p) : ': \u2026');
   });
 }
 
@@ -16130,7 +16196,8 @@ async function paCheckAll() {
       var idx = alerts.findIndex(function(x) { return x.id === a.id; });
       if (idx !== -1) { alerts[idx].fired = true; alerts[idx].firedAt = Date.now(); alerts[idx].firedPrice = price; }
       changed = true;
-      await sendTelegram(buildMessage(a, price, cfg), cfg);
+      var tgMsgId = await sendTelegram(buildMessage(a, price, cfg), cfg);
+      if (tgMsgId && idx !== -1) alerts[idx].tgMessageId = tgMsgId;
       if (cfg.discordWebhook) await sendDiscord(buildDiscordEmbed(a, price, cfg), cfg.discordWebhook);
       logEntries.push({ id: a.id, symbol: a.symbol, dir: a.dir, target: a.target, price: price, note: a.note || '', firedAt: Date.now() });
     }
@@ -16314,8 +16381,10 @@ function buildDiscordEmbed(a, price, cfg) {
 }
 
 async function sendTelegram(text, cfg) {
-  if (!cfg.telegramToken || !cfg.telegramChatId) return;
-  await fetch('https://api.telegram.org/bot' + cfg.telegramToken + '/sendMessage', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ chat_id:cfg.telegramChatId, text:text, parse_mode:'HTML' }) });
+  if (!cfg.telegramToken || !cfg.telegramChatId) return null;
+  var r = await fetch('https://api.telegram.org/bot' + cfg.telegramToken + '/sendMessage', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ chat_id:cfg.telegramChatId, text:text, parse_mode:'HTML' }) });
+  var d = await r.json().catch(function(){ return {}; });
+  return (d.ok && d.result) ? d.result.message_id : null;
 }
 async function sendDiscord(payload, webhookUrl) {
   if (!webhookUrl) return;
