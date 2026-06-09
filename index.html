@@ -15533,7 +15533,29 @@ function cmSaveAndPush(){
   }
   cmUpdateBadge('warn', 'Pushing config…');
   cmFetch('/config', 'POST', cmBuildConfig())
-  .then(function(){ return cmFetch('/alerts', 'POST', _paAlerts || []); })
+  .then(function(){
+    // Merge cloud fired-states before pushing so we don't resurrect already-fired alerts
+    return cmFetch('/alerts', 'GET').then(function(cloudAlerts){
+      var cloudFiredMap = {};
+      if(Array.isArray(cloudAlerts)){
+        cloudAlerts.forEach(function(ca){ if(ca.fired) cloudFiredMap[ca.id] = ca; });
+      }
+      var merged = (_paAlerts || []).map(function(a){
+        if(!a.fired && cloudFiredMap[a.id]){
+          return Object.assign({}, a, {
+            fired: true,
+            firedAt: cloudFiredMap[a.id].firedAt,
+            firedPrice: cloudFiredMap[a.id].firedPrice,
+            firedByCloud: true
+          });
+        }
+        return a;
+      });
+      return cmFetch('/alerts', 'POST', merged);
+    }).catch(function(){
+      return cmFetch('/alerts', 'POST', _paAlerts || []);
+    });
+  })
   .then(function(d){
     cmUpdateBadge('ok', 'Connected · ' + (d.count || 0) + ' alerts active in cloud');
     toast('Cloud monitor configured! ' + (d.count || 0) + ' alerts pushed.', 'ok');
@@ -15546,12 +15568,30 @@ function cmSaveAndPush(){
 
 function cmSyncAlertsOnly(){
   if(!localStorage.getItem(CM_KEY_URL)){ toast('Set up the cloud monitor first', 'err'); return; }
-  cmFetch('/alerts', 'POST', _paAlerts || [])
-  .then(function(d){
+  // Merge cloud fired-states before pushing so we don't resurrect already-fired alerts
+  cmFetch('/alerts', 'GET').then(function(cloudAlerts){
+    var cloudFiredMap = {};
+    if(Array.isArray(cloudAlerts)){
+      cloudAlerts.forEach(function(ca){ if(ca.fired) cloudFiredMap[ca.id] = ca; });
+    }
+    var merged = (_paAlerts || []).map(function(a){
+      if(!a.fired && cloudFiredMap[a.id]){
+        return Object.assign({}, a, {
+          fired: true,
+          firedAt: cloudFiredMap[a.id].firedAt,
+          firedPrice: cloudFiredMap[a.id].firedPrice,
+          firedByCloud: true
+        });
+      }
+      return a;
+    });
+    return cmFetch('/alerts', 'POST', merged);
+  }).catch(function(){
+    return cmFetch('/alerts', 'POST', _paAlerts || []);
+  }).then(function(d){
     cmUpdateBadge('ok', 'Connected · alerts synced just now');
     toast('Alerts synced: ' + (d.count || 0) + ' sent to cloud', 'ok');
-  })
-  .catch(function(err){ toast('Sync failed: ' + err.message, 'err'); });
+  }).catch(function(err){ toast('Sync failed: ' + err.message, 'err'); });
 }
 
 // silent=true → used on auto page-load sync; suppresses "nothing new" toast
@@ -15577,7 +15617,8 @@ function cmPullFired(silent){
       }
     });
     if(updated > 0){
-      paSave();
+      // Use the original paSave (pre-wrapper) to avoid a redundant GET+POST round-trip
+      (typeof _origPaSave === 'function' ? _origPaSave : paSave).call(this);
       paRender();
       toast('☁️ ' + updated + ' alert(s) triggered by cloud while page was closed', 'ok');
     } else if(!silent){
@@ -15599,14 +15640,34 @@ function cmCheckStatus(){
 }
 
 // Auto-sync alerts to cloud on every paSave (add / edit / delete)
+// Fix: fetch cloud fired-states first so we never resurrect already-fired alerts
 (function(){
   var _orig = typeof paSave === 'function' ? paSave : null;
   if(!_orig) return;
+  window._origPaSave = _orig; // expose so cmPullFired can bypass the wrapper
   paSave = function(){
     _orig.apply(this, arguments);
-    if(localStorage.getItem(CM_KEY_URL)){
+    if(!localStorage.getItem(CM_KEY_URL)) return;
+    cmFetch('/alerts', 'GET').then(function(cloudAlerts){
+      var cloudFiredMap = {};
+      if(Array.isArray(cloudAlerts)){
+        cloudAlerts.forEach(function(ca){ if(ca.fired) cloudFiredMap[ca.id] = ca; });
+      }
+      var merged = (_paAlerts || []).map(function(a){
+        if(!a.fired && cloudFiredMap[a.id]){
+          return Object.assign({}, a, {
+            fired: true,
+            firedAt: cloudFiredMap[a.id].firedAt,
+            firedPrice: cloudFiredMap[a.id].firedPrice,
+            firedByCloud: true
+          });
+        }
+        return a;
+      });
+      cmFetch('/alerts', 'POST', merged).catch(function(){});
+    }).catch(function(){
       cmFetch('/alerts', 'POST', _paAlerts || []).catch(function(){});
-    }
+    });
   };
 })();
 
@@ -15884,7 +15945,29 @@ function cmSaveAndPush(){
   }
   cmUpdateBadge('warn', 'Pushing config…');
   cmFetch('/config', 'POST', cmBuildConfig())
-  .then(function(){ return cmFetch('/alerts', 'POST', _paAlerts || []); })
+  .then(function(){
+    // Merge cloud fired-states before pushing so we don't resurrect already-fired alerts
+    return cmFetch('/alerts', 'GET').then(function(cloudAlerts){
+      var cloudFiredMap = {};
+      if(Array.isArray(cloudAlerts)){
+        cloudAlerts.forEach(function(ca){ if(ca.fired) cloudFiredMap[ca.id] = ca; });
+      }
+      var merged = (_paAlerts || []).map(function(a){
+        if(!a.fired && cloudFiredMap[a.id]){
+          return Object.assign({}, a, {
+            fired: true,
+            firedAt: cloudFiredMap[a.id].firedAt,
+            firedPrice: cloudFiredMap[a.id].firedPrice,
+            firedByCloud: true
+          });
+        }
+        return a;
+      });
+      return cmFetch('/alerts', 'POST', merged);
+    }).catch(function(){
+      return cmFetch('/alerts', 'POST', _paAlerts || []);
+    });
+  })
   .then(function(d){
     cmUpdateBadge('ok', 'Connected · ' + (d.count || 0) + ' alerts active in cloud');
     toast('Cloud monitor configured! ' + (d.count || 0) + ' alerts pushed.', 'ok');
@@ -15897,12 +15980,30 @@ function cmSaveAndPush(){
 
 function cmSyncAlertsOnly(){
   if(!localStorage.getItem(CM_KEY_URL)){ toast('Set up the cloud monitor first', 'err'); return; }
-  cmFetch('/alerts', 'POST', _paAlerts || [])
-  .then(function(d){
+  // Merge cloud fired-states before pushing so we don't resurrect already-fired alerts
+  cmFetch('/alerts', 'GET').then(function(cloudAlerts){
+    var cloudFiredMap = {};
+    if(Array.isArray(cloudAlerts)){
+      cloudAlerts.forEach(function(ca){ if(ca.fired) cloudFiredMap[ca.id] = ca; });
+    }
+    var merged = (_paAlerts || []).map(function(a){
+      if(!a.fired && cloudFiredMap[a.id]){
+        return Object.assign({}, a, {
+          fired: true,
+          firedAt: cloudFiredMap[a.id].firedAt,
+          firedPrice: cloudFiredMap[a.id].firedPrice,
+          firedByCloud: true
+        });
+      }
+      return a;
+    });
+    return cmFetch('/alerts', 'POST', merged);
+  }).catch(function(){
+    return cmFetch('/alerts', 'POST', _paAlerts || []);
+  }).then(function(d){
     cmUpdateBadge('ok', 'Connected · alerts synced just now');
     toast('Alerts synced: ' + (d.count || 0) + ' sent to cloud', 'ok');
-  })
-  .catch(function(err){ toast('Sync failed: ' + err.message, 'err'); });
+  }).catch(function(err){ toast('Sync failed: ' + err.message, 'err'); });
 }
 
 // silent=true → used on auto page-load sync; suppresses "nothing new" toast
@@ -15928,7 +16029,8 @@ function cmPullFired(silent){
       }
     });
     if(updated > 0){
-      paSave();
+      // Use the original paSave (pre-wrapper) to avoid a redundant GET+POST round-trip
+      (typeof _origPaSave === 'function' ? _origPaSave : paSave).call(this);
       paRender();
       toast('☁️ ' + updated + ' alert(s) triggered by cloud while page was closed', 'ok');
     } else if(!silent){
@@ -15950,14 +16052,34 @@ function cmCheckStatus(){
 }
 
 // Auto-sync alerts to cloud on every paSave (add / edit / delete)
+// Fix: fetch cloud fired-states first so we never resurrect already-fired alerts
 (function(){
   var _orig = typeof paSave === 'function' ? paSave : null;
   if(!_orig) return;
+  window._origPaSave = _orig; // expose so cmPullFired can bypass the wrapper
   paSave = function(){
     _orig.apply(this, arguments);
-    if(localStorage.getItem(CM_KEY_URL)){
+    if(!localStorage.getItem(CM_KEY_URL)) return;
+    cmFetch('/alerts', 'GET').then(function(cloudAlerts){
+      var cloudFiredMap = {};
+      if(Array.isArray(cloudAlerts)){
+        cloudAlerts.forEach(function(ca){ if(ca.fired) cloudFiredMap[ca.id] = ca; });
+      }
+      var merged = (_paAlerts || []).map(function(a){
+        if(!a.fired && cloudFiredMap[a.id]){
+          return Object.assign({}, a, {
+            fired: true,
+            firedAt: cloudFiredMap[a.id].firedAt,
+            firedPrice: cloudFiredMap[a.id].firedPrice,
+            firedByCloud: true
+          });
+        }
+        return a;
+      });
+      cmFetch('/alerts', 'POST', merged).catch(function(){});
+    }).catch(function(){
       cmFetch('/alerts', 'POST', _paAlerts || []).catch(function(){});
-    }
+    });
   };
 })();
 
