@@ -3660,7 +3660,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               <div><span style="color:var(--green)">POST</span> <span style="color:var(--text2)">/poll</span> <span style="color:var(--text3);font-family:'DM Sans',sans-serif">— manually trigger a price check now</span></div>
               <div><span style="color:var(--accent)">GET</span>&nbsp; <span style="color:var(--text2)">/status</span> <span style="color:var(--text3);font-family:'DM Sans',sans-serif">— worker health &amp; alert counts</span></div>
               <div><span style="color:var(--accent)">GET</span>&nbsp; <span style="color:var(--text2)">/debug?sym=BTCUSDT</span> <span style="color:var(--text3);font-family:'DM Sans',sans-serif">— test all price providers for a symbol</span></div>
-              <div><span style="color:var(--accent)">GET</span>&nbsp; <span style="color:var(--text2)">/prices</span> <span style="color:var(--text3);font-family:'DM Sans',sans-serif">— last polled prices cache</span></div>
+              <div><span style="color:var(--accent)">GET</span>&nbsp; <span style="color:var(--text2)">/price?symbol=EURUSD</span> <span style="color:var(--text3);font-family:'DM Sans',sans-serif">— live price fetch (no KV, direct from provider)</span></div>
             </div>
 
             <!-- Download buttons -->
@@ -14589,9 +14589,9 @@ function paStopMonitoring(){
 // Fetch prices — routes through the cloud worker when configured,
 // otherwise polls providers directly from the browser.
 function paFetchPrices(){
-  // When a worker is configured, all price fetching is done server-side.
-  // Pull the latest cached prices from the worker's /prices KV endpoint
-  // instead of hitting external APIs from the browser.
+  // When a worker is configured, delegate to cmFetchPrices which calls
+  // the worker's /price endpoint per symbol — no KV involved, worker
+  // hits the provider directly and returns the result to the browser.
   if(localStorage.getItem('cm-worker-url')){ cmFetchPrices(); return; }
 
   var symbols = paGetActiveSymbols();
@@ -15546,7 +15546,8 @@ function cmSaveAndPush(){
             fired: true,
             firedAt: cloudFiredMap[a.id].firedAt,
             firedPrice: cloudFiredMap[a.id].firedPrice,
-            firedByCloud: true
+            firedByCloud: true,
+            tgMessageId: cloudFiredMap[a.id].tgMessageId || a.tgMessageId || null
           });
         }
         return a;
@@ -15580,7 +15581,8 @@ function cmSyncAlertsOnly(){
           fired: true,
           firedAt: cloudFiredMap[a.id].firedAt,
           firedPrice: cloudFiredMap[a.id].firedPrice,
-          firedByCloud: true
+          firedByCloud: true,
+            tgMessageId: cloudFiredMap[a.id].tgMessageId || a.tgMessageId || null
         });
       }
       return a;
@@ -15613,6 +15615,7 @@ function cmPullFired(silent){
         local.firedAt      = ca.firedAt    || Date.now();
         local.firedPrice   = ca.firedPrice;
         local.firedByCloud = true; // flags the ☁ Cloud badge in the card
+        if(ca.tgMessageId) local.tgMessageId = ca.tgMessageId;
         updated++;
       }
     });
@@ -15659,7 +15662,8 @@ function cmCheckStatus(){
             fired: true,
             firedAt: cloudFiredMap[a.id].firedAt,
             firedPrice: cloudFiredMap[a.id].firedPrice,
-            firedByCloud: true
+            firedByCloud: true,
+            tgMessageId: cloudFiredMap[a.id].tgMessageId || a.tgMessageId || null
           });
         }
         return a;
@@ -15674,18 +15678,27 @@ function cmCheckStatus(){
 // ── Pull last-polled prices from the cloud worker ─────────────────────────────
 function cmFetchPrices(){
   if(!localStorage.getItem(CM_KEY_URL)) return;
-  cmFetch('/prices', 'GET')
-  .then(function(prices){
-    if(!prices || typeof prices !== 'object') return;
-    var LABELS = {
-      binance:'Binance', coingecko:'CoinGecko', oanda:'Oanda',
-      finnhub:'Finnhub', av:'Alpha Vantage', yahoo:'Yahoo Finance'
-    };
+  // Collect unique active symbols
+  var symbols = [];
+  (_paAlerts || []).forEach(function(a){
+    if(!a.fired && symbols.indexOf(a.symbol.toUpperCase()) === -1) symbols.push(a.symbol.toUpperCase());
+  });
+  if(!symbols.length) return;
+  var LABELS = {
+    binance:'Binance', coingecko:'CoinGecko', oanda:'Oanda',
+    finnhub:'Finnhub', av:'Alpha Vantage', yahoo:'Yahoo Finance'
+  };
+  // Fetch each symbol individually — no KV read, worker calls provider on demand
+  Promise.all(symbols.map(function(sym){
+    return cmFetch('/price?symbol=' + encodeURIComponent(sym), 'GET')
+      .then(function(info){ return { sym: sym, info: info }; })
+      .catch(function(){ return { sym: sym, info: null }; });
+  })).then(function(results){
     var anyUpdate = false;
-    Object.keys(prices).forEach(function(sym){
-      var info = prices[sym];
+    results.forEach(function(r){
+      var info = r.info;
       if(!info || info.price === undefined || info.price === null) return;
-      var upper = sym.toUpperCase();
+      var upper = r.sym;
       _paPrices[upper] = parseFloat(info.price);
       if(info.time) _paPriceUpdatedAt[upper] = info.time;
       _paAlerts.forEach(function(a){
@@ -15693,7 +15706,6 @@ function cmFetchPrices(){
         var chipEl = document.querySelector('[data-pa-prov="' + a.id + '"]');
         if(chipEl && info.provider){
           var label = LABELS[info.provider] || info.provider;
-          // Detect fallback: compare provider against the primary for this asset type
           var assetType = paDetectAssetType(upper);
           var primaryProv = paGetProviderChain(assetType)[0];
           var isFallback = info.provider !== primaryProv;
@@ -15711,8 +15723,7 @@ function cmFetchPrices(){
     if(!_paCountdownInterval){
       _paCountdownInterval = setInterval(paCountdownTick, 1000);
     }
-  })
-  .catch(function(err){ console.warn('cmFetchPrices failed:', err.message); });
+  }).catch(function(err){ console.warn('cmFetchPrices failed:', err.message); });
 }
 
 // ── Auto-push config to worker when provider API keys change ─────────────────
@@ -15958,7 +15969,8 @@ function cmSaveAndPush(){
             fired: true,
             firedAt: cloudFiredMap[a.id].firedAt,
             firedPrice: cloudFiredMap[a.id].firedPrice,
-            firedByCloud: true
+            firedByCloud: true,
+            tgMessageId: cloudFiredMap[a.id].tgMessageId || a.tgMessageId || null
           });
         }
         return a;
@@ -15992,7 +16004,8 @@ function cmSyncAlertsOnly(){
           fired: true,
           firedAt: cloudFiredMap[a.id].firedAt,
           firedPrice: cloudFiredMap[a.id].firedPrice,
-          firedByCloud: true
+          firedByCloud: true,
+            tgMessageId: cloudFiredMap[a.id].tgMessageId || a.tgMessageId || null
         });
       }
       return a;
@@ -16026,6 +16039,7 @@ function cmPullFired(silent){
         local.firedPrice   = ca.firedPrice;
         local.firedByCloud = true; // flags the ☁ Cloud badge in the card
         updated++;
+        if(ca.tgMessageId) local.tgMessageId = ca.tgMessageId;
       }
     });
     if(updated > 0){
@@ -16071,7 +16085,8 @@ function cmCheckStatus(){
             fired: true,
             firedAt: cloudFiredMap[a.id].firedAt,
             firedPrice: cloudFiredMap[a.id].firedPrice,
-            firedByCloud: true
+            firedByCloud: true,
+            tgMessageId: cloudFiredMap[a.id].tgMessageId || a.tgMessageId || null
           });
         }
         return a;
@@ -16086,18 +16101,27 @@ function cmCheckStatus(){
 // ── Pull last-polled prices from the cloud worker ─────────────────────────────
 function cmFetchPrices(){
   if(!localStorage.getItem(CM_KEY_URL)) return;
-  cmFetch('/prices', 'GET')
-  .then(function(prices){
-    if(!prices || typeof prices !== 'object') return;
-    var LABELS = {
-      binance:'Binance', coingecko:'CoinGecko', oanda:'Oanda',
-      finnhub:'Finnhub', av:'Alpha Vantage', yahoo:'Yahoo Finance'
-    };
+  // Collect unique active symbols
+  var symbols = [];
+  (_paAlerts || []).forEach(function(a){
+    if(!a.fired && symbols.indexOf(a.symbol.toUpperCase()) === -1) symbols.push(a.symbol.toUpperCase());
+  });
+  if(!symbols.length) return;
+  var LABELS = {
+    binance:'Binance', coingecko:'CoinGecko', oanda:'Oanda',
+    finnhub:'Finnhub', av:'Alpha Vantage', yahoo:'Yahoo Finance'
+  };
+  // Fetch each symbol individually — no KV read, worker calls provider on demand
+  Promise.all(symbols.map(function(sym){
+    return cmFetch('/price?symbol=' + encodeURIComponent(sym), 'GET')
+      .then(function(info){ return { sym: sym, info: info }; })
+      .catch(function(){ return { sym: sym, info: null }; });
+  })).then(function(results){
     var anyUpdate = false;
-    Object.keys(prices).forEach(function(sym){
-      var info = prices[sym];
+    results.forEach(function(r){
+      var info = r.info;
       if(!info || info.price === undefined || info.price === null) return;
-      var upper = sym.toUpperCase();
+      var upper = r.sym;
       _paPrices[upper] = parseFloat(info.price);
       if(info.time) _paPriceUpdatedAt[upper] = info.time;
       _paAlerts.forEach(function(a){
@@ -16105,7 +16129,6 @@ function cmFetchPrices(){
         var chipEl = document.querySelector('[data-pa-prov="' + a.id + '"]');
         if(chipEl && info.provider){
           var label = LABELS[info.provider] || info.provider;
-          // Detect fallback: compare provider against the primary for this asset type
           var assetType = paDetectAssetType(upper);
           var primaryProv = paGetProviderChain(assetType)[0];
           var isFallback = info.provider !== primaryProv;
@@ -16123,8 +16146,7 @@ function cmFetchPrices(){
     if(!_paCountdownInterval){
       _paCountdownInterval = setInterval(paCountdownTick, 1000);
     }
-  })
-  .catch(function(err){ console.warn('cmFetchPrices failed:', err.message); });
+  }).catch(function(err){ console.warn('cmFetchPrices failed:', err.message); });
 }
 
 // ── Auto-push config to worker when provider API keys change ─────────────────
@@ -16281,6 +16303,20 @@ async function handleRequest(request) {
     var raw = await JOURNUP_KV.get('prices');
     return jsonRes(raw ? JSON.parse(raw) : {}, 200, origin);
   }
+  // Live price fetch — no KV read/write, result returned directly to browser
+  if (path === '/price' && method === 'GET') {
+    var sym = url.searchParams.get('symbol') || '';
+    if (!sym) return jsonRes({ error: 'Missing symbol parameter' }, 400, origin);
+    var cfgRaw = await JOURNUP_KV.get('config');
+    var cfg = cfgRaw ? JSON.parse(cfgRaw) : {};
+    try {
+      var result = await fetchPriceWithMeta(sym.toUpperCase(), cfg);
+      if (result === null) return jsonRes({ error: 'Price unavailable' }, 502, origin);
+      return jsonRes({ symbol: sym.toUpperCase(), price: result.price, provider: result.provider, time: Date.now() }, 200, origin);
+    } catch(e) {
+      return jsonRes({ error: e.message }, 502, origin);
+    }
+  }
   return jsonRes({ error: 'Not found' }, 404, origin);
 }
 
@@ -16299,17 +16335,11 @@ async function paCheckAll() {
   active.forEach(function(a) { if (!bySymbol[a.symbol]) bySymbol[a.symbol] = []; bySymbol[a.symbol].push(a); });
   var changed = false;
   var logEntries = [];
-  // Fresh cache each run — only currently-active symbols get written,
-  // so deleted/fired alerts never leave stale entries in /prices.
-  var pricesCache = {};
-  var pricesCacheChanged = false;
 
   await Promise.all(Object.keys(bySymbol).map(async function(sym) {
     var result = await fetchPriceWithMeta(sym, cfg);
     if (result === null) return;
     var price = result.price;
-    pricesCache[sym.toUpperCase()] = { price: price, time: Date.now(), provider: result.provider };
-    pricesCacheChanged = true;
     var symAlerts = bySymbol[sym];
     for (var i = 0; i < symAlerts.length; i++) {
       var a = symAlerts[i];
@@ -16325,7 +16355,6 @@ async function paCheckAll() {
     }
   }));
   if (changed) await JOURNUP_KV.put('alerts', JSON.stringify(alerts));
-  if (pricesCacheChanged) await JOURNUP_KV.put('prices', JSON.stringify(pricesCache));
   if (logEntries.length) {
     var existingRaw = await JOURNUP_KV.get('trigger_log');
     var log = (existingRaw ? JSON.parse(existingRaw) : []).concat(logEntries).slice(-200);
