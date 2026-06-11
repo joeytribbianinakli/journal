@@ -183,7 +183,7 @@ var DEFAULT_INDICES      = ['US30','US500','SP500','SPX','NAS100','NASDAQ','DAX'
 
 // Default provider chains — overrideable via cfg.providerChain sent from the page.
 var DEFAULT_PROVIDER_CHAIN = {
-  crypto:    ['binance','coingecko','yahoo'],
+  crypto:    ['binance','coingecko','oanda','yahoo'],
   forex:     ['oanda','av','yahoo'],
   commodity: ['oanda','av','yahoo'],
   stock:     ['finnhub','av','yahoo'],
@@ -244,17 +244,36 @@ function toBinancePair(sym) {
 async function fetchBinance(sym) {
   var pair = toBinancePair(sym);
   var r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=' + pair);
+  if (!r.ok) return null;                 // guard before r.json() — non-JSON responses (HTML block pages) would throw
   var d = await r.json();
-  if (!r.ok || d.code) return null;       // gracefully handle API error codes
+  if (d.code) return null;               // gracefully handle Binance API error codes
   return d.price ? parseFloat(d.price) : null;
 }
 
-// CoinGecko: fully algorithmic — no hardcoded coin map.
-// Pass 1: strip USDT/USD suffix, lowercase → try as CoinGecko ID directly.
-//   Works for most altcoins whose CG ID matches their ticker (sol, ada, doge, avax…).
+// CoinGecko: fast-path map for common coins whose CoinGecko ID differs from their ticker,
+// plus fully algorithmic fallback for any coin not in the map.
+// Pass 1: check CG_MAP, then try the ticker as the ID directly (works for sol, ada, doge, avax...).
 // Pass 2: if pass 1 returns nothing, call /search to resolve the real CG ID dynamically.
-//   Handles coins where the ID differs from the ticker (btc→bitcoin, xrp→ripple, etc.)
-//   without hardcoding any coin names. Any new pair added to the app just works.
+//   Any new pair added to the app just works - no map update needed for coins whose ID matches ticker.
+var CG_MAP = {
+  'BTC':'bitcoin','BTCUSD':'bitcoin','BTCUSDT':'bitcoin',
+  'ETH':'ethereum','ETHUSD':'ethereum','ETHUSDT':'ethereum',
+  'BNB':'binancecoin','BNBUSD':'binancecoin','BNBUSDT':'binancecoin',
+  'XRP':'ripple','XRPUSD':'ripple','XRPUSDT':'ripple',
+  'SOL':'solana','SOLUSD':'solana','SOLUSDT':'solana',
+  'ADA':'cardano','ADAUSD':'cardano','ADAUSDT':'cardano',
+  'DOGE':'dogecoin','DOGEUSD':'dogecoin','DOGEUSDT':'dogecoin',
+  'AVAX':'avalanche-2','AVAXUSD':'avalanche-2','AVAXUSDT':'avalanche-2',
+  'DOT':'polkadot','DOTUSD':'polkadot','DOTUSDT':'polkadot',
+  'MATIC':'matic-network','MATICUSD':'matic-network','MATICUSDT':'matic-network',
+  'LTC':'litecoin','LTCUSD':'litecoin','LTCUSDT':'litecoin',
+  'LINK':'chainlink','LINKUSD':'chainlink','LINKUSDT':'chainlink',
+  'UNI':'uniswap','UNIUSD':'uniswap','UNIUSDT':'uniswap',
+  'ATOM':'cosmos','ATOMUSD':'cosmos','ATOMUSDT':'cosmos',
+  'TRX':'tron','TRXUSD':'tron','TRXUSDT':'tron',
+  'TON':'the-open-network','TONUSD':'the-open-network','TONUSDT':'the-open-network',
+  'SHIB':'shiba-inu','SHIBUSD':'shiba-inu','SHIBUSDT':'shiba-inu'
+};
 async function fetchCoinGecko(sym, apiKey) {
   var u = sym.toUpperCase();
   var base = u.replace(/USDT$/, '').replace(/USD$/, '').toLowerCase();
@@ -262,17 +281,23 @@ async function fetchCoinGecko(sym, apiKey) {
 
   async function priceById(id) {
     var url = 'https://api.coingecko.com/api/v3/simple/price?ids=' + encodeURIComponent(id) + '&vs_currencies=usd' + apiSuffix;
-    var d = await (await fetch(url)).json();
+    var r = await fetch(url);
+    if (!r.ok) return null;
+    var d = await r.json();
     return (d[id] && d[id].usd) ? parseFloat(d[id].usd) : null;
   }
 
-  // Pass 1: try the ticker as the ID directly
-  var price = await priceById(base);
+  // Pass 1: fast-path map for coins whose CG ID differs from ticker, then try ticker as ID directly
+  var mappedId = CG_MAP[u] || CG_MAP[base.toUpperCase()] || null;
+  var price = await priceById(mappedId || base);
   if (price !== null) return price;
 
-  // Pass 2: resolve via /search — picks the first result whose symbol matches exactly
+  // Pass 2: resolve via /search - picks the first result whose symbol matches exactly.
+  // Only reached for unknown coins not in CG_MAP whose ticker is not their CG ID.
   try {
-    var sd = await (await fetch('https://api.coingecko.com/api/v3/search?query=' + encodeURIComponent(base) + apiSuffix)).json();
+    var searchUrl = 'https://api.coingecko.com/api/v3/search?query=' + encodeURIComponent(base);
+    if (apiKey) searchUrl += '&x_cg_demo_api_key=' + encodeURIComponent(apiKey);
+    var sd = await (await fetch(searchUrl)).json();
     var coins = sd.coins || [];
     for (var i = 0; i < coins.length; i++) {
       if (coins[i].symbol && coins[i].symbol.toLowerCase() === base && coins[i].id) {
