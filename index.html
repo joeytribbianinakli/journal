@@ -3567,7 +3567,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="pa-cloud-field">
               <div class="pa-cloud-label">Worker Secret <span style="font-weight:400;text-transform:none">(optional)</span></div>
-              <input id="cm-worker-secret" class="pa-cloud-input" type="password" placeholder="Leave blank if not set">
+              <div style="display:flex;gap:6px;"><input id="cm-worker-secret" class="pa-cloud-input" type="password" placeholder="Leave blank if not set" style="flex:1;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('cm-worker-secret')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
             </div>
             <hr class="pa-cloud-divider">
             <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">ℹ️ Telegram token &amp; chat ID are read from your Telegram setup above. Discord webhook is read from your Discord setup above.</div>
@@ -14680,7 +14680,7 @@ function paDetectAssetType(sym){
 // 'av'        = Alpha Vantage (stocks, forex, crypto, key required)
 // 'yahoo'     = Yahoo Finance via allorigins proxy (free, no key, broad coverage)
 var PA_ASSET_PROVIDER_MAP = {
-  crypto:    ['binance', 'coingecko', 'yahoo'],
+  crypto:    ['binance', 'coingecko', 'oanda', 'yahoo'],
   forex:     ['oanda', 'av', 'yahoo'],
   commodity: ['oanda', 'av', 'yahoo'],
   stock:     ['finnhub', 'av', 'yahoo'],
@@ -15525,7 +15525,7 @@ function cmBuildConfig(){
     commodities:     commodities,
     indices:         indices,
     providerChain:   Object.assign({}, typeof PA_ASSET_PROVIDER_MAP !== 'undefined' ? PA_ASSET_PROVIDER_MAP : {
-      crypto: ['binance','coingecko','yahoo'], forex: ['oanda','av','yahoo'],
+      crypto: ['binance','coingecko','oanda','yahoo'], forex: ['oanda','av','yahoo'],
       commodity: ['oanda','av','yahoo'], stock: ['finnhub','av','yahoo'], index: ['finnhub','av','yahoo']
     }),
   };
@@ -15835,7 +15835,7 @@ function cfDownloadPatch(){
             </div>
             <div class="pa-cloud-field">
               <div class="pa-cloud-label">Worker Secret <span style="font-weight:400;text-transform:none">(optional)</span></div>
-              <input id="cm-worker-secret" class="pa-cloud-input" type="password" placeholder="Leave blank if not set">
+              <div style="display:flex;gap:6px;"><input id="cm-worker-secret" class="pa-cloud-input" type="password" placeholder="Leave blank if not set" style="flex:1;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('cm-worker-secret')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
             </div>
             <hr class="pa-cloud-divider">
             <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">ℹ️ Telegram token &amp; chat ID are read from your Telegram setup above. Discord webhook is read from your Discord setup above.</div>
@@ -15960,7 +15960,7 @@ function cmBuildConfig(){
     commodities:     commodities,
     indices:         indices,
     providerChain:   Object.assign({}, typeof PA_ASSET_PROVIDER_MAP !== 'undefined' ? PA_ASSET_PROVIDER_MAP : {
-      crypto: ['binance','coingecko','yahoo'], forex: ['oanda','av','yahoo'],
+      crypto: ['binance','coingecko','oanda','yahoo'], forex: ['oanda','av','yahoo'],
       commodity: ['oanda','av','yahoo'], stock: ['finnhub','av','yahoo'], index: ['finnhub','av','yahoo']
     }),
   };
@@ -16407,7 +16407,7 @@ var DEFAULT_INDICES      = ['US30','US500','SP500','SPX','NAS100','NASDAQ','DAX'
 
 // Default provider chains — overrideable via cfg.providerChain sent from the page.
 var DEFAULT_PROVIDER_CHAIN = {
-  crypto:    ['binance','coingecko','yahoo'],
+  crypto:    ['binance','coingecko','oanda','yahoo'],
   forex:     ['oanda','av','yahoo'],
   commodity: ['oanda','av','yahoo'],
   stock:     ['finnhub','av','yahoo'],
