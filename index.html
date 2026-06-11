@@ -14046,8 +14046,9 @@ function paUpdateAlert(){
   _paAlerts[idx].targetStr = rawInput;
   _paAlerts[idx].note   = note;
   // Reset fired state if target/direction changed
-  _paAlerts[idx].fired  = false;
-  _paAlerts[idx].firedAt = null;
+  _paAlerts[idx].fired     = false;
+  _paAlerts[idx].firedAt   = null;
+  _paAlerts[idx].firedPrice = undefined;
 
   paSave();
   paCancelEdit();
@@ -14222,7 +14223,14 @@ async function paRender(){
     // Price-dynamic section — these spans/divs are targeted by paUpdatePrices
     html += '<div class="pa-alert-meta">';
     html += '<span>Set ' + escHtml(createdStr) + '</span>';
-    if(f.hasPrice){
+    if(a.fired){
+      // Fired alert: show the price at trigger time, not the live price.
+      // paUpdatePrices skips these spans so this value is never overwritten.
+      if(typeof a.firedPrice === 'number'){
+        html += '<span class="pa-current-price" data-pa-price-fired="' + a.id + '">Triggered: ' + paFmtPrice(a.firedPrice) + '</span>';
+      }
+      html += '<span class="pa-pct-label" style="font-size:10px;font-weight:700;color:var(--green)">TARGET HIT</span>';
+    } else if(f.hasPrice){
       html += '<span class="pa-current-price" data-pa-price="' + a.id + '">Current: ' + paFmtPrice(price) + '</span>';
       if(f.pct) html += '<span class="pa-pct-label" data-pa-pct="' + a.id + '" style="font-size:10px;font-weight:600;color:' + (f.pct==='TARGET HIT'?'var(--green)':'var(--text3)') + '">' + f.pct + '</span>';
       else       html += '<span class="pa-pct-label" data-pa-pct="' + a.id + '" style="font-size:10px;font-weight:600;"></span>';
@@ -14287,6 +14295,9 @@ async function paRender(){
 // no reflow of static card structure.
 function paUpdatePrices(){
   _paAlerts.forEach(function(a){
+    // Fired alerts show firedPrice set at trigger time — never overwrite with live price
+    if(a.fired) return;
+
     var price = _paPrices[a.symbol];
     var f = paComputePriceFields(a, price);
 
@@ -15107,8 +15118,9 @@ function paCheckAlerts(sym, price){
     if(a.dir === 'above' && price >= a.target) hit = true;
     if(a.dir === 'below' && price <= a.target) hit = true;
     if(hit){
-      a.fired  = true;
-      a.firedAt = Date.now();
+      a.fired     = true;
+      a.firedAt   = Date.now();
+      a.firedPrice = price;   // capture exact trigger price — used in UI instead of live price
       fired = true;
       // Immediately update this card's DOM class for instant visual feedback
       var cardEl = document.getElementById('pa-card-' + a.id);
@@ -15697,10 +15709,22 @@ function cmFetchPrices(){
     var anyUpdate = false;
     results.forEach(function(r){
       var info = r.info;
-      if(!info || info.price === undefined || info.price === null) return;
       var upper = r.sym;
+      if(!info || info.price === undefined || info.price === null){
+        // Price fetch failed — mark null so UI shows unavailable instead of stuck hourglass
+        if(_paPrices[upper] === undefined) _paPrices[upper] = null;
+        _paAlerts.forEach(function(a){
+          if(a.fired || a.symbol.toUpperCase() !== upper) return;
+          var chipEl = document.querySelector('[data-pa-prov="' + a.id + '"]');
+          if(chipEl){ chipEl.textContent = '⚠ Unavailable'; chipEl.className = 'pa-prov-chip fallback'; chipEl.title = 'All providers failed for ' + upper + '. Redeploy worker with latest fixes.'; }
+        });
+        anyUpdate = true;
+        return;
+      }
       _paPrices[upper] = parseFloat(info.price);
       if(info.time) _paPriceUpdatedAt[upper] = info.time;
+      // Fire alerts locally using the fresh price — was missing in cloud path
+      paCheckAlerts(upper, parseFloat(info.price));
       _paAlerts.forEach(function(a){
         if(a.fired || a.symbol.toUpperCase() !== upper) return;
         var chipEl = document.querySelector('[data-pa-prov="' + a.id + '"]');
@@ -16120,10 +16144,22 @@ function cmFetchPrices(){
     var anyUpdate = false;
     results.forEach(function(r){
       var info = r.info;
-      if(!info || info.price === undefined || info.price === null) return;
       var upper = r.sym;
+      if(!info || info.price === undefined || info.price === null){
+        // Price fetch failed — mark null so UI shows unavailable instead of stuck hourglass
+        if(_paPrices[upper] === undefined) _paPrices[upper] = null;
+        _paAlerts.forEach(function(a){
+          if(a.fired || a.symbol.toUpperCase() !== upper) return;
+          var chipEl = document.querySelector('[data-pa-prov="' + a.id + '"]');
+          if(chipEl){ chipEl.textContent = '⚠ Unavailable'; chipEl.className = 'pa-prov-chip fallback'; chipEl.title = 'All providers failed for ' + upper + '. Redeploy worker with latest fixes.'; }
+        });
+        anyUpdate = true;
+        return;
+      }
       _paPrices[upper] = parseFloat(info.price);
       if(info.time) _paPriceUpdatedAt[upper] = info.time;
+      // Fire alerts locally using the fresh price — was missing in cloud path
+      paCheckAlerts(upper, parseFloat(info.price));
       _paAlerts.forEach(function(a){
         if(a.fired || a.symbol.toUpperCase() !== upper) return;
         var chipEl = document.querySelector('[data-pa-prov="' + a.id + '"]');
