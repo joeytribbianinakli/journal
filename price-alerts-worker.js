@@ -231,28 +231,95 @@ async function fetchPrice(sym, cfg) {
   return result ? result.price : null;
 }
 
-async function fetchBinance(sym) {
+// Returns the Binance trading pair for a given symbol.
+// Adapts dynamically: BTCUSDT → BTCUSDT, BTCUSD → BTCUSDT, BTC → BTCUSDT
+// Does NOT hardcode coin names — works for any xUSD or xUSDT symbol.
+function toBinancePair(sym) {
   var u = sym.toUpperCase();
-  var pair = /USDT$/.test(u) ? u : u.replace(/USD$/,'') + 'USDT';
-  var d = await (await fetch('https://api.binance.com/api/v3/ticker/price?symbol=' + pair)).json();
+  if (/USDT$/.test(u)) return u;          // already a USDT pair
+  if (/USD$/.test(u)) return u.slice(0, -3) + 'USDT'; // xUSD → xUSDT
+  return u + 'USDT';                      // bare ticker → xUSDT
+}
+
+async function fetchBinance(sym) {
+  var pair = toBinancePair(sym);
+  var r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=' + pair);
+  var d = await r.json();
+  if (!r.ok || d.code) return null;       // gracefully handle API error codes
   return d.price ? parseFloat(d.price) : null;
 }
 
-var CG_MAP = {'BTC':'bitcoin','BTCUSDT':'bitcoin','ETH':'ethereum','ETHUSDT':'ethereum','BNB':'binancecoin','BNBUSDT':'binancecoin','SOL':'solana','SOLUSDT':'solana','XRP':'ripple','XRPUSDT':'ripple','ADA':'cardano','ADAUSDT':'cardano','DOGE':'dogecoin','DOGEUSDT':'dogecoin','AVAX':'avalanche-2','AVAXUSDT':'avalanche-2','DOT':'polkadot','DOTUSDT':'polkadot','LTC':'litecoin','LTCUSDT':'litecoin','LINK':'chainlink','LINKUSDT':'chainlink','TON':'the-open-network','TONUSDT':'the-open-network','SHIB':'shiba-inu','SHIBUSDT':'shiba-inu'};
+// CoinGecko: fully algorithmic — no hardcoded coin map.
+// Pass 1: strip USDT/USD suffix, lowercase → try as CoinGecko ID directly.
+//   Works for most altcoins whose CG ID matches their ticker (sol, ada, doge, avax…).
+// Pass 2: if pass 1 returns nothing, call /search to resolve the real CG ID dynamically.
+//   Handles coins where the ID differs from the ticker (btc→bitcoin, xrp→ripple, etc.)
+//   without hardcoding any coin names. Any new pair added to the app just works.
 async function fetchCoinGecko(sym, apiKey) {
   var u = sym.toUpperCase();
-  var id = CG_MAP[u] || u.replace(/USDT$|USD$/,'').toLowerCase();
-  var url = 'https://api.coingecko.com/api/v3/simple/price?ids=' + encodeURIComponent(id) + '&vs_currencies=usd';
-  if (apiKey) url += '&x_cg_demo_api_key=' + encodeURIComponent(apiKey);
-  var d = await (await fetch(url)).json();
-  return (d[id] && d[id].usd) ? parseFloat(d[id].usd) : null;
+  var base = u.replace(/USDT$/, '').replace(/USD$/, '').toLowerCase();
+  var apiSuffix = apiKey ? '&x_cg_demo_api_key=' + encodeURIComponent(apiKey) : '';
+
+  async function priceById(id) {
+    var url = 'https://api.coingecko.com/api/v3/simple/price?ids=' + encodeURIComponent(id) + '&vs_currencies=usd' + apiSuffix;
+    var d = await (await fetch(url)).json();
+    return (d[id] && d[id].usd) ? parseFloat(d[id].usd) : null;
+  }
+
+  // Pass 1: try the ticker as the ID directly
+  var price = await priceById(base);
+  if (price !== null) return price;
+
+  // Pass 2: resolve via /search — picks the first result whose symbol matches exactly
+  try {
+    var sd = await (await fetch('https://api.coingecko.com/api/v3/search?query=' + encodeURIComponent(base) + apiSuffix)).json();
+    var coins = sd.coins || [];
+    for (var i = 0; i < coins.length; i++) {
+      if (coins[i].symbol && coins[i].symbol.toLowerCase() === base && coins[i].id) {
+        price = await priceById(coins[i].id);
+        if (price !== null) return price;
+        break;
+      }
+    }
+  } catch(e) {}
+
+  return null;
 }
 
-var YAHOO_MAP = {'GOLD':'GC=F','SILVER':'SI=F','OIL':'CL=F','WTI':'CL=F','BRENT':'BZ=F','US30':'YM=F','US500':'ES=F','SP500':'ES=F','SPX':'ES=F','NAS100':'NQ=F','XAUUSD':'GC=F','XAGUSD':'SI=F','EURUSD':'EURUSD=X','GBPUSD':'GBPUSD=X','USDJPY':'USDJPY=X','AUDUSD':'AUDUSD=X','USDCAD':'USDCAD=X','USDCHF':'USDCHF=X'};
-async function fetchYahoo(sym) {
+// Yahoo Finance: fully algorithmic ticker derivation.
+// The only exceptions kept are commodity/index futures tickers (e.g. XAUUSD → GC=F)
+// because Yahoo uses futures contract codes that can't be derived from the symbol.
+// Everything else — crypto, forex, stocks — is derived algorithmically:
+//   BTCUSDT / BTCUSD → BTC-USD   (crypto: strip suffix, add -USD)
+//   EURUSD           → EURUSD=X  (6-char forex: append =X)
+//   AAPL             → AAPL      (stocks: pass through)
+var YAHOO_FUTURES_MAP = {
+  'XAUUSD':'GC=F','GOLD':'GC=F',
+  'XAGUSD':'SI=F','SILVER':'SI=F',
+  'OIL':'CL=F','WTI':'CL=F','CRUDE':'CL=F','BRENT':'BZ=F','USOIL':'CL=F',
+  'NATGAS':'NG=F','CORN':'ZC=F','WHEAT':'ZW=F',
+  'US30':'YM=F','US500':'ES=F','SP500':'ES=F','SPX':'ES=F',
+  'NAS100':'NQ=F','NASDAQ':'NQ=F','DAX':'GDAXI','UK100':'^FTSE'
+};
+function toYahooTicker(sym) {
   var u = sym.toUpperCase();
-  var ticker = YAHOO_MAP[u] || u;
-  if (!YAHOO_MAP[u] && /^[A-Z]{6}$/.test(u)) ticker = u + '=X';
+  // Commodity/index futures — irreducible, keep a small exception map
+  if (YAHOO_FUTURES_MAP[u]) return YAHOO_FUTURES_MAP[u];
+  // Crypto with USDT suffix: BTCUSDT → BTC-USD
+  if (/USDT$/.test(u)) return u.slice(0, -4) + '-USD';
+  // Crypto with USD suffix: BTCUSD → BTC-USD
+  // Check base against known crypto list first so 6-char pairs like BTCUSD are caught,
+  // while real forex pairs like EURUSD (whose base EUR is not in the list) fall through.
+  if (/USD$/.test(u) && DEFAULT_KNOWN_CRYPTO.indexOf(u.slice(0, -3)) !== -1) return u.slice(0, -3) + '-USD';
+  // Longer crypto USD pairs not in the default list (e.g. MATICUSD, length > 6)
+  if (/USD$/.test(u) && u.length > 6) return u.slice(0, -3) + '-USD';
+  // Forex: exactly 6 alpha chars → EURUSD=X
+  if (/^[A-Z]{6}$/.test(u)) return u + '=X';
+  // Stocks, indices, ETFs — pass through as-is
+  return u;
+}
+async function fetchYahoo(sym) {
+  var ticker = toYahooTicker(sym);
   // Call Yahoo directly — no CORS proxy needed from a Worker (server-side)
   var url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(ticker) + '?interval=1m&range=1d';
   var r = await fetch(url, {
@@ -274,24 +341,61 @@ async function fetchYahoo(sym) {
   return (meta && meta.regularMarketPrice) ? parseFloat(meta.regularMarketPrice) : null;
 }
 
-var AV_COMM = {'GOLD':'XAUUSD','SILVER':'XAGUSD','XAUUSD':'XAUUSD','XAGUSD':'XAGUSD'};
+// Alpha Vantage: fully algorithmic.
+// Forex/commodity pairs (6 chars or XAU/XAG style): split at 3 chars → CURRENCY_EXCHANGE_RATE
+// Crypto with USDT/USD suffix: strip suffix → DIGITAL_CURRENCY_DAILY vs USD
+// Stocks/ETFs: pass symbol through → GLOBAL_QUOTE
 async function fetchAlphaVantage(sym, apiKey) {
   var u = sym.toUpperCase();
-  if (/^[A-Z]{6}$/.test(u) || AV_COMM[u]) {
-    var pair = AV_COMM[u] || u;
-    var d = await (await fetch('https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=' + pair.slice(0,3) + '&to_currency=' + pair.slice(3,6) + '&apikey=' + encodeURIComponent(apiKey))).json();
+  var base = u.replace(/USDT$/, '').replace(/USD$/, '');
+
+  // Forex: exactly 6 alpha chars (EURUSD, GBPJPY, XAUUSD, etc.)
+  if (/^[A-Z]{6}$/.test(u)) {
+    var from = u.slice(0, 3), to = u.slice(3, 6);
+    var d = await (await fetch('https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=' + from + '&to_currency=' + to + '&apikey=' + encodeURIComponent(apiKey))).json();
     var rate = d['Realtime Currency Exchange Rate'] && d['Realtime Currency Exchange Rate']['5. Exchange Rate'];
     return rate ? parseFloat(rate) : null;
   }
+
+  // Crypto: had USDT or USD suffix, or is a known short ticker that's not 6 chars
+  // Use CURRENCY_EXCHANGE_RATE: from=BTC to=USD (works for any crypto AV supports)
+  if (u !== base) {
+    // Had a suffix stripped — it's crypto
+    var d = await (await fetch('https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=' + encodeURIComponent(base) + '&to_currency=USD&apikey=' + encodeURIComponent(apiKey))).json();
+    var rate = d['Realtime Currency Exchange Rate'] && d['Realtime Currency Exchange Rate']['5. Exchange Rate'];
+    return rate ? parseFloat(rate) : null;
+  }
+
+  // Stock / ETF / index
   var d = await (await fetch('https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=' + encodeURIComponent(u) + '&apikey=' + encodeURIComponent(apiKey))).json();
   var price = d['Global Quote'] && d['Global Quote']['05. price'];
   return price ? parseFloat(price) : null;
 }
 
-var OANDA_MAP = {'EURUSD':'EUR_USD','GBPUSD':'GBP_USD','USDJPY':'USD_JPY','AUDUSD':'AUD_USD','USDCAD':'USD_CAD','USDCHF':'USD_CHF','NZDUSD':'NZD_USD','EURGBP':'EUR_GBP','EURJPY':'EUR_JPY','GBPJPY':'GBP_JPY','XAUUSD':'XAU_USD','XAGUSD':'XAG_USD','GOLD':'XAU_USD','SILVER':'XAG_USD','US30':'US30_USD','US500':'SPX500_USD','SP500':'SPX500_USD','NAS100':'NAS100_USD','OIL':'WTICO_USD','WTI':'WTICO_USD','CRUDE':'WTICO_USD','BRENT':'BCO_USD'};
-async function fetchOanda(sym, apiKey, env) {
+// Oanda: fully algorithmic instrument derivation.
+// Oanda format is always BASE_QUOTE with underscore (EUR_USD, XAU_USD, BTC_USD).
+// Rules:
+//   EURUSD (6-char forex)  → EUR_USD  (split at 3)
+//   BTCUSDT / BTCUSD       → BTC_USD  (strip T from USDT, insert _)
+//   XAU_USD (already oanda format) → pass through
+// A small exceptions map covers non-derivable Oanda instrument names for indices/commodities.
+var OANDA_EXCEPTIONS = {
+  'US30':'US30_USD','US500':'SPX500_USD','SP500':'SPX500_USD','SPX':'SPX500_USD',
+  'NAS100':'NAS100_USD','NASDAQ':'NAS100_USD',
+  'OIL':'WTICO_USD','WTI':'WTICO_USD','CRUDE':'WTICO_USD','USOIL':'WTICO_USD',
+  'BRENT':'BCO_USD','UK100':'UK100_GBP','DAX':'DE30_EUR'
+};
+function toOandaInstrument(sym) {
   var u = sym.toUpperCase();
-  var inst = OANDA_MAP[u] || (/^[A-Z]{6}$/.test(u) ? u.slice(0,3)+'_'+u.slice(3,6) : (/^[A-Z]+_[A-Z]+$/.test(u) ? u : null));
+  if (OANDA_EXCEPTIONS[u]) return OANDA_EXCEPTIONS[u];
+  if (/^[A-Z]+_[A-Z]+$/.test(u)) return u;           // already BASE_QUOTE
+  if (/^[A-Z]{6}$/.test(u)) return u.slice(0,3) + '_' + u.slice(3,6); // EURUSD → EUR_USD
+  if (/USDT$/.test(u)) return u.slice(0,-4) + '_USD'; // BTCUSDT → BTC_USD
+  if (/USD$/.test(u)) return u.slice(0,-3) + '_USD';  // BTCUSD → BTC_USD
+  return null; // can't derive — skip
+}
+async function fetchOanda(sym, apiKey, env) {
+  var inst = toOandaInstrument(sym);
   if (!inst) return null;
   var host = env === 'live' ? 'https://api-fxtrade.oanda.com' : 'https://api-fxpractice.oanda.com';
   var r = await fetch(host + '/v3/instruments/' + inst + '/candles?count=1&price=M&granularity=S5', { headers: { 'Authorization': 'Bearer ' + apiKey } });
@@ -301,9 +405,35 @@ async function fetchOanda(sym, apiKey, env) {
   return (price && !isNaN(price)) ? price : null;
 }
 
-var FINNHUB_MAP = {'US30':'DJI','SP500':'^GSPC','SPX':'^GSPC','US500':'^GSPC','NAS100':'^NDX','NASDAQ':'^NDX','DAX':'^GDAXI','UK100':'^FTSE','GOLD':'OANDA:XAU_USD','XAUUSD':'OANDA:XAU_USD','SILVER':'OANDA:XAG_USD','XAGUSD':'OANDA:XAG_USD'};
+// Finnhub: mostly pass-through for stocks.
+// For forex, Finnhub uses "OANDA:EUR_USD" format — derive it the same way as Oanda.
+// Small exceptions map only for index shorthands (US30, NAS100 etc.) that Finnhub
+// doesn't recognise by those names.
+var FINNHUB_INDEX_MAP = {
+  'US30':'DJI','SP500':'^GSPC','SPX':'^GSPC','US500':'^GSPC',
+  'NAS100':'^NDX','NASDAQ':'^NDX','DAX':'^GDAXI','UK100':'^FTSE'
+};
 async function fetchFinnhub(sym, apiKey) {
-  var ticker = FINNHUB_MAP[sym.toUpperCase()] || sym.toUpperCase();
+  var u = sym.toUpperCase();
+  var ticker;
+  if (FINNHUB_INDEX_MAP[u]) {
+    ticker = FINNHUB_INDEX_MAP[u];
+  } else if (/USDT$/.test(u)) {
+    // Crypto USDT pair: BTCUSDT → BINANCE:BTCUSDT
+    ticker = 'BINANCE:' + u;
+  } else if (/USD$/.test(u) && DEFAULT_KNOWN_CRYPTO.indexOf(u.slice(0, -3)) !== -1) {
+    // Known crypto USD pair: BTCUSD → COINBASE:BTC-USD
+    // Must come before the 6-char forex check so BTCUSD isn't misrouted to OANDA
+    ticker = 'COINBASE:' + u.slice(0,-3) + '-USD';
+  } else if (/USD$/.test(u) && u.length > 6) {
+    // Longer crypto USD pair not in default list (e.g. MATICUSD)
+    ticker = 'COINBASE:' + u.slice(0,-3) + '-USD';
+  } else if (/^[A-Z]{6}$/.test(u)) {
+    // Forex: EURUSD → OANDA:EUR_USD
+    ticker = 'OANDA:' + u.slice(0,3) + '_' + u.slice(3,6);
+  } else {
+    ticker = u; // stocks pass through
+  }
   var d = await (await fetch('https://finnhub.io/api/v1/quote?symbol=' + encodeURIComponent(ticker) + '&token=' + encodeURIComponent(apiKey))).json();
   return (d.c && d.c !== 0) ? parseFloat(d.c) : null;
 }
