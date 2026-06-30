@@ -1583,7 +1583,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="frow-inline">
             <div class="frow"><label class="flabel">Entry price <span style="color:var(--red);margin-left:2px">*</span></label><input type="number" id="f-entry" step="any" placeholder="e.g. 1.07477" oninput="recalc()"></div>
             <div class="frow"><label class="flabel">Stop Loss <span style="color:var(--red);margin-left:2px">*</span></label><input type="number" id="f-sl-price" step="any" placeholder="e.g. 1.07200" oninput="recalc()"></div>
-            <div class="frow"><label class="flabel" id="exit-price-label">Exit price <span style="color:var(--red);margin-left:2px">*</span> <span id="exit-price-hint" style="display:none;font-size:9px;color:var(--accent);font-weight:500">(remainder / last TP)</span></label><input type="number" id="f-exit" step="any" placeholder="e.g. 1.07714" oninput="recalc()"></div>
+            <div class="frow"><label class="flabel" id="exit-price-label">Exit price <span id="exit-price-hint" style="display:none;font-size:9px;color:var(--accent);font-weight:500">(remainder / last TP)</span></label><input type="number" id="f-exit" step="any" placeholder="e.g. 1.07714" oninput="recalc()"></div>
             <div class="frow">
               <label class="flabel">Total Quantity (units) <span style="color:var(--red);margin-left:2px">*</span></label>
               <input type="number" id="f-qty" step="any" placeholder="e.g. 100000" oninput="recalc();_validatePartialQty()">
@@ -5772,9 +5772,12 @@ async function populateSessionSelects(restoreSessionId){
     document.getElementById('f-session').value=restoreSessionId;
     onSessionChange();
   } else if(!editingId){
-    // New trade: auto-select most recent active non-demo session, or most recent non-demo session
+    // New trade: auto-select the active non-demo session created first; if none active, most recent non-demo session
     var nonDemoSessions=activeSessions.filter(function(s){return !s.isDemo;});
-    var activeNonDemo=nonDemoSessions.find(function(s){return isSessionActive(s);})||nonDemoSessions[0]||null;
+    var activeNonDemoList=nonDemoSessions.filter(function(s){return isSessionActive(s);});
+    var activeNonDemo=activeNonDemoList.length
+      ?activeNonDemoList.slice().sort(function(a,b){return new Date(a.createdAt||a.startDate)-new Date(b.createdAt||b.startDate);})[0]
+      :(nonDemoSessions[0]||null);
     var targetId=activeNonDemo?activeNonDemo.id:'';
     document.getElementById('f-session').value=targetId;
     onSessionChange();
@@ -5782,8 +5785,11 @@ async function populateSessionSelects(restoreSessionId){
 
   // Non-demo sessions for all filters (demos only show if user explicitly picks them)
   var filterSessions=activeSessions.filter(function(s){return !s.isDemo;});
-  // Most recent active non-demo session for auto-defaulting filters
-  var defaultFilterSession=filterSessions.find(function(s){return isSessionActive(s);})||filterSessions[0]||null;
+  // Default filter session: the active session created first; falls back to most recent non-demo session
+  var activeFilterSessionsList=filterSessions.filter(function(s){return isSessionActive(s);});
+  var defaultFilterSession=activeFilterSessionsList.length
+    ?activeFilterSessionsList.slice().sort(function(a,b){return new Date(a.createdAt||a.startDate)-new Date(b.createdAt||b.startDate);})[0]
+    :(filterSessions[0]||null);
 
   // Dashboard session filter: show demo sessions when demo mode is ON, real sessions otherwise
   var demoOn=!!_dashDemoMode;
@@ -5827,7 +5833,7 @@ async function populateSessionSelects(restoreSessionId){
     _defaultHistSessionId=histDefaultSession?histDefaultSession.id:'';
     hF.innerHTML='<option value="">All sessions</option>'+histDemoSessions.map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');
     if(hv&&histDemoSessions.find(function(s){return s.id===hv;})){hF.value=hv;}
-    else if(hv===''){hF.value='';}
+    else if(histDefaultSession){hF.value=histDefaultSession.id;}
     else{hF.value='';}
   }
   // Monte Carlo session select — also demo-aware (mirrors dashboard mode)
@@ -6783,9 +6789,8 @@ async function saveTrade(){
   var slVal=document.getElementById('f-sl-price').value;
   if(!slVal){toast('Stop loss price is required','err');switchTab(0,null);return;}
   var exitVal=document.getElementById('f-exit').value;
-  // When partials are active, exit price is derived from the last partial — don't require the field
+  // Exit price is optional — a trade saved without one is treated as pending
   var hasPartialInputs=_partialTPs.filter(function(p){return parseFloat(p.price)>0&&parseFloat(p.qty)>0;}).length>0;
-  if(!hasPartialInputs&&!exitVal){toast('Exit price is required','err');switchTab(0,null);return;}
   var qtyVal=document.getElementById('f-qty').value;
   if(!qtyVal){toast('Quantity is required','err');switchTab(0,null);return;}
   // Validate partial qty sums match total qty
@@ -6896,7 +6901,7 @@ async function saveTrade(){
       }
     }
     var wlVal=document.getElementById('f-winloss').value;
-    winLoss=wlVal!==''?parseFloat(wlVal):(pl>=0?1:0);
+    winLoss=wlVal!==''?parseFloat(wlVal):(exit?(pl>=0?1:0):null);
   }
   var durMs=edt&&xdt?new Date(xdt)-new Date(edt):0;
   var _emptyIds={'htf-W':[],'htf-D':[],'htf-4h':[],'mtf-1h':[],'mtf-30m':[],'ltf-15m':[],'ltf-5m':[],'setup':[],'postanalysis':[]};
@@ -7267,7 +7272,7 @@ var ALL_HISTORY_COLS=[
   {key:'pair',      label:'Pair',      sortVal:function(t){return t.pair||'';},                   render:function(t){return'<td style="font-weight:600;color:var(--text)">'+escHtml(t.pair||'')+'</td>';}},
   {key:'assetType', label:'Asset',     sortVal:function(t){return t.assetType||'';},              render:function(t){return'<td style="color:var(--text2)">'+escHtml(t.assetType||'—')+'</td>';}},
   {key:'type',      label:'Direction', sortVal:function(t){return t.type||'';},                   render:function(t){var typ=t.type||'';return'<td>'+(typ?'<span class="badge '+(typ==='Long'?'badge-green':'badge-red')+'">'+typ+'</span>':'—')+'</td>';}},
-  {key:'result',    label:'Result',    sortVal:function(t){return t.winLoss||0;},                 render:function(t){var win=t.winLoss===1;return'<td><span class="badge '+(win?'badge-green':'badge-red')+'">'+(win?'Win':'Loss')+'</span></td>';}},
+  {key:'result',    label:'Result',    sortVal:function(t){return t.winLoss||0;},                 render:function(t){if(!t.exitPrice)return'<td><span class="badge badge-amber">Pending</span></td>';var win=t.winLoss===1;return'<td><span class="badge '+(win?'badge-green':'badge-red')+'">'+(win?'Win':'Loss')+'</span></td>';}},
   {key:'plDollar',  label:'P/L ($)',   sortVal:function(t){return parseFloat(t.plDollar)||0;},    render:function(t){var pl=parseFloat(t.plDollar)||0;var ptag=(t.partialTPs&&t.partialTPs.length)?'<span style="font-size:8px;font-weight:700;vertical-align:middle;background:rgba(77,127,255,.12);color:var(--accent);border-radius:3px;padding:1px 4px;margin-left:4px">P</span>':'';return'<td class="mono" style="color:'+(pl>=0?'var(--green)':'var(--red)')+'">'+((pl>=0?'+':'')+pl.toFixed(2))+ptag+'</td>';}},
   {key:'plPct',     label:'P/L (%)',   sortVal:function(t){return parseFloat(t.plPct)||0;},       render:function(t){var p=parseFloat(t.plPct)||0;return'<td class="mono" style="color:'+(p>=0?'var(--green)':'var(--red)')+'">'+((p>=0?'+':'')+p.toFixed(2))+'%</td>';}},
   {key:'actualRR',  label:'RR',        sortVal:function(t){return t.actualRR!=null?parseFloat(t.actualRR):-999;},render:function(t){return'<td class="mono">'+(t.actualRR!=null?parseFloat(t.actualRR).toFixed(2)+'R':'—')+'</td>';}},
@@ -7588,7 +7593,9 @@ async function _renderHistoryImpl(){
       +' <button class="btn btn-sm btn-icon" title="Edit" onclick="event.stopPropagation();editTrade(\''+t.id+'\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
       +' <button class="btn btn-danger btn-sm btn-icon" title="Delete" onclick="event.stopPropagation();deleteTrade(\''+t.id+'\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>'
       +'</td>';
-    return'<tr onclick="openDetail(\''+t.id+'\')">'+cells+actions+'</tr>';
+    var isPending=!t.exitPrice;
+    var rowStyle=isPending?' style="background:rgba(232,160,48,.12)"':'';
+    return'<tr'+rowStyle+' onclick="openDetail(\''+t.id+'\')">'+cells+actions+'</tr>';
   }).join('');
   wrap.innerHTML='<table class="data"><thead><tr>'+headers+'</tr></thead><tbody>'+rows+'</tbody></table>';
 
@@ -7660,9 +7667,10 @@ async function openDetail(id){
   var _clTemplateForDetail=await getChecklist();
   document.getElementById('dm-title').textContent='#'+trade.num+' — '+trade.pair;
   var win=trade.winLoss===1;
+  var pendingTrade=!trade.exitPrice;
   document.getElementById('dm-badges').innerHTML=
     (trade.skipped?'<span class="skipped-badge">⊘ Skipped</span>':'')+
-    '<span class="badge '+(win?'badge-green':'badge-red')+'">'+(win?'Win':'Loss')+'</span>'+
+    (pendingTrade?'<span class="badge badge-amber">Pending</span>':'<span class="badge '+(win?'badge-green':'badge-red')+'">'+(win?'Win':'Loss')+'</span>')+
     '<span class="badge '+(trade.type==='Long'?'badge-green':'badge-red')+'">'+trade.type+'</span>'+
     (trade.strategy?'<span class="badge badge-gray">'+escHtml(trade.strategy)+'</span>':'')+
     '<span class="stars">'+trade.rating+'</span>';
