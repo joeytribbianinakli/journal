@@ -1543,11 +1543,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               <div class="frow">
                 <label class="flabel">Exit criteria <span style="color:var(--red);margin-left:2px">*</span></label>
                 <div class="opt-group" id="opt-exit-a">
-                  <span class="opt-pill opt-green" data-val="TP" onclick="pickOpt(this,'tp-exit-a-val')">TP</span>
-                  <span class="opt-pill opt-red" data-val="SL" onclick="pickOpt(this,'tp-exit-a-val')">SL</span>
-                  <span class="opt-pill opt-amber" data-val="TSL" onclick="pickOpt(this,'tp-exit-a-val')">TSL</span>
-                  <span class="opt-pill opt-blue" data-val="Partial" onclick="pickOpt(this,'tp-exit-a-val')">Partial</span>
-                  <span class="opt-pill opt-gray" data-val="Manual" onclick="pickOpt(this,'tp-exit-a-val')">Manual</span>
+                  <span class="opt-pill opt-green" data-val="TP" onclick="pickOptDeselectable(this,'tp-exit-a-val')">TP</span>
+                  <span class="opt-pill opt-red" data-val="SL" onclick="pickOptDeselectable(this,'tp-exit-a-val')">SL</span>
+                  <span class="opt-pill opt-amber" data-val="TSL" onclick="pickOptDeselectable(this,'tp-exit-a-val')">TSL</span>
+                  <span class="opt-pill opt-blue" data-val="Partial" onclick="pickOptDeselectable(this,'tp-exit-a-val')">Partial</span>
+                  <span class="opt-pill opt-gray" data-val="Manual" onclick="pickOptDeselectable(this,'tp-exit-a-val')">Manual</span>
                 </div>
                 <input type="hidden" id="tp-exit-a-val" value="">
               </div>
@@ -4833,6 +4833,21 @@ function pickOpt(pill,hiddenId){
   pill.classList.add('selected');
   var hidden=document.getElementById(hiddenId);if(hidden)hidden.value=pill.dataset.val;
 }
+// Like pickOpt, but clicking an already-selected pill again clears the selection instead of
+// leaving it stuck. Used for fields that are optional/conditionally-required (e.g. Exit criteria),
+// where a mis-click shouldn't force the user to fill in the rest of the related fields.
+function pickOptDeselectable(pill,hiddenId){
+  var grp=pill.closest('.opt-group');
+  var alreadySelected=pill.classList.contains('selected');
+  if(grp)grp.querySelectorAll('.opt-pill').forEach(function(p){p.classList.remove('selected')});
+  var hidden=document.getElementById(hiddenId);
+  if(alreadySelected){
+    if(hidden)hidden.value='';
+  } else {
+    pill.classList.add('selected');
+    if(hidden)hidden.value=pill.dataset.val;
+  }
+}
 function setOptPill(groupId,val){
   var grp=document.getElementById(groupId);if(!grp)return;
   grp.querySelectorAll('.opt-pill').forEach(function(p){
@@ -6100,6 +6115,18 @@ function onSkippedChange(){
 }
 
 function toggleAnalysis(hdr){hdr.classList.toggle('open');hdr.nextElementSibling.classList.toggle('open');}
+// Auto-expands the collapsible analysis section (Post-journal, News) containing the given
+// field, so that when editing a trade that already has data there, it's visible immediately
+// instead of hidden behind a collapsed header.
+function _autoExpandAnalysisSection(fieldElId){
+  var field=document.getElementById(fieldElId);
+  if(!field)return;
+  var body=field.closest('.analysis-body');
+  if(!body)return;
+  body.classList.add('open');
+  var hdr=body.previousElementSibling;
+  if(hdr&&hdr.classList.contains('analysis-header'))hdr.classList.add('open');
+}
 function analysisExpandAll(){
   document.querySelectorAll('#tab-2 .analysis-header').forEach(function(hdr){
     hdr.classList.add('open');hdr.nextElementSibling.classList.add('open');
@@ -6808,7 +6835,7 @@ async function saveTrade(){
   var etimeDate=document.getElementById('f-etime-date').value;
   if(!etimeDate){toast('Entry date is required','err');switchTab(0,null);return;}
   var xtimeDate=document.getElementById('f-xtime-date').value;
-  if(!xtimeDate){toast('Exit date is required','err');switchTab(0,null);return;}
+  // Exit date is conditionally required — see combined exit-details check below
   var stratVal=document.getElementById('f-strategy').value;
   if(!stratVal){toast('Strategy is required','err');switchTab(0,null);return;}
   var modelVal=document.getElementById('f-model-val').value;
@@ -6825,13 +6852,30 @@ async function saveTrade(){
   var etimeTime=(document.getElementById('f-etime-time-24').value||'').trim()||(parseTimeInput(document.getElementById('f-etime-time').value||'')||{h24:''}).h24;
   if(!etimeTime){toast('Entry time is required (e.g. 1430)','err');switchTab(0,null);return;}
   var xtimeTime=(document.getElementById('f-xtime-time-24').value||'').trim()||(parseTimeInput(document.getElementById('f-xtime-time').value||'')||{h24:''}).h24;
-  if(!xtimeTime){toast('Exit time is required (e.g. 1645)','err');switchTab(0,null);return;}
+  // Exit time is conditionally required — see combined exit-details check below
   var slplaceVal=document.getElementById('tp-slplace-val').value;
   if(!slplaceVal){toast('SL placement is required','err');switchTab(0,null);return;}
   var exitCritVal=document.getElementById('tp-exit-a-val').value;
-  if(!exitCritVal){toast('Exit criteria is required','err');switchTab(0,null);return;}
+  // Exit criteria is conditionally required — see combined exit-details check below
   var tpplaceVal=document.getElementById('tp-tpplace-val').value;
   if(!tpplaceVal){toast('TP placement is required','err');switchTab(0,null);return;}
+
+  // ── Combined exit-details check ──
+  // Exit price, exit criteria, exit date, and exit time are each optional individually
+  // (a trade saved with none of them is a still-running/pending trade). But if ANY one
+  // of them is filled in, all four become mandatory before the trade can be saved.
+  var _exitFieldsPresent=[!!exitVal,!!exitCritVal,!!xtimeDate,!!xtimeTime];
+  var _exitFieldsCount=_exitFieldsPresent.filter(Boolean).length;
+  if(_exitFieldsCount>0&&_exitFieldsCount<4){
+    var _missingExit=[];
+    if(!exitVal)_missingExit.push('Exit price');
+    if(!exitCritVal)_missingExit.push('Exit criteria');
+    if(!xtimeDate)_missingExit.push('Exit date');
+    if(!xtimeTime)_missingExit.push('Exit time');
+    toast('Trade has partial exit details — also fill in: '+_missingExit.join(', '),'err');
+    switchTab(0,null);
+    return;
+  }
   // Tab 2 (Analysis) — mandatory: setup notes, led-to-trade, plan if/then
   var setupNotes=document.getElementById('setup-notes').value.trim();
   if(!setupNotes){toast('Setup description is required (Analysis tab)','err');switchTab(2,null);return;}
@@ -7127,6 +7171,11 @@ async function editTrade(id){
   s('setup-notes',trade.setupNotes);
   s('led-to-trade',trade.ledToTrade);s('issues-notes',trade.issuesNotes);
   s('post-analysis',trade.postAnalysis);s('f-news',trade.news);
+  // If this trade already has post-journal or news content, expand those sections by default
+  // instead of leaving them collapsed (they're collapsed-by-default for new/empty trades).
+  var _hasPostJournalContent=(trade.postAnalysis&&trade.postAnalysis!=='1. ')||(trade.imageIds&&trade.imageIds.postanalysis&&trade.imageIds.postanalysis.length>0);
+  if(_hasPostJournalContent)_autoExpandAnalysisSection('post-analysis');
+  if(trade.news&&trade.news!=='1. ')_autoExpandAnalysisSection('f-news');
   s('plan-if',trade.planIf);s('plan-if-then',trade.planIfThen);s('plan-elseif',trade.planElseIf);s('plan-elseif-then',trade.planElseIfThen);
   s('emo-before',trade.emoBefore);s('emo-after',trade.emoAfter);s('emo-complete',trade.emoComplete);
   s('l-mistakes',trade.mistakes);s('l-lessons',trade.lessons);s('l-good',trade.good);
@@ -7680,17 +7729,23 @@ async function openDetail(id){
 
   // Images
   var imgSections='';
+  var postJournalImgHtml='';
   if(trade.imageIds){
     var allImgHtml=[];
     var _zoneLabel=function(z){var m={'htf-W':'HTF — W','htf-D':'HTF — D','htf-4h':'HTF — 4h','mtf-1h':'MTF — 1h','mtf-30m':'MTF — 30m','ltf-15m':'LTF — 15m','ltf-5m':'LTF — 5m','setup':'Setup','postanalysis':'Post-journal'};return m[z]||z.toUpperCase();};
-    var _allDetailZones=['setup'].concat(SS_ZONES.filter(function(z){return z!=='setup'}));
-    Object.keys(trade.imageIds).forEach(function(z){if(!_allDetailZones.includes(z))_allDetailZones.push(z);});
+    var _allDetailZones=['setup'].concat(SS_ZONES.filter(function(z){return z!=='setup'&&z!=='postanalysis';}));
+    Object.keys(trade.imageIds).forEach(function(z){if(z!=='postanalysis'&&!_allDetailZones.includes(z))_allDetailZones.push(z);});
     for(var zone of _allDetailZones){
       var zImgs=[];
       for(var imgId of(trade.imageIds[zone]||[])){var img=await dbGet('images',imgId);if(img){var src=img.cloudUrl||img.dataUrl;zImgs.push('<div class="img-thumb" style="aspect-ratio:16/10"><img src="'+src+'" onclick="openLightbox(\''+src+'\')"></div>');}}
       if(zImgs.length){allImgHtml.push('<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">'+_zoneLabel(zone)+'</div><div class="img-grid">'+zImgs.join('')+'</div></div>');}
     }
     if(allImgHtml.length)imgSections='<div class="detail-section-title">Screenshots</div>'+allImgHtml.join('');
+    // Post-journal screenshots are built separately so they can be shown together with the
+    // post-journal text below, instead of buried in the generic Screenshots block above.
+    var pjImgs=[];
+    for(var pjImgId of(trade.imageIds['postanalysis']||[])){var pjImg=await dbGet('images',pjImgId);if(pjImg){var pjSrc=pjImg.cloudUrl||pjImg.dataUrl;pjImgs.push('<div class="img-thumb" style="aspect-ratio:16/10"><img src="'+pjSrc+'" onclick="openLightbox(\''+pjSrc+'\')"></div>');}}
+    if(pjImgs.length)postJournalImgHtml='<div class="img-grid" style="margin-top:8px">'+pjImgs.join('')+'</div>';
   }
   var biasHtml='';
   if(trade.biasNarrative){var bArr=[];for(var tf in trade.biasNarrative){var v=trade.biasNarrative[tf];if(v&&v!=='neutral')bArr.push('<span class="badge '+(v==='bull'?'badge-green':'badge-red')+'">'+tf+': '+(v==='bull'?'Bullish':'Bearish')+'</span>');}if(bArr.length)biasHtml='<div class="detail-section-title">Narrative bias</div><div class="pill-row">'+bArr.join('')+'</div>';}
@@ -7778,7 +7833,7 @@ async function openDetail(id){
     +(trade.skipped&&trade.whySkipped?'<div class="detail-section-title" style="color:var(--amber)">Why skipped</div><div style="font-size:12px;color:var(--text2);white-space:pre-wrap;line-height:1.6">'+escHtml(trade.whySkipped)+'</div>':'')
     +(trade.issuesNotes&&trade.issuesNotes!='1. '?'<div class="detail-section-title">Issues</div><div style="font-size:12px;color:var(--text2);white-space:pre-wrap;line-height:1.6">'+escHtml(trade.issuesNotes)+'</div>':'')
     +imgSections
-    +(trade.postAnalysis&&trade.postAnalysis!='1. '?'<div class="detail-section-title">Post-journal</div><div class="js-pre">'+escHtml(trade.postAnalysis)+'</div>':'')
+    +(( (trade.postAnalysis&&trade.postAnalysis!='1. ') || postJournalImgHtml )?'<div class="detail-section-title">Post-journal</div>'+((trade.postAnalysis&&trade.postAnalysis!='1. ')?'<div class="js-pre">'+escHtml(trade.postAnalysis)+'</div>':'')+postJournalImgHtml:'')
     +(trade.emoBefore||trade.emoAfter||trade.emoComplete?
       '<div class="detail-section-title">Emotions</div><div class="detail-grid">'
       +(trade.emoBefore?'<div class="detail-item"><div class="di-label">Before trade</div><div class="di-val js-pre">'+escHtml(trade.emoBefore)+'</div></div>':'')
@@ -8312,7 +8367,8 @@ openDB().then(async function(){
   ['opt-criteria','opt-slplace','opt-tpplace','opt-exit-a'].forEach(function(gid){
     var grp=document.getElementById(gid);if(!grp)return;
     var hiddenId=gid.replace('opt-','tp-').replace(/-a$/,'-a-val')+( gid.endsWith('-a')?'':'-val');
-    grp.querySelectorAll('.opt-pill').forEach(function(p){p.setAttribute('onclick','pickOpt(this,\''+hiddenId+'\')');});
+    var fn=gid==='opt-exit-a'?'pickOptDeselectable':'pickOpt';
+    grp.querySelectorAll('.opt-pill').forEach(function(p){p.setAttribute('onclick',fn+'(this,\''+hiddenId+'\')');});
   });
   recalc();
   // Auto-pull on page load if GitHub is configured — keeps multi-device in sync without snapshot
@@ -9024,11 +9080,6 @@ var CALC_INSTRUMENTS = {
     {sym:'AUD/USD', pip:0.0001, contract:100000, pvp:10,    quote:'USD', lev:[1,10,20,30,50,100,200,500], defLev:30, desc:'Aussie / US Dollar'},
     {sym:'USD/CAD', pip:0.0001, contract:100000, pvp:null,  quote:'CAD', lev:[1,10,20,30,50,100,200,500], defLev:30, desc:'US Dollar / Canadian Dollar'},
     {sym:'NZD/USD', pip:0.0001, contract:100000, pvp:10,    quote:'USD', lev:[1,10,20,30,50,100,200,500], defLev:30, desc:'Kiwi / US Dollar'},
-    {sym:'EUR/GBP', pip:0.0001, contract:100000, pvp:null,  quote:'GBP', lev:[1,10,20,30,50,100,200,500], defLev:30, desc:'Euro / British Pound'},
-    {sym:'EUR/JPY', pip:0.01,   contract:100000, pvp:null,  quote:'JPY', lev:[1,10,20,30,50,100,200,500], defLev:30, desc:'Euro / Japanese Yen'},
-    {sym:'GBP/JPY', pip:0.01,   contract:100000, pvp:null,  quote:'JPY', lev:[1,10,20,30,50,100,200,500], defLev:30, desc:'Pound / Japanese Yen'},
-    {sym:'USD/MXN', pip:0.0001, contract:100000, pvp:null,  quote:'MXN', lev:[1,10,20,30,50,100],         defLev:20, desc:'US Dollar / Mexican Peso'},
-    {sym:'EUR/CHF', pip:0.0001, contract:100000, pvp:null,  quote:'CHF', lev:[1,10,20,30,50,100,200,500], defLev:30, desc:'Euro / Swiss Franc'},
   ],
   crypto: [
     {sym:'BTC/USD', pip:1,      contract:1, pvp:1,      quote:'USD', lev:[1,2,3,5,10,20,50,100,125], defLev:10, desc:'Bitcoin',     unitLabel:'Coins', breakdownType:'crypto'},
@@ -9067,6 +9118,18 @@ var CALC_INSTRUMENTS = {
     {sym:'GER40',  pip:0.1,  contract:1,   pvp:0.1,   quote:'EUR', lev:[1,2,5,10,20,50,100,200], defLev:50, desc:'DAX 40 CFD',           tickSize:0.1,  tickVal:0.1,  breakdownType:'contracts', unitLabel:'Lots'},
   ]
 };
+
+// Flat sym -> spec lookup built from the hardcoded defaults above. Used by calcSyncAssets()
+// to reuse known metadata (pip size, contract size, leverage tiers, etc.) for any symbol
+// that also exists in the user's Assets & pairs list, without showing symbols that aren't
+// actually configured there.
+var CALC_KNOWN_SPECS = (function(){
+  var map={};
+  Object.keys(CALC_INSTRUMENTS).forEach(function(tab){
+    CALC_INSTRUMENTS[tab].forEach(function(spec){ if(!map[spec.sym])map[spec.sym]=spec; });
+  });
+  return map;
+})();
 
 var calcCurrentClass = 'forex';
 var calcDirection = 'long';
@@ -9130,12 +9193,22 @@ function calcPopulateInstruments(){
 function calcOnInstrumentChange(){
   var inst=calcGetInst();
   var levSel=document.getElementById('calc-leverage');
+  var grid=document.getElementById('calc-info-grid');
+  if(!inst){
+    // No instruments configured for this asset class — clear dependent UI instead of erroring
+    if(levSel)levSel.innerHTML='';
+    if(grid)grid.innerHTML='<div class="calc-info-row"><span class="calc-ik">No pairs configured</span><span class="calc-iv">Add some in Assets &amp; pairs</span></div>';
+    var lbl0=document.getElementById('calc-info-toggle-label');
+    if(lbl0)lbl0.textContent='No instrument selected';
+    document.getElementById('calc-out-size').textContent='—';
+    document.getElementById('calc-out-sub').textContent='Add a pair in Assets & pairs for this asset class first';
+    return;
+  }
   if(levSel){
     levSel.innerHTML=inst.lev.map(function(l){return'<option value="'+l+'"'+(l===inst.defLev?' selected':'')+'>'+l+':1</option>';}).join('');
     levSel.value=inst.defLev;
   }
   // Info grid
-  var grid=document.getElementById('calc-info-grid');
   if(grid){
     var rows=[
       ['Contract size',inst.contract.toLocaleString()+' '+( inst.unitLabel||'units')],
@@ -9152,7 +9225,11 @@ function calcOnInstrumentChange(){
   calcCalc();
 }
 
-// Sync instrument lists from journal Assets & pairs — routes to correct tab by asset type name
+// Sync instrument lists from journal Assets & pairs — routes to correct tab by asset type name.
+// The calculator dropdown is now built EXCLUSIVELY from the user's configured Assets & pairs
+// (no leftover hardcoded symbols that aren't actually in the user's list). Known symbols reuse
+// their built-in spec (pip size, contract size, leverage tiers, etc.) via CALC_KNOWN_SPECS;
+// unrecognized/custom pairs get an auto-generated spec based on the asset class tab.
 async function calcSyncAssets(){
   var assets=await getAssets();
   // Map asset type name keywords -> calc tab
@@ -9164,28 +9241,40 @@ async function calcSyncAssets(){
     if(n.includes('index')||n.includes('indic')||n.includes('future'))return 'indices';
     return 'forex'; // default: forex
   }
+  var rebuilt={forex:[],crypto:[],metals:[],stocks:[],indices:[]};
   assets.forEach(function(at){
     var tab=guessCalcTab(at.name);
+    if(!rebuilt[tab])rebuilt[tab]=[];
     at.pairs.forEach(function(p){
-      if(CALC_INSTRUMENTS[tab]&&CALC_INSTRUMENTS[tab].find(function(i){return i.sym===p;}))return; // already there
-      var isJPY=p.includes('JPY');
+      if(rebuilt[tab].find(function(i){return i.sym===p;}))return; // already added (e.g. dup pair across asset types mapped to same tab)
+      var known=CALC_KNOWN_SPECS[p];
       var entry;
-      if(tab==='forex'){
-        entry={sym:p, pip:isJPY?0.01:0.0001, contract:100000, pvp:isJPY?null:10, quote:p.split('/')[1]||'USD', lev:[1,10,20,30,50,100,200,500], defLev:30, desc:at.name+' — '+p};
-      } else if(tab==='crypto'){
-        entry={sym:p, pip:0.01, contract:1, pvp:0.01, quote:'USD', lev:[1,2,3,5,10,20,50,100], defLev:10, desc:at.name+' — '+p, unitLabel:'Coins', breakdownType:'crypto'};
-      } else if(tab==='metals'){
-        entry={sym:p, pip:0.1, contract:100, pvp:10, quote:'USD', lev:[1,2,5,10,20,50,100,200,500], defLev:100, desc:at.name+' — '+p, unitLabel:'Oz', tickSize:0.1, tickVal:10, breakdownType:'oz'};
-      } else if(tab==='stocks'){
-        entry={sym:p, pip:0.01, contract:1, pvp:0.01, quote:'USD', lev:[1,2,4,5,10,20], defLev:5, desc:at.name+' — '+p, breakdownType:'shares', unitLabel:'Shares'};
+      if(known){
+        entry=known;
       } else {
-        entry={sym:p, pip:0.1, contract:1, pvp:0.1, quote:'USD', lev:[1,2,5,10,20,50,100,200], defLev:50, desc:at.name+' — '+p, breakdownType:'contracts', unitLabel:'Lots'};
+        var isJPY=p.includes('JPY');
+        if(tab==='forex'){
+          var quoteCcy=p.split('/')[1]||'USD';
+          // pvp=10 only valid when USD is the quote currency (e.g. EUR/USD); otherwise
+          // leave null so calcCalc() derives pip value live from price (see fallback there)
+          entry={sym:p, pip:isJPY?0.01:0.0001, contract:100000, pvp:(quoteCcy==='USD'?10:null), quote:quoteCcy, lev:[1,10,20,30,50,100,200,500], defLev:30, desc:at.name+' — '+p};
+        } else if(tab==='crypto'){
+          entry={sym:p, pip:0.01, contract:1, pvp:0.01, quote:'USD', lev:[1,2,3,5,10,20,50,100], defLev:10, desc:at.name+' — '+p, unitLabel:'Coins', breakdownType:'crypto'};
+        } else if(tab==='metals'){
+          entry={sym:p, pip:0.1, contract:100, pvp:10, quote:'USD', lev:[1,2,5,10,20,50,100,200,500], defLev:100, desc:at.name+' — '+p, unitLabel:'Oz', tickSize:0.1, tickVal:10, breakdownType:'oz'};
+        } else if(tab==='stocks'){
+          entry={sym:p, pip:0.01, contract:1, pvp:0.01, quote:'USD', lev:[1,2,4,5,10,20], defLev:5, desc:at.name+' — '+p, breakdownType:'shares', unitLabel:'Shares'};
+        } else {
+          entry={sym:p, pip:0.1, contract:1, pvp:0.1, quote:'USD', lev:[1,2,5,10,20,50,100,200], defLev:50, desc:at.name+' — '+p, breakdownType:'contracts', unitLabel:'Lots'};
+        }
       }
-      if(CALC_INSTRUMENTS[tab])CALC_INSTRUMENTS[tab].push(entry);
+      rebuilt[tab].push(entry);
     });
   });
-  if(CALC_INSTRUMENTS[calcCurrentClass])calcPopulateInstruments();
+  CALC_INSTRUMENTS=rebuilt;
+  calcPopulateInstruments();
 }
+
 
 function calcGetDefaultCapital(){
   return parseFloat(localStorage.getItem('tj-calc-capital'))||5000;
@@ -9807,7 +9896,10 @@ function calcCalc(){
 
   var riskDollar=balance*(riskPct/100);
   var pip=inst.pip;
-  var pvp=inst.pvp!=null?inst.pvp:(10/(entry*pip)); // fallback for non-USD quote
+  // Fallback for USD-base pairs (USD/JPY, USD/CHF, USD/CAD): pip value in USD
+  // = (contract size × pip size) ÷ current price. e.g. USD/CAD @ 1.4189:
+  // (100000 × 0.0001) / 1.4189 = $7.05 per pip per standard lot.
+  var pvp=inst.pvp!=null?inst.pvp:((inst.contract*pip)/entry);
   var slDist=Math.abs(entry-slVal);
   var slTicks=slDist/pip;
   if(slDist===0)return;
