@@ -9337,9 +9337,13 @@ async function calcPopulateBacktestSessions(){
   sel.innerHTML='<option value="">— select session —</option>'+active.map(function(s){
     return '<option value="'+s.id+'">'+escHtml(s.name)+'</option>';
   }).join('');
-  // Auto-select the currently active session if any
-  var today=new Date().toISOString().slice(0,10);
-  var cur=active.find(function(s){return s.startDate<=today&&(!s.endDate||s.endDate>=today);});
+  // Auto-select the currently active session — if several are active today, pick the one
+  // that was created first, matching the same convention used for the trade-log form and
+  // history filters (createdAt, falling back to startDate for legacy sessions without it).
+  var activeToday=active.filter(isSessionActive);
+  var cur=activeToday.length
+    ?activeToday.slice().sort(function(a,b){return new Date(a.createdAt||a.startDate)-new Date(b.createdAt||b.startDate);})[0]
+    :null;
   if(cur){sel.value=cur.id;calcOnBacktestSessionChange();}
 }
 
