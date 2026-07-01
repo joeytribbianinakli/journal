@@ -3511,6 +3511,8 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               <span id="pa-alert-count-badge" style="display:none;font-size:9px;font-weight:700;background:var(--accent);color:#fff;border-radius:10px;padding:1px 6px;letter-spacing:.03em;font-family:DM Mono,monospace;"></span>
             </span>
             <span style="display:flex;align-items:center;gap:6px;">
+              <button class="btn btn-ghost btn-sm" onclick="paExpandAllGroups()" title="Expand all asset type groups">Expand all</button>
+              <button class="btn btn-ghost btn-sm" onclick="paCollapseAllGroups()" title="Collapse all asset type groups">Collapse all</button>
               <button class="btn btn-ghost btn-sm" onclick="paClearFired()" title="Remove triggered alerts">Clear fired</button>
             </span>
           </p>
@@ -14236,6 +14238,18 @@ function paComputePriceFields(a, price){
 function paToggleGroup(assetType){
   var el = document.getElementById('pa-group-' + assetType);
   if(el) el.classList.toggle('collapsed');
+}
+
+function paExpandAllGroups(){
+  document.querySelectorAll('#page-price-alerts .pa-asset-group').forEach(function(el){
+    el.classList.remove('collapsed');
+  });
+}
+
+function paCollapseAllGroups(){
+  document.querySelectorAll('#page-price-alerts .pa-asset-group').forEach(function(el){
+    el.classList.add('collapsed');
+  });
 }
 
 // ── Full structural render (used when cards are added/removed/reordered) ──
