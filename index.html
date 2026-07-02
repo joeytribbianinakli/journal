@@ -2886,30 +2886,6 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       #page-price-alerts .pa-tickers-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
       #page-price-alerts .pa-tickers-row:empty{display:none;}
       #page-price-alerts .pa-ticker-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 7px;border-radius:4px;background:var(--bg4);border:1px solid var(--border);color:var(--text2);font-family:DM Mono,monospace;}
-      /* Filter tabs */
-      #page-price-alerts .pa-filter-tabs{display:flex;gap:4px;margin-bottom:8px;}
-      #page-price-alerts .pa-filter-tab{font-size:10px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;}
-      #page-price-alerts .pa-filter-tab .pa-filter-n{opacity:.7;margin-left:3px;}
-      #page-price-alerts .pa-filter-tab.active{background:var(--accent);border-color:var(--accent);color:#fff;}
-      #page-price-alerts .pa-filter-tab.active .pa-filter-n{opacity:.85;}
-      #page-price-alerts .pa-filter-tab:hover:not(.active){background:var(--bg4);color:var(--text2);}
-      /* Compact card: default is one slim row, details expand on click */
-      #page-price-alerts .pa-alert-card{padding:0;cursor:pointer;}
-      #page-price-alerts .pa-alert-card.pa-expanded{cursor:default;}
-      #page-price-alerts .pa-row-main{display:flex;align-items:center;gap:8px;padding:8px 10px;}
-      #page-price-alerts .pa-row-main .pa-alert-symbol{padding:2px 6px;font-size:11px;}
-      #page-price-alerts .pa-row-main .pa-alert-dir{padding:1px 6px;font-size:9px;flex-shrink:0;}
-      #page-price-alerts .pa-row-main .pa-alert-price{font-size:13px;margin-left:0;}
-      #page-price-alerts .pa-row-inline-bar{flex:1;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;min-width:24px;}
-      #page-price-alerts .pa-row-inline-bar .pa-progress-fill{height:100%;border-radius:2px;transition:width .5s;}
-      #page-price-alerts .pa-row-mini-status{font-size:9px;color:var(--text3);white-space:nowrap;flex-shrink:0;font-family:DM Mono,monospace;}
-      #page-price-alerts .pa-row-chev{color:var(--text3);flex-shrink:0;transition:transform .18s;}
-      #page-price-alerts .pa-alert-card.pa-expanded .pa-row-chev{transform:rotate(180deg);}
-      #page-price-alerts .pa-row-actions{display:flex;gap:3px;margin-left:2px;flex-shrink:0;}
-      #page-price-alerts .pa-detail{display:none;padding:0 14px 12px;border-top:1px solid var(--border);margin-top:1px;}
-      #page-price-alerts .pa-alert-card.pa-expanded .pa-detail{display:block;padding-top:9px;}
-      #page-price-alerts .pa-alert-card:not(.pa-expanded) .pa-progress-bar{display:none;}
-      #page-price-alerts .pa-alert-card.fired .pa-row-main{opacity:.85;}
       </style>
 
       <!-- Telegram Setup + Add Alert -->
@@ -3543,12 +3519,6 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 
 
           <span id="pa-last-updated" style="display:block;font-size:10px;color:var(--text3);text-align:right;margin-bottom:4px;min-height:13px;"></span>
-
-          <div class="pa-filter-tabs" id="pa-filter-tabs">
-            <button class="pa-filter-tab active" data-pa-filter="active" onclick="paSetFilter('active')">Active<span class="pa-filter-n" id="pa-filter-n-active"></span></button>
-            <button class="pa-filter-tab" data-pa-filter="fired" onclick="paSetFilter('fired')">Fired<span class="pa-filter-n" id="pa-filter-n-fired"></span></button>
-            <button class="pa-filter-tab" data-pa-filter="all" onclick="paSetFilter('all')">All<span class="pa-filter-n" id="pa-filter-n-all"></span></button>
-          </div>
 
           <div id="pa-alerts-list" class="pa-alert-list">
             <div class="pa-empty" id="pa-empty-state">
@@ -14270,25 +14240,6 @@ function paToggleGroup(assetType){
   if(el) el.classList.toggle('collapsed');
 }
 
-// ── Compact card list: filter tab + per-card expand state ──
-var _paFilter = 'active'; // 'active' | 'fired' | 'all'
-var _paExpandedCards = {}; // id -> true
-
-function paSetFilter(filter){
-  _paFilter = filter;
-  document.querySelectorAll('#pa-filter-tabs .pa-filter-tab').forEach(function(btn){
-    btn.classList.toggle('active', btn.getAttribute('data-pa-filter') === filter);
-  });
-  paRender();
-}
-
-function paToggleCard(id, evt){
-  if(evt && evt.target && evt.target.closest('.pa-row-actions')) return; // don't expand when clicking edit/delete
-  _paExpandedCards[id] = !_paExpandedCards[id];
-  var card = document.getElementById('pa-card-' + id);
-  if(card) card.classList.toggle('pa-expanded', !!_paExpandedCards[id]);
-}
-
 function paExpandAllGroups(){
   document.querySelectorAll('#page-price-alerts .pa-asset-group').forEach(function(el){
     el.classList.remove('collapsed');
@@ -14321,14 +14272,6 @@ async function paRender(){
     else navCnt.style.display='none';
   }
 
-  // Filter tab counts
-  var nActiveEl = document.getElementById('pa-filter-n-active');
-  var nFiredEl  = document.getElementById('pa-filter-n-fired');
-  var nAllEl    = document.getElementById('pa-filter-n-all');
-  if(nActiveEl) nActiveEl.textContent = active.length ? ' ' + active.length : '';
-  if(nFiredEl)  nFiredEl.textContent  = fired.length ? ' ' + fired.length : '';
-  if(nAllEl)    nAllEl.textContent    = _paAlerts.length ? ' ' + _paAlerts.length : '';
-
   if(_paAlerts.length === 0){
     if(empty) empty.style.display='block';
     list.innerHTML = '';
@@ -14336,19 +14279,11 @@ async function paRender(){
     paRenderTickers();
     return;
   }
-
-  // Apply active/fired/all filter
-  var filtered = _paFilter === 'active' ? active : (_paFilter === 'fired' ? fired : active.concat(fired));
-
-  if(filtered.length === 0){
-    list.innerHTML = '<div class="pa-empty"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="var(--border2)" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:4px">No ' + (_paFilter === 'all' ? '' : _paFilter + ' ') + 'alerts</div><div style="font-size:11px">' + (_paFilter === 'fired' ? 'Alerts will appear here once triggered' : 'Add an alert using the form on the left') + '</div></div>';
-    paRenderTickers();
-    return;
-  }
   if(empty) empty.style.display='none';
 
   var html = '';
-  var sorted = filtered;
+  // active first, then fired; group by asset type
+  var sorted = active.concat(fired);
 
   var groupMap = {}; // detectedKey -> [alert, ...]
   sorted.forEach(function(a){
@@ -14394,34 +14329,26 @@ async function paRender(){
 
     var dirClass = a.dir === 'above' ? 'above' : 'below';
     var dirLabel = a.dir === 'above' ? '↑ Above' : '↓ Below';
-    var isExpanded = !!_paExpandedCards[a.id];
-    var cardClass = 'pa-alert-card' + (a.fired ? (' fired' + (a.dir === 'below' ? ' fired-below' : '')) : '') + (isExpanded ? ' pa-expanded' : '');
+    var cardClass = 'pa-alert-card' + (a.fired ? (' fired' + (a.dir === 'below' ? ' fired-below' : '')) : '');
     var createdStr = new Date(a.created).toLocaleDateString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
 
     html += '<div class="' + cardClass + '" id="pa-card-' + a.id + '">';
-
-    // ── Compact summary row (always visible) — tap to expand for details ──
-    html += '<div class="pa-row-main" onclick="paToggleCard(\'' + a.id + '\', event)">';
+    html += '<div class="pa-alert-top">';
     html += '<span class="pa-alert-symbol">' + escHtml(a.symbol) + '</span>';
     html += '<span class="pa-alert-dir ' + dirClass + '">' + dirLabel + '</span>';
     html += '<span class="pa-alert-price">' + (a.targetStr || paFmtPrice(a.target)) + '</span>';
-    if(!a.fired){
-      html += '<div class="pa-row-inline-bar" data-pa-bar="' + a.id + '"><div class="pa-progress-fill" style="width:' + (f.hasPrice ? f.fillW : 0) + '%;background:' + f.fillColor + '"></div></div>';
-    } else {
+    html += '<div class="pa-alert-actions">';
+    if(a.fired){
       var firedLabelColor = a.dir === 'below' ? 'var(--red)' : 'var(--green)';
-      html += '<span style="flex:1;text-align:right;font-size:9px;color:' + firedLabelColor + ';font-weight:700;">✓ FIRED</span>';
+      html += '<span style="font-size:10px;color:' + firedLabelColor + ';font-weight:700;">✓ FIRED</span>';
     }
-    html += '<div class="pa-row-actions">';
     if(!a.fired){
       html += '<button class="btn btn-ghost btn-sm btn-icon" onclick="paEditAlert(\'' + a.id + '\')" title="Edit alert"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
     }
     html += '<button class="btn btn-danger btn-sm btn-icon" onclick="paDeleteAlert(\'' + a.id + '\')" title="Delete alert"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>';
-    html += '</div>'; // .pa-row-actions
-    html += '<svg class="pa-row-chev" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
-    html += '</div>'; // .pa-row-main
+    html += '</div></div>'; // .pa-alert-top
 
-    // ── Detail section (hidden until expanded) — full meta, note, provider chain, fired info ──
-    html += '<div class="pa-detail">';
+    // Price-dynamic section — these spans/divs are targeted by paUpdatePrices
     html += '<div class="pa-alert-meta">';
     html += '<span>Set ' + escHtml(createdStr) + '</span>';
     if(a.fired){
@@ -14446,6 +14373,11 @@ async function paRender(){
 
     if(a.note){
       html += '<div class="pa-alert-note"><span style="opacity:.6;margin-right:4px;">📝</span>' + escHtml(a.note) + '</div>';
+    }
+
+    // Progress bar — always rendered (hidden when no price via zero width)
+    if(!a.fired){
+      html += '<div class="pa-progress-bar" data-pa-bar="' + a.id + '"><div class="pa-progress-fill" style="width:' + (f.hasPrice ? f.fillW : 0) + '%;background:' + f.fillColor + '"></div></div>';
     }
 
     if(a.fired && a.firedAt){
@@ -14475,7 +14407,6 @@ async function paRender(){
       html += '</div>';
     }
 
-    html += '</div>'; // .pa-detail
     html += '</div>'; // .pa-alert-card
     }); // end group.forEach
 
