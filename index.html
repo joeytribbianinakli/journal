@@ -3546,9 +3546,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <span id="pa-last-updated" style="display:block;font-size:10px;color:var(--text3);text-align:right;margin-bottom:4px;min-height:13px;"></span>
 
           <div class="pa-filter-tabs" id="pa-filter-tabs">
-            <button class="pa-filter-tab active" data-pa-filter="active" onclick="paSetFilter('active')">Active<span class="pa-filter-n" id="pa-filter-n-active"></span></button>
+            <button class="pa-filter-tab" data-pa-filter="active" onclick="paSetFilter('active')">Active<span class="pa-filter-n" id="pa-filter-n-active"></span></button>
             <button class="pa-filter-tab" data-pa-filter="fired" onclick="paSetFilter('fired')">Fired<span class="pa-filter-n" id="pa-filter-n-fired"></span></button>
-            <button class="pa-filter-tab" data-pa-filter="all" onclick="paSetFilter('all')">All<span class="pa-filter-n" id="pa-filter-n-all"></span></button>
+            <button class="pa-filter-tab active" data-pa-filter="all" onclick="paSetFilter('all')">All<span class="pa-filter-n" id="pa-filter-n-all"></span></button>
           </div>
 
           <div id="pa-alerts-list" class="pa-alert-list">
@@ -14309,7 +14309,7 @@ function paToggleGroup(assetType){
 }
 
 // ── Compact card list: filter tab + per-card expand state ──
-var _paFilter = 'active'; // 'active' | 'fired' | 'all'
+var _paFilter = 'all'; // 'active' | 'fired' | 'all'
 var _paExpandedCards = {}; // id -> true
 
 function paSetFilter(filter){
@@ -15791,12 +15791,18 @@ function cmIsConnected(){
   return _cmConnected;
 }
 
-// Push the full local alert list up to CloudMonitor (fire-and-forget).
-// Called by paSave() after every add/edit/delete. No-op when no URL saved.
+// Push the full local alert list up to CloudMonitor. Called by paSave()
+// after every add/edit/delete. No-op when no URL saved. Failures are
+// surfaced with a toast (not just logged) — if a push silently fails,
+// the next page load's authoritative pull (cmLoadAlerts) would otherwise
+// overwrite the correct local state with the server's stale copy,
+// effectively "undoing" whatever change was just made (e.g. resurrecting
+// a deleted/cleared alert).
 function cmPushAlerts(){
   if(!cmHasUrl()) return Promise.resolve();
   return cmFetch('/alerts', 'POST', _paAlerts || []).catch(function(err){
     console.warn('CloudMonitor push failed:', err.message);
+    toast('⚠️ Saved locally but failed to sync to CloudMonitor (' + err.message + ') — the change may revert on next reload until you retry', 'err');
   });
 }
 
