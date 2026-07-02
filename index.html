@@ -3523,6 +3523,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               Set Alert
             </button>
             <button class="btn btn-ghost" id="pa-cancel-edit-btn" style="width:100%;margin-top:6px;display:none" onclick="paCancelEdit()">Cancel edit</button>
+            <div id="pa-cloud-gate-hint" style="display:none;font-size:11px;color:var(--amber);margin-top:8px;line-height:1.5;">⚠️ Connect CloudMonitor below before adding or editing alerts — an alert can only ever fire through the connected worker.</div>
           </div>
         </div>
 
@@ -3618,7 +3619,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <div class="pa-cloud-actions">
               <button class="btn btn-primary btn-sm" onclick="cmSaveAndPush()">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
-                Save &amp; Push to Cloud
+                Save and Sync
               </button>
               <button class="btn btn-sm" onclick="cmSyncAlertsOnly()">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>
@@ -3651,7 +3652,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 
             <!-- Intro -->
             <div style="font-size:11px;background:rgba(77,127,255,.06);border:1px solid rgba(77,127,255,.18);border-radius:6px;padding:10px 12px;margin-bottom:12px;color:var(--text2);line-height:1.65">
-              <strong style="color:var(--accent)">No CLI needed.</strong> The worker is deployed entirely through the Cloudflare dashboard — copy, paste, save. A free account is all you need. All config (tokens, keys, alerts) is stored in KV and pushed from this page via <em>Save &amp; Push to Cloud</em>.
+              <strong style="color:var(--accent)">No CLI needed.</strong> The worker is deployed entirely through the Cloudflare dashboard — copy, paste, save. A free account is all you need. All config (tokens, keys, alerts) is stored in KV and pushed from this page via <em>Save and Sync</em>.
             </div>
 
             <!-- HTML patch box -->
@@ -3682,7 +3683,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                 <li><strong style="color:var(--text2)">Bind the KV namespace.</strong> Worker → Settings → Bindings → Add → KV namespace. Variable name: <code style="background:var(--bg3);padding:1px 5px;border-radius:3px">JOURNUP_KV</code> (exact). Select the namespace. Save.</li>
                 <li><strong style="color:var(--text2)">(Optional) Worker Secret.</strong> Settings → Bindings → Add → Secret. Name: <code style="background:var(--bg3);padding:1px 5px;border-radius:3px">WORKER_SECRET</code>. Enter the same value in the Worker Secret field above.</li>
                 <li><strong style="color:var(--text2)">Set cron trigger.</strong> Settings → Triggers → Cron Triggers → Add. <code style="background:var(--bg3);padding:1px 5px;border-radius:3px">*/1 * * * *</code> = every minute, <code style="background:var(--bg3);padding:1px 5px;border-radius:3px">*/5 * * * *</code> = every 5 min.</li>
-                <li>Copy your worker URL, paste it into <strong style="color:var(--text2)">Cloudflare Worker URL</strong> above, then click <strong style="color:var(--text2)">Save &amp; Push to Cloud</strong>.</li>
+                <li>Copy your worker URL, paste it into <strong style="color:var(--text2)">Cloudflare Worker URL</strong> above, then click <strong style="color:var(--text2)">Save and Sync</strong>.</li>
               </ol>
             </div>
 
@@ -13358,6 +13359,17 @@ var PA_PROVIDER_MIN_POLL_MS = {
   oanda:      15  * 1000         // 15 s — practice/live: 100 req/s
 };
 var PA_KEY_ALERTS       = 'tj-price-alerts';
+
+// ── Cloud sync model ─────────────────────────────────────────────
+// CloudMonitor (the Cloudflare Worker) is the single source of truth
+// for the alert list whenever it's connected:
+//   • Adding an alert requires a connected CloudMonitor and pushes the
+//     full alert list to the worker immediately (see paSave/cmPushAlerts).
+//   • Loading the Price Alerts page always overwrites the local list
+//     with whatever is currently on the server (see cmLoadAlerts),
+//     so a device that deleted an alert — or another device that
+//     added one — is reflected everywhere without needing tombstones
+//     or a two-way merge.
 var PA_KEY_TOKEN        = 'tj-pa-tg-token';
 var PA_KEY_CHATID       = 'tj-pa-tg-chatid';
 var PA_KEY_PROVIDER     = 'tj-pa-provider';   // legacy global (not used for routing; per-asset chains now)
@@ -13568,10 +13580,21 @@ function paLoad(){
   } catch(e){ _paAlerts=[]; }
 }
 
-function paSave(){
+// Persist to localStorage + GitHub backup mirror, without touching the cloud.
+// Used internally by cmLoadAlerts() when it just pulled the server's copy
+// (pushing it straight back would be a pointless round-trip).
+function paSaveLocalOnly(){
   localStorage.setItem(PA_KEY_ALERTS, JSON.stringify(_paAlerts));
   // Mirror to GitHub tjalert.json (bkp/alerts_backup.json only on Manual Backup)
   ghAutoSyncAlerts();
+}
+
+function paSave(){
+  paSaveLocalOnly();
+  // Push the full list to CloudMonitor (fire-and-forget) so every other
+  // device sees the same alerts — including deletions — next time it
+  // loads the Price Alerts page. No-op if CloudMonitor isn't connected.
+  cmPushAlerts();
 }
 
 function paGetTg(){
@@ -14087,6 +14110,10 @@ function paSetDir(dir){
 // ── Add alert ────────────────────────────────────────────────
 
 function paAddAlert(){
+  if(!cmIsConnected()){
+    toast('Connect CloudMonitor before adding alerts — see Cloud Monitor setup below', 'err');
+    return;
+  }
   var symbol = (document.getElementById('pa-symbol').value||'').trim().toUpperCase();
   var rawInput = (document.getElementById('pa-target').value||'').replace(/,/g,'').trim();
   var target = parseFloat(rawInput);
@@ -14164,6 +14191,7 @@ function paEditAlert(id){
   if(addBtn){ addBtn.textContent=''; addBtn.innerHTML='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Update Alert'; addBtn.onclick=paUpdateAlert; }
   if(cancelBtn) cancelBtn.style.display='block';
   if(panelTitle) panelTitle.childNodes[panelTitle.childNodes.length-1].textContent = ' Edit Alert';
+  paRefreshCloudGate(); // Update button is disabled too if CloudMonitor isn't connected
 
   // Scroll form into view
   var panel = document.getElementById('pa-add-panel');
@@ -14177,6 +14205,10 @@ function paEditAlert(id){
 
 function paUpdateAlert(){
   if(!_paEditingId) return;
+  if(!cmIsConnected()){
+    toast('Connect CloudMonitor before editing alerts — see Cloud Monitor setup below', 'err');
+    return;
+  }
   var symbol = (document.getElementById('pa-symbol').value||'').trim().toUpperCase();
   var rawInput = (document.getElementById('pa-target').value||'').replace(/,/g,'').trim();
   var target = parseFloat(rawInput);
@@ -14221,6 +14253,7 @@ function paCancelEdit(){
   if(cancelBtn) cancelBtn.style.display='none';
   if(panelTitle) panelTitle.childNodes[panelTitle.childNodes.length-1].textContent = ' Add Alert';
   document.querySelectorAll('.pa-alert-card').forEach(function(c){ c.style.outline=''; });
+  paRefreshCloudGate(); // back in "Add" mode — re-disable if CloudMonitor isn't connected
 }
 
 function paClearFired(){
@@ -14249,17 +14282,22 @@ function paComputePriceFields(a, price){
   var pct = '';
   var fillW = 0;
   var fillColor = 'var(--accent)';
+  var NEAR_THRESHOLD = 5; // % away from target — inside this band, bar turns amber as an early warning
   if(hasPrice && a.target){
     if(a.dir === 'above'){
       fillW = Math.min(100, Math.round((price / a.target) * 100));
-      fillColor = fillW >= 100 ? 'var(--green)' : 'var(--accent)';
-      var diff = ((a.target - price) / a.target * 100).toFixed(2);
-      pct = price < a.target ? diff + '% away' : 'TARGET HIT';
+      var diff = ((a.target - price) / a.target * 100);
+      if(fillW >= 100) fillColor = 'var(--green)';
+      else if(diff <= NEAR_THRESHOLD) fillColor = 'var(--amber)';
+      else fillColor = 'var(--accent)';
+      pct = price < a.target ? diff.toFixed(2) + '% away' : 'TARGET HIT';
     } else {
       fillW = Math.min(100, Math.round((a.target / price) * 100));
-      fillColor = fillW >= 100 ? 'var(--red)' : 'var(--accent)';
-      var diff2 = ((price - a.target) / price * 100).toFixed(2);
-      pct = price > a.target ? diff2 + '% away' : 'TARGET HIT';
+      var diff2 = ((price - a.target) / price * 100);
+      if(fillW >= 100) fillColor = 'var(--red)';
+      else if(diff2 <= NEAR_THRESHOLD) fillColor = 'var(--amber)';
+      else fillColor = 'var(--accent)';
+      pct = price > a.target ? diff2.toFixed(2) + '% away' : 'TARGET HIT';
     }
   }
   return { hasPrice: hasPrice, isFailed: isFailed, pct: pct, fillW: fillW, fillColor: fillColor };
@@ -14433,7 +14471,7 @@ async function paRender(){
       html += '<span class="pa-pct-label" style="font-size:10px;font-weight:700;color:var(--green)">TARGET HIT</span>';
     } else if(f.hasPrice){
       html += '<span class="pa-current-price" data-pa-price="' + a.id + '">Current: ' + paFmtPrice(price) + '</span>';
-      if(f.pct) html += '<span class="pa-pct-label" data-pa-pct="' + a.id + '" style="font-size:10px;font-weight:600;color:' + (f.pct==='TARGET HIT'?'var(--green)':'var(--text3)') + '">' + f.pct + '</span>';
+      if(f.pct) html += '<span class="pa-pct-label" data-pa-pct="' + a.id + '" style="font-size:10px;font-weight:600;color:' + (f.pct==='TARGET HIT'?'var(--green)':(f.fillColor==='var(--amber)'?'var(--amber)':'var(--text3)')) + '">' + f.pct + '</span>';
       else       html += '<span class="pa-pct-label" data-pa-pct="' + a.id + '" style="font-size:10px;font-weight:600;"></span>';
     } else if(f.isFailed){
       html += '<span class="pa-current-price" data-pa-price="' + a.id + '" style="font-size:10px;color:var(--red);font-style:italic" title="All price providers failed for this symbol. Check your API keys or try again later.">⚠ Price unavailable</span>';
@@ -14523,7 +14561,7 @@ function paUpdatePrices(){
     var pctEl = document.querySelector('[data-pa-pct="' + a.id + '"]');
     if(pctEl){
       pctEl.textContent = f.pct;
-      pctEl.style.color = f.pct === 'TARGET HIT' ? 'var(--green)' : 'var(--text3)';
+      pctEl.style.color = f.pct === 'TARGET HIT' ? 'var(--green)' : (f.fillColor === 'var(--amber)' ? 'var(--amber)' : 'var(--text3)');
     }
 
     // Progress bar fill
@@ -15441,13 +15479,15 @@ function paInit(){
   paLoadConfig();
   paRefreshTgUI();
   paProviderUIInit();
-  paRender();
+  paRender();                 // show the local cache immediately, no blank flash
   paPopulateSymbolSuggestions();
   // paStartMonitoring handles both modes:
   //   • worker configured  → periodic cmFetchPrices (no direct provider calls)
   //   • no worker          → browser polling with rate-limit-safe interval from paComputePollMs
   paStartMonitoring();
   paTgDeleteOldMessages();
+  paRefreshCloudGate();       // disable Add Alert until CloudMonitor is connected
+  cmLoadAlerts();             // then reconcile with the cloud's authoritative copy
 }
 
 // Hook into nav() — init when navigating to price-alerts
@@ -15632,7 +15672,10 @@ function paDiscordEmbedReset(){
 // ════════════════════════════════════════════════════════════════════
 var CM_KEY_URL      = 'cm-worker-url';
 var CM_KEY_SECRET   = 'cm-worker-secret';
-
+// True only once a request to the worker has actually succeeded — NOT the
+// same as "a URL is saved". A saved-but-wrong/unreachable URL must not
+// count as connected (see cmIsConnected() below).
+var _cmConnected = false;
 
 // ── Restore saved values + auto-sync on page open ────────────────────
 (function cmInit(){
@@ -15645,12 +15688,11 @@ var CM_KEY_SECRET   = 'cm-worker-secret';
 
   if(url){
     cmUpdateBadge('warn', 'Syncing with cloud…');
-    // On page open: pull any alerts fired while the page was closed, then check status.
-    // One-time only — no background polling, no performance hit.
-    setTimeout(function(){
-      cmPullFired(true);
-      cmCheckStatus();
-    }, 900);
+    // One-time pull on page open — CloudMonitor is authoritative once
+    // connected, so this reconciles anything that changed (fired / added /
+    // deleted) on another device while this one was closed. No background
+    // polling here, no performance hit.
+    setTimeout(function(){ cmLoadAlerts(); }, 900);
   } else {
     cmUpdateBadge('off', 'Not connected');
   }
@@ -15673,6 +15715,12 @@ function cmUpdateBadge(state, text){
   if(badge){ badge.className = 'pa-cloud-badge ' + (state === 'ok' ? 'ok' : state === 'warn' ? 'warn' : 'off'); badge.textContent = label; }
   if(dot)  { dot.className   = 'pa-cloud-dot '   + (state === 'ok' ? 'ok' : state === 'warn' ? 'warn' : ''); }
   if(txt && text)  { txt.textContent = text; }
+  // Only a confirmed 'ok' from the worker counts as connected. 'warn'
+  // (mid-request) and 'off' (error/unreachable/no URL) both mean "not
+  // safely connected yet" — this is what actually gates Add/Edit Alert,
+  // not merely whether a URL string is saved in localStorage.
+  _cmConnected = (state === 'ok');
+  paRefreshCloudGate();
 }
 
 function cmFetch(path, method, body){
@@ -15728,6 +15776,59 @@ function cmBuildConfig(){
   };
 }
 
+// ── Cloud connection checks ──────────────────────────────────────
+// cmHasUrl()      — is a worker URL saved at all? Used internally to decide
+//                   whether it's even worth attempting a network call.
+// cmIsConnected() — has a call to that worker actually succeeded? This is
+//                   what gates Add/Edit Alert. A saved-but-wrong or
+//                   unreachable URL must NOT count as connected — see
+//                   _cmConnected, which only flips true on a confirmed
+//                   'ok' from cmUpdateBadge().
+function cmHasUrl(){
+  return !!(localStorage.getItem(CM_KEY_URL) || '').trim();
+}
+function cmIsConnected(){
+  return _cmConnected;
+}
+
+// Push the full local alert list up to CloudMonitor (fire-and-forget).
+// Called by paSave() after every add/edit/delete. No-op when no URL saved.
+function cmPushAlerts(){
+  if(!cmHasUrl()) return Promise.resolve();
+  return cmFetch('/alerts', 'POST', _paAlerts || []).catch(function(err){
+    console.warn('CloudMonitor push failed:', err.message);
+  });
+}
+
+// ── Authoritative pull ──────────────────────────────────────────
+// CloudMonitor is the single source of truth for the alert list once
+// connected: this OVERWRITES the local list with whatever is currently
+// on the server (no merge). Called whenever the Price Alerts page is
+// loaded/navigated to, plus from the manual sync/pull buttons, so an
+// alert deleted or added on another device is always reflected here —
+// no tombstones or two-way merge logic needed. No-op when no URL saved.
+function cmLoadAlerts(){
+  if(!cmHasUrl()) return Promise.resolve();
+  cmUpdateBadge('warn', 'Syncing with cloud…');
+  return cmFetch('/alerts', 'GET').then(function(cloudAlerts){
+    if(Array.isArray(cloudAlerts)){
+      _paAlerts = cloudAlerts;
+      paSaveLocalOnly();     // persist locally without re-pushing
+      paPruneOrphanedSymbols();
+      paRender();
+      paStartMonitoring();
+    }
+    cmUpdateBadge('ok', 'Connected · ' + (_paAlerts||[]).length + ' alert(s) in cloud');
+  }).catch(function(err){
+    cmUpdateBadge('off', 'Cannot reach worker: ' + err.message);
+    toast('CloudMonitor sync failed — showing last known alerts', 'err');
+  });
+}
+
+// "Save and Sync" — connects to the Worker URL, pushes config
+// (Telegram/Discord/secret), seeds the cloud with whatever alerts exist
+// locally right now, then re-pulls so the page reflects the cloud copy
+// (which, for a first-time connect, is just what we seeded it with).
 function cmSaveAndPush(){
   var url    = ((document.getElementById('cm-worker-url')     || {}).value || '').trim();
   var secret = ((document.getElementById('cm-worker-secret')  || {}).value || '').trim();
@@ -15740,109 +15841,47 @@ function cmSaveAndPush(){
   if((!tgToken || !tgChatId) && !discordHook){
     toast('Configure Telegram or Discord first before pushing to cloud', 'err'); return;
   }
-  cmUpdateBadge('warn', 'Pushing config…');
+  cmUpdateBadge('warn', 'Connecting & syncing…');
   cmFetch('/config', 'POST', cmBuildConfig())
+  .then(function(){ return cmFetch('/alerts', 'POST', _paAlerts || []); })
+  .then(function(){ return cmLoadAlerts(); })
   .then(function(){
-    // Merge cloud fired-states before pushing so we don't resurrect already-fired alerts
-    return cmFetch('/alerts', 'GET').then(function(cloudAlerts){
-      var cloudFiredMap = {};
-      if(Array.isArray(cloudAlerts)){
-        cloudAlerts.forEach(function(ca){ if(ca.fired) cloudFiredMap[ca.id] = ca; });
-      }
-      var merged = (_paAlerts || []).map(function(a){
-        if(!a.fired && cloudFiredMap[a.id]){
-          return Object.assign({}, a, {
-            fired: true,
-            firedAt: cloudFiredMap[a.id].firedAt,
-            firedPrice: cloudFiredMap[a.id].firedPrice,
-            firedByCloud: true,
-            tgMessageId: cloudFiredMap[a.id].tgMessageId || a.tgMessageId || null
-          });
-        }
-        return a;
-      });
-      return cmFetch('/alerts', 'POST', merged);
-    }).catch(function(){
-      return cmFetch('/alerts', 'POST', _paAlerts || []);
-    });
-  })
-  .then(function(d){
-    cmUpdateBadge('ok', 'Connected · ' + (d.count || 0) + ' alerts active in cloud');
-    toast('Cloud monitor configured! ' + (d.count || 0) + ' alerts pushed.', 'ok');
+    toast('Connected to CloudMonitor · ' + (_paAlerts||[]).length + ' alert(s) in sync', 'ok');
   })
   .catch(function(err){
     cmUpdateBadge('off', 'Error: ' + err.message);
-    toast('Cloud push failed: ' + err.message, 'err');
+    toast('Save & sync failed: ' + err.message, 'err');
   });
 }
 
+// "Sync Alerts Only" — pushes whatever's local, then re-pulls the
+// authoritative cloud copy. Doesn't touch config (assumes the worker
+// is already connected).
 function cmSyncAlertsOnly(){
-  if(!localStorage.getItem(CM_KEY_URL)){ toast('Set up the cloud monitor first', 'err'); return; }
-  // Merge cloud fired-states before pushing so we don't resurrect already-fired alerts
-  cmFetch('/alerts', 'GET').then(function(cloudAlerts){
-    var cloudFiredMap = {};
-    if(Array.isArray(cloudAlerts)){
-      cloudAlerts.forEach(function(ca){ if(ca.fired) cloudFiredMap[ca.id] = ca; });
-    }
-    var merged = (_paAlerts || []).map(function(a){
-      if(!a.fired && cloudFiredMap[a.id]){
-        return Object.assign({}, a, {
-          fired: true,
-          firedAt: cloudFiredMap[a.id].firedAt,
-          firedPrice: cloudFiredMap[a.id].firedPrice,
-          firedByCloud: true,
-            tgMessageId: cloudFiredMap[a.id].tgMessageId || a.tgMessageId || null
-        });
-      }
-      return a;
-    });
-    return cmFetch('/alerts', 'POST', merged);
-  }).catch(function(){
-    return cmFetch('/alerts', 'POST', _paAlerts || []);
-  }).then(function(d){
-    cmUpdateBadge('ok', 'Connected · alerts synced just now');
-    toast('Alerts synced: ' + (d.count || 0) + ' sent to cloud', 'ok');
-  }).catch(function(err){ toast('Sync failed: ' + err.message, 'err'); });
+  if(!cmHasUrl()){ toast('Set up the cloud monitor first', 'err'); return; }
+  cmUpdateBadge('warn', 'Syncing…');
+  cmPushAlerts()
+  .then(function(){ return cmLoadAlerts(); })
+  .then(function(){ toast('Alerts synced with cloud · ' + (_paAlerts||[]).length + ' total', 'ok'); })
+  .catch(function(err){ toast('Sync failed: ' + err.message, 'err'); });
 }
 
-// silent=true → used on auto page-load sync; suppresses "nothing new" toast
-// but shows a prominent toast if alerts were actually fired while away
+// silent=true → used on auto page-load sync; suppresses toasts.
+// Pulls the authoritative cloud copy (which naturally includes any
+// alerts that fired while the page was closed).
 function cmPullFired(silent){
-  if(!localStorage.getItem(CM_KEY_URL)){
+  if(!cmHasUrl()){
     if(!silent) toast('Set up the cloud monitor first', 'err');
     return;
   }
-  cmFetch('/alerts', 'GET')
-  .then(function(cloudAlerts){
-    if(!Array.isArray(cloudAlerts)) return;
-    var updated = 0;
-    cloudAlerts.forEach(function(ca){
-      if(!ca.fired) return;
-      var local = (_paAlerts || []).find(function(a){ return a.id === ca.id; });
-      if(local && !local.fired){
-        local.fired        = true;
-        local.firedAt      = ca.firedAt    || Date.now();
-        local.firedPrice   = ca.firedPrice;
-        local.firedByCloud = true; // flags the ☁ Cloud badge in the card
-        if(ca.tgMessageId) local.tgMessageId = ca.tgMessageId;
-        updated++;
-      }
-    });
-    if(updated > 0){
-      // Use the original paSave (pre-wrapper) to avoid a redundant GET+POST round-trip
-      (typeof _origPaSave === 'function' ? _origPaSave : paSave).call(this);
-      paRender();
-      toast('☁️ ' + updated + ' alert(s) triggered by cloud while page was closed', 'ok');
-    } else if(!silent){
-      toast('No new fired alerts found in cloud', '');
-    }
+  cmLoadAlerts().then(function(){
+    if(!silent) toast('Pulled the latest alerts from the cloud', 'ok');
     cmFetchPrices();
-  })
-  .catch(function(err){ if(!silent) toast('Pull failed: ' + err.message, 'err'); });
+  });
 }
 
 function cmCheckStatus(){
-  if(!localStorage.getItem(CM_KEY_URL)){ cmUpdateBadge('off', 'Not connected'); return; }
+  if(!cmHasUrl()){ cmUpdateBadge('off', 'Not connected'); return; }
   cmFetch('/status', 'GET')
   .then(function(s){
     if(s.ok) cmUpdateBadge('ok', 'Connected · ' + s.activeAlerts + ' active alert(s) in cloud');
@@ -15851,38 +15890,18 @@ function cmCheckStatus(){
   .catch(function(err){ cmUpdateBadge('off', 'Cannot reach worker: ' + err.message); });
 }
 
-// Auto-sync alerts to cloud on every paSave (add / edit / delete)
-// Fix: fetch cloud fired-states first so we never resurrect already-fired alerts
-(function(){
-  var _orig = typeof paSave === 'function' ? paSave : null;
-  if(!_orig) return;
-  window._origPaSave = _orig; // expose so cmPullFired can bypass the wrapper
-  paSave = function(){
-    _orig.apply(this, arguments);
-    if(!localStorage.getItem(CM_KEY_URL)) return;
-    cmFetch('/alerts', 'GET').then(function(cloudAlerts){
-      var cloudFiredMap = {};
-      if(Array.isArray(cloudAlerts)){
-        cloudAlerts.forEach(function(ca){ if(ca.fired) cloudFiredMap[ca.id] = ca; });
-      }
-      var merged = (_paAlerts || []).map(function(a){
-        if(!a.fired && cloudFiredMap[a.id]){
-          return Object.assign({}, a, {
-            fired: true,
-            firedAt: cloudFiredMap[a.id].firedAt,
-            firedPrice: cloudFiredMap[a.id].firedPrice,
-            firedByCloud: true,
-            tgMessageId: cloudFiredMap[a.id].tgMessageId || a.tgMessageId || null
-          });
-        }
-        return a;
-      });
-      cmFetch('/alerts', 'POST', merged).catch(function(){});
-    }).catch(function(){
-      cmFetch('/alerts', 'POST', _paAlerts || []).catch(function(){});
-    });
-  };
-})();
+// ── Gate the Add/Edit Alert form on a *verified* CloudMonitor connection ─
+// An alert can only ever fire via CloudMonitor (see paAddAlert/paUpdateAlert's
+// guards + paSave→cmPushAlerts), so the form is disabled — for both adding
+// and editing — with an explanatory hint until cmIsConnected() is true
+// (i.e. a real request has succeeded, not just a URL being saved).
+function paRefreshCloudGate(){
+  var addBtn = document.getElementById('pa-add-btn');
+  var hint   = document.getElementById('pa-cloud-gate-hint');
+  var connected = cmIsConnected();
+  if(addBtn){ addBtn.disabled = !connected; addBtn.style.opacity = connected ? '' : '.5'; addBtn.style.cursor = connected ? '' : 'not-allowed'; }
+  if(hint) hint.style.display = connected ? 'none' : 'block';
+}
 
 // ── Pull last-polled prices from the cloud worker ─────────────────────────────
 function cmFetchPrices(){
