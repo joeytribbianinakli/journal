@@ -10,11 +10,12 @@
  *   msgTemplate, msgDirAbove, msgDirBelow, notePrefix, datetimeFmt          — shared message template
  *   avKey, oandaKey, oandaEnv, finnhubKey, coingeckoKey                     — data provider keys
  *   knownCrypto, commodities, indices, providerChain                        — asset classification
- *   deleteDays                                                              — auto-delete fired Telegram
- *                                                                              alert messages after N days
- *                                                                              (0/unset = never). Runs on the
- *                                                                              cron schedule, so it works even
- *                                                                              when the app isn't open.
+ *   deleteHours                                                             — auto-delete fired Telegram
+ *                                                                              alert messages after N hours
+ *                                                                              (0/unset = never). Telegram only
+ *                                                                              allows deleting messages up to 48h
+ *                                                                              old. Runs on the cron schedule, so
+ *                                                                              it works even when the app isn't open.
  */
 
 function corsHeaders(origin) {
@@ -181,9 +182,9 @@ async function paCheckAll() {
   // active alerts left to price-check above — so nothing pending gets missed.
   // Note: Telegram only allows bots to delete messages up to 48 hours old;
   // deletion attempts past that window fail harmlessly and are not retried.
-  var deleteDays = parseInt(cfg.deleteDays, 10);
-  if (deleteDays > 0 && cfg.telegramToken && cfg.telegramChatId) {
-    var cutoff = Date.now() - (deleteDays * 86400000);
+  var deleteHours = parseInt(cfg.deleteHours, 10);
+  if (deleteHours > 0 && cfg.telegramToken && cfg.telegramChatId) {
+    var cutoff = Date.now() - (deleteHours * 3600000);
     for (var j = 0; j < alerts.length; j++) {
       var al = alerts[j];
       if (al.fired && al.tgMessageId && al.firedAt && al.firedAt < cutoff) {
