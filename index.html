@@ -2961,8 +2961,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                 <div id="pa-delete-box" style="display:none;padding:12px;background:var(--bg);border-top:1px solid var(--border);">
                   <select id="pa-delete-days" onchange="paDeleteDaysSave()" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:7px 10px;outline:none;appearance:none;-webkit-appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 9px center;padding-right:28px;margin-bottom:6px;">
                     <option value="0">Never delete</option>
-                    <option value="1">After 1 day</option>
-                    <option value="2">After 2 days</option>
+                    <option value="12">After 12 hours</option>
+                    <option value="24">After 24 hours</option>
+                    <option value="48">After 48 hours</option>
                   </select>
                   <div style="font-size:10px;color:var(--text3);line-height:1.5;">⚠️ Telegram only allows bots to delete messages up to <strong>48 hours</strong> old. Messages older than that cannot be deleted.</div>
                 </div>
@@ -13631,9 +13632,15 @@ function paRefreshTgUI(){
     if(connected) connected.style.display='none';
     if(form) form.style.display='block';
   }
-  // Restore delete days select
+  // Restore delete-duration select. The stored value used to mean "days"
+  // (0/1/2) — one-time migrate those to the equivalent hour value (1 day →
+  // 24h, 2 days → 48h) now that the option is hour-based, so existing
+  // settings keep their real-world duration instead of silently resetting.
+  var ddRaw = localStorage.getItem('tj-pa-delete-days');
+  if(ddRaw === '1'){ ddRaw = '24'; localStorage.setItem('tj-pa-delete-days', ddRaw); }
+  else if(ddRaw === '2'){ ddRaw = '48'; localStorage.setItem('tj-pa-delete-days', ddRaw); }
   var ddSel = document.getElementById('pa-delete-days');
-  if(ddSel) ddSel.value = localStorage.getItem('tj-pa-delete-days') || '0';
+  if(ddSel) ddSel.value = ddRaw || '0';
 }
 
 function paDeleteDaysSave(){
@@ -13641,7 +13648,7 @@ function paDeleteDaysSave(){
   if(!sel) return;
   localStorage.setItem('tj-pa-delete-days', sel.value);
   ghAutoSyncAlerts();
-  toast(sel.value === '0' ? 'Auto-delete disabled' : 'Alert messages will be deleted after ' + sel.value + ' day(s)', 'ok');
+  toast(sel.value === '0' ? 'Auto-delete disabled' : 'Alert messages will be deleted after ' + sel.value + ' hour(s)', 'ok');
 }
 
 function paSetProvider(p, btn){
@@ -14079,12 +14086,12 @@ function paTgDeleteMessage(messageId){
   }).catch(function(){});
 }
 
-// Delete fired alert messages older than the configured number of days
+// Delete fired alert messages older than the configured number of hours.
 // Note: Telegram only allows bots to delete messages up to 48 hours old.
 function paTgDeleteOldMessages(){
-  var days = parseInt(localStorage.getItem('tj-pa-delete-days') || '0', 10);
-  if(!days || days < 1) return;
-  var cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
+  var hours = parseInt(localStorage.getItem('tj-pa-delete-days') || '0', 10);
+  if(!hours || hours < 1) return;
+  var cutoff = Date.now() - (hours * 60 * 60 * 1000);
   var changed = false;
   _paAlerts.forEach(function(a){
     if(!a.fired || !a.tgMessageId) return;
@@ -15774,7 +15781,7 @@ function cmBuildConfig(){
       commodity: ['oanda','av','yahoo'], stock: ['finnhub','av','yahoo'], index: ['finnhub','av','yahoo']
     }),
     // Auto-delete: server-side cleanup runs even when the app/browser is closed
-    deleteDays:      parseInt(localStorage.getItem('tj-pa-delete-days') || '0', 10),
+    deleteHours:     parseInt(localStorage.getItem('tj-pa-delete-days') || '0', 10),
   };
 }
 
@@ -16188,7 +16195,7 @@ function cmBuildConfig(){
       commodity: ['oanda','av','yahoo'], stock: ['finnhub','av','yahoo'], index: ['finnhub','av','yahoo']
     }),
     // Auto-delete: server-side cleanup runs even when the app/browser is closed
-    deleteDays:      parseInt(localStorage.getItem('tj-pa-delete-days') || '0', 10),
+    deleteHours:     parseInt(localStorage.getItem('tj-pa-delete-days') || '0', 10),
   };
 }
 
@@ -16450,11 +16457,12 @@ function cfDownloadWorker(){
  *   msgTemplate, msgDirAbove, msgDirBelow, notePrefix, datetimeFmt          — shared message template
  *   avKey, oandaKey, oandaEnv, finnhubKey, coingeckoKey                     — data provider keys
  *   knownCrypto, commodities, indices, providerChain                        — asset classification
- *   deleteDays                                                              — auto-delete fired Telegram
- *                                                                              alert messages after N days
- *                                                                              (0/unset = never). Runs on the
- *                                                                              cron schedule, so it works even
- *                                                                              when the app isn't open.
+ *   deleteHours                                                             — auto-delete fired Telegram
+ *                                                                              alert messages after N hours
+ *                                                                              (0/unset = never). Telegram only
+ *                                                                              allows deleting messages up to 48h
+ *                                                                              old. Runs on the cron schedule, so
+ *                                                                              it works even when the app isn't open.
  */
 
 function corsHeaders(origin) {
@@ -16621,9 +16629,9 @@ async function paCheckAll() {
   // active alerts left to price-check above — so nothing pending gets missed.
   // Note: Telegram only allows bots to delete messages up to 48 hours old;
   // deletion attempts past that window fail harmlessly and are not retried.
-  var deleteDays = parseInt(cfg.deleteDays, 10);
-  if (deleteDays > 0 && cfg.telegramToken && cfg.telegramChatId) {
-    var cutoff = Date.now() - (deleteDays * 86400000);
+  var deleteHours = parseInt(cfg.deleteHours, 10);
+  if (deleteHours > 0 && cfg.telegramToken && cfg.telegramChatId) {
+    var cutoff = Date.now() - (deleteHours * 3600000);
     for (var j = 0; j < alerts.length; j++) {
       var al = alerts[j];
       if (al.fired && al.tgMessageId && al.firedAt && al.firedAt < cutoff) {
