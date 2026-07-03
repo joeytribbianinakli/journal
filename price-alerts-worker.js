@@ -10,6 +10,11 @@
  *   msgTemplate, msgDirAbove, msgDirBelow, notePrefix, datetimeFmt          — shared message template
  *   avKey, oandaKey, oandaEnv, finnhubKey, coingeckoKey                     — data provider keys
  *   knownCrypto, commodities, indices, providerChain                        — asset classification
+ *   deleteDays                                                              — auto-delete fired Telegram
+ *                                                                              alert messages after N days
+ *                                                                              (0/unset = never). Runs on the
+ *                                                                              cron schedule, so it works even
+ *                                                                              when the app isn't open.
  */
 
 function corsHeaders(origin) {
@@ -141,31 +146,54 @@ async function paCheckAll() {
   var alertsRaw = await JOURNUP_KV.get('alerts');
   if (!alertsRaw) return;
   var alerts = JSON.parse(alertsRaw);
-  var active = alerts.filter(function(a) { return !a.fired; });
-  if (!active.length) return;
-  var bySymbol = {};
-  active.forEach(function(a) { if (!bySymbol[a.symbol]) bySymbol[a.symbol] = []; bySymbol[a.symbol].push(a); });
   var changed = false;
   var logEntries = [];
 
-  await Promise.all(Object.keys(bySymbol).map(async function(sym) {
-    var result = await fetchPriceWithMeta(sym, cfg);
-    if (result === null) return;
-    var price = result.price;
-    var symAlerts = bySymbol[sym];
-    for (var i = 0; i < symAlerts.length; i++) {
-      var a = symAlerts[i];
-      var hit = (a.dir === 'above' && price >= a.target) || (a.dir === 'below' && price <= a.target);
-      if (!hit) continue;
-      var idx = alerts.findIndex(function(x) { return x.id === a.id; });
-      if (idx !== -1) { alerts[idx].fired = true; alerts[idx].firedAt = Date.now(); alerts[idx].firedPrice = price; }
-      changed = true;
-      var tgMsgId = await sendTelegram(buildMessage(a, price, cfg), cfg);
-      if (tgMsgId && idx !== -1) alerts[idx].tgMessageId = tgMsgId;
-      if (cfg.discordWebhook) await sendDiscord(buildDiscordEmbed(a, price, cfg), cfg.discordWebhook);
-      logEntries.push({ id: a.id, symbol: a.symbol, dir: a.dir, target: a.target, price: price, note: a.note || '', firedAt: Date.now() });
+  var active = alerts.filter(function(a) { return !a.fired; });
+  if (active.length) {
+    var bySymbol = {};
+    active.forEach(function(a) { if (!bySymbol[a.symbol]) bySymbol[a.symbol] = []; bySymbol[a.symbol].push(a); });
+
+    await Promise.all(Object.keys(bySymbol).map(async function(sym) {
+      var result = await fetchPriceWithMeta(sym, cfg);
+      if (result === null) return;
+      var price = result.price;
+      var symAlerts = bySymbol[sym];
+      for (var i = 0; i < symAlerts.length; i++) {
+        var a = symAlerts[i];
+        var hit = (a.dir === 'above' && price >= a.target) || (a.dir === 'below' && price <= a.target);
+        if (!hit) continue;
+        var idx = alerts.findIndex(function(x) { return x.id === a.id; });
+        if (idx !== -1) { alerts[idx].fired = true; alerts[idx].firedAt = Date.now(); alerts[idx].firedPrice = price; }
+        changed = true;
+        var tgMsgId = await sendTelegram(buildMessage(a, price, cfg), cfg);
+        if (tgMsgId && idx !== -1) alerts[idx].tgMessageId = tgMsgId;
+        if (cfg.discordWebhook) await sendDiscord(buildDiscordEmbed(a, price, cfg), cfg.discordWebhook);
+        logEntries.push({ id: a.id, symbol: a.symbol, dir: a.dir, target: a.target, price: price, note: a.note || '', firedAt: Date.now() });
+      }
+    }));
+  }
+
+  // Auto-delete fired alert Telegram messages once the configured retention
+  // period has passed. Mirrors the page's own (browser-side) cleanup logic,
+  // but runs here too so it still happens on schedule even if the app/browser
+  // is closed. Runs every paCheckAll() pass — including when there were no
+  // active alerts left to price-check above — so nothing pending gets missed.
+  // Note: Telegram only allows bots to delete messages up to 48 hours old;
+  // deletion attempts past that window fail harmlessly and are not retried.
+  var deleteDays = parseInt(cfg.deleteDays, 10);
+  if (deleteDays > 0 && cfg.telegramToken && cfg.telegramChatId) {
+    var cutoff = Date.now() - (deleteDays * 86400000);
+    for (var j = 0; j < alerts.length; j++) {
+      var al = alerts[j];
+      if (al.fired && al.tgMessageId && al.firedAt && al.firedAt < cutoff) {
+        try { await sendTelegramDelete(al.tgMessageId, cfg); } catch(e) {}
+        al.tgMessageId = null; // clear so we don't retry every run
+        changed = true;
+      }
     }
-  }));
+  }
+
   if (changed) await JOURNUP_KV.put('alerts', JSON.stringify(alerts));
   if (logEntries.length) {
     var existingRaw = await JOURNUP_KV.get('trigger_log');
@@ -507,4 +535,14 @@ async function sendTelegram(text, cfg) {
 async function sendDiscord(payload, webhookUrl) {
   if (!webhookUrl) return;
   await fetch(webhookUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+}
+async function sendTelegramDelete(messageId, cfg) {
+  if (!cfg.telegramToken || !cfg.telegramChatId || !messageId) return null;
+  var r = await fetch('https://api.telegram.org/bot' + cfg.telegramToken + '/deleteMessage', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: cfg.telegramChatId, message_id: messageId })
+  });
+  var d = await r.json().catch(function(){ return {}; });
+  return !!d.ok;
 }
