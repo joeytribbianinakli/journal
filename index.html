@@ -419,8 +419,19 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto}
 .detail-overlay.open{display:flex}
 .detail-modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-xl);width:100%;max-width:840px;overflow:hidden;flex-shrink:0}
+.detail-modal.has-images{max-width:1180px}
 .detail-modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--bg)}
 .detail-modal-body{padding:20px;max-height:80vh;overflow-y:auto}
+.detail-modal.has-images .detail-modal-body{padding:0;height:80vh;max-height:80vh;overflow:hidden}
+.detail-panels{display:flex;height:100%}
+.detail-panel-left{flex:1;min-width:0;overflow-y:auto;padding:20px}
+.detail-panel-right{width:360px;flex-shrink:0;border-left:1px solid var(--border);overflow-y:auto;padding:18px;background:var(--bg)}
+.detail-panel-right .detail-section-title{margin-top:0;padding-top:0;border-top:none}
+@media(max-width:900px){
+  .detail-modal.has-images .detail-modal-body{height:auto;max-height:80vh;overflow-y:auto}
+  .detail-panels{flex-direction:column;height:auto}
+  .detail-panel-right{width:100%;border-left:none;border-top:1px solid var(--border)}
+}
 .detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
 .di-label{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
 .di-val{font-size:12px;font-weight:500}
@@ -520,6 +531,13 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .lightbox.open{display:flex}
 .lightbox img{max-width:92vw;max-height:92vh;border-radius:var(--radius-lg);object-fit:contain}
 .lightbox-close{position:fixed;top:14px;right:18px;background:rgba(255,255,255,.08);border:none;color:#fff;font-size:18px;cursor:pointer;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-family:inherit;z-index:501}
+.lightbox-nav{position:fixed;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.08);border:none;color:#fff;font-size:20px;cursor:pointer;border-radius:50%;width:42px;height:42px;display:none;align-items:center;justify-content:center;font-family:inherit;z-index:501;transition:background .12s}
+.lightbox-nav:hover{background:rgba(255,255,255,.18)}
+.lightbox-nav.show{display:flex}
+.lightbox-prev{left:18px}
+.lightbox-next{right:18px}
+.lightbox-counter{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.7);font-size:11px;font-weight:600;letter-spacing:.05em;z-index:501;display:none}
+.lightbox-counter.show{display:block}
 
 /* ── Checklist drag-to-reorder ── */
 .cl-card-draggable{cursor:grab;position:relative}
@@ -3954,7 +3972,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
 <!-- Detail modal -->
 <div class="detail-overlay" id="detail-overlay" onclick="closeDetail(event)">
-  <div class="detail-modal" onclick="event.stopPropagation()">
+  <div class="detail-modal" id="detail-modal" onclick="event.stopPropagation()">
     <div class="detail-modal-header">
       <div><div class="topbar-title" id="dm-title">Trade</div><div id="dm-badges" style="display:flex;gap:5px;margin-top:5px"></div></div>
       <div style="display:flex;gap:7px">
@@ -4343,7 +4361,10 @@ document.addEventListener('DOMContentLoaded',function(){
 <!-- Lightbox -->
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
   <button class="lightbox-close" onclick="closeLightbox()">×</button>
-  <img id="lightbox-img" src="" alt="">
+  <button class="lightbox-nav lightbox-prev" id="lightbox-prev" onclick="event.stopPropagation();lightboxNav(-1)">‹</button>
+  <img id="lightbox-img" src="" alt="" onclick="event.stopPropagation()">
+  <button class="lightbox-nav lightbox-next" id="lightbox-next" onclick="event.stopPropagation();lightboxNav(1)">›</button>
+  <div class="lightbox-counter" id="lightbox-counter"></div>
 </div>
 
 <!-- Theme modal -->
@@ -7761,9 +7782,12 @@ async function openDetail(id){
   var plStr=(trade.plDollar>=0?'+':'')+trade.plDollar.toFixed(2);
   var plColor=win?'var(--green)':'var(--red)';
 
-  // Images
+  // Images — all screenshots are collected into a single flat list (_dmImgList) so the
+  // lightbox can step through every image on this trade with the keyboard, regardless of
+  // which zone/group it came from.
   var imgSections='';
   var postJournalImgHtml='';
+  _dmImgList=[];
   if(trade.imageIds){
     var allImgHtml=[];
     var _zoneLabel=function(z){var m={'htf-W':'HTF — W','htf-D':'HTF — D','htf-4h':'HTF — 4h','mtf-1h':'MTF — 1h','mtf-30m':'MTF — 30m','ltf-15m':'LTF — 15m','ltf-5m':'LTF — 5m','setup':'Setup','postanalysis':'Post-journal'};return m[z]||z.toUpperCase();};
@@ -7771,16 +7795,17 @@ async function openDetail(id){
     Object.keys(trade.imageIds).forEach(function(z){if(z!=='postanalysis'&&!_allDetailZones.includes(z))_allDetailZones.push(z);});
     for(var zone of _allDetailZones){
       var zImgs=[];
-      for(var imgId of(trade.imageIds[zone]||[])){var img=await dbGet('images',imgId);if(img){var src=img.cloudUrl||img.dataUrl;zImgs.push('<div class="img-thumb" style="aspect-ratio:16/10"><img src="'+src+'" onclick="openLightbox(\''+src+'\')"></div>');}}
+      for(var imgId of(trade.imageIds[zone]||[])){var img=await dbGet('images',imgId);if(img){var src=img.cloudUrl||img.dataUrl;_dmImgList.push(src);var _idx=_dmImgList.length-1;zImgs.push('<div class="img-thumb" style="aspect-ratio:16/10"><img src="'+src+'" onclick="openLightboxAt('+_idx+')"></div>');}}
       if(zImgs.length){allImgHtml.push('<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">'+_zoneLabel(zone)+'</div><div class="img-grid">'+zImgs.join('')+'</div></div>');}
     }
-    if(allImgHtml.length)imgSections='<div class="detail-section-title">Screenshots</div>'+allImgHtml.join('');
-    // Post-journal screenshots are built separately so they can be shown together with the
-    // post-journal text below, instead of buried in the generic Screenshots block above.
+    if(allImgHtml.length)imgSections=allImgHtml.join('');
+    // Post-journal screenshots are built separately so they can be grouped with their own
+    // label in the screenshots panel, alongside every other zone.
     var pjImgs=[];
-    for(var pjImgId of(trade.imageIds['postanalysis']||[])){var pjImg=await dbGet('images',pjImgId);if(pjImg){var pjSrc=pjImg.cloudUrl||pjImg.dataUrl;pjImgs.push('<div class="img-thumb" style="aspect-ratio:16/10"><img src="'+pjSrc+'" onclick="openLightbox(\''+pjSrc+'\')"></div>');}}
-    if(pjImgs.length)postJournalImgHtml='<div class="img-grid" style="margin-top:8px">'+pjImgs.join('')+'</div>';
+    for(var pjImgId of(trade.imageIds['postanalysis']||[])){var pjImg=await dbGet('images',pjImgId);if(pjImg){var pjSrc=pjImg.cloudUrl||pjImg.dataUrl;_dmImgList.push(pjSrc);var _pjIdx=_dmImgList.length-1;pjImgs.push('<div class="img-thumb" style="aspect-ratio:16/10"><img src="'+pjSrc+'" onclick="openLightboxAt('+_pjIdx+')"></div>');}}
+    if(pjImgs.length)postJournalImgHtml='<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Post-journal</div><div class="img-grid">'+pjImgs.join('')+'</div></div>';
   }
+  var screenshotsPanelHtml=imgSections+postJournalImgHtml;
   var biasHtml='';
   if(trade.biasNarrative){var bArr=[];for(var tf in trade.biasNarrative){var v=trade.biasNarrative[tf];if(v&&v!=='neutral')bArr.push('<span class="badge '+(v==='bull'?'badge-green':'badge-red')+'">'+tf+': '+(v==='bull'?'Bullish':'Bearish')+'</span>');}if(bArr.length)biasHtml='<div class="detail-section-title">Narrative bias</div><div class="pill-row">'+bArr.join('')+'</div>';}
   var planHtml='';
@@ -7816,7 +7841,7 @@ async function openDetail(id){
     });
     return html;
   }());
-  document.getElementById('dm-body').innerHTML=
+  var leftHtml=
     '<div class="detail-grid">'
     +'<div class="detail-item"><div class="di-label">Entry</div><div class="di-val mono">'+trade.entryPrice+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Exit</div><div class="di-val mono">'+trade.exitPrice+'</div></div>'
@@ -7866,8 +7891,7 @@ async function openDetail(id){
     +(trade.ledToTrade?'<div class="detail-section-title">What led to the trade</div><div style="font-size:12px;color:var(--text2);white-space:pre-wrap;line-height:1.6">'+escHtml(trade.ledToTrade)+'</div>':'')
     +(trade.skipped&&trade.whySkipped?'<div class="detail-section-title" style="color:var(--amber)">Why skipped</div><div style="font-size:12px;color:var(--text2);white-space:pre-wrap;line-height:1.6">'+escHtml(trade.whySkipped)+'</div>':'')
     +(trade.issuesNotes&&trade.issuesNotes!='1. '?'<div class="detail-section-title">Issues</div><div style="font-size:12px;color:var(--text2);white-space:pre-wrap;line-height:1.6">'+escHtml(trade.issuesNotes)+'</div>':'')
-    +imgSections
-    +(( (trade.postAnalysis&&trade.postAnalysis!='1. ') || postJournalImgHtml )?'<div class="detail-section-title">Post-journal</div>'+((trade.postAnalysis&&trade.postAnalysis!='1. ')?'<div class="js-pre">'+escHtml(trade.postAnalysis)+'</div>':'')+postJournalImgHtml:'')
+    +((trade.postAnalysis&&trade.postAnalysis!='1. ')?'<div class="detail-section-title">Post-journal</div><div class="js-pre">'+escHtml(trade.postAnalysis)+'</div>':'')
     +(trade.emoBefore||trade.emoAfter||trade.emoComplete?
       '<div class="detail-section-title">Emotions</div><div class="detail-grid">'
       +(trade.emoBefore?'<div class="detail-item"><div class="di-label">Before trade</div><div class="di-val js-pre">'+escHtml(trade.emoBefore)+'</div></div>':'')
@@ -7877,6 +7901,18 @@ async function openDetail(id){
     +(trade.mistakes||trade.lessons||trade.good?'<div class="detail-section-title">Lessons</div><div class="detail-grid">'+noteRow('Mistakes',trade.mistakes)+noteRow('Lessons learned',trade.lessons)+noteRow('What went well',trade.good)+'</div>':'')
     +(trade.news&&trade.news!='1. '?'<div class="detail-section-title">News</div><div class="js-pre">'+escHtml(trade.news)+'</div>':'')
     +'<div style="height:16px"></div>';
+  var dmModalEl=document.getElementById('detail-modal');
+  if(screenshotsPanelHtml){
+    dmModalEl.classList.add('has-images');
+    document.getElementById('dm-body').innerHTML=
+      '<div class="detail-panels">'
+      +'<div class="detail-panel-left">'+leftHtml+'</div>'
+      +'<div class="detail-panel-right"><div class="detail-section-title">Screenshots</div>'+screenshotsPanelHtml+'</div>'
+      +'</div>';
+  }else{
+    dmModalEl.classList.remove('has-images');
+    document.getElementById('dm-body').innerHTML=leftHtml;
+  }
   document.getElementById('detail-overlay').classList.add('open');
 
   // Async: compute fees from current asset settings and inject into detail panel
@@ -7897,7 +7933,24 @@ async function openDetail(id){
 function closeDetail(e){if(e&&e.target!==document.getElementById('detail-overlay'))return;document.getElementById('detail-overlay').classList.remove('open');}
 
 // ══ Lightbox ══════════════════════════════════════
-function openLightbox(src){document.getElementById('lightbox-img').src=src;document.getElementById('lightbox').classList.add('open');}
+// _dmImgList holds every screenshot shown in the currently-open trade detail modal (in
+// display order), so the lightbox can step through all of them with ←/→ or the on-screen
+// nav buttons, no matter which zone/group an image was opened from.
+var _dmImgList=[];
+var _lbImages=[];
+var _lbIndex=0;
+function _lbRender(){
+  document.getElementById('lightbox-img').src=_lbImages[_lbIndex];
+  var multi=_lbImages.length>1;
+  document.getElementById('lightbox-prev').classList.toggle('show',multi);
+  document.getElementById('lightbox-next').classList.toggle('show',multi);
+  var counter=document.getElementById('lightbox-counter');
+  counter.classList.toggle('show',multi);
+  if(multi)counter.textContent=(_lbIndex+1)+' / '+_lbImages.length;
+}
+function openLightbox(src){_lbImages=[src];_lbIndex=0;_lbRender();document.getElementById('lightbox').classList.add('open');}
+function openLightboxAt(idx){_lbImages=_dmImgList;_lbIndex=idx;_lbRender();document.getElementById('lightbox').classList.add('open');}
+function lightboxNav(dir){if(_lbImages.length<2)return;_lbIndex=(_lbIndex+dir+_lbImages.length)%_lbImages.length;_lbRender();}
 function closeLightbox(){document.getElementById('lightbox').classList.remove('open');}
 
 // ══ Dashboard ═════════════════════════════════════
@@ -8370,6 +8423,12 @@ async function loadSavedTheme(){
 if(!window._tjKeydownListenerRegistered){
   window._tjKeydownListenerRegistered = true;
   document.addEventListener('keydown',function(e){
+  // Lightbox image navigation with ← / →
+  if((e.key==='ArrowRight'||e.key==='ArrowLeft')&&document.getElementById('lightbox').classList.contains('open')){
+    e.preventDefault();
+    lightboxNav(e.key==='ArrowRight'?1:-1);
+    return;
+  }
   if(e.key!=='Escape')return;
   // Close in priority order: lightbox → detail → modals
   if(document.getElementById('lightbox').classList.contains('open')){closeLightbox();return;}
