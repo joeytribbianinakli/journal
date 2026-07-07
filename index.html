@@ -3982,7 +3982,8 @@ document.addEventListener('DOMContentLoaded',function(){
   <div class="detail-modal" id="detail-modal" onclick="event.stopPropagation()">
     <div class="detail-modal-header">
       <div><div class="topbar-title" id="dm-title">Trade</div><div id="dm-badges" style="display:flex;gap:5px;margin-top:5px"></div></div>
-      <div style="display:flex;gap:7px">
+      <div style="display:flex;gap:7px;align-items:center">
+        <button class="star-toggle-btn" id="dm-star-btn" title="Star trade" style="border:1px solid var(--border);border-radius:6px;padding:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
         <button class="btn btn-ghost btn-sm" id="dm-edit-btn">Edit</button>
         <button class="btn btn-ghost btn-sm btn-icon" onclick="document.getElementById('detail-overlay').classList.remove('open')">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -7791,6 +7792,20 @@ async function openDetail(id){
     (trade.strategy?'<span class="badge badge-gray">'+escHtml(trade.strategy)+'</span>':'')+
     '<span class="stars">'+trade.rating+'</span>';
   document.getElementById('dm-edit-btn').onclick=function(){editTrade(id)};
+  var dmStarBtn=document.getElementById('dm-star-btn');
+  var _dmSyncStarBtn=function(starred){
+    dmStarBtn.classList.toggle('starred',!!starred);
+    dmStarBtn.querySelector('svg').setAttribute('fill',starred?'currentColor':'none');
+    dmStarBtn.title=starred?'Unstar trade':'Star trade';
+  };
+  _dmSyncStarBtn(trade.starred);
+  dmStarBtn.onclick=async function(){
+    trade.starred=!trade.starred;
+    await dbPut('trades',trade);
+    _dmSyncStarBtn(trade.starred);
+    renderHistory();
+    ghAutoSync();
+  };
   var plStr=(trade.plDollar>=0?'+':'')+trade.plDollar.toFixed(2);
   var plColor=win?'var(--green)':'var(--red)';
 
