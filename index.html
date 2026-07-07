@@ -551,6 +551,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .cl-item-drag-handle svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2}
 .cl-items-container{display:flex;flex-direction:column;min-height:10px}
 .stars{color:var(--amber);font-size:12px;letter-spacing:1px}
+.star-toggle-btn{background:none;border:none;cursor:pointer;padding:4px;display:inline-flex;align-items:center;justify-content:center;color:var(--text3);transition:color .12s,transform .12s;font-family:inherit}
+.star-toggle-btn:hover{color:var(--amber);transform:scale(1.1)}
+.star-toggle-btn.starred{color:var(--amber)}
+.star-toggle-btn svg{width:15px;height:15px}
 .edit-banner{background:rgba(77,127,255,.06);border:1px solid rgba(77,127,255,.2);border-radius:var(--radius);padding:8px 12px;margin-bottom:14px;font-size:12px;color:var(--accent);display:none;align-items:center;justify-content:space-between}
 .edit-banner.visible{display:flex}
 .section-label{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
@@ -2081,6 +2085,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </button>
             <button id="hist-demo-toggle" onclick="event.stopPropagation();toggleHistDemoMode()" title="Toggle demo data view" style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(232,160,48,.35);background:rgba(232,160,48,.08);color:var(--amber);font-family:inherit;letter-spacing:.04em;transition:all .12s">
               ✦ <span id="hist-demo-label">Demo OFF</span>
+            </button>
+            <button id="hist-starred-toggle" onclick="event.stopPropagation();toggleHistStarredOnly()" title="Show only starred trades" style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(232,160,48,.35);background:rgba(232,160,48,.08);color:var(--amber);font-family:inherit;letter-spacing:.04em;transition:all .12s">
+              ★ <span id="hist-starred-label">Starred OFF</span>
             </button>
             
           </div>
@@ -7649,6 +7656,7 @@ async function _renderHistoryImpl(){
     if(fat&&t.assetType!==fat)return false;
     if(fskip==='skipped'&&!t.skipped)return false;
     if(fskip==='taken'&&t.skipped)return false;
+    if(_histStarredOnly&&!t.starred)return false;
     if(fsrch&&!((t.pair||'').toLowerCase().includes(fsrch)||(t.num||'').toLowerCase().includes(fsrch)||(t.lessons||'').toLowerCase().includes(fsrch)))return false;
     return true;
   });
@@ -7683,7 +7691,7 @@ async function _renderHistoryImpl(){
   var visibleCols=cfg.filter(function(c){return c.visible;}).map(function(c){return ALL_HISTORY_COLS.find(function(col){return col.key===c.key;});}).filter(Boolean);
   if(!visibleCols.length)visibleCols=DEFAULT_HIST_COL_KEYS.map(function(k){return ALL_HISTORY_COLS.find(function(c){return c.key===k;});}).filter(Boolean);
 
-  var headers=visibleCols.map(function(c){
+  var headers='<th style="width:1%"></th>'+visibleCols.map(function(c){
     var isActive=_histSort.key===c.key;
     var arrow=isActive?(_histSort.dir===-1?' ↓':' ↑'):'';
     var style='cursor:pointer;user-select:none;white-space:nowrap;'+(isActive?'color:var(--accent)':'');
@@ -7692,6 +7700,10 @@ async function _renderHistoryImpl(){
 
   var rows=filtered.map(function(t){
     var cells=visibleCols.map(function(col){try{return col.render(t);}catch(e){return'<td>—</td>';}}).join('');
+    var isStarred=!!t.starred;
+    var starCell='<td style="white-space:nowrap;padding-right:0">'
+      +'<button class="star-toggle-btn'+(isStarred?' starred':'')+'" title="'+(isStarred?'Unstar trade':'Star trade')+'" onclick="event.stopPropagation();toggleStarTrade(\''+t.id+'\')"><svg viewBox="0 0 24 24" fill="'+(isStarred?'currentColor':'none')+'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>'
+      +'</td>';
     var actions='<td style="white-space:nowrap">'
       +'<button class="btn btn-sm btn-icon" title="View" onclick="event.stopPropagation();openDetail(\''+t.id+'\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>'
       +' <button class="btn btn-sm btn-icon" title="Edit" onclick="event.stopPropagation();editTrade(\''+t.id+'\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
@@ -7699,7 +7711,7 @@ async function _renderHistoryImpl(){
       +'</td>';
     var isPending=!t.exitPrice;
     var rowStyle=isPending?' style="background:rgba(232,160,48,.12)"':'';
-    return'<tr'+rowStyle+' onclick="openDetail(\''+t.id+'\')">'+cells+actions+'</tr>';
+    return'<tr'+rowStyle+' onclick="openDetail(\''+t.id+'\')">'+starCell+cells+actions+'</tr>';
   }).join('');
   wrap.innerHTML='<table class="data"><thead><tr>'+headers+'</tr></thead><tbody>'+rows+'</tbody></table>';
 
@@ -7763,7 +7775,7 @@ async function populateFilters(){
   if(datf){var datv=datf.value;datf.innerHTML='<option value="">All asset types</option>'+assetTypes.map(function(a){return'<option value="'+escHtml(a)+'">'+escHtml(a)+'</option>'}).join('');datf.value=datv;}
   updateHistChips();
 }
-function resetFilters(){var ids=['flt-pair','flt-type','flt-strategy','flt-result','flt-session','flt-asset-type'];ids.forEach(function(id){var el=document.getElementById(id);if(el)el.selectedIndex=0});var fsk=document.getElementById('flt-skipped');if(fsk)fsk.value='taken';document.getElementById('flt-search').value='';_dashDemoMode=false;_histDemoMode=false;_syncDemoButtons(false);updateHistChips();populateSessionSelects().then(function(){renderHistory();});}
+function resetFilters(){var ids=['flt-pair','flt-type','flt-strategy','flt-result','flt-session','flt-asset-type'];ids.forEach(function(id){var el=document.getElementById(id);if(el)el.selectedIndex=0});var fsk=document.getElementById('flt-skipped');if(fsk)fsk.value='taken';document.getElementById('flt-search').value='';_dashDemoMode=false;_histDemoMode=false;_syncDemoButtons(false);_histStarredOnly=false;var sbtn=document.getElementById('hist-starred-toggle'),slbl=document.getElementById('hist-starred-label');if(sbtn){sbtn.style.background='rgba(232,160,48,.08)';sbtn.style.borderColor='rgba(232,160,48,.35)';}if(slbl)slbl.textContent='Starred OFF';updateHistChips();populateSessionSelects().then(function(){renderHistory();});}
 
 // ══ Detail modal ══════════════════════════════════
 async function openDetail(id){
@@ -8244,6 +8256,7 @@ function toggleCalFilters(){
 // ── Demo mode toggle ───────────────────────────────────────
 var _dashDemoMode=false; // false = real sessions, true = demo sessions (shared by dash, cal, mc, hist)
 var _histDemoMode=false;  // alias — kept for backward-compat; always mirrors _dashDemoMode
+var _histStarredOnly=false; // when true, history table only shows starred trades
 // Track auto-selected default session IDs so badge/chips don't count them as active filters
 var _defaultDashSessionId='';
 var _defaultHistSessionId='';
@@ -8291,6 +8304,24 @@ function toggleHistDemoMode(){
   var hF=document.getElementById('flt-session');if(hF)hF.value='';
   updateHistChips();
   populateSessionSelects().then(function(){renderHistory();});
+}
+
+function toggleHistStarredOnly(){
+  _histStarredOnly=!_histStarredOnly;
+  var btn=document.getElementById('hist-starred-toggle');
+  var lbl=document.getElementById('hist-starred-label');
+  if(btn){btn.style.background=_histStarredOnly?'rgba(232,160,48,.22)':'rgba(232,160,48,.08)';btn.style.borderColor=_histStarredOnly?'rgba(232,160,48,.6)':'rgba(232,160,48,.35)';}
+  if(lbl)lbl.textContent=_histStarredOnly?'Starred ON':'Starred OFF';
+  renderHistory();
+}
+
+async function toggleStarTrade(id){
+  var trade=await dbGet('trades',id);
+  if(!trade)return;
+  trade.starred=!trade.starred;
+  await dbPut('trades',trade);
+  renderHistory();
+  ghAutoSync();
 }
 
 function toggleMcDemoMode(){
