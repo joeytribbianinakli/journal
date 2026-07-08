@@ -427,11 +427,65 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .detail-panel-left{flex:1;min-width:0;overflow-y:auto;padding:20px}
 .detail-panel-right{width:360px;flex-shrink:0;border-left:1px solid var(--border);overflow-y:auto;padding:18px;background:var(--bg)}
 .detail-panel-right .detail-section-title{margin-top:0;padding-top:0;border-top:none}
+/* Screenshot category groups (Setup / HTF / MTF / LTF / Post-journal) — a clear
+   divider plus a colour-coded badge per group so categories are easy to tell apart. */
+.ss-group{border-top:1px solid var(--border);padding-top:14px;margin-top:14px}
+.ss-group-first{border-top:none;padding-top:0;margin-top:0}
+.ss-group-hdr{display:flex;align-items:center;gap:7px;margin:-6px -8px 9px;padding:7px 8px;border-radius:var(--radius);cursor:pointer;user-select:none;transition:background .12s}
+.ss-group-hdr:hover{background:var(--bg3)}
+.ss-group-chevron{font-size:9px;color:var(--text3);flex-shrink:0;transition:transform .15s;line-height:1}
+.ss-group.collapsed .ss-group-chevron{transform:rotate(-90deg)}
+.ss-group-title{font-size:13px;font-weight:800;color:var(--text);opacity:.8;letter-spacing:.03em;text-transform:uppercase;flex:1}
+.ss-group-count{font-size:10px;font-weight:700;color:var(--text3);background:var(--bg3);padding:3px 8px;border-radius:20px;flex-shrink:0}
+.ss-group.collapsed .img-grid{display:none}
+/* Screenshots panel — default grid view uses the same multi-column thumbnail layout
+   as everywhere else in the app (base .img-grid/.img-thumb rules below), matching the
+   reference layout. No right-panel-specific size override here; the "focus" view further
+   down is what gives a single image the full width when the trader clicks a thumbnail. */
+/* Draggable divider between the trade-info and screenshots panels */
+.detail-panel-resizer{width:7px;flex-shrink:0;cursor:col-resize;position:relative;background:transparent;touch-action:none}
+.detail-panel-resizer::after{content:'';position:absolute;top:0;bottom:0;left:3px;width:1px;background:var(--border)}
+.detail-panel-resizer::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:3px;height:28px;border-radius:2px;background:var(--border2);transition:background .12s}
+.detail-panel-resizer:hover::before,.detail-panel-resizer.dragging::before{background:var(--accent)}
+.detail-panel-resizer:hover::after,.detail-panel-resizer.dragging::after{background:var(--accent)}
 @media(max-width:900px){
   .detail-modal.has-images .detail-modal-body{height:auto;max-height:80vh;overflow-y:auto}
   .detail-panels{flex-direction:column;height:auto}
-  .detail-panel-right{width:100%;border-left:none;border-top:1px solid var(--border)}
+  .detail-panel-right{width:100%!important;border-left:none;border-top:1px solid var(--border)}
+  .detail-panel-resizer{display:none}
 }
+/* Screenshots panel — single-image "focus" view. Lets the trader click a thumbnail
+   to see it large in the same right-hand panel (trade info on the left stays visible
+   the whole time), instead of leaving the page via the full lightbox. A toolbar gives
+   zoom + back-to-grid + prev/next controls. Purely additive: the existing grid view
+   (.img-grid/.img-thumb) and the full lightbox are untouched and still reachable. */
+.dm-panel-right-inner{display:flex;flex-direction:column;height:100%}
+.dm-focus-view{display:none;flex-direction:column;height:100%;min-height:0}
+.dm-focus-view.open{display:flex}
+.dm-focus-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.dm-focus-back{display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:600;font-family:inherit;padding:6px 10px;border-radius:var(--radius);cursor:pointer;transition:background .12s,color .12s}
+.dm-focus-back:hover{background:var(--bg4);color:var(--text)}
+.dm-focus-zoom-controls{display:flex;align-items:center;gap:4px}
+.dm-focus-zoom-controls button{background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:13px;font-weight:600;font-family:inherit;width:26px;height:26px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s,color .12s}
+.dm-focus-zoom-controls button:hover{background:var(--bg4);color:var(--text)}
+.dm-focus-zoom-pct{font-size:10px;font-weight:700;color:var(--text3);min-width:34px;text-align:center;font-family:'DM Mono',monospace}
+.dm-focus-expand{background:var(--bg3);border:1px solid var(--border);color:var(--text2);width:26px;height:26px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:background .12s,color .12s}
+.dm-focus-expand:hover{background:var(--bg4);color:var(--text)}
+.dm-focus-stage{flex:1;min-height:0;overflow:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3);display:flex}
+.dm-focus-stage:not(.zoomed){align-items:center;justify-content:center}
+.dm-focus-stage.zoomed{cursor:grab;align-items:flex-start;justify-content:flex-start}
+.dm-focus-stage.zoomed.grabbing{cursor:grabbing}
+.dm-focus-stage img{max-width:100%;max-height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none}
+.dm-focus-stage.zoomed img{max-width:none;max-height:none}
+.dm-focus-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px}
+.dm-focus-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.04em;text-transform:uppercase}
+.dm-focus-nav{display:flex;align-items:center;gap:6px}
+.dm-focus-nav button{background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:600;font-family:inherit;padding:5px 9px;border-radius:var(--radius);cursor:pointer;transition:background .12s,color .12s}
+.dm-focus-nav button:hover{background:var(--bg4);color:var(--text)}
+.dm-focus-nav button:disabled{opacity:.35;cursor:default}
+.dm-focus-counter{font-size:10px;font-weight:600;color:var(--text3);font-family:'DM Mono',monospace}
+/* Small affordance so it's clear a thumbnail can be clicked to focus it */
+.detail-panel-right .img-thumb{cursor:zoom-in}
 .detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
 .di-label{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
 .di-val{font-size:12px;font-weight:500}
@@ -1139,6 +1193,41 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <div class="card" style="margin-bottom:22px">
         <div class="card-header"><span class="card-title">Error type impact</span></div>
         <div class="table-wrap" id="dash-error-table"></div>
+      </div>
+
+      <!-- Trade volume over time (monthly / yearly) — collapsible, collapsed by default -->
+      <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdVolume()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/><path d="M8 2v4"/><path d="M16 2v4"/></svg>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">Trade Volume Over Time</span>
+        <svg id="trd-volume-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="trd-volume-body" style="display:none">
+        <div class="stats-grid" id="dash-volume-stats"></div>
+        <div class="card" style="margin-bottom:22px">
+          <div class="card-header">
+            <span class="card-title">Trades per period</span>
+            <div class="cal-view-tabs" id="trd-volume-tabs">
+              <button class="cal-view-tab active" data-view="month" onclick="setTrdVolumeView('month',this)">Monthly</button>
+              <button class="cal-view-tab" data-view="year" onclick="setTrdVolumeView('year',this)">Yearly</button>
+            </div>
+          </div>
+          <div class="card-body"><div class="chart-wrap" style="height:200px"><canvas id="chart-volume"></canvas></div></div>
+        </div>
+      </div>
+
+      <!-- Exit & outcome breakdown (win / loss / breakeven, TP / SL / TSL / partial / manual) — collapsible, collapsed by default -->
+      <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdOutcome()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">Exit &amp; Outcome Breakdown</span>
+        <svg id="trd-outcome-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="trd-outcome-body" style="display:none">
+        <div class="stats-grid" id="dash-outcome-result-stats"></div>
+        <div class="stats-grid" id="dash-outcome-exit-stats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
+          <div class="card"><div class="card-header"><span class="card-title">Result split (Win / Loss / Breakeven)</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-outcome-result"></canvas></div></div></div>
+          <div class="card"><div class="card-header"><span class="card-title">Exit type breakdown</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-outcome-exit"></canvas></div></div></div>
+        </div>
       </div>
 
       <!-- Direction (Long/Short) analysis — collapsible, collapsed by default -->
@@ -4416,8 +4505,8 @@ document.addEventListener('DOMContentLoaded',function(){
 </div>
 
 <!-- Strategy modal -->
-<div class="modal-overlay" id="strategy-modal">
-  <div class="modal-box" style="max-width:480px">
+<div class="modal-overlay" id="strategy-modal" onclick="document.getElementById('strategy-modal').classList.remove('open')">
+  <div class="modal-box" style="max-width:480px" onclick="event.stopPropagation()">
     <div class="modal-header">
       <div>
         <h3 style="margin-bottom:2px">Strategies</h3>
@@ -4442,8 +4531,8 @@ document.addEventListener('DOMContentLoaded',function(){
 
 
 <!-- Asset Manager modal -->
-<div class="modal-overlay" id="asset-modal">
-  <div class="modal-box" style="max-width:780px;display:flex;flex-direction:column;max-height:88vh">
+<div class="modal-overlay" id="asset-modal" onclick="closeAssetModal()">
+  <div class="modal-box" style="max-width:780px;display:flex;flex-direction:column;max-height:88vh" onclick="event.stopPropagation()">
     <!-- Header -->
     <div class="modal-header" style="flex-shrink:0">
       <div style="display:flex;align-items:center;gap:8px">
@@ -8059,22 +8148,47 @@ async function openDetail(id,opts){
   var imgSections='';
   var postJournalImgHtml='';
   _dmImgList=[];
+  _dmImgLabels=[];
+  var _ssGroupN=0; // tracks render order so only the first group skips the divider
   if(trade.imageIds){
     var allImgHtml=[];
-    var _zoneLabel=function(z){var m={'htf-W':'HTF — W','htf-D':'HTF — D','htf-4h':'HTF — 4h','mtf-1h':'MTF — 1h','mtf-30m':'MTF — 30m','ltf-15m':'LTF — 15m','ltf-5m':'LTF — 5m','setup':'Setup','postanalysis':'Post-journal'};return m[z]||z.toUpperCase();};
+    // Each zone group gets a short label — kept plain (no per-category colour) to
+    // avoid visual clutter; the divider + larger label are what separate groups.
+    var _zoneMeta=function(z){
+      var m={
+        'htf-W':'HTF — W','htf-D':'HTF — D','htf-4h':'HTF — 4h',
+        'mtf-1h':'MTF — 1h','mtf-30m':'MTF — 30m',
+        'ltf-15m':'LTF — 15m','ltf-5m':'LTF — 5m','ltf-1m':'LTF — 1m',
+        'setup':'Setup','postanalysis':'Post-journal'
+      };
+      return {label:m[z]||z.toUpperCase()};
+    };
+    var _ssGroupHtml=function(meta,count,gridHtml,zoneKey){
+      var first=_ssGroupN===0;_ssGroupN++;
+      // Always starts expanded for every trade — collapsing is a per-view toggle only
+      // (not remembered across trades), since the modal body is rebuilt fresh each open.
+      return '<div class="ss-group'+(first?' ss-group-first':'')+'">'
+        +'<div class="ss-group-hdr" onclick="dmToggleSSGroup(this.parentElement)">'
+        +'<span class="ss-group-chevron">\u25be</span>'
+        +'<span class="ss-group-title">'+escHtml(meta.label)+'</span>'
+        +'<span class="ss-group-count">'+count+(count===1?' image':' images')+'</span>'
+        +'</div>'
+        +'<div class="img-grid">'+gridHtml+'</div>'
+        +'</div>';
+    };
     var _allDetailZones=['setup'].concat(SS_ZONES.filter(function(z){return z!=='setup'&&z!=='postanalysis';}));
     Object.keys(trade.imageIds).forEach(function(z){if(z!=='postanalysis'&&!_allDetailZones.includes(z))_allDetailZones.push(z);});
     for(var zone of _allDetailZones){
       var zImgs=[];
-      for(var imgId of(trade.imageIds[zone]||[])){var img=await dbGet('images',imgId);if(img){var src=img.cloudUrl||img.dataUrl;_dmImgList.push(src);var _idx=_dmImgList.length-1;zImgs.push('<div class="img-thumb" style="aspect-ratio:16/10"><img src="'+src+'" onclick="openLightboxAt('+_idx+')"></div>');}}
-      if(zImgs.length){allImgHtml.push('<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">'+_zoneLabel(zone)+'</div><div class="img-grid">'+zImgs.join('')+'</div></div>');}
+      for(var imgId of(trade.imageIds[zone]||[])){var img=await dbGet('images',imgId);if(img){var src=img.cloudUrl||img.dataUrl;_dmImgList.push(src);_dmImgLabels.push(_zoneMeta(zone).label);var _idx=_dmImgList.length-1;zImgs.push('<div class="img-thumb" style="aspect-ratio:16/10"><img src="'+src+'" onclick="dmFocusImage('+_idx+')"></div>');}}
+      if(zImgs.length)allImgHtml.push(_ssGroupHtml(_zoneMeta(zone),zImgs.length,zImgs.join(''),zone));
     }
     if(allImgHtml.length)imgSections=allImgHtml.join('');
     // Post-journal screenshots are built separately so they can be grouped with their own
     // label in the screenshots panel, alongside every other zone.
     var pjImgs=[];
-    for(var pjImgId of(trade.imageIds['postanalysis']||[])){var pjImg=await dbGet('images',pjImgId);if(pjImg){var pjSrc=pjImg.cloudUrl||pjImg.dataUrl;_dmImgList.push(pjSrc);var _pjIdx=_dmImgList.length-1;pjImgs.push('<div class="img-thumb" style="aspect-ratio:16/10"><img src="'+pjSrc+'" onclick="openLightboxAt('+_pjIdx+')"></div>');}}
-    if(pjImgs.length)postJournalImgHtml='<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Post-journal</div><div class="img-grid">'+pjImgs.join('')+'</div></div>';
+    for(var pjImgId of(trade.imageIds['postanalysis']||[])){var pjImg=await dbGet('images',pjImgId);if(pjImg){var pjSrc=pjImg.cloudUrl||pjImg.dataUrl;_dmImgList.push(pjSrc);_dmImgLabels.push(_zoneMeta('postanalysis').label);var _pjIdx=_dmImgList.length-1;pjImgs.push('<div class="img-thumb" style="aspect-ratio:16/10"><img src="'+pjSrc+'" onclick="dmFocusImage('+_pjIdx+')"></div>');}}
+    if(pjImgs.length)postJournalImgHtml=_ssGroupHtml(_zoneMeta('postanalysis'),pjImgs.length,pjImgs.join(''),'postanalysis');
   }
   var screenshotsPanelHtml=imgSections+postJournalImgHtml;
   var biasHtml='';
@@ -8175,11 +8289,38 @@ async function openDetail(id,opts){
   var dmModalEl=document.getElementById('detail-modal');
   if(screenshotsPanelHtml){
     dmModalEl.classList.add('has-images');
+    var _savedPanelW=parseInt(localStorage.getItem('tj-detail-panel-w'),10);
+    if(!_savedPanelW||isNaN(_savedPanelW))_savedPanelW=360;
     document.getElementById('dm-body').innerHTML=
       '<div class="detail-panels">'
       +'<div class="detail-panel-left">'+leftHtml+'</div>'
-      +'<div class="detail-panel-right"><div class="detail-section-title">Screenshots</div>'+screenshotsPanelHtml+'</div>'
+      +'<div class="detail-panel-resizer" id="dm-panel-resizer" title="Drag to resize panels"></div>'
+      +'<div class="detail-panel-right" id="dm-panel-right" style="width:'+_savedPanelW+'px">'
+      +'<div class="dm-panel-right-inner">'
+      +'<div id="dm-ss-grid-view"><div class="detail-section-title">Screenshots</div>'+screenshotsPanelHtml+'</div>'
+      +'<div class="dm-focus-view" id="dm-focus-view">'
+      +'<div class="dm-focus-toolbar">'
+      +'<button class="dm-focus-back" onclick="dmFocusBack()">\u2039 All screenshots</button>'
+      +'<div class="dm-focus-zoom-controls">'
+      +'<button onclick="dmFocusZoom(-1)" title="Zoom out">\u2212</button>'
+      +'<span class="dm-focus-zoom-pct" id="dm-focus-zoom-pct">100%</span>'
+      +'<button onclick="dmFocusZoom(1)" title="Zoom in">+</button>'
+      +'</div>'
+      +'<button class="dm-focus-expand" id="dm-focus-expand" title="Open fullscreen">\u2922</button>'
+      +'</div>'
+      +'<div class="dm-focus-stage" id="dm-focus-stage"><img id="dm-focus-img" src="" draggable="false" ondblclick="openLightboxAt(_dmFocusIdx)" title="Double-click for full-screen"></div>'
+      +'<div class="dm-focus-meta">'
+      +'<span class="dm-focus-label" id="dm-focus-label"></span>'
+      +'<div class="dm-focus-nav">'
+      +'<button id="dm-focus-prev" onclick="dmFocusNav(-1)">\u2039 Prev</button>'
+      +'<span class="dm-focus-counter" id="dm-focus-counter"></span>'
+      +'<button id="dm-focus-next" onclick="dmFocusNav(1)">Next \u203a</button>'
+      +'</div></div>'
+      +'</div>'
+      +'</div>'
+      +'</div>'
       +'</div>';
+    _wireDetailPanelResizer();
   }else{
     dmModalEl.classList.remove('has-images');
     document.getElementById('dm-body').innerHTML=leftHtml;
@@ -8202,12 +8343,70 @@ async function openDetail(id,opts){
   });
 }
 function closeDetail(e){if(e&&e.target!==document.getElementById('detail-overlay'))return;document.getElementById('detail-overlay').classList.remove('open');}
+// Collapse/expand a screenshots category group in the detail modal's grid view.
+// Always starts expanded when a trade is opened; toggling only affects the current
+// view (not remembered across trades), so every trade you open shows all its
+// screenshot categories expanded.
+function dmToggleSSGroup(groupEl){
+  if(!groupEl)return;
+  groupEl.classList.toggle('collapsed');
+}
+
+// ── Trade detail modal: draggable divider between the trade-info panel (left)
+// and the screenshots panel (right). Lets the trader widen the image panel to
+// read charts at a larger size while the trade-info panel shrinks to fit, or
+// vice-versa. Width is persisted so the preference carries over to the next
+// trade opened. Uses Pointer Events so it works with mouse, touch and pen.
+// The modal body's innerHTML is rebuilt on every open, so the resizer/panel
+// elements are looked up fresh each time — but the window-level drag
+// listeners are attached exactly once (guarded by _dmResizerWired) to avoid
+// stacking duplicate handlers across repeated opens.
+var _dmResizerWired=false;
+var _dmDragState=null; // {resizer, rightPanel, panelsEl, startX, startW}
+function _wireDetailPanelResizer(){
+  var resizer=document.getElementById('dm-panel-resizer');
+  var rightPanel=document.getElementById('dm-panel-right');
+  var panelsEl=resizer?resizer.parentElement:null;
+  if(!resizer||!rightPanel||!panelsEl)return;
+  var MIN_RIGHT=260,MIN_LEFT=280;
+  resizer.addEventListener('pointerdown',function(e){
+    _dmDragState={resizer:resizer,rightPanel:rightPanel,panelsEl:panelsEl,startX:e.clientX,startW:rightPanel.getBoundingClientRect().width,minRight:MIN_RIGHT,minLeft:MIN_LEFT};
+    resizer.classList.add('dragging');
+    document.body.style.userSelect='none';
+  });
+  resizer.addEventListener('dblclick',function(){
+    rightPanel.style.width='360px';
+    try{localStorage.setItem('tj-detail-panel-w','360');}catch(err){}
+  });
+  if(!_dmResizerWired){
+    _dmResizerWired=true;
+    window.addEventListener('pointermove',function(e){
+      var s=_dmDragState;
+      if(!s)return;
+      var dx=e.clientX-s.startX; // dragging left (negative dx) widens the right panel
+      var newW=s.startW-dx;
+      var maxRight=s.panelsEl.getBoundingClientRect().width-s.minLeft-s.resizer.getBoundingClientRect().width;
+      if(newW<s.minRight)newW=s.minRight;
+      if(newW>maxRight)newW=maxRight;
+      s.rightPanel.style.width=newW+'px';
+    });
+    window.addEventListener('pointerup',function(){
+      var s=_dmDragState;
+      if(!s)return;
+      s.resizer.classList.remove('dragging');
+      document.body.style.userSelect='';
+      try{localStorage.setItem('tj-detail-panel-w',Math.round(s.rightPanel.getBoundingClientRect().width));}catch(err){}
+      _dmDragState=null;
+    });
+  }
+}
 
 // ══ Lightbox ══════════════════════════════════════
 // _dmImgList holds every screenshot shown in the currently-open trade detail modal (in
 // display order), so the lightbox can step through all of them with ←/→ or the on-screen
 // nav buttons, no matter which zone/group an image was opened from.
 var _dmImgList=[];
+var _dmImgLabels=[]; // zone label per image in _dmImgList, shown in the focus-view header
 var _lbImages=[];
 var _lbIndex=0;
 function _lbRender(){
@@ -8223,6 +8422,131 @@ function openLightbox(src){_lbImages=[src];_lbIndex=0;_lbRender();document.getEl
 function openLightboxAt(idx){_lbImages=_dmImgList;_lbIndex=idx;_lbRender();document.getElementById('lightbox').classList.add('open');}
 function lightboxNav(dir){if(_lbImages.length<2)return;_lbIndex=(_lbIndex+dir+_lbImages.length)%_lbImages.length;_lbRender();}
 function closeLightbox(){document.getElementById('lightbox').classList.remove('open');}
+
+// ══ Detail modal — inline screenshot "focus" view ═══════════════════════════
+// Clicking a thumbnail in the trade-detail screenshots panel shows it large right
+// there in the same panel (trade info on the left stays visible / readable the whole
+// time) instead of jumping into the full-page lightbox. From focus view the trader can
+// step through every image on the trade (prev/next), zoom in/out to read fine chart
+// detail, or go back to the thumbnail grid to pick a different one. The full lightbox
+// is still one click away via the expand button, for anyone who wants a truly
+// full-screen view. Entirely additive — the grid view and lightbox code above are
+// untouched.
+var _dmFocusIdx=0;
+var _dmFocusZoom=1; // 1 = fit-to-panel; >1 = zoomed, scrollable/pannable
+var _dmFocusPanWired=false;
+var _dmFocusPanState=null;
+function dmFocusImage(idx){
+  if(!_dmImgList.length)return;
+  _dmFocusIdx=idx;
+  _dmFocusZoom=1;
+  var gridView=document.getElementById('dm-ss-grid-view');
+  var focusView=document.getElementById('dm-focus-view');
+  if(!gridView||!focusView)return;
+  gridView.style.display='none';
+  focusView.classList.add('open');
+  var expandBtn=document.getElementById('dm-focus-expand');
+  if(expandBtn)expandBtn.onclick=function(){openLightboxAt(_dmFocusIdx);};
+  _dmFocusRender();
+  _wireDmFocusPan();
+}
+function dmFocusBack(){
+  var gridView=document.getElementById('dm-ss-grid-view');
+  var focusView=document.getElementById('dm-focus-view');
+  if(focusView)focusView.classList.remove('open');
+  if(gridView)gridView.style.display='';
+}
+function dmFocusNav(dir){
+  if(_dmImgList.length<2)return;
+  _dmFocusIdx=(_dmFocusIdx+dir+_dmImgList.length)%_dmImgList.length;
+  _dmFocusZoom=1;
+  _dmFocusRender();
+}
+function dmFocusZoom(dir){
+  _dmFocusZoomBy(dir*0.5);
+}
+function _dmFocusZoomBy(delta){
+  var next=Math.round((_dmFocusZoom+delta)*100)/100;
+  if(next<1)next=1;
+  if(next>4)next=4;
+  _dmFocusZoom=next;
+  _dmFocusApplyZoom();
+}
+function _dmFocusApplyZoom(){
+  var stage=document.getElementById('dm-focus-stage');
+  var img=document.getElementById('dm-focus-img');
+  var pct=document.getElementById('dm-focus-zoom-pct');
+  if(!stage||!img)return;
+  var zoomed=_dmFocusZoom>1;
+  stage.classList.toggle('zoomed',zoomed);
+  if(zoomed){
+    img.style.width=(_dmFocusZoom*100)+'%';
+    img.style.height='auto';
+  }else{
+    img.style.width='';
+    img.style.height='';
+    stage.scrollLeft=0;
+    stage.scrollTop=0;
+  }
+  if(pct)pct.textContent=Math.round(_dmFocusZoom*100)+'%';
+}
+function _dmFocusRender(){
+  if(!_dmImgList.length)return;
+  var img=document.getElementById('dm-focus-img');
+  var label=document.getElementById('dm-focus-label');
+  var counter=document.getElementById('dm-focus-counter');
+  var prevBtn=document.getElementById('dm-focus-prev');
+  var nextBtn=document.getElementById('dm-focus-next');
+  if(img)img.src=_dmImgList[_dmFocusIdx];
+  if(label)label.textContent=(_dmImgLabels&&_dmImgLabels[_dmFocusIdx])||'';
+  if(counter)counter.textContent=(_dmFocusIdx+1)+' / '+_dmImgList.length;
+  var multi=_dmImgList.length>1;
+  if(prevBtn)prevBtn.disabled=!multi;
+  if(nextBtn)nextBtn.disabled=!multi;
+  var stage=document.getElementById('dm-focus-stage');
+  if(stage){stage.scrollLeft=0;stage.scrollTop=0;}
+  _dmFocusApplyZoom();
+}
+// Click-drag to pan around a zoomed-in image, and mouse-wheel to zoom in/out — both
+// wired once (guarded) since the modal body's innerHTML — and therefore #dm-focus-stage
+// — is rebuilt on every openDetail().
+function _wireDmFocusPan(){
+  if(_dmFocusPanWired)return;
+  _dmFocusPanWired=true;
+  document.addEventListener('pointerdown',function(e){
+    var stage=document.getElementById('dm-focus-stage');
+    if(!stage||!stage.classList.contains('zoomed'))return;
+    if(!stage.contains(e.target))return;
+    _dmFocusPanState={stage:stage,startX:e.clientX,startY:e.clientY,startLeft:stage.scrollLeft,startTop:stage.scrollTop};
+    stage.classList.add('grabbing');
+  });
+  document.addEventListener('pointermove',function(e){
+    var s=_dmFocusPanState;
+    if(!s)return;
+    s.stage.scrollLeft=s.startLeft-(e.clientX-s.startX);
+    s.stage.scrollTop=s.startTop-(e.clientY-s.startY);
+  });
+  document.addEventListener('pointerup',function(){
+    if(_dmFocusPanState){_dmFocusPanState.stage.classList.remove('grabbing');_dmFocusPanState=null;}
+  });
+  document.addEventListener('wheel',function(e){
+    var focusView=document.getElementById('dm-focus-view');
+    var stage=document.getElementById('dm-focus-stage');
+    if(!focusView||!stage||!focusView.classList.contains('open'))return;
+    if(!stage.contains(e.target))return;
+    e.preventDefault();
+    var rect=stage.getBoundingClientRect();
+    var prevZoom=_dmFocusZoom;
+    var pointX=e.clientX-rect.left+stage.scrollLeft;
+    var pointY=e.clientY-rect.top+stage.scrollTop;
+    _dmFocusZoomBy((e.deltaY<0?1:-1)*0.15);
+    if(_dmFocusZoom!==prevZoom&&prevZoom>0){
+      var ratio=_dmFocusZoom/prevZoom;
+      stage.scrollLeft=pointX*ratio-(e.clientX-rect.left);
+      stage.scrollTop=pointY*ratio-(e.clientY-rect.top);
+    }
+  },{passive:false});
+}
 
 // ══ Dashboard ═════════════════════════════════════
 async function _renderDashboardImpl(){
@@ -8537,6 +8861,8 @@ async function _renderTradeAnalyticsImpl(){
   });
   trades=enrichSkippedPL(trades);
   _renderQualityAnalytics(trades);
+  _renderVolumeAnalytics(trades);
+  _renderOutcomeAnalytics(trades);
   _renderDirectionAnalytics(trades);
   _renderTimeAnalytics(trades);
   _renderCategoryAnalytics(trades,'assetType','Uncategorized','dash-assettype-stats','chart-assettype-wr','chart-assettype-pl','dash-assettype-table','assetTypeWR','assetTypePL','Asset type');
@@ -8608,6 +8934,119 @@ function _renderCategoryAnalytics(trades,field,emptyLabel,statsElId,wrChartId,pl
   }).join('');
   var tblEl=document.getElementById(tableElId);
   if(tblEl)tblEl.innerHTML=!trades.length?'<div class="empty-state"><p>No trades yet</p></div>':'<table class="data"><thead><tr><th>'+label+'</th><th>Trades</th><th>Win rate</th><th>Avg RR</th><th>Total P/L</th></tr></thead><tbody>'+tblHtml+'</tbody></table>';
+}
+
+// ── Trade volume over time (monthly / yearly counts) ─────────────────
+var _trdVolumeView='month'; // 'month' | 'year' — remembered across re-renders in this session
+var _trdVolumeTrades=[]; // cached filtered trade set, so the view toggle can re-render without a full re-filter
+function setTrdVolumeView(view,btnEl){
+  _trdVolumeView=view;
+  if(btnEl){
+    var tabs=document.getElementById('trd-volume-tabs');
+    if(tabs)Array.prototype.forEach.call(tabs.querySelectorAll('.cal-view-tab'),function(b){b.classList.toggle('active',b===btnEl);});
+  }
+  _renderVolumeAnalytics(_trdVolumeTrades);
+}
+function _renderVolumeAnalytics(trades){
+  trades=trades||[];
+  _trdVolumeTrades=trades;
+  var c=chartColors();
+  var dated=trades.filter(function(t){return !!t.entryTime;});
+
+  // ── Bucket by month (YYYY-MM) and by year (YYYY) ──
+  var byMonth={},byYear={};
+  dated.forEach(function(t){
+    var d=new Date(t.entryTime);
+    if(isNaN(d.getTime()))return;
+    var mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    var yk=String(d.getFullYear());
+    if(!byMonth[mk])byMonth[mk]=[];
+    byMonth[mk].push(t);
+    if(!byYear[yk])byYear[yk]=[];
+    byYear[yk].push(t);
+  });
+  var monthKeys=Object.keys(byMonth).sort();
+  var yearKeys=Object.keys(byYear).sort();
+  var monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function monthLabel(mk){var p=mk.split('-');return monthNames[parseInt(p[1],10)-1]+' \''+p[0].slice(2);}
+
+  // ── Stat cards ──
+  var totalMonths=monthKeys.length;
+  var avgPerMonth=totalMonths?(dated.length/totalMonths):0;
+  var busiestMonthKey=null;monthKeys.forEach(function(k){if(!busiestMonthKey||byMonth[k].length>byMonth[busiestMonthKey].length)busiestMonthKey=k;});
+  var busiestYearKey=null;yearKeys.forEach(function(k){if(!busiestYearKey||byYear[k].length>byYear[busiestYearKey].length)busiestYearKey=k;});
+  var statsEl=document.getElementById('dash-volume-stats');
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="stat-card"><div class="stat-label">Total trades logged</div><div class="stat-value">'+dated.length+'</div><div class="stat-sub">'+(trades.length-dated.length>0?(trades.length-dated.length)+' missing a date':'in current filter')+'</div></div>'+
+      '<div class="stat-card"><div class="stat-label">Months with activity</div><div class="stat-value">'+totalMonths+'</div><div class="stat-sub">'+(yearKeys.length)+' year'+(yearKeys.length===1?'':'s')+' covered</div></div>'+
+      '<div class="stat-card"><div class="stat-label">Avg trades / month</div><div class="stat-value">'+(totalMonths?avgPerMonth.toFixed(1):'—')+'</div><div class="stat-sub">across active months</div></div>'+
+      '<div class="stat-card purple"><div class="stat-label">Busiest month</div><div class="stat-value" style="font-size:15px">'+(busiestMonthKey?monthLabel(busiestMonthKey):'—')+'</div><div class="stat-sub">'+(busiestMonthKey?byMonth[busiestMonthKey].length+' trades':'no trades')+'</div></div>'+
+      '<div class="stat-card purple"><div class="stat-label">Busiest year</div><div class="stat-value" style="font-size:15px">'+(busiestYearKey||'—')+'</div><div class="stat-sub">'+(busiestYearKey?byYear[busiestYearKey].length+' trades':'no trades')+'</div></div>';
+  }
+
+  // ── Chart: trades per period (monthly or yearly, based on toggle) ──
+  var isMonth=_trdVolumeView==='month';
+  var keys=isMonth?monthKeys:yearKeys;
+  var buckets=isMonth?byMonth:byYear;
+  var labels=isMonth?keys.map(monthLabel):keys;
+  var counts=keys.map(function(k){return buckets[k].length;});
+  if(charts.volume)charts.volume.destroy();
+  var _cvV=document.getElementById('chart-volume');
+  if(_cvV)charts.volume=new Chart(_cvV.getContext('2d'),{type:'bar',data:{labels:labels,datasets:[{label:'Trades',data:counts,backgroundColor:c.accent,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y+' trade'+(ctx.parsed.y===1?'':'s');}}}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},stepSize:1,precision:0},grid:{color:c.grid}}}}});
+}
+
+// ── Exit & outcome breakdown (win / loss / breakeven, TP / SL / TSL / partial / manual) ──
+function _renderOutcomeAnalytics(trades){
+  trades=trades||[];
+  var c=chartColors();
+  var closed=trades.filter(function(t){return t.winLoss!=null;});
+
+  // ── Result split: win / loss / breakeven (winLoss: 1=win, 0=loss, 0.5=breakeven) ──
+  var wins=closed.filter(function(t){return t.winLoss===1;});
+  var losses=closed.filter(function(t){return t.winLoss===0;});
+  var breakevens=closed.filter(function(t){return t.winLoss===0.5;});
+  var resStatsEl=document.getElementById('dash-outcome-result-stats');
+  if(resStatsEl){
+    resStatsEl.innerHTML=
+      '<div class="stat-card green"><div class="stat-label">Win trades</div><div class="stat-value">'+wins.length+'</div><div class="stat-sub">'+(closed.length?(wins.length/closed.length*100).toFixed(0)+'% of closed':'—')+'</div></div>'+
+      '<div class="stat-card red"><div class="stat-label">Loss trades</div><div class="stat-value">'+losses.length+'</div><div class="stat-sub">'+(closed.length?(losses.length/closed.length*100).toFixed(0)+'% of closed':'—')+'</div></div>'+
+      '<div class="stat-card amber"><div class="stat-label">Breakeven trades</div><div class="stat-value">'+breakevens.length+'</div><div class="stat-sub">'+(closed.length?(breakevens.length/closed.length*100).toFixed(0)+'% of closed':'—')+'</div></div>';
+  }
+
+  // ── Exit type split: TP / SL / TSL / Partial / Manual / not logged (trade.tpExitA) ──
+  var exitTypes=['TP','SL','TSL','Partial','Manual'];
+  var exitBuckets={};
+  exitTypes.forEach(function(k){exitBuckets[k]=[];});
+  var noExit=[];
+  trades.forEach(function(t){
+    var e=t.tpExitA;
+    if(e&&exitBuckets[e])exitBuckets[e].push(t);
+    else noExit.push(t);
+  });
+  var exitColors={TP:c.green,SL:c.red,TSL:c.amber,Partial:c.accent,Manual:c.purple};
+  var exitStatsEl=document.getElementById('dash-outcome-exit-stats');
+  if(exitStatsEl){
+    exitStatsEl.innerHTML=exitTypes.map(function(k){
+      var arr=exitBuckets[k];
+      var cls=k==='TP'?'green':(k==='SL'?'red':(k==='TSL'?'amber':(k==='Partial'?'':'purple')));
+      return '<div class="stat-card '+cls+'"><div class="stat-label">'+k+' exits</div><div class="stat-value">'+arr.length+'</div><div class="stat-sub">'+(trades.length?(arr.length/trades.length*100).toFixed(0)+'% of trades':'—')+'</div></div>';
+    }).join('')+
+    '<div class="stat-card"><div class="stat-label">Not logged</div><div class="stat-value">'+noExit.length+'</div><div class="stat-sub">no exit criteria tagged</div></div>';
+  }
+
+  // ── Result split chart (doughnut) ──
+  if(charts.outcomeResult)charts.outcomeResult.destroy();
+  var _cvOR=document.getElementById('chart-outcome-result');
+  if(_cvOR)charts.outcomeResult=new Chart(_cvOR.getContext('2d'),{type:'doughnut',data:{labels:['Win','Loss','Breakeven'],datasets:[{data:[wins.length,losses.length,breakevens.length],backgroundColor:[c.green,c.red,c.amber],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:c.legend,font:{size:10},padding:8,boxWidth:9}}}}});
+
+  // ── Exit type chart (doughnut) ──
+  var exitLabels=exitTypes.concat(['Not logged']);
+  var exitData=exitTypes.map(function(k){return exitBuckets[k].length;}).concat([noExit.length]);
+  var exitColorArr=exitTypes.map(function(k){return exitColors[k];}).concat([c.tick]);
+  if(charts.outcomeExit)charts.outcomeExit.destroy();
+  var _cvOE=document.getElementById('chart-outcome-exit');
+  if(_cvOE)charts.outcomeExit=new Chart(_cvOE.getContext('2d'),{type:'doughnut',data:{labels:exitLabels,datasets:[{data:exitData,backgroundColor:exitColorArr,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:c.legend,font:{size:10},padding:8,boxWidth:9}}}}});
 }
 
 // ── Long vs Short breakdown ──────────────────────────
@@ -8813,6 +9252,21 @@ function toggleCollapsible(bodyId,chevronId){
 }
 // Charts drawn while their container is display:none get sized 0×0 by Chart.js —
 // resize() them right after the section opens so they render properly the first time.
+function toggleTrdVolume(){
+  var wasOpen=(document.getElementById('trd-volume-body')||{}).style.display==='block';
+  toggleCollapsible('trd-volume-body','trd-volume-chevron');
+  if(!wasOpen){
+    if(charts.volume)charts.volume.resize();
+  }
+}
+function toggleTrdOutcome(){
+  var wasOpen=(document.getElementById('trd-outcome-body')||{}).style.display==='block';
+  toggleCollapsible('trd-outcome-body','trd-outcome-chevron');
+  if(!wasOpen){
+    if(charts.outcomeResult)charts.outcomeResult.resize();
+    if(charts.outcomeExit)charts.outcomeExit.resize();
+  }
+}
 function toggleTrdDirection(){
   var wasOpen=(document.getElementById('trd-direction-body')||{}).style.display==='block';
   toggleCollapsible('trd-direction-body','trd-direction-chevron');
@@ -9131,8 +9585,20 @@ if(!window._tjKeydownListenerRegistered){
     lightboxNav(e.key==='ArrowRight'?1:-1);
     return;
   }
+  // Screenshots focus view (inside the trade detail modal) — step through images with
+  // ← / →, takes priority over the trade prev/next nav below while it's open.
+  var _dmFocusEl=document.getElementById('dm-focus-view');
+  var _dmFocusOpen=_dmFocusEl&&_dmFocusEl.classList.contains('open');
+  if((e.key==='ArrowRight'||e.key==='ArrowLeft')&&_dmFocusOpen){
+    var _fTag=(document.activeElement&&document.activeElement.tagName)||'';
+    if(_fTag!=='INPUT'&&_fTag!=='TEXTAREA'&&_fTag!=='SELECT'){
+      e.preventDefault();
+      dmFocusNav(e.key==='ArrowRight'?1:-1);
+      return;
+    }
+  }
   // Trade detail modal — prev/next trade with ← / → (skip while typing in a field)
-  if((e.key==='ArrowRight'||e.key==='ArrowLeft')&&document.getElementById('detail-overlay').classList.contains('open')){
+  if((e.key==='ArrowRight'||e.key==='ArrowLeft')&&document.getElementById('detail-overlay').classList.contains('open')&&!_dmFocusOpen){
     var _tag=(document.activeElement&&document.activeElement.tagName)||'';
     var _editable=document.activeElement&&document.activeElement.isContentEditable;
     if(_tag!=='INPUT'&&_tag!=='TEXTAREA'&&_tag!=='SELECT'&&!_editable){
@@ -9142,9 +9608,11 @@ if(!window._tjKeydownListenerRegistered){
     }
   }
   if(e.key!=='Escape')return;
-  // Close in priority order: lightbox → detail → modals
+  // Close in priority order: lightbox → screenshots focus view → other modals.
+  // The trade detail modal itself is intentionally NOT closed by Escape — only via
+  // its close button / clicking outside — so Escape can't accidentally lose your place.
   if(document.getElementById('lightbox').classList.contains('open')){closeLightbox();return;}
-  if(document.getElementById('detail-overlay').classList.contains('open')){document.getElementById('detail-overlay').classList.remove('open');return;}
+  if(_dmFocusOpen){dmFocusBack();return;}
   if(document.getElementById('retro-view-overlay').classList.contains('open')){closeRetroView();return;}
   var modalIds=['theme-modal','col-manager-modal','session-modal','strategy-modal','asset-modal'];
   for(var i=0;i<modalIds.length;i++){
