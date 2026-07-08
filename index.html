@@ -453,6 +453,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
   .detail-panels{flex-direction:column;height:auto}
   .detail-panel-right{width:100%!important;border-left:none;border-top:1px solid var(--border)}
   .detail-panel-resizer{display:none}
+  /* Below this width the panels stack and .detail-panel-right no longer has a fixed
+     height to hand down via flex:1, so the focus-view stage gets an explicit height
+     here instead — otherwise the enlarged image would have nowhere defined to size into. */
+  .dm-focus-view{height:auto}
+  .dm-focus-stage{height:52vh;flex:none}
 }
 /* Screenshots panel — single-image "focus" view. Lets the trader click a thumbnail
    to see it large in the same right-hand panel (trade info on the left stays visible
@@ -471,7 +476,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .dm-focus-zoom-pct{font-size:10px;font-weight:700;color:var(--text3);min-width:34px;text-align:center;font-family:'DM Mono',monospace}
 .dm-focus-expand{background:var(--bg3);border:1px solid var(--border);color:var(--text2);width:26px;height:26px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:background .12s,color .12s}
 .dm-focus-expand:hover{background:var(--bg4);color:var(--text)}
-.dm-focus-stage{flex:1;min-height:0;overflow:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3);display:flex}
+.dm-focus-stage{flex:1;min-height:280px;overflow:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3);display:flex}
 .dm-focus-stage:not(.zoomed){align-items:center;justify-content:center}
 .dm-focus-stage.zoomed{cursor:grab;align-items:flex-start;justify-content:flex-start}
 .dm-focus-stage.zoomed.grabbing{cursor:grabbing}
