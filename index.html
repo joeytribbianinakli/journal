@@ -555,6 +555,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .star-toggle-btn:hover{color:var(--amber);transform:scale(1.1)}
 .star-toggle-btn.starred{color:var(--amber)}
 .star-toggle-btn svg{width:15px;height:15px}
+.pin-toggle-btn{background:none;border:none;cursor:pointer;padding:4px;display:inline-flex;align-items:center;justify-content:center;color:var(--text3);transition:color .12s,transform .12s;font-family:inherit}
+.pin-toggle-btn:hover{color:var(--accent);transform:scale(1.1)}
+.pin-toggle-btn.pinned{color:var(--accent)}
+.pin-toggle-btn svg{width:15px;height:15px}
 .edit-banner{background:rgba(77,127,255,.06);border:1px solid rgba(77,127,255,.2);border-radius:var(--radius);padding:8px 12px;margin-bottom:14px;font-size:12px;color:var(--accent);display:none;align-items:center;justify-content:space-between}
 .edit-banner.visible{display:flex}
 .section-label{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
@@ -895,6 +899,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
     <button class="nav-item active" onclick="nav('dashboard',this)">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard
     </button>
+    <button class="nav-item" onclick="nav('trade-analytics',this)">
+      <svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>Trade Analytics
+    </button>
     <button class="nav-item" onclick="nav('calendar',this)">
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendar
     </button>
@@ -1046,6 +1053,156 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <div class="card">
         <div class="card-header"><span class="card-title">Recent trades</span><button class="btn btn-ghost btn-sm" onclick="nav('history',null)">View all</button></div>
         <div class="table-wrap" id="dash-recent"></div>
+      </div>
+
+      <!-- Trade Quality Analytics teaser → moved to its own page for dedicated filters -->
+      <div class="card" style="margin-top:26px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:14px" onclick="nav('trade-analytics',document.querySelector('.nav-item[onclick*=\'trade-analytics\']'))">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:36px;height:36px;border-radius:10px;background:var(--accent-bg,rgba(77,127,255,.1));display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+          </div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--text)">Trade Quality Analytics</div>
+            <div style="font-size:11.5px;color:var(--text3);margin-top:2px">Ratings, error types, long/short performance &amp; entry-time patterns — with its own filters</div>
+          </div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+
+    <!-- TRADE ANALYTICS (rating, error type, direction & timing — own page + own filters) -->
+    <div class="page" id="page-trade-analytics">
+      <div class="dash-filter-bar" id="trd-filter-bar">
+        <div class="dash-filter-header" onclick="toggleTrdFilters()">
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            <span style="font-size:13px;font-weight:600">Filters</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button id="trd-demo-toggle" onclick="event.stopPropagation();toggleTrdDemoMode()" title="Toggle demo data view" style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(232,160,48,.35);background:rgba(232,160,48,.08);color:var(--amber);font-family:inherit;letter-spacing:.04em;transition:all .12s">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span id="trd-demo-label">Demo OFF</span>
+            </button>
+            <svg id="trd-filter-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+        <div class="dash-filter-body" id="trd-filter-body" style="display:none">
+          <div class="dash-filter-row">
+            <div class="dash-filter-group">
+              <div class="dash-filter-label">Session</div>
+              <select id="trd-session-filter" onchange="renderTradeAnalytics()"><option value="">All sessions</option></select>
+            </div>
+            <div class="dash-filter-group">
+              <div class="dash-filter-label">Asset / Pair</div>
+              <select id="trd-pair-filter" onchange="renderTradeAnalytics()"><option value="">All pairs</option></select>
+            </div>
+            <div class="dash-filter-group">
+              <div class="dash-filter-label">Direction</div>
+              <select id="trd-direction-filter" onchange="renderTradeAnalytics()">
+                <option value="">All</option>
+                <option value="Long">Long only</option>
+                <option value="Short">Short only</option>
+              </select>
+            </div>
+            <div class="dash-filter-group">
+              <div class="dash-filter-label">Trade type</div>
+              <select id="trd-skipped-filter" onchange="renderTradeAnalytics()">
+                <option value="taken">Taken trades</option>
+                <option value="skipped">Skipped trades</option>
+              </select>
+            </div>
+            <div class="dash-filter-group">
+              <div class="dash-filter-label">Error type</div>
+              <select id="trd-error-filter" onchange="renderTradeAnalytics()">
+                <option value="">All trades</option>
+                <option value="__clean__">Clean (no error)</option>
+                <option>Invalid - Manual</option>
+                <option>Checklist</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:8px;text-align:right">
+            <button class="btn btn-ghost btn-sm" onclick="resetTrdFilters()">Reset filters</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-grid" id="dash-quality-stats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
+        <div class="card"><div class="card-header"><span class="card-title">Rating distribution</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-rating-dist"></canvas></div></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Error type breakdown</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-error-dist"></canvas></div></div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
+        <div class="card"><div class="card-header"><span class="card-title">Win rate by rating</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-rating-perf"></canvas></div></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Avg P/L by error type</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-error-pl"></canvas></div></div></div>
+      </div>
+      <div class="card" style="margin-bottom:22px">
+        <div class="card-header"><span class="card-title">Error type impact</span></div>
+        <div class="table-wrap" id="dash-error-table"></div>
+      </div>
+
+      <!-- Direction (Long/Short) analysis — collapsible, collapsed by default -->
+      <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdDirection()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">Long vs Short Performance</span>
+        <svg id="trd-direction-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="trd-direction-body" style="display:none">
+        <div class="stats-grid" id="dash-direction-stats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
+          <div class="card"><div class="card-header"><span class="card-title">Win rate: Long vs Short</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-direction-wr"></canvas></div></div></div>
+          <div class="card"><div class="card-header"><span class="card-title">Avg P/L: Long vs Short</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-direction-pl"></canvas></div></div></div>
+        </div>
+      </div>
+
+      <!-- Entry-time analysis — collapsible, collapsed by default -->
+      <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdTime()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">Performance by Entry Time</span>
+        <svg id="trd-time-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="trd-time-body" style="display:none">
+        <div class="stats-grid" id="dash-time-stats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
+          <div class="card"><div class="card-header"><span class="card-title">Win rate by entry time (4h blocks, local time)</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-time-wr"></canvas></div></div></div>
+          <div class="card"><div class="card-header"><span class="card-title">Avg P/L by entry time</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-time-pl"></canvas></div></div></div>
+        </div>
+      </div>
+
+      <!-- Asset type analysis — collapsible, collapsed by default -->
+      <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdAssetType()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">Performance by Asset Type</span>
+        <svg id="trd-assettype-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="trd-assettype-body" style="display:none">
+        <div class="stats-grid" id="dash-assettype-stats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="card"><div class="card-header"><span class="card-title">Win rate by asset type</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-assettype-wr"></canvas></div></div></div>
+          <div class="card"><div class="card-header"><span class="card-title">Avg P/L by asset type</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-assettype-pl"></canvas></div></div></div>
+        </div>
+        <div class="card" style="margin-bottom:22px">
+          <div class="card-header"><span class="card-title">Asset type breakdown</span></div>
+          <div class="table-wrap" id="dash-assettype-table"></div>
+        </div>
+      </div>
+
+      <!-- LTF entry analysis — collapsible, collapsed by default -->
+      <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdLtf()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">Performance by LTF Entry</span>
+        <svg id="trd-ltf-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="trd-ltf-body" style="display:none">
+        <div class="stats-grid" id="dash-ltf-stats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="card"><div class="card-header"><span class="card-title">Win rate by LTF entry</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-ltf-wr"></canvas></div></div></div>
+          <div class="card"><div class="card-header"><span class="card-title">Avg P/L by LTF entry</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-ltf-pl"></canvas></div></div></div>
+        </div>
+        <div class="card" style="margin-bottom:22px">
+          <div class="card-header"><span class="card-title">LTF entry breakdown</span></div>
+          <div class="table-wrap" id="dash-ltf-table"></div>
+        </div>
       </div>
     </div>
 
@@ -1555,7 +1712,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="frow" style="min-width:130px">
               <label class="flabel">Error type</label>
-              <select id="f-error"><option value="">— none —</option><option>Valid - Natural</option><option>Invalid - Manual</option><option>Checklist</option></select>
+              <select id="f-error"><option value="">— none —</option><option>Invalid - Manual</option><option>Checklist</option></select>
             </div>
           </div>
           <!-- TRADE PLAN (moved from Analysis tab) -->
@@ -2088,6 +2245,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </button>
             <button id="hist-starred-toggle" onclick="event.stopPropagation();toggleHistStarredOnly()" title="Show only starred trades" style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(232,160,48,.35);background:rgba(232,160,48,.08);color:var(--amber);font-family:inherit;letter-spacing:.04em;transition:all .12s">
               ★ <span id="hist-starred-label">Starred OFF</span>
+            </button>
+            <button id="hist-pinned-jump" onclick="event.stopPropagation();jumpToPinnedTrade()" title="Jump back to your pinned trade" style="display:none;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(77,127,255,.35);background:rgba(77,127,255,.08);color:var(--accent);font-family:inherit;letter-spacing:.04em;transition:all .12s">
+              📌 <span id="hist-pinned-label">Pinned</span>
             </button>
             
           </div>
@@ -3818,6 +3978,25 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <div id="fxs-url-display" style="margin-top:10px;font-family:DM Mono,monospace;font-size:10px;color:var(--text3);word-break:break-all;line-height:1.5;padding:6px 8px;background:var(--bg3);border-radius:var(--radius)"></div>
           </div>
 
+          <!-- FXStreet card -->
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <div style="width:30px;height:30px;background:#0f9d58;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <div>
+                <div style="font-weight:700;font-size:13px;color:var(--text)">FXStreet Calendar</div>
+                <div style="font-size:10px;color:var(--text3)">Alternate source — filter by country & impact on-site</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <a href="https://www.fxstreet.com/economic-calendar" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="flex:1;min-width:60px;justify-content:center" onclick="fxsMarkChecked()">
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                Open calendar
+              </a>
+            </div>
+          </div>
+
           <!-- Confirmation toggle (flow only) -->
           <div id="fxs-confirm-wrapper" style="display:none">
           <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);transition:border-color .15s" id="fxs-confirm-row">
@@ -3983,6 +4162,9 @@ document.addEventListener('DOMContentLoaded',function(){
     <div class="detail-modal-header">
       <div><div class="topbar-title" id="dm-title">Trade</div><div id="dm-badges" style="display:flex;gap:5px;margin-top:5px"></div></div>
       <div style="display:flex;gap:7px;align-items:center">
+        <button class="btn btn-ghost btn-sm btn-icon" id="dm-prev-btn" title="Previous trade" onclick="dmNav(-1)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <button class="btn btn-ghost btn-sm btn-icon" id="dm-next-btn" title="Next trade" onclick="dmNav(1)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+        <button class="pin-toggle-btn" id="dm-pin-btn" title="Pin trade" style="border:1px solid var(--border);border-radius:6px;padding:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.76V6h1a2 2 0 000-4H8a2 2 0 000 4h1v4.76a2 2 0 01-1.11 1.79l-1.78.9A2 2 0 005 15.24V17z"/></svg></button>
         <button class="star-toggle-btn" id="dm-star-btn" title="Star trade" style="border:1px solid var(--border);border-radius:6px;padding:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
         <button class="btn btn-ghost btn-sm" id="dm-edit-btn">Edit</button>
         <button class="btn btn-ghost btn-sm btn-icon" onclick="document.getElementById('detail-overlay').classList.remove('open')">
@@ -5898,6 +6080,17 @@ async function populateSessionSelects(restoreSessionId){
     else{calF2.value='';}
   }
 
+  // Trade Analytics session filter — same demo-aware list + default-active-session logic as dashboard
+  var trdF=document.getElementById('trd-session-filter');
+  if(trdF){
+    var tv=trdF.value;
+    _defaultTrdSessionId=dashDefaultSession?dashDefaultSession.id:'';
+    trdF.innerHTML='<option value="">All sessions</option>'+dashFilterSessions.map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');
+    if(tv&&dashFilterSessions.find(function(s){return s.id===tv;})){trdF.value=tv;}
+    else if(dashDefaultSession){trdF.value=dashDefaultSession.id;}
+    else{trdF.value='';}
+  }
+
   var hF=document.getElementById('flt-session');
   if(hF){
     var hv=hF.value;
@@ -5933,7 +6126,7 @@ async function populateSessionSelects(restoreSessionId){
 }
 
 // ══ Navigation ════════════════════════════════════
-var pageMap={'pre-checklist':{title:'Pre-trade checklist',sub:'Calendar → Checklist → Calculator → Log trade'},dashboard:{title:'Dashboard',sub:'Overview of your trading performance'},log:{title:'Log trade',sub:'Record a new trade entry'},history:{title:'Trade history',sub:'Browse and filter all your trades'},sessions:{title:'Sessions',sub:'Manage your trading session periods'},'checklist-editor':{title:'Checklist editor',sub:'Edit checklist items globally'},backup:{title:'Backup & restore',sub:'Export, import or clear your journal data'},montecarlo:{title:'Monte Carlo',sub:'Simulate future equity paths from historical trade data'},calculator:{title:'Position Size Calculator',sub:'Forex · Crypto · Gold · Stocks · Indices'},calendar:{title:'Calendar view',sub:'Visual trade activity by day, week and year'},'ai-analyzer':{title:'AI Trade Analyzer',sub:'Intelligent session review powered by AI'},'price-alerts':{title:'Price Alerts',sub:'Get notified on your phone when a price target is hit'},fxstreet:{title:'Economic calendar',sub:'ForexFactory calendar — check before trading'}};;
+var pageMap={'pre-checklist':{title:'Pre-trade checklist',sub:'Calendar → Checklist → Calculator → Log trade'},dashboard:{title:'Dashboard',sub:'Overview of your trading performance'},log:{title:'Log trade',sub:'Record a new trade entry'},history:{title:'Trade history',sub:'Browse and filter all your trades'},sessions:{title:'Sessions',sub:'Manage your trading session periods'},'checklist-editor':{title:'Checklist editor',sub:'Edit checklist items globally'},backup:{title:'Backup & restore',sub:'Export, import or clear your journal data'},montecarlo:{title:'Monte Carlo',sub:'Simulate future equity paths from historical trade data'},calculator:{title:'Position Size Calculator',sub:'Forex · Crypto · Gold · Stocks · Indices'},calendar:{title:'Calendar view',sub:'Visual trade activity by day, week and year'},'ai-analyzer':{title:'AI Trade Analyzer',sub:'Intelligent session review powered by AI'},'price-alerts':{title:'Price Alerts',sub:'Get notified on your phone when a price target is hit'},fxstreet:{title:'Economic calendar',sub:'ForexFactory calendar — check before trading'},'trade-analytics':{title:'Trade Analytics',sub:'Ratings, error types, direction & entry-time performance'}};;
 var _currentPage='dashboard';
 function nav(id,btn){
   // Reset log form when navigating away — but preserve it if going back to calc within the flow
@@ -5990,6 +6183,7 @@ function nav(id,btn){
   if(id==='calendar'){calPopulateSessionFilter().then(function(){calJumpToMostRecent().then(function(){renderCalendar();});});}
   if(id==='ai-analyzer'){aiAnalyzerInit();}
   if(id==='fxstreet'){fxsOnPageEnter();}
+  if(id==='trade-analytics'){populateSessionSelects().then(function(){populateTrdFilters().then(function(){renderTradeAnalytics();});});}
 }
 function startNewTrade(){
   var logBtn=document.querySelector('.nav-item[onclick*="nav(\'log\'"]');
@@ -7624,6 +7818,7 @@ function chartColors(){
   };
 }
 function renderDashboard()     { guardedRender('renderDashboard',     _renderDashboardImpl); }
+function renderTradeAnalytics(){ guardedRender('renderTradeAnalytics', _renderTradeAnalyticsImpl); }
 function updateSidebarStats()  { guardedRender('updateSidebarStats',  _updateSidebarStatsImpl); }
 
 async function _renderHistoryImpl(){
@@ -7702,6 +7897,7 @@ async function _renderHistoryImpl(){
   var rows=filtered.map(function(t){
     var cells=visibleCols.map(function(col){try{return col.render(t);}catch(e){return'<td>—</td>';}}).join('');
     var isStarred=!!t.starred;
+    var isPinned=!!t.pinned;
     var starCell='<td style="white-space:nowrap;padding-right:0">'
       +'<button class="star-toggle-btn'+(isStarred?' starred':'')+'" title="'+(isStarred?'Unstar trade':'Star trade')+'" onclick="event.stopPropagation();toggleStarTrade(\''+t.id+'\')"><svg viewBox="0 0 24 24" fill="'+(isStarred?'currentColor':'none')+'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>'
       +'</td>';
@@ -7711,10 +7907,13 @@ async function _renderHistoryImpl(){
       +' <button class="btn btn-danger btn-sm btn-icon" title="Delete" onclick="event.stopPropagation();deleteTrade(\''+t.id+'\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>'
       +'</td>';
     var isPending=!t.exitPrice;
-    var rowStyle=isPending?' style="background:rgba(232,160,48,.12)"':'';
-    return'<tr'+rowStyle+' onclick="openDetail(\''+t.id+'\')">'+starCell+cells+actions+'</tr>';
+    var rowStyle=isPending?' style="background:rgba(232,160,48,.12)'+(isPinned?';box-shadow:inset 4px 0 0 var(--accent)"':'"'):(isPinned?' style="box-shadow:inset 4px 0 0 var(--accent)"':'');
+    return'<tr'+rowStyle+(isPinned?' title="📌 Pinned trade"':'')+' onclick="openDetail(\''+t.id+'\')">'+starCell+cells+actions+'</tr>';
   }).join('');
   wrap.innerHTML='<table class="data"><thead><tr>'+headers+'</tr></thead><tbody>'+rows+'</tbody></table>';
+  // Ordered id list — used by the detail modal's prev/next navigation buttons
+  window._histTradeOrder=filtered.map(function(t){return t.id;});
+  updateHistPinnedIndicator();
 
   // Async: fill fees & net P/L cells using current asset fee settings
   // Use a render-generation token so a stale async fill doesn't overwrite a newer render
@@ -7779,7 +7978,31 @@ async function populateFilters(){
 function resetFilters(){var ids=['flt-pair','flt-type','flt-strategy','flt-result','flt-session','flt-asset-type'];ids.forEach(function(id){var el=document.getElementById(id);if(el)el.selectedIndex=0});var fsk=document.getElementById('flt-skipped');if(fsk)fsk.value='taken';document.getElementById('flt-search').value='';_dashDemoMode=false;_histDemoMode=false;_syncDemoButtons(false);_histStarredOnly=false;var sbtn=document.getElementById('hist-starred-toggle'),slbl=document.getElementById('hist-starred-label');if(sbtn){sbtn.style.background='rgba(232,160,48,.08)';sbtn.style.borderColor='rgba(232,160,48,.35)';}if(slbl)slbl.textContent='Starred OFF';updateHistChips();populateSessionSelects().then(function(){renderHistory();});}
 
 // ══ Detail modal ══════════════════════════════════
-async function openDetail(id){
+// ══ Detail modal — prev/next navigation ═══════════
+var _dmNavIds=[];
+var _dmNavIndex=-1;
+function dmNav(dir){
+  var newIdx=_dmNavIndex+dir;
+  if(newIdx<0||newIdx>=_dmNavIds.length)return;
+  _dmNavIndex=newIdx;
+  openDetail(_dmNavIds[newIdx],{keepNav:true});
+}
+function _dmUpdateNavButtons(){
+  var prevBtn=document.getElementById('dm-prev-btn');
+  var nextBtn=document.getElementById('dm-next-btn');
+  if(!prevBtn||!nextBtn)return;
+  var hasList=_dmNavIds.length>1;
+  prevBtn.style.display=hasList?'inline-flex':'none';
+  nextBtn.style.display=hasList?'inline-flex':'none';
+  prevBtn.disabled=_dmNavIndex<=0;
+  nextBtn.disabled=_dmNavIndex>=_dmNavIds.length-1;
+  prevBtn.style.opacity=prevBtn.disabled?'.35':'1';
+  nextBtn.style.opacity=nextBtn.disabled?'.35':'1';
+  prevBtn.style.cursor=prevBtn.disabled?'default':'pointer';
+  nextBtn.style.cursor=nextBtn.disabled?'default':'pointer';
+}
+async function openDetail(id,opts){
+  opts=opts||{};
   var trade=await dbGet('trades',id);if(!trade)return;
   var _clTemplateForDetail=await getChecklist();
   document.getElementById('dm-title').textContent='#'+trade.num+' — '+trade.pair;
@@ -7792,6 +8015,15 @@ async function openDetail(id){
     (trade.strategy?'<span class="badge badge-gray">'+escHtml(trade.strategy)+'</span>':'')+
     '<span class="stars">'+trade.rating+'</span>';
   document.getElementById('dm-edit-btn').onclick=function(){editTrade(id)};
+  // Prev/next navigation — reuse the ordered id list from the last history render,
+  // unless this call came from dmNav itself (which already set the list/index).
+  if(!opts.keepNav){
+    var order=window._histTradeOrder||[];
+    var idx=order.indexOf(id);
+    if(idx!==-1){_dmNavIds=order;_dmNavIndex=idx;}
+    else{_dmNavIds=[id];_dmNavIndex=0;}
+  }
+  _dmUpdateNavButtons();
   var dmStarBtn=document.getElementById('dm-star-btn');
   var _dmSyncStarBtn=function(starred){
     dmStarBtn.classList.toggle('starred',!!starred);
@@ -7805,6 +8037,18 @@ async function openDetail(id){
     _dmSyncStarBtn(trade.starred);
     renderHistory();
     ghAutoSync();
+  };
+  var dmPinBtn=document.getElementById('dm-pin-btn');
+  var _dmSyncPinBtn=function(pinned){
+    dmPinBtn.classList.toggle('pinned',!!pinned);
+    dmPinBtn.querySelector('svg').setAttribute('fill',pinned?'currentColor':'none');
+    dmPinBtn.title=pinned?'Unpin trade':'Pin trade (only one at a time)';
+  };
+  _dmSyncPinBtn(trade.pinned);
+  dmPinBtn.onclick=async function(){
+    var nowPinned=await togglePinTrade(id);
+    trade.pinned=nowPinned;
+    _dmSyncPinBtn(nowPinned);
   };
   var plStr=(trade.plDollar>=0?'+':'')+trade.plDollar.toFixed(2);
   var plColor=win?'var(--green)':'var(--red)';
@@ -8148,6 +8392,297 @@ async function _renderDashboardImpl(){
   document.getElementById('dash-recent').innerHTML=!recent.length?'<div class="empty-state"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><p>No trades yet</p><button class="btn btn-primary" onclick="startNewTrade()">Log your first trade</button></div>':'<table class="data"><thead><tr><th>Trade #</th><th>Pair</th><th>Type</th><th>Result</th><th>P/L ($)</th><th>RR</th></tr></thead><tbody>'+recentRows+'</tbody></table>';
 }
 
+// ══ Trade Quality Analytics ═══════════════════════
+// Analyzes the user-entered Rating (1–5 stars) and Error type fields to surface
+// how self-assessed trade quality and specific mistakes relate to actual outcomes.
+function _renderQualityAnalytics(trades){
+  trades=trades||[];
+  // 'Valid - Natural' is retired from the picker but old trades may still carry it — treat as clean.
+  var ERR_NONE=['','None','— none —','Valid - Natural'];
+  var c=chartColors();
+
+  // ── Bucket trades by star rating (rating string length = star count, 1-5) ──
+  var ratingBuckets={1:[],2:[],3:[],4:[],5:[]};
+  trades.forEach(function(t){
+    var n=(t.rating||'').length;
+    if(n>=1&&n<=5)ratingBuckets[n].push(t);
+  });
+  var rated=[].concat(ratingBuckets[1],ratingBuckets[2],ratingBuckets[3],ratingBuckets[4],ratingBuckets[5]);
+  var avgRating=rated.length?rated.reduce(function(a,t){return a+t.rating.length;},0)/rated.length:0;
+
+  // ── Bucket trades by error type (skip blank/none-like values) ──
+  var errorBuckets={};
+  trades.forEach(function(t){
+    var e=t.error;
+    if(e&&ERR_NONE.indexOf(e)===-1){
+      if(!errorBuckets[e])errorBuckets[e]=[];
+      errorBuckets[e].push(t);
+    }
+  });
+  var errKeys=Object.keys(errorBuckets).sort(function(a,b){return errorBuckets[b].length-errorBuckets[a].length;});
+  var topErr=errKeys[0]||null;
+  var cleanTrades=trades.filter(function(t){return !t.error||ERR_NONE.indexOf(t.error)!==-1;});
+
+  function winRate(arr){return arr.length?(arr.filter(function(t){return t.winLoss===1;}).length/arr.length*100):null;}
+  function avgRRof(arr){var f=arr.filter(function(t){return t.actualRR!=null&&t.actualRR!==0;});return f.length?f.reduce(function(a,t){return a+t.actualRR;},0)/f.length:null;}
+  function avgPLof(arr){return arr.length?arr.reduce(function(a,t){return a+(t.plDollar||0);},0)/arr.length:null;}
+  function totalPLof(arr){return arr.reduce(function(a,t){return a+(t.plDollar||0);},0);}
+
+  var hiQ=[].concat(ratingBuckets[4],ratingBuckets[5]);
+  var loQ=[].concat(ratingBuckets[1],ratingBuckets[2]);
+  var hiWR=winRate(hiQ),loWR=winRate(loQ);
+
+  // ── Stat cards ──
+  var cleanPct=trades.length?(cleanTrades.length/trades.length*100):0;
+  var starsDisplay=rated.length?'⭐'.repeat(Math.max(1,Math.round(avgRating))):'—';
+  var statsEl=document.getElementById('dash-quality-stats');
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="stat-card"><div class="stat-label">Total trades</div><div class="stat-value">'+trades.length+'</div><div class="stat-sub">in current filter</div></div>'+
+      '<div class="stat-card purple"><div class="stat-label">Avg trade rating</div><div class="stat-value stars" style="font-size:16px">'+starsDisplay+'</div><div class="stat-sub">'+(rated.length?avgRating.toFixed(2)+'/5 · '+rated.length+' rated':'no ratings yet')+'</div></div>'+
+      '<div class="stat-card '+(!trades.length?'':(cleanPct>=70?'green':(cleanPct>=40?'amber':'red')))+'"><div class="stat-label">Clean trades</div><div class="stat-value">'+(trades.length?cleanPct.toFixed(0)+'%':'—')+'</div><div class="stat-sub">'+cleanTrades.length+' of '+trades.length+' error-free</div></div>'+
+      '<div class="stat-card '+(topErr?'red':'')+'"><div class="stat-label">Most common error</div><div class="stat-value" style="font-size:14px">'+(topErr?escHtml(topErr):'None logged')+'</div><div class="stat-sub">'+(topErr?errorBuckets[topErr].length+' occurrences · '+(errorBuckets[topErr].length/trades.length*100).toFixed(0)+'% of trades':'no errors tagged')+'</div></div>'+
+      '<div class="stat-card amber"><div class="stat-label">High vs low rated WR</div><div class="stat-value" style="font-size:16px">'+(hiWR!=null||loWR!=null?(hiWR!=null?hiWR.toFixed(0)+'%':'—')+' vs '+(loWR!=null?loWR.toFixed(0)+'%':'—'):'—')+'</div><div class="stat-sub">4-5★ vs 1-2★ win rate</div></div>';
+  }
+
+  // ── Helper: safely blend two hex colors for a red→green quality scale ──
+  function mixHex(a,b,t){
+    try{
+      if(!/^#/.test(a)||!/^#/.test(b))return t<0.5?a:b;
+      var ar=parseInt(a.slice(1,3),16),ag=parseInt(a.slice(3,5),16),ab=parseInt(a.slice(5,7),16);
+      var br=parseInt(b.slice(1,3),16),bg=parseInt(b.slice(3,5),16),bb=parseInt(b.slice(5,7),16);
+      if([ar,ag,ab,br,bg,bb].some(function(v){return isNaN(v);}))return t<0.5?a:b;
+      return 'rgb('+Math.round(ar+(br-ar)*t)+','+Math.round(ag+(bg-ag)*t)+','+Math.round(ab+(bb-ab)*t)+')';
+    }catch(e){return a;}
+  }
+
+  // ── Rating distribution (bar, red→green scale) ──
+  var ratingLabels=['1★','2★','3★','4★','5★'];
+  var ratingColors=[c.red,mixHex(c.red,c.amber,.5),c.amber,mixHex(c.amber,c.green,.5),c.green];
+  var ratingCounts=[1,2,3,4,5].map(function(n){return ratingBuckets[n].length;});
+  if(charts.ratingDist)charts.ratingDist.destroy();
+  var _cvRD=document.getElementById('chart-rating-dist');
+  if(_cvRD)charts.ratingDist=new Chart(_cvRD.getContext('2d'),{type:'bar',data:{labels:ratingLabels,datasets:[{label:'Trades',data:ratingCounts,backgroundColor:ratingColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:11}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},stepSize:1,precision:0},grid:{color:c.grid}}}}});
+
+  // ── Error type breakdown (doughnut, includes Clean baseline) ──
+  // Clean is always green, so error-type colors are drawn from a palette that
+  // deliberately excludes green — otherwise an error type can render in the same
+  // color as "Clean" and become impossible to tell apart in the legend.
+  var errTypePalette=[c.red,c.amber,c.purple,c.accent,'#64d4fc','#ff8a5c','#c968e0'];
+  var errLabels=errKeys.concat(['Clean']);
+  var errData=errKeys.map(function(k){return errorBuckets[k].length;}).concat([cleanTrades.length]);
+  var errColors=errKeys.map(function(k,i){return errTypePalette[i%errTypePalette.length];}).concat([c.green]);
+  if(charts.errorDist)charts.errorDist.destroy();
+  var _cvED=document.getElementById('chart-error-dist');
+  if(_cvED)charts.errorDist=new Chart(_cvED.getContext('2d'),{type:'doughnut',data:{labels:errLabels,datasets:[{data:errData,backgroundColor:errColors,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:c.legend,font:{size:10},padding:8,boxWidth:9}}}}});
+
+  // ── Win rate by rating (bar) ──
+  var wrByRating=[1,2,3,4,5].map(function(n){var wr=winRate(ratingBuckets[n]);return wr!=null?parseFloat(wr.toFixed(1)):0;});
+  var wrColors=[1,2,3,4,5].map(function(n){var wr=winRate(ratingBuckets[n]);return wr!=null&&wr>=50?c.green:c.red;});
+  if(charts.ratingPerf)charts.ratingPerf.destroy();
+  var _cvRP=document.getElementById('chart-rating-perf');
+  if(_cvRP)charts.ratingPerf=new Chart(_cvRP.getContext('2d'),{type:'bar',data:{labels:ratingLabels,datasets:[{label:'Win rate %',data:wrByRating,backgroundColor:wrColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var n=ctx.dataIndex+1;return ctx.parsed.y+'% win rate ('+ratingBuckets[n].length+' trades)';}}}},scales:{x:{ticks:{color:c.tick,font:{size:11}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},suggestedMax:100}}}});
+
+  // ── Avg P/L by error type (bar, Clean shown first as baseline) ──
+  var errPLLabels=['Clean'].concat(errKeys);
+  var errPLArrs=[cleanTrades].concat(errKeys.map(function(k){return errorBuckets[k];}));
+  var errPLData=errPLArrs.map(function(arr){var v=avgPLof(arr);return v!=null?parseFloat(v.toFixed(2)):0;});
+  var errPLColors=errPLData.map(function(v){return v>=0?c.green:c.red;});
+  if(charts.errorPL)charts.errorPL.destroy();
+  var _cvEP=document.getElementById('chart-error-pl');
+  if(_cvEP)charts.errorPL=new Chart(_cvEP.getContext('2d'),{type:'bar',data:{labels:errPLLabels.map(function(k){return k.length>14?k.slice(0,14)+'…':k;}),datasets:[{label:'Avg P/L ($)',data:errPLData,backgroundColor:errPLColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return'$'+v;}},grid:{color:c.grid}}}}});
+
+  // ── Error type impact table ──
+  var tblRows=[{label:'Clean (no error)',arr:cleanTrades}].concat(errKeys.map(function(k){return{label:k,arr:errorBuckets[k]};}));
+  var tblHtml=tblRows.map(function(r){
+    var wr=winRate(r.arr),rr=avgRRof(r.arr),tp=totalPLof(r.arr);
+    return '<tr>'+
+      '<td style="font-weight:600;color:var(--text)">'+escHtml(r.label)+'</td>'+
+      '<td class="mono">'+r.arr.length+'</td>'+
+      '<td class="mono" style="color:'+(wr!=null?(wr>=50?'var(--green)':'var(--red)'):'var(--text3)')+'">'+(wr!=null?wr.toFixed(1)+'%':'—')+'</td>'+
+      '<td class="mono">'+(rr!=null?rr.toFixed(2)+'R':'—')+'</td>'+
+      '<td class="mono" style="color:'+(tp>=0?'var(--green)':'var(--red)')+'">'+(tp>=0?'+':'')+tp.toFixed(2)+'</td>'+
+      '</tr>';
+  }).join('');
+  var tblEl=document.getElementById('dash-error-table');
+  if(tblEl)tblEl.innerHTML=!trades.length?'<div class="empty-state"><p>No trades yet</p></div>':'<table class="data"><thead><tr><th>Category</th><th>Trades</th><th>Win rate</th><th>Avg RR</th><th>Total P/L</th></tr></thead><tbody>'+tblHtml+'</tbody></table>';
+}
+
+// ══ Trade Analytics page — its own filtered data set ═══════════════
+async function _renderTradeAnalyticsImpl(){
+  var allTrades=await dbGetAllCached('trades');
+  var allSess=await dbGetAllCached('sessions');
+  var archivedIds=new Set(allSess.filter(function(s){return s.archived;}).map(function(s){return s.id;}));
+  var demoIds=new Set(allSess.filter(function(s){return !!s.isDemo;}).map(function(s){return s.id;}));
+  var demoOn=!!_dashDemoMode;
+  var sesF=(document.getElementById('trd-session-filter')||{}).value||'';
+  var pairF=(document.getElementById('trd-pair-filter')||{}).value||'';
+  var dirF=(document.getElementById('trd-direction-filter')||{}).value||'';
+  var errF=(document.getElementById('trd-error-filter')||{}).value||'';
+  var skipF=(document.getElementById('trd-skipped-filter')||{}).value||'taken';
+  var ERR_NONE_F=['','None','— none —','Valid - Natural'];
+  var trades=allTrades.filter(function(t){
+    if(archivedIds.has(t.sessionId))return false;
+    // Enforce demo/real split, same convention as the dashboard
+    if(demoOn&&!demoIds.has(t.sessionId))return false;
+    if(!demoOn&&demoIds.has(t.sessionId))return false;
+    if(skipF==='skipped'&&!t.skipped)return false;
+    if(skipF==='taken'&&t.skipped)return false;
+    if(sesF&&t.sessionId!==sesF)return false;
+    if(pairF&&t.pair!==pairF)return false;
+    if(dirF&&t.type!==dirF)return false;
+    if(errF==='__clean__'){ if(t.error&&ERR_NONE_F.indexOf(t.error)===-1)return false; }
+    else if(errF){ if(t.error!==errF)return false; }
+    return true;
+  });
+  trades=enrichSkippedPL(trades);
+  _renderQualityAnalytics(trades);
+  _renderDirectionAnalytics(trades);
+  _renderTimeAnalytics(trades);
+  _renderCategoryAnalytics(trades,'assetType','Uncategorized','dash-assettype-stats','chart-assettype-wr','chart-assettype-pl','dash-assettype-table','assetTypeWR','assetTypePL','Asset type');
+  _renderCategoryAnalytics(trades,'ltf','No LTF logged','dash-ltf-stats','chart-ltf-wr','chart-ltf-pl','dash-ltf-table','ltfWR','ltfPL','LTF entry');
+}
+
+// ── Generic categorical breakdown (used by Asset type & LTF entry) ──────────
+// Buckets trades by an arbitrary string field on the trade object and renders
+// the same stat-card / chart / table shape as the other analytics sections.
+function _renderCategoryAnalytics(trades,field,emptyLabel,statsElId,wrChartId,plChartId,tableElId,wrChartKey,plChartKey,label){
+  trades=trades||[];
+  var c=chartColors();
+  function winRate(arr){return arr.length?(arr.filter(function(t){return t.winLoss===1;}).length/arr.length*100):null;}
+  function avgRRof(arr){var f=arr.filter(function(t){return t.actualRR!=null&&t.actualRR!==0;});return f.length?f.reduce(function(a,t){return a+t.actualRR;},0)/f.length:null;}
+  function avgPLof(arr){return arr.length?arr.reduce(function(a,t){return a+(t.plDollar||0);},0)/arr.length:null;}
+  function totalPLof(arr){return arr.reduce(function(a,t){return a+(t.plDollar||0);},0);}
+
+  var buckets={};
+  trades.forEach(function(t){
+    var k=t[field];
+    k=(k&&String(k).trim())?String(k):emptyLabel;
+    if(!buckets[k])buckets[k]=[];
+    buckets[k].push(t);
+  });
+  var keys=Object.keys(buckets).sort(function(a,b){return buckets[b].length-buckets[a].length;});
+
+  // ── Stat cards: total categories, top by volume, best/worst by P/L (min 3 trades) ──
+  var byVolume=keys[0]||null;
+  var bestKey=null,bestPL=-Infinity,worstKey=null,worstPL=Infinity;
+  keys.forEach(function(k){
+    var arr=buckets[k],pl=avgPLof(arr);
+    if(arr.length>=3&&pl!=null){
+      if(pl>bestPL){bestPL=pl;bestKey=k;}
+      if(pl<worstPL){worstPL=pl;worstKey=k;}
+    }
+  });
+  var statsEl=document.getElementById(statsElId);
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="stat-card"><div class="stat-label">'+label+' categories</div><div class="stat-value">'+keys.length+'</div><div class="stat-sub">'+trades.length+' trades in current filter</div></div>'+
+      '<div class="stat-card"><div class="stat-label">Most traded</div><div class="stat-value" style="font-size:15px">'+(byVolume?escHtml(byVolume):'—')+'</div><div class="stat-sub">'+(byVolume?buckets[byVolume].length+' trades':'no trades')+'</div></div>'+
+      '<div class="stat-card '+(bestKey?'green':'')+'"><div class="stat-label">Best avg P/L</div><div class="stat-value" style="font-size:15px">'+(bestKey?escHtml(bestKey):'—')+'</div><div class="stat-sub">'+(bestKey?'$'+bestPL.toFixed(0)+' avg · '+buckets[bestKey].length+' trades':'need 3+ trades in a category')+'</div></div>'+
+      '<div class="stat-card '+(worstKey?'red':'')+'"><div class="stat-label">Weakest avg P/L</div><div class="stat-value" style="font-size:15px">'+(worstKey?escHtml(worstKey):'—')+'</div><div class="stat-sub">'+(worstKey?'$'+worstPL.toFixed(0)+' avg · '+buckets[worstKey].length+' trades':'need 3+ trades in a category')+'</div></div>';
+  }
+
+  // ── Win rate by category (bar) ──
+  var wrData=keys.map(function(k){var wr=winRate(buckets[k]);return wr!=null?parseFloat(wr.toFixed(1)):0;});
+  var wrColors=keys.map(function(k){var wr=winRate(buckets[k]);return wr!=null&&wr>=50?c.green:c.red;});
+  if(charts[wrChartKey])charts[wrChartKey].destroy();
+  var _cvWR=document.getElementById(wrChartId);
+  if(_cvWR)charts[wrChartKey]=new Chart(_cvWR.getContext('2d'),{type:'bar',data:{labels:keys.map(function(k){return k.length>14?k.slice(0,14)+'…':k;}),datasets:[{label:'Win rate %',data:wrData,backgroundColor:wrColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y+'% win rate ('+buckets[keys[ctx.dataIndex]].length+' trades)';}}}},scales:{x:{ticks:{color:c.tick,font:{size:9}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},suggestedMax:100}}}});
+
+  // ── Avg P/L by category (bar) ──
+  var plData=keys.map(function(k){var v=avgPLof(buckets[k]);return v!=null?parseFloat(v.toFixed(2)):0;});
+  if(charts[plChartKey])charts[plChartKey].destroy();
+  var _cvPL=document.getElementById(plChartId);
+  if(_cvPL)charts[plChartKey]=new Chart(_cvPL.getContext('2d'),{type:'bar',data:{labels:keys.map(function(k){return k.length>14?k.slice(0,14)+'…':k;}),datasets:[{label:'Avg P/L ($)',data:plData,backgroundColor:plData.map(function(v){return v>=0?c.green:c.red;}),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:9}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return'$'+v;}},grid:{color:c.grid}}}}});
+
+  // ── Breakdown table ──
+  var tblHtml=keys.map(function(k){
+    var arr=buckets[k],wr=winRate(arr),rr=avgRRof(arr),tp=totalPLof(arr);
+    return '<tr>'+
+      '<td style="font-weight:600;color:var(--text)">'+escHtml(k)+'</td>'+
+      '<td class="mono">'+arr.length+'</td>'+
+      '<td class="mono" style="color:'+(wr!=null?(wr>=50?'var(--green)':'var(--red)'):'var(--text3)')+'">'+(wr!=null?wr.toFixed(1)+'%':'—')+'</td>'+
+      '<td class="mono">'+(rr!=null?rr.toFixed(2)+'R':'—')+'</td>'+
+      '<td class="mono" style="color:'+(tp>=0?'var(--green)':'var(--red)')+'">'+(tp>=0?'+':'')+tp.toFixed(2)+'</td>'+
+      '</tr>';
+  }).join('');
+  var tblEl=document.getElementById(tableElId);
+  if(tblEl)tblEl.innerHTML=!trades.length?'<div class="empty-state"><p>No trades yet</p></div>':'<table class="data"><thead><tr><th>'+label+'</th><th>Trades</th><th>Win rate</th><th>Avg RR</th><th>Total P/L</th></tr></thead><tbody>'+tblHtml+'</tbody></table>';
+}
+
+// ── Long vs Short breakdown ──────────────────────────
+function _renderDirectionAnalytics(trades){
+  trades=trades||[];
+  var c=chartColors();
+  function winRate(arr){return arr.length?(arr.filter(function(t){return t.winLoss===1;}).length/arr.length*100):null;}
+  function avgPLof(arr){return arr.length?arr.reduce(function(a,t){return a+(t.plDollar||0);},0)/arr.length:null;}
+  function totalPLof(arr){return arr.reduce(function(a,t){return a+(t.plDollar||0);},0);}
+  var longs=trades.filter(function(t){return t.type==='Long';});
+  var shorts=trades.filter(function(t){return t.type==='Short';});
+  var lWR=winRate(longs),sWR=winRate(shorts);
+  var lPL=avgPLof(longs),sPL=avgPLof(shorts);
+  var lTot=totalPLof(longs),sTot=totalPLof(shorts);
+
+  var statsEl=document.getElementById('dash-direction-stats');
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="stat-card green"><div class="stat-label">Long trades</div><div class="stat-value">'+longs.length+'</div><div class="stat-sub">'+(lWR!=null?lWR.toFixed(0)+'% win rate':'no trades')+'</div></div>'+
+      '<div class="stat-card red"><div class="stat-label">Short trades</div><div class="stat-value">'+shorts.length+'</div><div class="stat-sub">'+(sWR!=null?sWR.toFixed(0)+'% win rate':'no trades')+'</div></div>'+
+      '<div class="stat-card '+(lTot>=sTot?'green':'red')+'"><div class="stat-label">Stronger direction</div><div class="stat-value" style="font-size:15px">'+(!longs.length&&!shorts.length?'—':(lTot===sTot?'Even':(lTot>sTot?'Long':'Short')))+'</div><div class="stat-sub">by total P/L</div></div>'+
+      '<div class="stat-card amber"><div class="stat-label">Avg P/L (L vs S)</div><div class="stat-value" style="font-size:15px">'+(lPL!=null?'$'+lPL.toFixed(0):'—')+' / '+(sPL!=null?'$'+sPL.toFixed(0):'—')+'</div><div class="stat-sub">per trade</div></div>';
+  }
+
+  if(charts.dirWR)charts.dirWR.destroy();
+  var _cvDW=document.getElementById('chart-direction-wr');
+  if(_cvDW)charts.dirWR=new Chart(_cvDW.getContext('2d'),{type:'bar',data:{labels:['Long','Short'],datasets:[{label:'Win rate %',data:[lWR!=null?parseFloat(lWR.toFixed(1)):0,sWR!=null?parseFloat(sWR.toFixed(1)):0],backgroundColor:[c.green,c.red],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var n=ctx.dataIndex===0?longs.length:shorts.length;return ctx.parsed.y+'% win rate ('+n+' trades)';}}}},scales:{x:{ticks:{color:c.tick,font:{size:11}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},suggestedMax:100}}}});
+
+  if(charts.dirPL)charts.dirPL.destroy();
+  var _cvDP=document.getElementById('chart-direction-pl');
+  var dPLData=[lPL!=null?parseFloat(lPL.toFixed(2)):0,sPL!=null?parseFloat(sPL.toFixed(2)):0];
+  if(_cvDP)charts.dirPL=new Chart(_cvDP.getContext('2d'),{type:'bar',data:{labels:['Long','Short'],datasets:[{label:'Avg P/L ($)',data:dPLData,backgroundColor:dPLData.map(function(v){return v>=0?c.green:c.red;}),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:11}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return'$'+v;}},grid:{color:c.grid}}}}});
+}
+
+// ── Entry-time-of-day breakdown (4-hour local-time blocks) ──────────
+function _renderTimeAnalytics(trades){
+  trades=trades||[];
+  var c=chartColors();
+  var blockLabels=['12–4am','4–8am','8am–12pm','12–4pm','4–8pm','8pm–12am'];
+  var buckets=[[],[],[],[],[],[]];
+  trades.forEach(function(t){
+    if(!t.entryTime||t.entryTime.length<13)return;
+    var hour=parseInt(t.entryTime.slice(11,13),10);
+    if(isNaN(hour))return;
+    buckets[Math.floor(hour/4)].push(t);
+  });
+  function winRate(arr){return arr.length?(arr.filter(function(t){return t.winLoss===1;}).length/arr.length*100):null;}
+  function avgPLof(arr){return arr.length?arr.reduce(function(a,t){return a+(t.plDollar||0);},0)/arr.length:null;}
+  var timedCount=buckets.reduce(function(a,b){return a+b.length;},0);
+
+  var bestIdx=-1,bestWR=-1;
+  buckets.forEach(function(b,i){var wr=winRate(b);if(b.length>=3&&wr!=null&&wr>bestWR){bestWR=wr;bestIdx=i;}});
+  var worstIdx=-1,worstPL=Infinity;
+  buckets.forEach(function(b,i){var pl=avgPLof(b);if(b.length>=3&&pl!=null&&pl<worstPL){worstPL=pl;worstIdx=i;}});
+
+  var statsEl=document.getElementById('dash-time-stats');
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="stat-card"><div class="stat-label">Trades with entry time</div><div class="stat-value">'+timedCount+'</div><div class="stat-sub">of '+trades.length+' in current filter</div></div>'+
+      '<div class="stat-card '+(bestIdx>=0?'green':'')+'"><div class="stat-label">Best time block</div><div class="stat-value" style="font-size:15px">'+(bestIdx>=0?blockLabels[bestIdx]:'—')+'</div><div class="stat-sub">'+(bestIdx>=0?bestWR.toFixed(0)+'% win rate · '+buckets[bestIdx].length+' trades':'need 3+ timed trades in a block')+'</div></div>'+
+      '<div class="stat-card '+(worstIdx>=0?'red':'')+'"><div class="stat-label">Weakest time block</div><div class="stat-value" style="font-size:15px">'+(worstIdx>=0?blockLabels[worstIdx]:'—')+'</div><div class="stat-sub">'+(worstIdx>=0?'$'+worstPL.toFixed(0)+' avg P/L · '+buckets[worstIdx].length+' trades':'need 3+ timed trades in a block')+'</div></div>';
+  }
+
+  var wrData=buckets.map(function(b){var wr=winRate(b);return wr!=null?parseFloat(wr.toFixed(1)):0;});
+  var wrColors=buckets.map(function(b){var wr=winRate(b);return wr!=null&&wr>=50?c.green:c.red;});
+  if(charts.timeWR)charts.timeWR.destroy();
+  var _cvTW=document.getElementById('chart-time-wr');
+  if(_cvTW)charts.timeWR=new Chart(_cvTW.getContext('2d'),{type:'bar',data:{labels:blockLabels,datasets:[{label:'Win rate %',data:wrData,backgroundColor:wrColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y+'% win rate ('+buckets[ctx.dataIndex].length+' trades)';}}}},scales:{x:{ticks:{color:c.tick,font:{size:9}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},suggestedMax:100}}}});
+
+  var plData=buckets.map(function(b){var v=avgPLof(b);return v!=null?parseFloat(v.toFixed(2)):0;});
+  if(charts.timePL)charts.timePL.destroy();
+  var _cvTP=document.getElementById('chart-time-pl');
+  if(_cvTP)charts.timePL=new Chart(_cvTP.getContext('2d'),{type:'bar',data:{labels:blockLabels,datasets:[{label:'Avg P/L ($)',data:plData,backgroundColor:plData.map(function(v){return v>=0?c.green:c.red;}),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:9}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return'$'+v;}},grid:{color:c.grid}}}}});
+}
+
 // ══ Sidebar stats ══════════════════════════════════
 async function _updateSidebarStatsImpl(){
   var trades=await dbGetAllCached('trades');
@@ -8260,6 +8795,76 @@ function toggleDashFilters(){
   body.style.display=open?'none':'block';
   chevron.style.transform=open?'':'rotate(180deg)';
 }
+function toggleTrdFilters(){
+  var body=document.getElementById('trd-filter-body');
+  var chevron=document.getElementById('trd-filter-chevron');
+  var open=body.style.display==='block';
+  body.style.display=open?'none':'block';
+  chevron.style.transform=open?'':'rotate(180deg)';
+}
+// Generic collapsible section toggle (used by Long/Short and Entry-time blocks on Trade Analytics)
+function toggleCollapsible(bodyId,chevronId){
+  var body=document.getElementById(bodyId);
+  if(!body)return;
+  var chevron=document.getElementById(chevronId);
+  var open=body.style.display==='block';
+  body.style.display=open?'none':'block';
+  if(chevron)chevron.style.transform=open?'':'rotate(180deg)';
+}
+// Charts drawn while their container is display:none get sized 0×0 by Chart.js —
+// resize() them right after the section opens so they render properly the first time.
+function toggleTrdDirection(){
+  var wasOpen=(document.getElementById('trd-direction-body')||{}).style.display==='block';
+  toggleCollapsible('trd-direction-body','trd-direction-chevron');
+  if(!wasOpen){
+    if(charts.dirWR)charts.dirWR.resize();
+    if(charts.dirPL)charts.dirPL.resize();
+  }
+}
+function toggleTrdTime(){
+  var wasOpen=(document.getElementById('trd-time-body')||{}).style.display==='block';
+  toggleCollapsible('trd-time-body','trd-time-chevron');
+  if(!wasOpen){
+    if(charts.timeWR)charts.timeWR.resize();
+    if(charts.timePL)charts.timePL.resize();
+  }
+}
+function toggleTrdAssetType(){
+  var wasOpen=(document.getElementById('trd-assettype-body')||{}).style.display==='block';
+  toggleCollapsible('trd-assettype-body','trd-assettype-chevron');
+  if(!wasOpen){
+    if(charts.assetTypeWR)charts.assetTypeWR.resize();
+    if(charts.assetTypePL)charts.assetTypePL.resize();
+  }
+}
+function toggleTrdLtf(){
+  var wasOpen=(document.getElementById('trd-ltf-body')||{}).style.display==='block';
+  toggleCollapsible('trd-ltf-body','trd-ltf-chevron');
+  if(!wasOpen){
+    if(charts.ltfWR)charts.ltfWR.resize();
+    if(charts.ltfPL)charts.ltfPL.resize();
+  }
+}
+function resetTrdFilters(){
+  ['trd-session-filter','trd-pair-filter','trd-direction-filter','trd-error-filter'].forEach(function(id){var el=document.getElementById(id);if(el)el.selectedIndex=0;});
+  var tsk=document.getElementById('trd-skipped-filter');if(tsk)tsk.value='taken';
+  _dashDemoMode=false;
+  _histDemoMode=false;
+  _syncDemoButtons(false);
+  populateSessionSelects().then(function(){populateTrdFilters().then(function(){renderTradeAnalytics();});});
+}
+async function populateTrdFilters(){
+  var trades=await dbGetAllCached('trades');
+  var sessions=await dbGetAllCached('sessions');
+  var demoOn=!!_dashDemoMode;
+  var demoIds=new Set(sessions.filter(function(s){return !!s.isDemo;}).map(function(s){return s.id;}));
+  var scoped=trades.filter(function(t){return demoOn?demoIds.has(t.sessionId):!demoIds.has(t.sessionId);});
+  var pairs=[...new Set(scoped.map(function(t){return t.pair}).filter(Boolean))].sort();
+  // Session select is populated by populateSessionSelects() (demo-aware + defaults to the
+  // active session created first) — not touched here to avoid clobbering that default.
+  var pf=document.getElementById('trd-pair-filter');
+  if(pf){var pv=pf.value;pf.innerHTML='<option value="">All pairs</option>'+pairs.map(function(p){return'<option value="'+escHtml(p)+'">'+escHtml(p)+'</option>'}).join('');pf.value=pv;}
+}
 function toggleCalFilters(){
   var body=document.getElementById('cal-filter-body');
   var chevron=document.getElementById('cal-filter-chevron');
@@ -8275,6 +8880,7 @@ var _histStarredOnly=false; // when true, history table only shows starred trade
 // Track auto-selected default session IDs so badge/chips don't count them as active filters
 var _defaultDashSessionId='';
 var _defaultHistSessionId='';
+var _defaultTrdSessionId='';
 
 // ── Unified demo-mode sync helper ─────────────────────────────────────────────
 // Call this whenever demo state changes.  It updates every toggle button+label
@@ -8284,7 +8890,8 @@ function _syncDemoButtons(on){
     {btn:'dash-demo-toggle',lbl:'dash-demo-label'},
     {btn:'cal-demo-toggle', lbl:'cal-demo-label'},
     {btn:'hist-demo-toggle',lbl:'hist-demo-label'},
-    {btn:'mc-demo-toggle',  lbl:'mc-demo-label'}
+    {btn:'mc-demo-toggle',  lbl:'mc-demo-label'},
+    {btn:'trd-demo-toggle', lbl:'trd-demo-label'}
   ];
   ids.forEach(function(pair){
     var btn=document.getElementById(pair.btn);
@@ -8339,12 +8946,61 @@ async function toggleStarTrade(id){
   ghAutoSync();
 }
 
+// ── Pin: only one trade can be pinned at a time, used as a "resume where I left off" marker ──
+async function togglePinTrade(id){
+  var trade=await dbGet('trades',id);
+  if(!trade)return false;
+  var newState=!trade.pinned;
+  if(newState){
+    // Enforce single pin — unpin any other trade currently pinned
+    var all=await dbGetAllCached('trades');
+    var others=all.filter(function(t){return t.id!==id&&t.pinned;});
+    for(var i=0;i<others.length;i++){
+      var o=await dbGet('trades',others[i].id);
+      if(o){o.pinned=false;await dbPut('trades',o);}
+    }
+  }
+  trade.pinned=newState;
+  await dbPut('trades',trade);
+  renderHistory();
+  ghAutoSync();
+  return newState;
+}
+async function updateHistPinnedIndicator(){
+  var all=await dbGetAllCached('trades');
+  var pinned=all.find(function(t){return t.pinned;});
+  var btn=document.getElementById('hist-pinned-jump');
+  var lbl=document.getElementById('hist-pinned-label');
+  if(!btn)return;
+  if(pinned){
+    btn.style.display='inline-flex';
+    if(lbl)lbl.textContent='#'+(pinned.num||'')+' '+(pinned.pair||'');
+  }else{
+    btn.style.display='none';
+  }
+}
+function jumpToPinnedTrade(){
+  dbGetAllCached('trades').then(function(all){
+    var pinned=all.find(function(t){return t.pinned;});
+    if(pinned)openDetail(pinned.id);
+    else toast('No trade pinned','err');
+  });
+}
+
 function toggleMcDemoMode(){
   _dashDemoMode=!_dashDemoMode;
   _histDemoMode=_dashDemoMode;
   _syncDemoButtons(_dashDemoMode);
   var mcF=document.getElementById('mc-session');if(mcF)mcF.value='';
   populateSessionSelects().then(function(){resetMonteCarloResults();initMonteCarlo();});
+}
+
+function toggleTrdDemoMode(){
+  _dashDemoMode=!_dashDemoMode;
+  _histDemoMode=_dashDemoMode;
+  _syncDemoButtons(_dashDemoMode);
+  var trdF=document.getElementById('trd-session-filter');if(trdF)trdF.value='';
+  populateSessionSelects().then(function(){populateTrdFilters().then(function(){renderTradeAnalytics();});});
 }
 
 function resetDashFilters(){
@@ -8474,6 +9130,16 @@ if(!window._tjKeydownListenerRegistered){
     e.preventDefault();
     lightboxNav(e.key==='ArrowRight'?1:-1);
     return;
+  }
+  // Trade detail modal — prev/next trade with ← / → (skip while typing in a field)
+  if((e.key==='ArrowRight'||e.key==='ArrowLeft')&&document.getElementById('detail-overlay').classList.contains('open')){
+    var _tag=(document.activeElement&&document.activeElement.tagName)||'';
+    var _editable=document.activeElement&&document.activeElement.isContentEditable;
+    if(_tag!=='INPUT'&&_tag!=='TEXTAREA'&&_tag!=='SELECT'&&!_editable){
+      e.preventDefault();
+      dmNav(e.key==='ArrowRight'?1:-1);
+      return;
+    }
   }
   if(e.key!=='Escape')return;
   // Close in priority order: lightbox → detail → modals
