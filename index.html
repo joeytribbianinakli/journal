@@ -2228,6 +2228,13 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <button id="hist-pinned-jump" onclick="event.stopPropagation();jumpToPinnedTrade()" title="Jump back to your pinned trade" style="display:none;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(77,127,255,.35);background:rgba(77,127,255,.08);color:var(--accent);font-family:inherit;letter-spacing:.04em;transition:all .12s">
               📌 <span id="hist-pinned-label">Pinned</span>
             </button>
+            <select id="hist-page-size-select" onchange="event.stopPropagation();histSetPageSize(this.value)" onclick="event.stopPropagation()" title="Trades per page" style="font-size:10px;padding:3px 22px 3px 4px;border-radius:4px;background-color:var(--bg3);border:1px solid var(--border2);color:var(--text2);width:56px">
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="250">250</option>
+              <option value="all">All</option>
+            </select>
           </div>
         </div>
         <div class="history-filter-body" id="hist-filter-body" style="display:none">
@@ -7690,6 +7697,8 @@ async function _renderHistoryImpl(){
   });
   var wrap=document.getElementById('history-table-wrap');
   var pager=document.getElementById('history-pagination');
+  var sizeSel=document.getElementById('hist-page-size-select');
+  if(sizeSel)sizeSel.value=(HIST_PAGE_SIZE===Infinity)?'all':String(HIST_PAGE_SIZE);
   if(!filtered.length){wrap.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><p>No trades match your filters</p></div>';if(pager)pager.innerHTML='';return;}
   // Reset to page 1 only when the filter/sort inputs actually changed — NOT when
   // histGoToPage() re-renders for pagination, and NOT when a trade edit/add/delete
@@ -7756,20 +7765,14 @@ async function _renderHistoryImpl(){
   wrap.innerHTML='<table class="data"><thead><tr>'+headers+'</tr></thead><tbody>'+rows+'</tbody></table>';
   if(pager){
     var rangeStart=pageStart+1,rangeEnd=Math.min(pageStart+HIST_PAGE_SIZE,filtered.length);
-    var sizeOptionsHtml=HIST_PAGE_SIZE_OPTIONS.map(function(opt){
-      var isAll=(opt==='all');
-      var isSelected=isAll?(HIST_PAGE_SIZE===Infinity):(HIST_PAGE_SIZE===opt);
-      return'<option value="'+opt+'"'+(isSelected?' selected':'')+'>'+(isAll?'All':opt)+' / page</option>';
-    }).join('');
     var navHtml=(totalPages>1)
-      ?('<button class="btn btn-sm" '+(_histPage<=1?'disabled':'')+' onclick="histGoToPage('+(_histPage-1)+')">Prev</button>'
+      ?('<button class="btn" '+(_histPage<=1?'disabled':'')+' onclick="histGoToPage('+(_histPage-1)+')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>Prev</button>'
         +'<span>Page '+_histPage+' of '+totalPages+'</span>'
-        +'<button class="btn btn-sm" '+(_histPage>=totalPages?'disabled':'')+' onclick="histGoToPage('+(_histPage+1)+')">Next</button>')
+        +'<button class="btn" '+(_histPage>=totalPages?'disabled':'')+' onclick="histGoToPage('+(_histPage+1)+')">Next<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>')
       :'';
     pager.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 2px;font-size:11px;color:var(--text3);flex-wrap:wrap">'
       +'<span>Showing '+rangeStart+'–'+rangeEnd+' of '+filtered.length+'</span>'
-      +'<div style="display:flex;align-items:center;gap:8px">'
-      +'<select onchange="histSetPageSize(this.value)" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text2);font-size:11px;padding:3px 6px">'+sizeOptionsHtml+'</select>'
+      +'<div style="display:flex;align-items:center;gap:10px">'
       +navHtml
       +'</div></div>';
   }
