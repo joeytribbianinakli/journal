@@ -1295,6 +1295,23 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="card"><div class="card-header"><span class="card-title">Avg P/L by entry time</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-time-pl"></canvas></div></div></div>
         </div>
       </div>
+      <!-- LTF entry analysis — collapsible, collapsed by default -->
+      <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdLtf()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">Performance by LTF Entry</span>
+        <svg id="trd-ltf-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="trd-ltf-body" style="display:none">
+        <div class="stats-grid" id="dash-ltf-stats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="card"><div class="card-header"><span class="card-title">Win rate by LTF entry</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-ltf-wr"></canvas></div></div></div>
+          <div class="card"><div class="card-header"><span class="card-title">Avg P/L by LTF entry</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-ltf-pl"></canvas></div></div></div>
+        </div>
+        <div class="card" style="margin-bottom:22px">
+          <div class="card-header"><span class="card-title">LTF entry breakdown</span></div>
+          <div class="table-wrap" id="dash-ltf-table"></div>
+        </div>
+      </div>
       <!-- Hold-time analysis — collapsible, collapsed by default -->
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdHold()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
@@ -1337,23 +1354,6 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         <div class="card" style="margin-bottom:22px">
           <div class="card-header"><span class="card-title">Asset type breakdown</span></div>
           <div class="table-wrap" id="dash-assettype-table"></div>
-        </div>
-      </div>
-      <!-- LTF entry analysis — collapsible, collapsed by default -->
-      <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdLtf()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-        <span style="font-size:14px;font-weight:700;color:var(--text)">Performance by LTF Entry</span>
-        <svg id="trd-ltf-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-      <div id="trd-ltf-body" style="display:none">
-        <div class="stats-grid" id="dash-ltf-stats"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-          <div class="card"><div class="card-header"><span class="card-title">Win rate by LTF entry</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-ltf-wr"></canvas></div></div></div>
-          <div class="card"><div class="card-header"><span class="card-title">Avg P/L by LTF entry</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-ltf-pl"></canvas></div></div></div>
-        </div>
-        <div class="card" style="margin-bottom:22px">
-          <div class="card-header"><span class="card-title">LTF entry breakdown</span></div>
-          <div class="table-wrap" id="dash-ltf-table"></div>
         </div>
       </div>
     </div>
@@ -11989,7 +11989,7 @@ async function ghPush(showToast){
     var payload=await ghBuildPayload();
     var content=btoa(unescape(encodeURIComponent(JSON.stringify(payload,null,2))));
     var sha=await ghGetFileSHA(cfg);
-    var body={message:'TJ backup — '+new Date().toISOString().slice(0,16).replace('T',' '),content:content};
+    var body={message:'TJ data — '+new Date().toISOString().slice(0,16).replace('T',' '),content:content};
     if(sha)body.sha=sha;
     var resp=await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/'+GH_FILE,{
       method:'PUT',
