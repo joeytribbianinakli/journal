@@ -4663,7 +4663,9 @@ async function updateStrategy(idx,name){
   }
   populateStrategySelect();
   if(updated)toast('Strategy renamed — updated '+updated+' trade'+(updated>1?'s':''),'ok');
-  ghAutoSyncConfig();
+  // Push full sync (trades + config) so any renamed trades reach GitHub too —
+  // config-only sync would leave the remote trades file with the stale name.
+  ghAutoSync();
 }
 // Rebuilds the Log Trade form's strategy dropdown from settings, preserving the
 // current selection if it still exists (called after any add/rename/delete above,
@@ -10532,7 +10534,8 @@ async function updateAssetTypeName(idx,name){
     }
     await renderAssetTypeList();
     if(updated)toast('Asset type renamed — updated '+updated+' trade'+(updated>1?'s':''),'ok');
-    ghAutoSyncConfig();
+    // Push full sync (trades + config) — see updateStrategy() for why config-only isn't enough.
+    ghAutoSync();
   }
 }
 // Delete a single pair from an asset type, blocked if any trade (live or archived) still references it
@@ -10595,7 +10598,10 @@ async function saveAssets(){
   calcSyncAssets();
   document.getElementById('asset-modal').classList.remove('open');
   toast('Assets saved','ok');
-  ghAutoSyncConfig();
+  // Push full sync (trades + config): the asset modal is where renames actually get
+  // committed (draft mode), so a config-only push here is what left renamed trades
+  // stuck with the stale asset-type name on GitHub. See updateStrategy() for the same fix.
+  ghAutoSync();
 }
 // Rebuild the Log Trade form's pair <select> (grouped by asset type via <optgroup>), preserving the current selection if still valid
 async function populatePairSelect(){
