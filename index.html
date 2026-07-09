@@ -593,6 +593,12 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .edit-banner{background:rgba(77,127,255,.06);border:1px solid rgba(77,127,255,.2);border-radius:var(--radius);padding:8px 12px;margin-bottom:14px;font-size:12px;color:var(--accent);display:none;align-items:center;justify-content:space-between}
 .edit-banner.visible{display:flex}
 .section-label{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+/* ── Trade Analytics: group-header dividers that cluster related collapsible sections
+   (e.g. "Risk & Trade Management") so the page reads as a few groups instead of one
+   long flat list. Purely visual — each section under a group still opens/closes on
+   its own via the existing toggleTrd*()/toggleCollapsible() functions. ── */
+.analytics-group-label{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.06em;text-transform:uppercase;margin:34px 2px 4px;padding-top:20px;border-top:1px solid var(--border)}
+.analytics-group-label.first{margin-top:8px;padding-top:0;border-top:none}
 /* ── Dashboard filter panel: collapsible global filter used on the dashboard ── */
 .dash-filter-bar{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:16px;overflow:hidden}
 .dash-filter-header{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;cursor:pointer;transition:background .1s;user-select:none}
@@ -1050,6 +1056,14 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         </div>
         <div class="card-body"><div class="chart-wrap" style="height:180px"><canvas id="chart-equity"></canvas></div></div>
       </div>
+      <!-- Drawdown (Actual Equity) — moved here from Trade Analytics: it's derived from
+           this same equity curve, so it belongs beside it. Always visible, like every
+           other section on this page (no collapse toggle, unlike Trade Analytics). -->
+      <div class="stats-grid" id="dash-drawdown-stats" style="grid-template-columns:repeat(4,1fr)"></div>
+      <div class="card" style="margin-bottom:22px">
+        <div class="card-header"><span class="card-title">Drawdown from peak equity (%)</span></div>
+        <div class="card-body"><div class="chart-wrap" style="height:180px"><canvas id="chart-drawdown"></canvas></div></div>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
         <div class="card"><div class="card-header"><span class="card-title">By strategy</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-strategy"></canvas></div></div></div>
         <div class="card"><div class="card-header"><span class="card-title">By pair</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-pair"></canvas></div></div></div>
@@ -1128,6 +1142,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           </div>
         </div>
       </div>
+      <div class="analytics-group-label first">Quality &amp; Ratings</div>
       <div class="stats-grid" id="dash-quality-stats"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
         <div class="card"><div class="card-header"><span class="card-title">Rating distribution</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-rating-dist"></canvas></div></div></div>
@@ -1141,6 +1156,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         <div class="card-header"><span class="card-title">Error type impact</span></div>
         <div class="table-wrap" id="dash-error-table"></div>
       </div>
+      <div class="analytics-group-label">Volume &amp; Outcome</div>
       <!-- Trade volume over time (monthly / yearly) — collapsible, collapsed by default -->
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdVolume()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/><path d="M8 2v4"/><path d="M16 2v4"/></svg>
@@ -1174,6 +1190,85 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="card"><div class="card-header"><span class="card-title">Exit type breakdown</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-outcome-exit"></canvas></div></div></div>
         </div>
       </div>
+      <div class="analytics-group-label">Risk &amp; Trade Management</div>
+      <!-- R-multiple distribution & payoff ratio — collapsible, collapsed by default -->
+      <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdRMulti()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">R-Multiple Distribution &amp; Payoff Ratio</span>
+        <svg id="trd-rmulti-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="trd-rmulti-body" style="display:none">
+        <div class="stats-grid" id="dash-rmulti-stats"></div>
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:22px">
+          <div class="card"><div class="card-header"><span class="card-title">R-multiple distribution</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-rmulti-dist"></canvas></div></div></div>
+          <div class="card"><div class="card-header"><span class="card-title">Avg win R vs avg loss R</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-rmulti-payoff"></canvas></div></div></div>
+        </div>
+      </div>
+      <!-- Target vs Actual R (trade management efficiency) — collapsible, collapsed by default -->
+      <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdTargetEff()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">Target vs Actual R (Trade Management)</span>
+        <svg id="trd-targeteff-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="trd-targeteff-body" style="display:none">
+        <div class="stats-grid" id="dash-targeteff-stats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
+          <div class="card"><div class="card-header"><span class="card-title">Outcome vs plan</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-targeteff-count"></canvas></div></div></div>
+          <div class="card"><div class="card-header"><span class="card-title">Avg R by outcome vs plan</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-targeteff-r"></canvas></div></div></div>
+        </div>
+      </div>
+      <!-- Risk-size analysis — collapsible, collapsed by default -->
+      <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdRisk()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">Performance by Risk Size</span>
+        <svg id="trd-risk-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="trd-risk-body" style="display:none">
+        <div class="stats-grid" id="dash-risk-stats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
+          <div class="card"><div class="card-header"><span class="card-title">Win rate by risk size</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-risk-wr"></canvas></div></div></div>
+          <div class="card"><div class="card-header"><span class="card-title">Avg P/L by risk size</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-risk-pl"></canvas></div></div></div>
+        </div>
+      </div>
+      <!-- Streak analysis — collapsible, collapsed by default -->
+      <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdStreak()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">Win/Loss Streaks</span>
+        <svg id="trd-streak-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="trd-streak-body" style="display:none">
+        <div class="stats-grid" id="dash-streak-stats"></div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-header"><span class="card-title">Recent win/loss sequence</span></div>
+          <div class="card-body">
+            <div id="trd-streak-strip" class="cal-streak-bar" style="overflow-x:auto;padding-bottom:2px;flex-wrap:wrap"></div>
+            <div style="display:flex;gap:14px;margin-top:8px;font-size:9px;color:var(--text3)">
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:rgba(52,201,122,.5);display:inline-block"></span>Win</span>
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:rgba(232,85,85,.45);display:inline-block"></span>Loss</span>
+              <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:var(--bg3);display:inline-block"></span>Breakeven</span>
+              <span style="margin-left:auto">most recent 60 →</span>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:22px">
+          <div class="card-header"><span class="card-title">Streak length distribution</span></div>
+          <div class="card-body"><div class="chart-wrap" style="height:180px"><canvas id="chart-streak-dist"></canvas></div></div>
+        </div>
+      </div>
+      <div class="analytics-group-label">Behavioral Patterns</div>
+      <!-- Checklist adherence analysis — collapsible, collapsed by default -->
+      <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdChecklist()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">Checklist Adherence vs. Performance</span>
+        <svg id="trd-checklist-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="trd-checklist-body" style="display:none">
+        <div class="stats-grid" id="dash-checklist-stats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
+          <div class="card"><div class="card-header"><span class="card-title">Win rate by checklist adherence</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-checklist-wr"></canvas></div></div></div>
+          <div class="card"><div class="card-header"><span class="card-title">Avg P/L by checklist adherence</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-checklist-pl"></canvas></div></div></div>
+        </div>
+      </div>
       <!-- Direction (Long/Short) analysis — collapsible, collapsed by default -->
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdDirection()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
@@ -1200,6 +1295,33 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="card"><div class="card-header"><span class="card-title">Avg P/L by entry time</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-time-pl"></canvas></div></div></div>
         </div>
       </div>
+      <!-- Hold-time analysis — collapsible, collapsed by default -->
+      <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdHold()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">Performance by Hold Time</span>
+        <svg id="trd-hold-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="trd-hold-body" style="display:none">
+        <div class="stats-grid" id="dash-hold-stats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
+          <div class="card"><div class="card-header"><span class="card-title">Win rate by hold time</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-hold-wr"></canvas></div></div></div>
+          <div class="card"><div class="card-header"><span class="card-title">Avg P/L by hold time</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-hold-pl"></canvas></div></div></div>
+        </div>
+      </div>
+      <!-- Day-of-week analysis — collapsible, collapsed by default -->
+      <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdDow()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">Performance by Day of Week</span>
+        <svg id="trd-dow-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="trd-dow-body" style="display:none">
+        <div class="stats-grid" id="dash-dow-stats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
+          <div class="card"><div class="card-header"><span class="card-title">Win rate by day of week</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-dow-wr"></canvas></div></div></div>
+          <div class="card"><div class="card-header"><span class="card-title">Avg P/L by day of week</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-dow-pl"></canvas></div></div></div>
+        </div>
+      </div>
+      <div class="analytics-group-label">Trade Composition</div>
       <!-- Asset type analysis — collapsible, collapsed by default -->
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdAssetType()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
@@ -8330,10 +8452,14 @@ function _wireDmFocusPan(){
 // filter row (session/asset-type/pair/strategy/skipped + demo-mode split), then:
 //   1. computes the 5 top stat cards (trades, win rate, total P/L, avg RR/PF, avg hold time)
 //   2. asynchronously layers estimated fees on top of the P/L card (net vs gross)
-//   3. builds the equity-curve / cum-P/L% series and draws the 4 dashboard charts via
+//   3. builds the equity-curve / cum-P/L% series and draws the 5 dashboard charts via
 //      Chart.js (cumpl, wl, strat, pair, equity — cached on the global `charts` map so
 //      repeated renders destroy+recreate instead of stacking canvases)
-//   4. renders the "recent trades" mini-table
+//   4. calls _renderDrawdownAnalytics() for the always-visible Drawdown section right
+//      below the equity curve (moved here from Trade Analytics, where it used to be
+//      collapsible — same underlying trades/equity series, so it reuses `trades` and
+//      `allSess` already computed above)
+//   5. renders the "recent trades" mini-table
 // To add a new stat card or chart here: compute the value from `trades` (already filtered
 // and demo/archived-aware), then either append to the `dash-stats` innerHTML string or add
 // a new `charts.xxx` block following the destroy-then-recreate pattern used below.
@@ -8484,6 +8610,9 @@ async function _renderDashboardImpl(){
   var _cvEquity=document.getElementById('chart-equity');
   if(_cvEquity)
     charts.equity=safeChart(_cvEquity.getContext('2d'),{type:'line',data:{labels:eqLabels,datasets:[{label:'Equity ($)',data:eqData,borderColor:eqColor,backgroundColor:eqBgColor,borderWidth:2,pointRadius:eqData.length<30?3:0,fill:true,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:10,color:chartColors().tick,font:{size:10}},grid:{color:chartColors().grid}},y:{ticks:{callback:function(v){return'$'+v.toLocaleString()},color:chartColors().tick,font:{size:10}},grid:{color:chartColors().grid},suggestedMin:eqMin*0.995,suggestedMax:eqMax*1.005}}}});
+  // Drawdown (moved here from Trade Analytics — it's computed from this same equity/trades
+  // series, so it lives right next to the Equity Curve it's derived from).
+  _renderDrawdownAnalytics(trades,allSess);
   var recent=trades.slice().sort(function(a,b){return new Date(b.savedAt)-new Date(a.savedAt)}).slice(0,5);
   var recentRows=recent.map(function(t){
     var win=t.winLoss===1;
@@ -8639,8 +8768,15 @@ async function _renderTradeAnalyticsImpl(){
   _renderQualityAnalytics(trades);
   _renderVolumeAnalytics(trades);
   _renderOutcomeAnalytics(trades);
+  _renderRMultipleAnalytics(trades);
+  _renderTargetEfficiencyAnalytics(trades);
+  _renderRiskSizeAnalytics(trades);
+  _renderStreakAnalytics(trades);
+  _renderChecklistAnalytics(trades);
   _renderDirectionAnalytics(trades);
   _renderTimeAnalytics(trades);
+  _renderHoldTimeAnalytics(trades);
+  _renderDowAnalytics(trades);
   _renderCategoryAnalytics(trades,'assetType','Uncategorized','dash-assettype-stats','chart-assettype-wr','chart-assettype-pl','dash-assettype-table','assetTypeWR','assetTypePL','Asset type');
   _renderCategoryAnalytics(trades,'ltf','No LTF logged','dash-ltf-stats','chart-ltf-wr','chart-ltf-pl','dash-ltf-table','ltfWR','ltfPL','LTF entry');
 }
@@ -8805,6 +8941,278 @@ function _renderOutcomeAnalytics(trades){
   var _cvOE=document.getElementById('chart-outcome-exit');
   if(_cvOE)charts.outcomeExit=safeChart(_cvOE.getContext('2d'),{type:'doughnut',data:{labels:exitLabels,datasets:[{data:exitData,backgroundColor:exitColorArr,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:c.legend,font:{size:10},padding:8,boxWidth:9}}}}});
 }
+// ── R-multiple distribution & payoff ratio ────────────
+// Breaks the single blended "Avg RR" figure (shown on the Dashboard) apart into
+// its win/loss components and a distribution histogram, so trade management
+// quality (e.g. cutting winners short, letting losers run) becomes visible.
+function _renderRMultipleAnalytics(trades){
+  trades=trades||[];
+  var c=chartColors();
+  var rrTrades=trades.filter(function(t){return t.actualRR!=null;});
+  var winRs=rrTrades.filter(function(t){return t.actualRR>0;}).map(function(t){return t.actualRR;});
+  var lossRs=rrTrades.filter(function(t){return t.actualRR<0;}).map(function(t){return t.actualRR;});
+  var avgWinR=winRs.length?winRs.reduce(function(a,v){return a+v;},0)/winRs.length:null;
+  var avgLossR=lossRs.length?lossRs.reduce(function(a,v){return a+v;},0)/lossRs.length:null;
+  var payoff=(avgWinR!=null&&avgLossR!=null&&avgLossR!==0)?(avgWinR/Math.abs(avgLossR)):null;
+  var statsEl=document.getElementById('dash-rmulti-stats');
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="stat-card"><div class="stat-label">R-tracked trades</div><div class="stat-value">'+rrTrades.length+'</div><div class="stat-sub">of '+trades.length+' in current filter</div></div>'+
+      '<div class="stat-card green"><div class="stat-label">Avg winning R</div><div class="stat-value pos">'+(avgWinR!=null?'+'+avgWinR.toFixed(2)+'R':'—')+'</div><div class="stat-sub">'+(winRs.length?winRs.length+' winning trades':'no wins tracked')+'</div></div>'+
+      '<div class="stat-card red"><div class="stat-label">Avg losing R</div><div class="stat-value neg">'+(avgLossR!=null?avgLossR.toFixed(2)+'R':'—')+'</div><div class="stat-sub">'+(lossRs.length?lossRs.length+' losing trades':'no losses tracked')+'</div></div>'+
+      '<div class="stat-card '+(payoff!=null?(payoff>=1?'green':'amber'):'')+'"><div class="stat-label">Payoff ratio</div><div class="stat-value" style="font-size:20px">'+(payoff!=null?payoff.toFixed(2)+' : 1':'—')+'</div><div class="stat-sub">avg win R ÷ avg loss R</div></div>';
+  }
+  // ── Distribution histogram (7 fixed bins spanning heavy losses to big winners) ──
+  var binLabels=['≤ -2R','-2R to -1R','-1R to 0R','0R to 1R','1R to 2R','2R to 3R','3R+'];
+  function binIndex(r){
+    if(r<=-2)return 0;if(r<=-1)return 1;if(r<0)return 2;if(r<1)return 3;if(r<2)return 4;if(r<3)return 5;return 6;
+  }
+  var bins=[0,0,0,0,0,0,0];
+  rrTrades.forEach(function(t){bins[binIndex(t.actualRR)]++;});
+  var binColors=binLabels.map(function(l,i){return i<3?c.red:c.green;});
+  if(charts.rmultiDist)charts.rmultiDist.destroy();
+  var _cvRD=document.getElementById('chart-rmulti-dist');
+  if(_cvRD)charts.rmultiDist=safeChart(_cvRD.getContext('2d'),{type:'bar',data:{labels:binLabels,datasets:[{label:'Trades',data:bins,backgroundColor:binColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:9}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},stepSize:1,precision:0},grid:{color:c.grid}}}}});
+  // ── Avg win R vs avg loss R (simple 2-bar payoff comparison) ──
+  var payoffData=[avgWinR!=null?parseFloat(avgWinR.toFixed(2)):0,avgLossR!=null?parseFloat(avgLossR.toFixed(2)):0];
+  if(charts.rmultiPayoff)charts.rmultiPayoff.destroy();
+  var _cvRP=document.getElementById('chart-rmulti-payoff');
+  if(_cvRP)charts.rmultiPayoff=safeChart(_cvRP.getContext('2d'),{type:'bar',data:{labels:['Avg win R','Avg loss R'],datasets:[{label:'R',data:payoffData,backgroundColor:[c.green,c.red],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:11}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'R';}},grid:{color:c.grid}}}}});
+}
+// ── Target vs Actual R (trade management efficiency) ──────────
+// Compares each winning trade's actualRR against the targetRR it was planned
+// against, to reveal whether winners are typically cut short of plan or run
+// to (or past) the original target. Losing trades are governed by the stop
+// rather than the target, so they're bucketed separately as a baseline.
+function _renderTargetEfficiencyAnalytics(trades){
+  trades=trades||[];
+  var c=chartColors();
+  var withTarget=trades.filter(function(t){return t.targetRR!=null&&t.targetRR>0&&t.actualRR!=null;});
+  var wins=withTarget.filter(function(t){return t.actualRR>0;});
+  var losses=withTarget.filter(function(t){return t.actualRR<=0;});
+  var hitBeat=wins.filter(function(t){return t.actualRR>=t.targetRR;});
+  var cutShort=wins.filter(function(t){return t.actualRR<t.targetRR;});
+  var captureRatios=wins.map(function(t){return (t.actualRR/t.targetRR)*100;});
+  var avgCapture=captureRatios.length?captureRatios.reduce(function(a,v){return a+v;},0)/captureRatios.length:null;
+  var hitPct=wins.length?(hitBeat.length/wins.length*100):null;
+  var cutPct=wins.length?(cutShort.length/wins.length*100):null;
+  var statsEl=document.getElementById('dash-targeteff-stats');
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="stat-card"><div class="stat-label">Trades with target set</div><div class="stat-value">'+withTarget.length+'</div><div class="stat-sub">of '+trades.length+' in current filter</div></div>'+
+      '<div class="stat-card purple"><div class="stat-label">Avg target capture</div><div class="stat-value" style="font-size:20px">'+(avgCapture!=null?avgCapture.toFixed(0)+'%':'—')+'</div><div class="stat-sub">'+(wins.length?'avg of actual÷planned R · '+wins.length+' winners':'no winners with a target')+'</div></div>'+
+      '<div class="stat-card '+(hitPct!=null?'green':'')+'"><div class="stat-label">Hit or beat target</div><div class="stat-value">'+(hitPct!=null?hitPct.toFixed(0)+'%':'—')+'</div><div class="stat-sub">'+(wins.length?hitBeat.length+' of '+wins.length+' winners':'no winners with a target')+'</div></div>'+
+      '<div class="stat-card '+(cutPct!=null?'amber':'')+'"><div class="stat-label">Cut short of target</div><div class="stat-value">'+(cutPct!=null?cutPct.toFixed(0)+'%':'—')+'</div><div class="stat-sub">exited before reaching the plan</div></div>';
+  }
+  // ── Outcome-vs-plan counts ──
+  var catLabels=['Hit/beat target','Cut short','Loss'];
+  var catArrs=[hitBeat,cutShort,losses];
+  var catColors=[c.green,c.amber,c.red];
+  var countData=catArrs.map(function(a){return a.length;});
+  if(charts.targetEffCount)charts.targetEffCount.destroy();
+  var _cvTC=document.getElementById('chart-targeteff-count');
+  if(_cvTC)charts.targetEffCount=safeChart(_cvTC.getContext('2d'),{type:'bar',data:{labels:catLabels,datasets:[{label:'Trades',data:countData,backgroundColor:catColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},stepSize:1,precision:0},grid:{color:c.grid}}}}});
+  // ── Avg actual R per outcome-vs-plan category ──
+  var rData=catArrs.map(function(a){
+    if(!a.length)return 0;
+    return parseFloat((a.reduce(function(s,t){return s+t.actualRR;},0)/a.length).toFixed(2));
+  });
+  if(charts.targetEffR)charts.targetEffR.destroy();
+  var _cvTR=document.getElementById('chart-targeteff-r');
+  if(_cvTR)charts.targetEffR=safeChart(_cvTR.getContext('2d'),{type:'bar',data:{labels:catLabels,datasets:[{label:'Avg R',data:rData,backgroundColor:catColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'R';}},grid:{color:c.grid}}}}});
+}
+// ── Risk-size bucket breakdown (uses riskpct) ──────────
+// Buckets trades by the % of account risked, to reveal whether oversized
+// bets correlate with weaker discipline/outcomes than the trader's normal
+// sizing — a pattern a single blended win rate can't show.
+function _renderRiskSizeAnalytics(trades){
+  trades=trades||[];
+  var c=chartColors();
+  var riskLabels=['<0.5%','0.5–1%','1–2%','2%+'];
+  var buckets=[[],[],[],[]];
+  function bucketIndex(pct){
+    if(pct<0.5)return 0;if(pct<1)return 1;if(pct<2)return 2;return 3;
+  }
+  trades.forEach(function(t){
+    if(t.riskpct==null||!(t.riskpct>0))return;
+    buckets[bucketIndex(parseFloat(t.riskpct))].push(t);
+  });
+  var riskedCount=buckets.reduce(function(a,b){return a+b.length;},0);
+  var bestIdx=-1,bestWR=-1;
+  buckets.forEach(function(b,i){var wr=winRate(b);if(b.length>=3&&wr!=null&&wr>bestWR){bestWR=wr;bestIdx=i;}});
+  var worstIdx=-1,worstPL=Infinity;
+  buckets.forEach(function(b,i){var pl=avgPLof(b);if(b.length>=3&&pl!=null&&pl<worstPL){worstPL=pl;worstIdx=i;}});
+  var statsEl=document.getElementById('dash-risk-stats');
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="stat-card"><div class="stat-label">Trades with risk % logged</div><div class="stat-value">'+riskedCount+'</div><div class="stat-sub">of '+trades.length+' in current filter</div></div>'+
+      '<div class="stat-card '+(bestIdx>=0?'green':'')+'"><div class="stat-label">Best risk-size bucket</div><div class="stat-value" style="font-size:15px">'+(bestIdx>=0?riskLabels[bestIdx]:'—')+'</div><div class="stat-sub">'+(bestIdx>=0?bestWR.toFixed(0)+'% win rate · '+buckets[bestIdx].length+' trades':'need 3+ trades in a bucket')+'</div></div>'+
+      '<div class="stat-card '+(worstIdx>=0?'red':'')+'"><div class="stat-label">Weakest risk-size bucket</div><div class="stat-value" style="font-size:15px">'+(worstIdx>=0?riskLabels[worstIdx]:'—')+'</div><div class="stat-sub">'+(worstIdx>=0?'$'+worstPL.toFixed(0)+' avg P/L · '+buckets[worstIdx].length+' trades':'need 3+ trades in a bucket')+'</div></div>';
+  }
+  var wrData=buckets.map(function(b){var wr=winRate(b);return wr!=null?parseFloat(wr.toFixed(1)):0;});
+  var wrColors=buckets.map(function(b){var wr=winRate(b);return wr!=null&&wr>=50?c.green:c.red;});
+  if(charts.riskWR)charts.riskWR.destroy();
+  var _cvRW=document.getElementById('chart-risk-wr');
+  if(_cvRW)charts.riskWR=safeChart(_cvRW.getContext('2d'),{type:'bar',data:{labels:riskLabels,datasets:[{label:'Win rate %',data:wrData,backgroundColor:wrColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y+'% win rate ('+buckets[ctx.dataIndex].length+' trades)';}}}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},suggestedMax:100}}}});
+  var plData=buckets.map(function(b){var v=avgPLof(b);return v!=null?parseFloat(v.toFixed(2)):0;});
+  if(charts.riskPL)charts.riskPL.destroy();
+  var _cvRPl=document.getElementById('chart-risk-pl');
+  if(_cvRPl)charts.riskPL=safeChart(_cvRPl.getContext('2d'),{type:'bar',data:{labels:riskLabels,datasets:[{label:'Avg P/L ($)',data:plData,backgroundColor:plData.map(function(v){return v>=0?c.green:c.red;}),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return'$'+v;}},grid:{color:c.grid}}}}});
+}
+// ── Win/loss streak analysis ──────────────────────────
+// Walks the filtered trades in chronological order (same ordering as the
+// equity curve) to find the longest winning/losing runs and the streak
+// currently in progress — previously this only existed buried inside the
+// single-session AI analyzer's text output (max consecutive losses).
+// Breakeven trades (winLoss===0.5) close out whatever streak was running
+// without extending either counter.
+function _renderStreakAnalytics(trades){
+  trades=trades||[];
+  var c=chartColors();
+  var seq=trades.filter(function(t){return t.winLoss===1||t.winLoss===0||t.winLoss===0.5;})
+    .slice()
+    .sort(function(a,b){return new Date(a.entryTime||a.savedAt)-new Date(b.entryTime||b.savedAt);});
+  var winStreaks=[],lossStreaks=[];
+  var curType=null,curLen=0;
+  seq.forEach(function(t){
+    if(t.winLoss===1){
+      if(curType==='W'){curLen++;}else{if(curType==='L')lossStreaks.push(curLen);curType='W';curLen=1;}
+    } else if(t.winLoss===0){
+      if(curType==='L'){curLen++;}else{if(curType==='W')winStreaks.push(curLen);curType='L';curLen=1;}
+    } else { // breakeven — close out whatever streak was running
+      if(curType==='W')winStreaks.push(curLen);
+      else if(curType==='L')lossStreaks.push(curLen);
+      curType=null;curLen=0;
+    }
+  });
+  if(curType==='W')winStreaks.push(curLen);
+  else if(curType==='L')lossStreaks.push(curLen);
+  var maxWinStreak=winStreaks.length?Math.max.apply(null,winStreaks):0;
+  var maxLossStreak=lossStreaks.length?Math.max.apply(null,lossStreaks):0;
+  var curLabel=curType?(curLen+' '+(curType==='W'?(curLen>1?'wins':'win'):(curLen>1?'losses':'loss'))):'—';
+  var statsEl=document.getElementById('dash-streak-stats');
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="stat-card"><div class="stat-label">Trades analyzed</div><div class="stat-value">'+seq.length+'</div><div class="stat-sub">chronological, current filter</div></div>'+
+      '<div class="stat-card '+(maxWinStreak?'green':'')+'"><div class="stat-label">Longest win streak</div><div class="stat-value">'+(maxWinStreak||'—')+'</div><div class="stat-sub">'+(maxWinStreak?'consecutive wins':'no wins recorded')+'</div></div>'+
+      '<div class="stat-card '+(maxLossStreak?'red':'')+'"><div class="stat-label">Longest loss streak</div><div class="stat-value">'+(maxLossStreak||'—')+'</div><div class="stat-sub">'+(maxLossStreak?'consecutive losses':'no losses recorded')+'</div></div>'+
+      '<div class="stat-card '+(curType==='W'?'green':(curType==='L'?'red':''))+'"><div class="stat-label">Current streak</div><div class="stat-value" style="font-size:16px">'+curLabel+'</div><div class="stat-sub">as of most recent trade</div></div>';
+  }
+  // ── Recent win/loss sequence strip (reuses the calendar's streak-day styling) ──
+  var stripTrades=seq.slice(-60);
+  var stripEl=document.getElementById('trd-streak-strip');
+  if(stripEl){
+    stripEl.innerHTML=!stripTrades.length?'<div class="empty-state"><p>No trades yet</p></div>':stripTrades.map(function(t){
+      var cls=t.winLoss===1?'s-win':(t.winLoss===0?'s-loss':'s-off');
+      var label=t.winLoss===1?'Win':(t.winLoss===0?'Loss':'Breakeven');
+      var dateStr=(t.entryTime||t.savedAt||'').slice(0,10);
+      return '<div class="cal-streak-day '+cls+'" title="#'+escHtml(t.num||'')+' '+escHtml(t.pair||'')+' — '+label+(dateStr?' · '+dateStr:'')+'"></div>';
+    }).join('');
+  }
+  // ── Streak length distribution (win streaks vs loss streaks, grouped by length) ──
+  var lenLabels=['1','2','3','4','5+'];
+  function lenBucket(len){return len>=5?4:(len-1);}
+  var winBuckets=[0,0,0,0,0],lossBuckets=[0,0,0,0,0];
+  winStreaks.forEach(function(l){winBuckets[lenBucket(l)]++;});
+  lossStreaks.forEach(function(l){lossBuckets[lenBucket(l)]++;});
+  if(charts.streakDist)charts.streakDist.destroy();
+  var _cvSD=document.getElementById('chart-streak-dist');
+  if(_cvSD)charts.streakDist=safeChart(_cvSD.getContext('2d'),{type:'bar',data:{labels:lenLabels,datasets:[{label:'Win streaks',data:winBuckets,backgroundColor:c.green,borderRadius:4},{label:'Loss streaks',data:lossBuckets,backgroundColor:c.red,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:c.legend,font:{size:10},padding:8,boxWidth:9}}},scales:{x:{title:{display:true,text:'Streak length',color:c.tick,font:{size:10}},ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},stepSize:1,precision:0},grid:{color:c.grid}}}}});
+}
+// ── Drawdown from actual equity curve ──────────────────
+// Walks the filtered trades in the same chronological order as the Dashboard's
+// equity curve, tracking the running peak, to find the real historical max
+// drawdown ($ and %) plus the current drawdown right now. Distinct from the
+// Monte Carlo page's drawdown, which is a hypothetical simulated figure —
+// this one is computed purely from trades that actually happened.
+// Lives on the Dashboard (called from _renderDashboardImpl right after the equity
+// curve chart), so it reads the Dashboard's own session filter, not Trade Analytics'.
+function _renderDrawdownAnalytics(trades,allSess){
+  trades=trades||[];allSess=allSess||[];
+  var c=chartColors();
+  var demoOn=!!_dashDemoMode;
+  var sesF=(document.getElementById('dash-session-filter')||{}).value||'';
+  var allSessForBase=allSess.filter(function(s){return !s.archived&&(demoOn?!!s.isDemo:!s.isDemo);});
+  var baselineEquity;
+  if(sesF){
+    var thisSessB=allSessForBase.find(function(s){return s.id===sesF;});
+    baselineEquity=thisSessB?(thisSessB.startingEquity||5000):5000;
+  } else {
+    baselineEquity=allSessForBase.reduce(function(sum,s){return sum+(s.startingEquity||5000);},0)||5000;
+  }
+  var sorted=trades.slice().sort(function(a,b){return new Date(a.entryTime||a.savedAt)-new Date(b.entryTime||b.savedAt);});
+  var running=baselineEquity,peak=baselineEquity;
+  var maxDDPct=0,maxDDDollar=0,maxDDTrough=baselineEquity;
+  var ddLabels=['Start'],ddData=[0];
+  sorted.forEach(function(t){
+    var pl=parseFloat(t.plDollar)||0;
+    running+=pl;
+    if(running>peak)peak=running;
+    var ddDollar=peak-running;
+    var ddPct=peak>0?(ddDollar/peak*100):0;
+    if(ddDollar>maxDDDollar){maxDDDollar=ddDollar;maxDDPct=ddPct;maxDDTrough=running;}
+    ddLabels.push(t.entryTime?t.entryTime.slice(0,10):'#'+t.num);
+    ddData.push(parseFloat((-ddPct).toFixed(2)));
+  });
+  var currentDD=peak>0?((peak-running)/peak*100):0;
+  var statsEl=document.getElementById('dash-drawdown-stats');
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="stat-card"><div class="stat-label">Peak equity</div><div class="stat-value" style="font-size:18px">$'+peak.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+'</div><div class="stat-sub">highest point reached</div></div>'+
+      '<div class="stat-card '+(maxDDDollar>0?'red':'')+'"><div class="stat-label">Max drawdown</div><div class="stat-value neg" style="font-size:18px">'+(maxDDDollar>0?'−'+maxDDPct.toFixed(1)+'%':'0%')+'</div><div class="stat-sub">'+(maxDDDollar>0?'−$'+maxDDDollar.toFixed(2)+' peak-to-trough':'no drawdown yet')+'</div></div>'+
+      '<div class="stat-card '+(currentDD>0.05?'amber':'green')+'"><div class="stat-label">Current drawdown</div><div class="stat-value" style="font-size:18px">'+(currentDD>0.05?'−'+currentDD.toFixed(1)+'%':'At peak')+'</div><div class="stat-sub">vs. all-time-high equity now</div></div>'+
+      '<div class="stat-card"><div class="stat-label">Trough (at max DD)</div><div class="stat-value" style="font-size:18px">$'+maxDDTrough.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+'</div><div class="stat-sub">equity at the deepest point</div></div>';
+  }
+  if(charts.drawdown)charts.drawdown.destroy();
+  var _cvDD=document.getElementById('chart-drawdown');
+  if(_cvDD)charts.drawdown=safeChart(_cvDD.getContext('2d'),{type:'line',data:{labels:ddLabels,datasets:[{label:'Drawdown %',data:ddData,borderColor:c.red,backgroundColor:c.redBg,borderWidth:2,pointRadius:ddData.length<30?3:0,fill:true,tension:0.25}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:8,color:c.tick,font:{size:10}},grid:{color:c.grid}},y:{max:0,ticks:{callback:function(v){return v.toFixed(0)+'%';},color:c.tick,font:{size:10}},grid:{color:c.grid}}}}});
+}
+// ── Checklist adherence vs. performance ──────────────────
+// Buckets trades by what % of their pre-trade checklist was actually checked
+// off, to show whether following your own process correlates with better
+// outcomes. Previously this adherence score was only computed for the
+// single-session AI analyzer's text output — never bucketed or visualized.
+function _renderChecklistAnalytics(trades){
+  trades=trades||[];
+  var c=chartColors();
+  var clLabels=['<50%','50–79%','80–99%','100%'];
+  var buckets=[[],[],[],[]];
+  var scores=[];
+  function bucketIndex(pct){
+    if(pct<50)return 0;if(pct<80)return 1;if(pct<100)return 2;return 3;
+  }
+  trades.forEach(function(t){
+    if(!t.checklist||!t.checklist.length)return;
+    var total=t.checklist.length;
+    var checked=t.checklist.filter(function(ci){return ci.checked;}).length;
+    var pct=total>0?(checked/total*100):100;
+    scores.push(pct);
+    buckets[bucketIndex(pct)].push(t);
+  });
+  var clCount=buckets.reduce(function(a,b){return a+b.length;},0);
+  var avgAdherence=scores.length?scores.reduce(function(a,v){return a+v;},0)/scores.length:null;
+  var bestIdx=-1,bestWR=-1;
+  buckets.forEach(function(b,i){var wr=winRate(b);if(b.length>=3&&wr!=null&&wr>bestWR){bestWR=wr;bestIdx=i;}});
+  var worstIdx=-1,worstPL=Infinity;
+  buckets.forEach(function(b,i){var pl=avgPLof(b);if(b.length>=3&&pl!=null&&pl<worstPL){worstPL=pl;worstIdx=i;}});
+  var statsEl=document.getElementById('dash-checklist-stats');
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="stat-card"><div class="stat-label">Trades with checklist</div><div class="stat-value">'+clCount+'</div><div class="stat-sub">of '+trades.length+' in current filter</div></div>'+
+      '<div class="stat-card purple"><div class="stat-label">Avg adherence</div><div class="stat-value" style="font-size:20px">'+(avgAdherence!=null?avgAdherence.toFixed(0)+'%':'—')+'</div><div class="stat-sub">'+(clCount?'across '+clCount+' checklisted trades':'no checklists logged')+'</div></div>'+
+      '<div class="stat-card '+(bestIdx>=0?'green':'')+'"><div class="stat-label">Best adherence bucket</div><div class="stat-value" style="font-size:15px">'+(bestIdx>=0?clLabels[bestIdx]:'—')+'</div><div class="stat-sub">'+(bestIdx>=0?bestWR.toFixed(0)+'% win rate · '+buckets[bestIdx].length+' trades':'need 3+ trades in a bucket')+'</div></div>'+
+      '<div class="stat-card '+(worstIdx>=0?'red':'')+'"><div class="stat-label">Weakest adherence bucket</div><div class="stat-value" style="font-size:15px">'+(worstIdx>=0?clLabels[worstIdx]:'—')+'</div><div class="stat-sub">'+(worstIdx>=0?'$'+worstPL.toFixed(0)+' avg P/L · '+buckets[worstIdx].length+' trades':'need 3+ trades in a bucket')+'</div></div>';
+  }
+  var wrData=buckets.map(function(b){var wr=winRate(b);return wr!=null?parseFloat(wr.toFixed(1)):0;});
+  var wrColors=buckets.map(function(b){var wr=winRate(b);return wr!=null&&wr>=50?c.green:c.red;});
+  if(charts.checklistWR)charts.checklistWR.destroy();
+  var _cvCW=document.getElementById('chart-checklist-wr');
+  if(_cvCW)charts.checklistWR=safeChart(_cvCW.getContext('2d'),{type:'bar',data:{labels:clLabels,datasets:[{label:'Win rate %',data:wrData,backgroundColor:wrColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y+'% win rate ('+buckets[ctx.dataIndex].length+' trades)';}}}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},suggestedMax:100}}}});
+  var plData=buckets.map(function(b){var v=avgPLof(b);return v!=null?parseFloat(v.toFixed(2)):0;});
+  if(charts.checklistPL)charts.checklistPL.destroy();
+  var _cvCP=document.getElementById('chart-checklist-pl');
+  if(_cvCP)charts.checklistPL=safeChart(_cvCP.getContext('2d'),{type:'bar',data:{labels:clLabels,datasets:[{label:'Avg P/L ($)',data:plData,backgroundColor:plData.map(function(v){return v>=0?c.green:c.red;}),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return'$'+v;}},grid:{color:c.grid}}}}});
+}
 // ── Long vs Short breakdown ──────────────────────────
 function _renderDirectionAnalytics(trades){
   trades=trades||[];
@@ -8863,6 +9271,78 @@ function _renderTimeAnalytics(trades){
   if(charts.timePL)charts.timePL.destroy();
   var _cvTP=document.getElementById('chart-time-pl');
   if(_cvTP)charts.timePL=safeChart(_cvTP.getContext('2d'),{type:'bar',data:{labels:blockLabels,datasets:[{label:'Avg P/L ($)',data:plData,backgroundColor:plData.map(function(v){return v>=0?c.green:c.red;}),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:9}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return'$'+v;}},grid:{color:c.grid}}}}});
+}
+// ── Hold-time bucket breakdown (uses durationMin) ──────────
+// The Dashboard shows one blended "Avg hold time" figure — this breaks it
+// into buckets so a trader can see whether quick scalps or longer-held
+// trades actually perform better, instead of a single averaged number.
+function _renderHoldTimeAnalytics(trades){
+  trades=trades||[];
+  var c=chartColors();
+  var holdLabels=['<15m','15–60m','1–4h','4–24h','1d+'];
+  var buckets=[[],[],[],[],[]];
+  function bucketIndex(min){
+    if(min<15)return 0;if(min<60)return 1;if(min<240)return 2;if(min<1440)return 3;return 4;
+  }
+  trades.forEach(function(t){
+    if(t.durationMin==null||t.durationMin<0)return;
+    buckets[bucketIndex(t.durationMin)].push(t);
+  });
+  var timedCount=buckets.reduce(function(a,b){return a+b.length;},0);
+  var bestIdx=-1,bestWR=-1;
+  buckets.forEach(function(b,i){var wr=winRate(b);if(b.length>=3&&wr!=null&&wr>bestWR){bestWR=wr;bestIdx=i;}});
+  var worstIdx=-1,worstPL=Infinity;
+  buckets.forEach(function(b,i){var pl=avgPLof(b);if(b.length>=3&&pl!=null&&pl<worstPL){worstPL=pl;worstIdx=i;}});
+  var statsEl=document.getElementById('dash-hold-stats');
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="stat-card"><div class="stat-label">Trades with duration</div><div class="stat-value">'+timedCount+'</div><div class="stat-sub">of '+trades.length+' in current filter</div></div>'+
+      '<div class="stat-card '+(bestIdx>=0?'green':'')+'"><div class="stat-label">Best hold-time bucket</div><div class="stat-value" style="font-size:15px">'+(bestIdx>=0?holdLabels[bestIdx]:'—')+'</div><div class="stat-sub">'+(bestIdx>=0?bestWR.toFixed(0)+'% win rate · '+buckets[bestIdx].length+' trades':'need 3+ timed trades in a bucket')+'</div></div>'+
+      '<div class="stat-card '+(worstIdx>=0?'red':'')+'"><div class="stat-label">Weakest hold-time bucket</div><div class="stat-value" style="font-size:15px">'+(worstIdx>=0?holdLabels[worstIdx]:'—')+'</div><div class="stat-sub">'+(worstIdx>=0?'$'+worstPL.toFixed(0)+' avg P/L · '+buckets[worstIdx].length+' trades':'need 3+ timed trades in a bucket')+'</div></div>';
+  }
+  var wrData=buckets.map(function(b){var wr=winRate(b);return wr!=null?parseFloat(wr.toFixed(1)):0;});
+  var wrColors=buckets.map(function(b){var wr=winRate(b);return wr!=null&&wr>=50?c.green:c.red;});
+  if(charts.holdWR)charts.holdWR.destroy();
+  var _cvHW=document.getElementById('chart-hold-wr');
+  if(_cvHW)charts.holdWR=safeChart(_cvHW.getContext('2d'),{type:'bar',data:{labels:holdLabels,datasets:[{label:'Win rate %',data:wrData,backgroundColor:wrColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y+'% win rate ('+buckets[ctx.dataIndex].length+' trades)';}}}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},suggestedMax:100}}}});
+  var plData=buckets.map(function(b){var v=avgPLof(b);return v!=null?parseFloat(v.toFixed(2)):0;});
+  if(charts.holdPL)charts.holdPL.destroy();
+  var _cvHP=document.getElementById('chart-hold-pl');
+  if(_cvHP)charts.holdPL=safeChart(_cvHP.getContext('2d'),{type:'bar',data:{labels:holdLabels,datasets:[{label:'Avg P/L ($)',data:plData,backgroundColor:plData.map(function(v){return v>=0?c.green:c.red;}),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return'$'+v;}},grid:{color:c.grid}}}}});
+}
+// ── Day-of-week breakdown (Sun–Sat, derived from entryTime) ──────────
+function _renderDowAnalytics(trades){
+  trades=trades||[];
+  var c=chartColors();
+  var dowLabels=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var buckets=[[],[],[],[],[],[],[]];
+  trades.forEach(function(t){
+    if(!t.entryTime)return;
+    var d=new Date(t.entryTime);
+    if(isNaN(d.getTime()))return;
+    buckets[d.getDay()].push(t);
+  });
+  var datedCount=buckets.reduce(function(a,b){return a+b.length;},0);
+  var bestIdx=-1,bestWR=-1;
+  buckets.forEach(function(b,i){var wr=winRate(b);if(b.length>=3&&wr!=null&&wr>bestWR){bestWR=wr;bestIdx=i;}});
+  var worstIdx=-1,worstPL=Infinity;
+  buckets.forEach(function(b,i){var pl=avgPLof(b);if(b.length>=3&&pl!=null&&pl<worstPL){worstPL=pl;worstIdx=i;}});
+  var statsEl=document.getElementById('dash-dow-stats');
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="stat-card"><div class="stat-label">Trades with a date</div><div class="stat-value">'+datedCount+'</div><div class="stat-sub">of '+trades.length+' in current filter</div></div>'+
+      '<div class="stat-card '+(bestIdx>=0?'green':'')+'"><div class="stat-label">Best day</div><div class="stat-value" style="font-size:15px">'+(bestIdx>=0?dowLabels[bestIdx]:'—')+'</div><div class="stat-sub">'+(bestIdx>=0?bestWR.toFixed(0)+'% win rate · '+buckets[bestIdx].length+' trades':'need 3+ trades on a day')+'</div></div>'+
+      '<div class="stat-card '+(worstIdx>=0?'red':'')+'"><div class="stat-label">Weakest day</div><div class="stat-value" style="font-size:15px">'+(worstIdx>=0?dowLabels[worstIdx]:'—')+'</div><div class="stat-sub">'+(worstIdx>=0?'$'+worstPL.toFixed(0)+' avg P/L · '+buckets[worstIdx].length+' trades':'need 3+ trades on a day')+'</div></div>';
+  }
+  var wrData=buckets.map(function(b){var wr=winRate(b);return wr!=null?parseFloat(wr.toFixed(1)):0;});
+  var wrColors=buckets.map(function(b){var wr=winRate(b);return wr!=null&&wr>=50?c.green:c.red;});
+  if(charts.dowWR)charts.dowWR.destroy();
+  var _cvDoW=document.getElementById('chart-dow-wr');
+  if(_cvDoW)charts.dowWR=safeChart(_cvDoW.getContext('2d'),{type:'bar',data:{labels:dowLabels,datasets:[{label:'Win rate %',data:wrData,backgroundColor:wrColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y+'% win rate ('+buckets[ctx.dataIndex].length+' trades)';}}}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},suggestedMax:100}}}});
+  var plData=buckets.map(function(b){var v=avgPLof(b);return v!=null?parseFloat(v.toFixed(2)):0;});
+  if(charts.dowPL)charts.dowPL.destroy();
+  var _cvDoP=document.getElementById('chart-dow-pl');
+  if(_cvDoP)charts.dowPL=safeChart(_cvDoP.getContext('2d'),{type:'bar',data:{labels:dowLabels,datasets:[{label:'Avg P/L ($)',data:plData,backgroundColor:plData.map(function(v){return v>=0?c.green:c.red;}),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return'$'+v;}},grid:{color:c.grid}}}}});
 }
 // ══ Sidebar stats ══════════════════════════════════
 // Tiny always-visible summary (trade count + win rate) shown in the nav sidebar on every
@@ -9038,6 +9518,45 @@ function toggleTrdOutcome(){
     if(charts.outcomeExit)charts.outcomeExit.resize();
   }
 }
+function toggleTrdRMulti(){
+  var wasOpen=(document.getElementById('trd-rmulti-body')||{}).style.display==='block';
+  toggleCollapsible('trd-rmulti-body','trd-rmulti-chevron');
+  if(!wasOpen){
+    if(charts.rmultiDist)charts.rmultiDist.resize();
+    if(charts.rmultiPayoff)charts.rmultiPayoff.resize();
+  }
+}
+function toggleTrdTargetEff(){
+  var wasOpen=(document.getElementById('trd-targeteff-body')||{}).style.display==='block';
+  toggleCollapsible('trd-targeteff-body','trd-targeteff-chevron');
+  if(!wasOpen){
+    if(charts.targetEffCount)charts.targetEffCount.resize();
+    if(charts.targetEffR)charts.targetEffR.resize();
+  }
+}
+function toggleTrdRisk(){
+  var wasOpen=(document.getElementById('trd-risk-body')||{}).style.display==='block';
+  toggleCollapsible('trd-risk-body','trd-risk-chevron');
+  if(!wasOpen){
+    if(charts.riskWR)charts.riskWR.resize();
+    if(charts.riskPL)charts.riskPL.resize();
+  }
+}
+function toggleTrdStreak(){
+  var wasOpen=(document.getElementById('trd-streak-body')||{}).style.display==='block';
+  toggleCollapsible('trd-streak-body','trd-streak-chevron');
+  if(!wasOpen){
+    if(charts.streakDist)charts.streakDist.resize();
+  }
+}
+function toggleTrdChecklist(){
+  var wasOpen=(document.getElementById('trd-checklist-body')||{}).style.display==='block';
+  toggleCollapsible('trd-checklist-body','trd-checklist-chevron');
+  if(!wasOpen){
+    if(charts.checklistWR)charts.checklistWR.resize();
+    if(charts.checklistPL)charts.checklistPL.resize();
+  }
+}
 function toggleTrdDirection(){
   var wasOpen=(document.getElementById('trd-direction-body')||{}).style.display==='block';
   toggleCollapsible('trd-direction-body','trd-direction-chevron');
@@ -9052,6 +9571,22 @@ function toggleTrdTime(){
   if(!wasOpen){
     if(charts.timeWR)charts.timeWR.resize();
     if(charts.timePL)charts.timePL.resize();
+  }
+}
+function toggleTrdHold(){
+  var wasOpen=(document.getElementById('trd-hold-body')||{}).style.display==='block';
+  toggleCollapsible('trd-hold-body','trd-hold-chevron');
+  if(!wasOpen){
+    if(charts.holdWR)charts.holdWR.resize();
+    if(charts.holdPL)charts.holdPL.resize();
+  }
+}
+function toggleTrdDow(){
+  var wasOpen=(document.getElementById('trd-dow-body')||{}).style.display==='block';
+  toggleCollapsible('trd-dow-body','trd-dow-chevron');
+  if(!wasOpen){
+    if(charts.dowWR)charts.dowWR.resize();
+    if(charts.dowPL)charts.dowPL.resize();
   }
 }
 function toggleTrdAssetType(){
