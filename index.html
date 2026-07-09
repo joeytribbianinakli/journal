@@ -7020,11 +7020,15 @@ async function saveTrade(){
   // Exit price, exit criteria, exit date, and exit time are each optional individually
   // (a trade saved with none of them is a still-running/pending trade). But if ANY one
   // of them is filled in, all four become mandatory before the trade can be saved.
-  var _exitFieldsPresent=[!!exitVal,!!exitCritVal,!!xtimeDate,!!xtimeTime];
+  // Note: when partial TPs are in use, the f-exit field is disabled/cleared by
+  // renderPartialTPs() and the real exit price instead comes from the partial rows —
+  // so hasPartialInputs counts as "exit price provided" here.
+  var _exitPriceProvided=!!exitVal||hasPartialInputs;
+  var _exitFieldsPresent=[_exitPriceProvided,!!exitCritVal,!!xtimeDate,!!xtimeTime];
   var _exitFieldsCount=_exitFieldsPresent.filter(Boolean).length;
   if(_exitFieldsCount>0&&_exitFieldsCount<4){
     var _missingExit=[];
-    if(!exitVal)_missingExit.push('Exit price');
+    if(!_exitPriceProvided)_missingExit.push('Exit price');
     if(!exitCritVal)_missingExit.push('Exit criteria');
     if(!xtimeDate)_missingExit.push('Exit date');
     if(!xtimeTime)_missingExit.push('Exit time');
