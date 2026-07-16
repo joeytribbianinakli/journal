@@ -11523,7 +11523,17 @@ function calcCalc(){
     document.getElementById('calc-bk2').textContent='$'+calcFmt(inst.tickVal,2); document.getElementById('calc-bk2l').textContent='Tick Value';
     document.getElementById('calc-breakdown-row').style.display='grid';
   }
-  calcLastUnits=Math.round(size*(inst.contract||1));
+  // NOTE: only round to a whole unit for 'lots' (forex), where the multiplier (100,000
+  // units/lot) is large enough that rounding error is negligible. For contracts/oz/crypto,
+  // the multiplier can be small (or 1), so Math.round() can collapse a legitimate small
+  // fractional position (e.g. 0.09 MNQ contracts) down to 0 and incorrectly block logging
+  // the trade via calcLogTrade()'s `if(!calcLastUnits)` check. Keep full precision instead,
+  // trimmed to 6dp to avoid floating-point noise (e.g. 0.19139999999999998).
+  if(bType==='lots'||!bType){
+    calcLastUnits=Math.round(size*(inst.contract||1));
+  } else {
+    calcLastUnits=Math.round(size*(inst.contract||1)*1e6)/1e6;
+  }
   document.getElementById('calc-out-size').textContent=sizeDisplay;
   document.getElementById('calc-out-unit-label').textContent=sizeLabel;
   document.getElementById('calc-out-sub').textContent=calcLastUnits.toLocaleString()+' units · $'+calcFmt(posValue,2)+' notional';
