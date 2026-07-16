@@ -872,20 +872,27 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 // this no-flash preload will disagree.
 (function(){
   var THEME_VARS={
+    // ── Neutral dark ──────────────────────────────────
     'Midnight Blue':{bg:'#0f1117',bg2:'#161b27',bg3:'#1e2535',bg4:'#252d3f',border:'#2a3347',border2:'#3a4560',text:'#e8eaf0',text2:'#aab0c8',text3:'#7a8298',accent:'#4f8ef7',accent2:'#3a7aee',green:'#3ecf8e',red:'#f56565',amber:'#f6ad55',purple:'#a78bfa'},
     'Pure Black':{bg:'#000000',bg2:'#0c0c0c',bg3:'#141414',bg4:'#1c1c1c',border:'#242424',border2:'#303030',text:'#f0f0f0',text2:'#aaaaaa',text3:'#707070',accent:'#3b82f6',accent2:'#2563eb',green:'#22c55e',red:'#ef4444',amber:'#f59e0b',purple:'#a855f7'},
-    'AMOLED':{bg:'#000000',bg2:'#080808',bg3:'#101010',bg4:'#181818',border:'#1e1e1e',border2:'#282828',text:'#ffffff',text2:'#a0a8b8',text3:'#606878',accent:'#60a5fa',accent2:'#3b82f6',green:'#34d399',red:'#f87171',amber:'#fbbf24',purple:'#c084fc'},
     'Charcoal':{bg:'#111111',bg2:'#1a1a1a',bg3:'#222222',bg4:'#2a2a2a',border:'#2e2e2e',border2:'#3a3a3a',text:'#ebebeb',text2:'#aaaaaa',text3:'#787878',accent:'#60a5fa',accent2:'#3b82f6',green:'#4ade80',red:'#f87171',amber:'#fbbf24',purple:'#c084fc'},
-    'Electric Blue':{bg:'#04080f',bg2:'#080f1e',bg3:'#0d162d',bg4:'#121e3a',border:'#1a2d50',border2:'#243d6a',text:'#d8e8ff',text2:'#8aabdc',text3:'#5878a8',accent:'#3b82f6',accent2:'#1d4ed8',green:'#22c55e',red:'#ef4444',amber:'#f59e0b',purple:'#818cf8'},
+    // ── Colored dark ──────────────────────────────────
     'Cobalt':{bg:'#020b18',bg2:'#061220',bg3:'#0a1a30',bg4:'#0e2240',border:'#152f52',border2:'#1e4070',text:'#c0d8f8',text2:'#7a9ac8',text3:'#4a6888',accent:'#1d6feb',accent2:'#1558cc',green:'#10b981',red:'#dc2626',amber:'#d97706',purple:'#7c3aed'},
-    'Slate':{bg:'#0d1117',bg2:'#161c24',bg3:'#1d2633',bg4:'#253040',border:'#2a3547',border2:'#3a4a60',text:'#e6ecf4',text2:'#a8b6c8',text3:'#7a8898',accent:'#58a6ff',accent2:'#388bfd',green:'#3fb950',red:'#f85149',amber:'#d29922',purple:'#bc8cff'},
-    'Steel Blue':{bg:'#0a0c10',bg2:'#111620',bg3:'#181f2e',bg4:'#1e2838',border:'#252f45',border2:'#2e3d5a',text:'#d4ddf0',text2:'#8898b8',text3:'#5a6a88',accent:'#4f7eb8',accent2:'#3a6090',green:'#3aaa78',red:'#d85050',amber:'#c08030',purple:'#7850c0'},
+    'Emerald':{bg:'#050f0c',bg2:'#0a1712',bg3:'#0f221a',bg4:'#152c22',border:'#1c3a2c',border2:'#28503e',text:'#dcece2',text2:'#9cc0aa',text3:'#5f8570',accent:'#10b981',accent2:'#0d9668',green:'#4ade80',red:'#f87171',amber:'#fbbf24',purple:'#a78bfa'},
+    'Amethyst':{bg:'#0d0817',bg2:'#150f24',bg3:'#1e1732',bg4:'#281f40',border:'#332a4d',border2:'#453a63',text:'#e8e0f5',text2:'#b0a0d0',text3:'#786896',accent:'#8b5cf6',accent2:'#7c3aed',green:'#34d399',red:'#f87171',amber:'#fbbf24',purple:'#c4b5fd'},
+    'Rosewood':{bg:'#140a0d',bg2:'#1e1013',bg3:'#2a171b',bg4:'#361f23',border:'#432730',border2:'#5a3540',text:'#f0dde2',text2:'#c8a0ac',text3:'#8f6a74',accent:'#e11d6f',accent2:'#c81760',green:'#4ade80',red:'#f87171',amber:'#fbbf24',purple:'#c084fc'},
+    // ── Light ─────────────────────────────────────────
     'Cloud':{bg:'#f0f4f8',bg2:'#ffffff',bg3:'#e8ecf4',bg4:'#dde3ee',border:'#c8d0de',border2:'#b0bcce',text:'#1a2030',text2:'#384868',text3:'#6878a0',accent:'#2563eb',accent2:'#1d4ed8',green:'#16a34a',red:'#dc2626',amber:'#d97706',purple:'#7c3aed'},
-    'Arctic':{bg:'#f4f8ff',bg2:'#ffffff',bg3:'#eaf0ff',bg4:'#dde8ff',border:'#c0d0f0',border2:'#a0bcec',text:'#0f1a30',text2:'#2a4070',text3:'#5070a8',accent:'#1d4ed8',accent2:'#1e3a8a',green:'#15803d',red:'#b91c1c',amber:'#b45309',purple:'#6d28d9'},
-    'Linen':{bg:'#faf8f4',bg2:'#ffffff',bg3:'#f4f0e8',bg4:'#ece6d8',border:'#d8cebe',border2:'#c0b0a0',text:'#201810',text2:'#604030',text3:'#907060',accent:'#2563eb',accent2:'#1d4ed8',green:'#15803d',red:'#b91c1c',amber:'#92400e',purple:'#6d28d9'}
+    'Linen':{bg:'#faf8f4',bg2:'#ffffff',bg3:'#f4f0e8',bg4:'#ece6d8',border:'#d8cebe',border2:'#c0b0a0',text:'#201810',text2:'#604030',text3:'#907060',accent:'#2563eb',accent2:'#1d4ed8',green:'#15803d',red:'#b91c1c',amber:'#92400e',purple:'#6d28d9'},
+    'Sage':{bg:'#f2f6f0',bg2:'#ffffff',bg3:'#e8f0e4',bg4:'#dce8d6',border:'#c8d8c0',border2:'#aec4a2',text:'#182418',text2:'#3c5438',text3:'#688260',accent:'#059669',accent2:'#047857',green:'#16a34a',red:'#dc2626',amber:'#b45309',purple:'#7c3aed'}
   };
+  // Themes removed for being near-duplicates of another entry (slight darkness/hue
+  // shifts only) map to their closest surviving replacement, so anyone with an old
+  // theme saved doesn't silently fall back to the untouched :root defaults.
+  var LEGACY_THEME_MAP={'AMOLED':'Pure Black','Electric Blue':'Cobalt','Slate':'Midnight Blue','Steel Blue':'Midnight Blue','Arctic':'Cloud'};
   try{
     var name=localStorage.getItem('tj-theme');
+    if(name&&LEGACY_THEME_MAP[name])name=LEGACY_THEME_MAP[name];
     var t=name&&THEME_VARS[name];
     if(t){
       var r=document.documentElement.style;
@@ -894,7 +901,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       r.setProperty('--text',t.text);r.setProperty('--text2',t.text2);r.setProperty('--text3',t.text3);
       r.setProperty('--accent',t.accent);r.setProperty('--accent2',t.accent2);
       r.setProperty('--green',t.green);r.setProperty('--red',t.red);r.setProperty('--amber',t.amber);r.setProperty('--purple',t.purple);r.setProperty('--blue',t.accent);
-      var _lt=['Cloud','Arctic','Linen'];document.documentElement.style.setProperty('color-scheme',_lt.indexOf(name)>=0?'light':'dark');
+      var _lt=['Cloud','Linen','Sage'];document.documentElement.style.setProperty('color-scheme',_lt.indexOf(name)>=0?'light':'dark');
     }
   }catch(e){}
 })();
@@ -2351,6 +2358,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               📌 <span id="hist-pinned-label">Pinned</span>
             </button>
             <select id="hist-page-size-select" onchange="event.stopPropagation();histSetPageSize(this.value)" onclick="event.stopPropagation()" title="Trades per page" style="font-size:10px;padding:3px 22px 3px 4px;border-radius:4px;background-color:var(--bg3);border:1px solid var(--border2);color:var(--text2);width:56px">
+              <option value="10">10</option>
               <option value="25">25</option>
               <option value="50">50</option>
               <option value="100">100</option>
@@ -3088,9 +3096,15 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       #page-price-alerts .pa-asset-group.collapsed .pa-group-cards{display:none;}
       #page-price-alerts .pa-asset-group.collapsed{margin-bottom:8px;}
       #page-price-alerts .pa-alert-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;position:relative;transition:border-color .18s,background .18s;}
-      #page-price-alerts .pa-alert-card.triggered{border-color:rgba(232,160,48,.4);background:rgba(232,160,48,.05);}
-      #page-price-alerts .pa-alert-card.fired{border-color:rgba(52,201,122,.45);background:rgba(14,20,14,.85);box-shadow:0 0 0 1px rgba(52,201,122,.2) inset;}
-      #page-price-alerts .pa-alert-card.fired.fired-below{border-color:rgba(232,85,85,.45);background:rgba(20,10,10,.85);box-shadow:0 0 0 1px rgba(232,85,85,.2) inset;}
+      /* Fired/triggered card backgrounds: layer a translucent tint OVER var(--bg3) (via
+         stacked backgrounds) instead of a hardcoded dark rgba. A flat rgba(14,20,14,.85)
+         is a near-black color in its own right, so on a light theme it painted the card
+         almost black regardless of the active palette. Layering the tint on top of
+         var(--bg3) means the tint rides on whatever the current theme's card color is,
+         so it stays subtle-dark-green on dark themes and subtle-light-green on light ones. */
+      #page-price-alerts .pa-alert-card.triggered{border-color:rgba(232,160,48,.4);background:linear-gradient(rgba(232,160,48,.08),rgba(232,160,48,.08)),var(--bg3);}
+      #page-price-alerts .pa-alert-card.fired{border-color:rgba(52,201,122,.45);background:linear-gradient(rgba(52,201,122,.12),rgba(52,201,122,.12)),var(--bg3);box-shadow:0 0 0 1px rgba(52,201,122,.2) inset;}
+      #page-price-alerts .pa-alert-card.fired.fired-below{border-color:rgba(232,85,85,.45);background:linear-gradient(rgba(232,85,85,.12),rgba(232,85,85,.12)),var(--bg3);box-shadow:0 0 0 1px rgba(232,85,85,.2) inset;}
       #page-price-alerts .pa-alert-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
       #page-price-alerts .pa-alert-symbol{font-family:DM Mono,monospace;font-size:13px;font-weight:700;color:var(--text);background:var(--bg4);border:1px solid var(--border2);border-radius:5px;padding:3px 8px;}
       #page-price-alerts .pa-alert-dir{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:4px;}
@@ -3355,7 +3369,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <div id="pa-tpl-panel-body" style="display:none;margin-top:14px;">
               <div style="font-size:10px;color:var(--text3);margin-bottom:10px;line-height:1.6;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);">
                 ℹ️ This template is used for <strong>Telegram</strong> messages. <strong>Discord</strong> uses an embed format — the placeholders below ({direction}, {note} prefix, {datetime}) apply to both.
-                <br>Available: <code>{symbol}</code> <code>{direction}</code> <code>{target}</code> <code>{price}</code> <code>{note}</code> <code>{datetime}</code> — Telegram HTML tags: <code>&lt;b&gt;</code> <code>&lt;i&gt;</code> ✅
+                <br>Available: <code>{symbol}</code> <code>{direction}</code> <code>{target}</code> <code>{price}</code> <code>{provider}</code> <code>{note}</code> <code>{datetime}</code> — Telegram HTML tags: <code>&lt;b&gt;</code> <code>&lt;i&gt;</code> ✅
               </div>
               <!-- Telegram template -->
               <div class="pa-field" style="margin-bottom:6px;">
@@ -3391,6 +3405,8 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                   <div style="font-size:11px;color:var(--text3);font-style:italic;">Dynamic — target price you set</div>
                   <div style="font-size:10px;color:var(--text3);font-family:DM Mono,monospace;">{price}</div>
                   <div style="font-size:11px;color:var(--text3);font-style:italic;">Dynamic — current price when fired</div>
+                  <div style="font-size:10px;color:var(--text3);font-family:DM Mono,monospace;">{provider}</div>
+                  <div style="font-size:11px;color:var(--text3);font-style:italic;">Dynamic — data provider used (e.g. Binance)</div>
                   <div style="font-size:10px;color:var(--text3);font-family:DM Mono,monospace;">{note}</div>
                   <div style="font-size:11px;color:var(--text3);font-style:italic;">Dynamic — note you added to alert</div>
                 </div>
@@ -7526,7 +7542,7 @@ var _histSort={key:'loggedAt',dir:-1}; // default: session desc + loggedAt desc
 // Rendering is paginated purely to keep the DOM small on large journals; it does NOT
 // affect which trades are counted as "filtered" — analytics/export/prev-next nav still
 // operate on the full filtered set. Only the visible <table> rows are sliced.
-var HIST_PAGE_SIZE_OPTIONS=[25,50,100,250,'all'];
+var HIST_PAGE_SIZE_OPTIONS=[10,25,50,100,250,'all'];
 var HIST_PAGE_SIZE=(function(){
   var saved=null;
   try{saved=localStorage.getItem('tj-hist-page-size');}catch(e){}
@@ -9813,21 +9829,24 @@ async function importCSV(input){
 // name to the `lightThemes` array inside applyThemeVars() so native form controls
 // (date pickers etc.) render with light chrome instead of dark.
 var THEMES={
-  // ── Dark ──────────────────────────────────────────
+  // ── Neutral dark ──────────────────────────────────
   'Midnight Blue':{bg:'#0f1117',bg2:'#161b27',bg3:'#1e2535',bg4:'#252d3f',border:'#2a3347',border2:'#3a4560',text:'#e8eaf0',text2:'#aab0c8',text3:'#7a8298',accent:'#4f8ef7',accent2:'#3a7aee',green:'#3ecf8e',red:'#f56565',amber:'#f6ad55',purple:'#a78bfa'},
   'Pure Black':{bg:'#000000',bg2:'#0c0c0c',bg3:'#141414',bg4:'#1c1c1c',border:'#242424',border2:'#303030',text:'#f0f0f0',text2:'#aaaaaa',text3:'#707070',accent:'#3b82f6',accent2:'#2563eb',green:'#22c55e',red:'#ef4444',amber:'#f59e0b',purple:'#a855f7'},
-  'AMOLED':{bg:'#000000',bg2:'#080808',bg3:'#101010',bg4:'#181818',border:'#1e1e1e',border2:'#282828',text:'#ffffff',text2:'#a0a8b8',text3:'#606878',accent:'#60a5fa',accent2:'#3b82f6',green:'#34d399',red:'#f87171',amber:'#fbbf24',purple:'#c084fc'},
   'Charcoal':{bg:'#111111',bg2:'#1a1a1a',bg3:'#222222',bg4:'#2a2a2a',border:'#2e2e2e',border2:'#3a3a3a',text:'#ebebeb',text2:'#aaaaaa',text3:'#787878',accent:'#60a5fa',accent2:'#3b82f6',green:'#4ade80',red:'#f87171',amber:'#fbbf24',purple:'#c084fc'},
-  // ── Blue/Tinted ───────────────────────────────────
-  'Electric Blue':{bg:'#04080f',bg2:'#080f1e',bg3:'#0d162d',bg4:'#121e3a',border:'#1a2d50',border2:'#243d6a',text:'#d8e8ff',text2:'#8aabdc',text3:'#5878a8',accent:'#3b82f6',accent2:'#1d4ed8',green:'#22c55e',red:'#ef4444',amber:'#f59e0b',purple:'#818cf8'},
+  // ── Colored dark ──────────────────────────────────
   'Cobalt':{bg:'#020b18',bg2:'#061220',bg3:'#0a1a30',bg4:'#0e2240',border:'#152f52',border2:'#1e4070',text:'#c0d8f8',text2:'#7a9ac8',text3:'#4a6888',accent:'#1d6feb',accent2:'#1558cc',green:'#10b981',red:'#dc2626',amber:'#d97706',purple:'#7c3aed'},
-  'Slate':{bg:'#0d1117',bg2:'#161c24',bg3:'#1d2633',bg4:'#253040',border:'#2a3547',border2:'#3a4a60',text:'#e6ecf4',text2:'#a8b6c8',text3:'#7a8898',accent:'#58a6ff',accent2:'#388bfd',green:'#3fb950',red:'#f85149',amber:'#d29922',purple:'#bc8cff'},
-  'Steel Blue':{bg:'#0a0c10',bg2:'#111620',bg3:'#181f2e',bg4:'#1e2838',border:'#252f45',border2:'#2e3d5a',text:'#d4ddf0',text2:'#8898b8',text3:'#5a6a88',accent:'#4f7eb8',accent2:'#3a6090',green:'#3aaa78',red:'#d85050',amber:'#c08030',purple:'#7850c0'},
+  'Emerald':{bg:'#050f0c',bg2:'#0a1712',bg3:'#0f221a',bg4:'#152c22',border:'#1c3a2c',border2:'#28503e',text:'#dcece2',text2:'#9cc0aa',text3:'#5f8570',accent:'#10b981',accent2:'#0d9668',green:'#4ade80',red:'#f87171',amber:'#fbbf24',purple:'#a78bfa'},
+  'Amethyst':{bg:'#0d0817',bg2:'#150f24',bg3:'#1e1732',bg4:'#281f40',border:'#332a4d',border2:'#453a63',text:'#e8e0f5',text2:'#b0a0d0',text3:'#786896',accent:'#8b5cf6',accent2:'#7c3aed',green:'#34d399',red:'#f87171',amber:'#fbbf24',purple:'#c4b5fd'},
+  'Rosewood':{bg:'#140a0d',bg2:'#1e1013',bg3:'#2a171b',bg4:'#361f23',border:'#432730',border2:'#5a3540',text:'#f0dde2',text2:'#c8a0ac',text3:'#8f6a74',accent:'#e11d6f',accent2:'#c81760',green:'#4ade80',red:'#f87171',amber:'#fbbf24',purple:'#c084fc'},
   // ── Light ─────────────────────────────────────────
   'Cloud':{bg:'#f0f4f8',bg2:'#ffffff',bg3:'#e8ecf4',bg4:'#dde3ee',border:'#c8d0de',border2:'#b0bcce',text:'#1a2030',text2:'#384868',text3:'#6878a0',accent:'#2563eb',accent2:'#1d4ed8',green:'#16a34a',red:'#dc2626',amber:'#d97706',purple:'#7c3aed'},
-  'Arctic':{bg:'#f4f8ff',bg2:'#ffffff',bg3:'#eaf0ff',bg4:'#dde8ff',border:'#c0d0f0',border2:'#a0bcec',text:'#0f1a30',text2:'#2a4070',text3:'#5070a8',accent:'#1d4ed8',accent2:'#1e3a8a',green:'#15803d',red:'#b91c1c',amber:'#b45309',purple:'#6d28d9'},
   'Linen':{bg:'#faf8f4',bg2:'#ffffff',bg3:'#f4f0e8',bg4:'#ece6d8',border:'#d8cebe',border2:'#c0b0a0',text:'#201810',text2:'#604030',text3:'#907060',accent:'#2563eb',accent2:'#1d4ed8',green:'#15803d',red:'#b91c1c',amber:'#92400e',purple:'#6d28d9'},
+  'Sage':{bg:'#f2f6f0',bg2:'#ffffff',bg3:'#e8f0e4',bg4:'#dce8d6',border:'#c8d8c0',border2:'#aec4a2',text:'#182418',text2:'#3c5438',text3:'#688260',accent:'#059669',accent2:'#047857',green:'#16a34a',red:'#dc2626',amber:'#b45309',purple:'#7c3aed'},
 };
+// Legacy theme names (previously near-duplicate palettes that got merged away) map to
+// their closest surviving replacement, kept in sync with the identical map in the
+// theme-preload script above so a saved-but-removed name still resolves consistently.
+var LEGACY_THEME_MAP={'AMOLED':'Pure Black','Electric Blue':'Cobalt','Slate':'Midnight Blue','Steel Blue':'Midnight Blue','Arctic':'Cloud'};
 function openThemeModal(){
   var swatches=document.getElementById('theme-swatches');
   var cur=localStorage.getItem('tj-theme')||'Midnight Blue';
@@ -9856,7 +9875,7 @@ function applyThemeVars(name){
   r.setProperty('--accent',t.accent);r.setProperty('--accent2',t.accent2);
   r.setProperty('--green',t.green);r.setProperty('--red',t.red);r.setProperty('--amber',t.amber);r.setProperty('--purple',t.purple);r.setProperty('--blue',t.accent);
   // Set color-scheme so native date pickers and form controls match the theme
-  var lightThemes=['Cloud','Arctic','Linen'];
+  var lightThemes=['Cloud','Linen','Sage'];
   document.documentElement.style.setProperty('color-scheme',lightThemes.indexOf(name)>=0?'light':'dark');
   localStorage.setItem('tj-theme',name);
   // Persist to IndexedDB (canonical) and push to config JSON/GitHub
@@ -9872,6 +9891,7 @@ async function loadSavedTheme(){
   var saved=null;
   try{var s=await dbGet('settings','tj-theme');if(s&&s.value)saved=s.value;}catch(e){}
   if(!saved)saved=localStorage.getItem('tj-theme');
+  if(saved&&LEGACY_THEME_MAP[saved])saved=LEGACY_THEME_MAP[saved];// migrate removed theme names
   if(saved&&THEMES[saved])applyThemeVars(saved);
 }
 // ══ Global Esc key handler ════════════════════════
@@ -10201,10 +10221,10 @@ function _getDefaultFees(typeName){
   return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['default']));
 }
 var DEFAULT_ASSET_TYPES=[
-  {name:'Forex Major',pairs:['EUR/USD','GBP/USD','USD/JPY','USD/CHF','AUD/USD','USD/CAD','NZD/USD'], fees:JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Forex Major']))},
-  {name:'Commodity',pairs:['XAU/USD','XAG/USD','OIL/USD'], fees:JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Commodity']))},
-  {name:'Index',pairs:['MNQ','MES','US30','NAS100','US500','UK100'], fees:JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Index']))},
-  {name:'Stocks',pairs:['QQQ','QQQM','MSFT','GOOG','AMZN','NVDA','TSLA','AAPL','NFLX','RDDT','HOOD'], fees:JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Stocks']))},
+  {name:'Forex Major',pairs:['AUD/USD','EUR/USD','GBP/USD','NZD/USD','USD/CAD','USD/CHF','USD/JPY'], fees:JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Forex Major']))},
+  {name:'Commodity',pairs:['OIL/USD','XAG/USD','XAU/USD'], fees:JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Commodity']))},
+  {name:'Index',pairs:['MES','MNQ','NAS100','UK100','US30','US500'], fees:JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Index']))},
+  {name:'Stocks',pairs:['AAPL','AMZN','GOOG','HOOD','MSFT','NFLX','NVDA','QQQ','QQQM','RDDT','TSLA'], fees:JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Stocks']))},
   {name:'Crypto',pairs:['BTC/USD','ETH/USD'], fees:JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Crypto']))}
 ];
 // Load the user's asset types + pairs (or seed the built-in defaults on first run), migrating in
@@ -10214,6 +10234,16 @@ async function getAssets(){
   // Ensure all loaded asset types have a fees object (migrate old data without fees)
   var dirty = false;
   assets.forEach(function(at){ if(!at.fees){ at.fees = _getDefaultFees(at.name); dirty = true; } });
+  // Keep each asset type's pairs alphabetically sorted (ascending) — this is the single
+  // source every pair dropdown/list in the app reads from, so sorting here propagates
+  // everywhere (Assets & Pairs modal, Log Trade pair select, calculator, price alert
+  // symbol select) without needing to sort separately in each render function.
+  assets.forEach(function(at){
+    if(!at.pairs || at.pairs.length < 2) return;
+    var sorted = at.pairs.slice().sort();
+    for(var i=0;i<sorted.length;i++){ if(sorted[i]!==at.pairs[i]){ dirty = true; break; } }
+    at.pairs = sorted;
+  });
   if(dirty) await setSetting('assets', assets);
   return assets;
 }
@@ -10569,6 +10599,7 @@ async function addPair(){
   if(!at){toast('Asset type not found','err');return;}
   if(at.pairs.includes(pair)){toast('Pair already exists in '+typeName,'err');return;}
   at.pairs.push(pair);
+  at.pairs.sort();
   if(_assetsDraft!==null){_assetsDraft=assets;_assetsDraftDirty();}
   else{await saveAssetsData(assets);}
   pInp.value='';
@@ -14630,7 +14661,7 @@ var PA_KEY_FINNHUB_KEY  = 'tj-pa-finnhub-key';
 var PA_KEY_COINGECKO_KEY= 'tj-pa-coingecko-key'; // optional — works free without key too
 var PA_KEY_TEMPLATE = 'tj-pa-tg-template';
 var PA_KEY_PLACEHOLDERS = 'tj-pa-placeholders';
-var PA_DEFAULT_TEMPLATE = '\u{1F514} <b>Price Alert Triggered!</b>\n\n<b>{symbol}</b> {direction} <b>{target}</b>\nCurrent price: <b>{price}</b>\n{note}\n<i>\u{1F551} {datetime}</i>\n<i>\u2014 JournUp Price Alerts</i>';
+var PA_DEFAULT_TEMPLATE = '\u{1F514} <b>Price Alert Triggered!</b>\n\n<b>{symbol}</b> {direction} <b>{target}</b>\nCurrent price: <b>{price}</b> (via {provider})\n{note}\n<i>\u{1F551} {datetime}</i>\n<i>\u2014 JournUp Price Alerts</i>';
 // ── Provider config cache ─────────────────────────────────────
 // These four values are read on every poll tick (once per symbol per interval).
 // Caching them avoids synchronous localStorage I/O in the hot path.
@@ -14674,8 +14705,9 @@ function paGetTemplate(){
   }
   return saved;
 }
-function paBuildMessage(a, currentPrice){
+function paBuildMessage(a, currentPrice, provider){
   var ph = paGetPlaceholders();
+  var providerLabel = (typeof PA_PROVIDER_LABELS !== 'undefined' && PA_PROVIDER_LABELS[provider]) || provider || '—';
   var dir = a.dir === 'above' ? ph.dirAbove : ph.dirBelow;
   var noteStr = a.note ? '\n' + ph.notePrefix + a.note : '';
   var now = new Date();
@@ -14695,6 +14727,7 @@ function paBuildMessage(a, currentPrice){
     .replace(/\{direction\}/g, dir)
     .replace(/\{target\}/g, paFmtPrice(a.target))
     .replace(/\{price\}/g, paFmtPrice(currentPrice))
+    .replace(/\{provider\}/g, providerLabel)
     .replace(/\{note\}/g, noteStr)
     .replace(/\{datetime\}/g, dateStr);
 }
@@ -14750,6 +14783,7 @@ function paTplPreview(){
     .replace(/\{direction\}/g, dirAbove)
     .replace(/\{target\}/g, paFmtPrice(1.0850))
     .replace(/\{price\}/g, paFmtPrice(1.0851))
+    .replace(/\{provider\}/g, 'Oanda')
     .replace(/\{note\}/g, '')
     .replace(/\{datetime\}/g, sampleDate);
   prev.textContent = txt.replace(/<[^>]+>/g, '');
@@ -16402,7 +16436,9 @@ function paCheckAlerts(sym, price){
   }
 }
 function paFireAlert(a, currentPrice){
-  var msg = paBuildMessage(a, currentPrice);
+  var _paProvAssetType = (typeof paDetectAssetType === 'function') ? paDetectAssetType(a.symbol.toUpperCase()) : null;
+  var _paProvUsed = (_paProvAssetType && _paActiveProviders[_paProvAssetType]) || _paLastProvider || '';
+  var msg = paBuildMessage(a, currentPrice, _paProvUsed);
   if(paIsConfigured()){
     paTgSendMessage(msg, function(ok, messageId){
       if(!ok){ console.warn('PA: Telegram send failed for', a.symbol); return; }
@@ -17459,6 +17495,7 @@ function cfDownloadWorker(){
  *                                                                              old. Runs on the cron schedule, so
  *                                                                              it works even when the app isn't open.
  */
+
 function corsHeaders(origin) {
   return {
     'Access-Control-Allow-Origin': origin || '*',
@@ -17473,12 +17510,15 @@ function jsonRes(data, status, origin) {
     headers: Object.assign({ 'Content-Type': 'application/json' }, corsHeaders(origin)),
   });
 }
+
 addEventListener('fetch', function(event) {
   event.respondWith(handleRequest(event.request));
 });
+
 addEventListener('scheduled', function(event) {
   event.waitUntil(paCheckAll());
 });
+
 async function handleRequest(request) {
   var origin = request.headers.get('Origin');
   if (request.method === 'OPTIONS') {
@@ -17492,6 +17532,7 @@ async function handleRequest(request) {
   var url = new URL(request.url);
   var path = url.pathname.replace(/\/+$/, '');
   var method = request.method;
+
   if (path === '/config' && method === 'POST') {
     var body = await request.json().catch(function() { return null; });
     if (!body) return jsonRes({ error: 'Invalid JSON' }, 400, origin);
@@ -17574,6 +17615,7 @@ async function handleRequest(request) {
   }
   return jsonRes({ error: 'Not found' }, 404, origin);
 }
+
 async function paCheckAll() {
   var cfgRaw = await JOURNUP_KV.get('config');
   if (!cfgRaw) return;
@@ -17585,10 +17627,12 @@ async function paCheckAll() {
   var alerts = JSON.parse(alertsRaw);
   var changed = false;
   var logEntries = [];
+
   var active = alerts.filter(function(a) { return !a.fired; });
   if (active.length) {
     var bySymbol = {};
     active.forEach(function(a) { if (!bySymbol[a.symbol]) bySymbol[a.symbol] = []; bySymbol[a.symbol].push(a); });
+
     await Promise.all(Object.keys(bySymbol).map(async function(sym) {
       var result = await fetchPriceWithMeta(sym, cfg);
       if (result === null) return;
@@ -17601,13 +17645,14 @@ async function paCheckAll() {
         var idx = alerts.findIndex(function(x) { return x.id === a.id; });
         if (idx !== -1) { alerts[idx].fired = true; alerts[idx].firedAt = Date.now(); alerts[idx].firedPrice = price; }
         changed = true;
-        var tgMsgId = await sendTelegram(buildMessage(a, price, cfg), cfg);
+        var tgMsgId = await sendTelegram(buildMessage(a, price, cfg, result.provider), cfg);
         if (tgMsgId && idx !== -1) alerts[idx].tgMessageId = tgMsgId;
-        if (cfg.discordWebhook) await sendDiscord(buildDiscordEmbed(a, price, cfg), cfg.discordWebhook);
+        if (cfg.discordWebhook) await sendDiscord(buildDiscordEmbed(a, price, cfg, result.provider), cfg.discordWebhook);
         logEntries.push({ id: a.id, symbol: a.symbol, dir: a.dir, target: a.target, price: price, note: a.note || '', firedAt: Date.now() });
       }
     }));
   }
+
   // Auto-delete fired alert Telegram messages once the configured retention
   // period has passed. Mirrors the page's own (browser-side) cleanup logic,
   // but runs here too so it still happens on schedule even if the app/browser
@@ -17627,6 +17672,7 @@ async function paCheckAll() {
       }
     }
   }
+
   if (changed) await JOURNUP_KV.put('alerts', JSON.stringify(alerts));
   if (logEntries.length) {
     var existingRaw = await JOURNUP_KV.get('trigger_log');
@@ -17634,12 +17680,14 @@ async function paCheckAll() {
     await JOURNUP_KV.put('trigger_log', JSON.stringify(log));
   }
 }
+
 // Default asset-detection lists — kept in sync with the page's paDetectAssetType.
 // If the page sends cfg.knownCrypto / cfg.commodities / cfg.indices in the config
 // payload, those override these defaults so the page stays the single source of truth.
 var DEFAULT_KNOWN_CRYPTO = ['BTC','ETH','BNB','SOL','XRP','ADA','DOGE','AVAX','DOT','MATIC','LTC','LINK','UNI','ATOM','TRX','TON','SHIB'];
 var DEFAULT_COMMODITIES  = ['XAUUSD','XAGUSD','GOLD','SILVER','OIL','CRUDE','WTI','BRENT','NATGAS','CORN','WHEAT'];
 var DEFAULT_INDICES      = ['US30','US500','SP500','SPX','NAS100','NASDAQ','DAX','UK100','GDAXI','YM=F','ES=F','NQ=F'];
+
 // Default provider chains — overrideable via cfg.providerChain sent from the page.
 var DEFAULT_PROVIDER_CHAIN = {
   crypto:    ['binance','coingecko','oanda','yahoo'],
@@ -17648,6 +17696,7 @@ var DEFAULT_PROVIDER_CHAIN = {
   stock:     ['finnhub','av','yahoo'],
   index:     ['finnhub','av','yahoo']
 };
+
 function detectAssetType(sym, cfg) {
   var u = sym.toUpperCase();
   var crypto      = (cfg && cfg.knownCrypto)  || DEFAULT_KNOWN_CRYPTO;
@@ -17661,6 +17710,7 @@ function detectAssetType(sym, cfg) {
   if (/^[A-Z]{6}$/.test(u)) return 'forex';
   return 'stock';
 }
+
 async function fetchPriceWithMeta(sym, cfg) {
   var providerChain = (cfg && cfg.providerChain) || DEFAULT_PROVIDER_CHAIN;
   var chain = providerChain[detectAssetType(sym, cfg)] || ['yahoo'];
@@ -17682,10 +17732,12 @@ async function fetchPriceWithMeta(sym, cfg) {
   }
   return null;
 }
+
 async function fetchPrice(sym, cfg) {
   var result = await fetchPriceWithMeta(sym, cfg);
   return result ? result.price : null;
 }
+
 // Returns the Binance trading pair for a given symbol.
 // Adapts dynamically: BTCUSDT → BTCUSDT, BTCUSD → BTCUSDT, BTC → BTCUSDT
 // Does NOT hardcode coin names — works for any xUSD or xUSDT symbol.
@@ -17695,6 +17747,7 @@ function toBinancePair(sym) {
   if (/USD$/.test(u)) return u.slice(0, -3) + 'USDT'; // xUSD → xUSDT
   return u + 'USDT';                      // bare ticker → xUSDT
 }
+
 async function fetchBinance(sym) {
   var pair = toBinancePair(sym);
   var r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=' + pair);
@@ -17703,6 +17756,7 @@ async function fetchBinance(sym) {
   if (d.code) return null;               // gracefully handle Binance API error codes
   return d.price ? parseFloat(d.price) : null;
 }
+
 // CoinGecko: fast-path map for common coins whose CoinGecko ID differs from their ticker,
 // plus fully algorithmic fallback for any coin not in the map.
 // Pass 1: check CG_MAP, then try the ticker as the ID directly (works for sol, ada, doge, avax...).
@@ -17731,6 +17785,7 @@ async function fetchCoinGecko(sym, apiKey) {
   var u = sym.toUpperCase();
   var base = u.replace(/USDT$/, '').replace(/USD$/, '').toLowerCase();
   var apiSuffix = apiKey ? '&x_cg_demo_api_key=' + encodeURIComponent(apiKey) : '';
+
   async function priceById(id) {
     var url = 'https://api.coingecko.com/api/v3/simple/price?ids=' + encodeURIComponent(id) + '&vs_currencies=usd' + apiSuffix;
     var r = await fetch(url);
@@ -17738,10 +17793,12 @@ async function fetchCoinGecko(sym, apiKey) {
     var d = await r.json();
     return (d[id] && d[id].usd) ? parseFloat(d[id].usd) : null;
   }
+
   // Pass 1: fast-path map for coins whose CG ID differs from ticker, then try ticker as ID directly
   var mappedId = CG_MAP[u] || CG_MAP[base.toUpperCase()] || null;
   var price = await priceById(mappedId || base);
   if (price !== null) return price;
+
   // Pass 2: resolve via /search - picks the first result whose symbol matches exactly.
   // Only reached for unknown coins not in CG_MAP whose ticker is not their CG ID.
   try {
@@ -17757,8 +17814,10 @@ async function fetchCoinGecko(sym, apiKey) {
       }
     }
   } catch(e) {}
+
   return null;
 }
+
 // Yahoo Finance: fully algorithmic ticker derivation.
 // The only exceptions kept are commodity/index futures tickers (e.g. XAUUSD → GC=F)
 // because Yahoo uses futures contract codes that can't be derived from the symbol.
@@ -17813,6 +17872,7 @@ async function fetchYahoo(sym) {
   var meta = d.chart && d.chart.result && d.chart.result[0] && d.chart.result[0].meta;
   return (meta && meta.regularMarketPrice) ? parseFloat(meta.regularMarketPrice) : null;
 }
+
 // Alpha Vantage: fully algorithmic.
 // Forex/commodity pairs (6 chars or XAU/XAG style): split at 3 chars → CURRENCY_EXCHANGE_RATE
 // Crypto with USDT/USD suffix: strip suffix → DIGITAL_CURRENCY_DAILY vs USD
@@ -17820,6 +17880,7 @@ async function fetchYahoo(sym) {
 async function fetchAlphaVantage(sym, apiKey) {
   var u = sym.toUpperCase();
   var base = u.replace(/USDT$/, '').replace(/USD$/, '');
+
   // Forex: exactly 6 alpha chars (EURUSD, GBPJPY, XAUUSD, etc.)
   if (/^[A-Z]{6}$/.test(u)) {
     var from = u.slice(0, 3), to = u.slice(3, 6);
@@ -17827,6 +17888,7 @@ async function fetchAlphaVantage(sym, apiKey) {
     var rate = d['Realtime Currency Exchange Rate'] && d['Realtime Currency Exchange Rate']['5. Exchange Rate'];
     return rate ? parseFloat(rate) : null;
   }
+
   // Crypto: had USDT or USD suffix, or is a known short ticker that's not 6 chars
   // Use CURRENCY_EXCHANGE_RATE: from=BTC to=USD (works for any crypto AV supports)
   if (u !== base) {
@@ -17835,11 +17897,13 @@ async function fetchAlphaVantage(sym, apiKey) {
     var rate = d['Realtime Currency Exchange Rate'] && d['Realtime Currency Exchange Rate']['5. Exchange Rate'];
     return rate ? parseFloat(rate) : null;
   }
+
   // Stock / ETF / index
   var d = await (await fetch('https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=' + encodeURIComponent(u) + '&apikey=' + encodeURIComponent(apiKey))).json();
   var price = d['Global Quote'] && d['Global Quote']['05. price'];
   return price ? parseFloat(price) : null;
 }
+
 // Oanda: fully algorithmic instrument derivation.
 // Oanda format is always BASE_QUOTE with underscore (EUR_USD, XAU_USD, BTC_USD).
 // Rules:
@@ -17872,6 +17936,7 @@ async function fetchOanda(sym, apiKey, env) {
   var price = d.candles && d.candles.length && parseFloat(d.candles[d.candles.length-1].mid.c);
   return (price && !isNaN(price)) ? price : null;
 }
+
 // Finnhub: mostly pass-through for stocks.
 // For forex, Finnhub uses "OANDA:EUR_USD" format — derive it the same way as Oanda.
 // Small exceptions map only for index shorthands (US30, NAS100 etc.) that Finnhub
@@ -17904,11 +17969,13 @@ async function fetchFinnhub(sym, apiKey) {
   var d = await (await fetch('https://finnhub.io/api/v1/quote?symbol=' + encodeURIComponent(ticker) + '&token=' + encodeURIComponent(apiKey))).json();
   return (d.c && d.c !== 0) ? parseFloat(d.c) : null;
 }
+
 function fmtPrice(p) {
   if (p === null || p === undefined) return '—';
   var s = parseFloat(p).toString(), parts = s.split('.');
   return (parts.length > 1 ? parseInt(parts[0],10).toLocaleString() + '.' + parts[1] : parseInt(parts[0],10).toLocaleString());
 }
+
 function fmtDatetime(fmt) {
   var now = new Date();
   if (fmt === 'iso')       return now.toISOString();
@@ -17917,24 +17984,31 @@ function fmtDatetime(fmt) {
   // 'locale' or unset — use a readable UTC string (Workers have no locale context)
   return now.toUTCString().replace(' GMT', ' UTC');
 }
-function buildMessage(a, price, cfg) {
+
+// Human-readable labels for provider codes — kept in sync with the page's PA_PROVIDER_LABELS.
+var PROVIDER_LABELS = { binance:'Binance', coingecko:'CoinGecko', yahoo:'Yahoo Finance', av:'Alpha Vantage', oanda:'Oanda', finnhub:'Finnhub' };
+function providerLabel(p) { return PROVIDER_LABELS[p] || p || '—'; }
+
+function buildMessage(a, price, cfg, provider) {
   var dir        = a.dir === 'above' ? (cfg.msgDirAbove || '📈 rose above') : (cfg.msgDirBelow || '📉 dropped below');
   var notePrefix = cfg.notePrefix !== undefined ? cfg.notePrefix : '📝 ';
   var note       = a.note ? '\n' + notePrefix + a.note : '';
-  var tpl = cfg.msgTemplate || '🔔 <b>Price Alert Triggered!</b>\n\n<b>{symbol}</b> {direction} <b>{target}</b>\nCurrent price: <b>{price}</b>{note}\n<i>🕐 {datetime}</i>\n<i>— JournUp Price Alerts (cloud)</i>';
+  var tpl = cfg.msgTemplate || '🔔 <b>Price Alert Triggered!</b>\n\n<b>{symbol}</b> {direction} <b>{target}</b>\nCurrent price: <b>{price}</b> (via {provider}){note}\n<i>🕐 {datetime}</i>\n<i>— JournUp Price Alerts (cloud)</i>';
   var datetime   = fmtDatetime(cfg.datetimeFmt);
-  return tpl.replace(/\{symbol\}/g, a.symbol).replace(/\{direction\}/g, dir).replace(/\{target\}/g, fmtPrice(a.target)).replace(/\{price\}/g, fmtPrice(price)).replace(/\{note\}/g, note).replace(/\{datetime\}/g, datetime);
+  return tpl.replace(/\{symbol\}/g, a.symbol).replace(/\{direction\}/g, dir).replace(/\{target\}/g, fmtPrice(a.target)).replace(/\{price\}/g, fmtPrice(price)).replace(/\{note\}/g, note).replace(/\{datetime\}/g, datetime).replace(/\{provider\}/g, providerLabel(provider));
 }
-function buildDiscordEmbed(a, price, cfg) {
+
+function buildDiscordEmbed(a, price, cfg, provider) {
   var notePrefix  = cfg && cfg.notePrefix !== undefined ? cfg.notePrefix : '📝 ';
   var colorAbove  = cfg && cfg.discordColorAbove ? parseInt(cfg.discordColorAbove.replace('#',''), 16) : 0x34c97a;
   var colorBelow  = cfg && cfg.discordColorBelow ? parseInt(cfg.discordColorBelow.replace('#',''), 16) : 0xe85555;
   var footerText  = (cfg && cfg.discordFooter) || 'JournUp Price Alerts (cloud)';
   var titlePrefix = (cfg && cfg.discordTitlePrefix) || '🔔 Price Alert: ';
-  var fields = [{ name:'Direction', value: a.dir==='above'?'↑ Above':'↓ Below', inline:true },{ name:'Target', value:fmtPrice(a.target), inline:true },{ name:'Current', value:fmtPrice(price), inline:true }];
+  var fields = [{ name:'Direction', value: a.dir==='above'?'↑ Above':'↓ Below', inline:true },{ name:'Target', value:fmtPrice(a.target), inline:true },{ name:'Current', value:fmtPrice(price), inline:true },{ name:'Provider', value: providerLabel(provider), inline:true }];
   if (a.note) fields.push({ name: notePrefix ? notePrefix.trim() || 'Note' : 'Note', value: a.note });
   return { embeds:[{ title: titlePrefix + a.symbol, color: a.dir==='above' ? colorAbove : colorBelow, fields:fields, footer:{text: footerText}, timestamp:new Date().toISOString() }] };
 }
+
 async function sendTelegram(text, cfg) {
   if (!cfg.telegramToken || !cfg.telegramChatId) return null;
   var r = await fetch('https://api.telegram.org/bot' + cfg.telegramToken + '/sendMessage', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ chat_id:cfg.telegramChatId, text:text, parse_mode:'HTML' }) });
