@@ -16,6 +16,10 @@
  *                                                                              allows deleting messages up to 48h
  *                                                                              old. Runs on the cron schedule, so
  *                                                                              it works even when the app isn't open.
+ *
+ * SYNC NOTE (for Claude/agents): this file is duplicated verbatim inside the
+ * `cfDownloadWorker()` template string in trading_journal.html. Any change
+ * here MUST be mirrored there so the two stay an exact copy.
  */
 
 function corsHeaders(origin) {
@@ -167,9 +171,9 @@ async function paCheckAll() {
         var idx = alerts.findIndex(function(x) { return x.id === a.id; });
         if (idx !== -1) { alerts[idx].fired = true; alerts[idx].firedAt = Date.now(); alerts[idx].firedPrice = price; }
         changed = true;
-        var tgMsgId = await sendTelegram(buildMessage(a, price, cfg), cfg);
+        var tgMsgId = await sendTelegram(buildMessage(a, price, cfg, result.provider), cfg);
         if (tgMsgId && idx !== -1) alerts[idx].tgMessageId = tgMsgId;
-        if (cfg.discordWebhook) await sendDiscord(buildDiscordEmbed(a, price, cfg), cfg.discordWebhook);
+        if (cfg.discordWebhook) await sendDiscord(buildDiscordEmbed(a, price, cfg, result.provider), cfg.discordWebhook);
         logEntries.push({ id: a.id, symbol: a.symbol, dir: a.dir, target: a.target, price: price, note: a.note || '', firedAt: Date.now() });
       }
     }));
@@ -182,17 +186,23 @@ async function paCheckAll() {
   // active alerts left to price-check above — so nothing pending gets missed.
   // Note: Telegram only allows bots to delete messages up to 48 hours old;
   // deletion attempts past that window fail harmlessly and are not retried.
+  // Once the Telegram message is gone, the alert itself is dropped from the
+  // list too (rather than just clearing tgMessageId), so the Price Alerts
+  // page mirrors Telegram: same single KV write either way, no extra KV usage.
   var deleteHours = parseInt(cfg.deleteHours, 10);
   if (deleteHours > 0 && cfg.telegramToken && cfg.telegramChatId) {
     var cutoff = Date.now() - (deleteHours * 3600000);
+    var keptAlerts = [];
     for (var j = 0; j < alerts.length; j++) {
       var al = alerts[j];
       if (al.fired && al.tgMessageId && al.firedAt && al.firedAt < cutoff) {
         try { await sendTelegramDelete(al.tgMessageId, cfg); } catch(e) {}
-        al.tgMessageId = null; // clear so we don't retry every run
         changed = true;
+        continue; // drop the alert — its Telegram message is gone
       }
+      keptAlerts.push(al);
     }
+    alerts = keptAlerts;
   }
 
   if (changed) await JOURNUP_KV.put('alerts', JSON.stringify(alerts));
@@ -507,22 +517,26 @@ function fmtDatetime(fmt) {
   return now.toUTCString().replace(' GMT', ' UTC');
 }
 
-function buildMessage(a, price, cfg) {
+// Human-readable labels for provider codes — kept in sync with the page's PA_PROVIDER_LABELS.
+var PROVIDER_LABELS = { binance:'Binance', coingecko:'CoinGecko', yahoo:'Yahoo Finance', av:'Alpha Vantage', oanda:'Oanda', finnhub:'Finnhub' };
+function providerLabel(p) { return PROVIDER_LABELS[p] || p || '—'; }
+
+function buildMessage(a, price, cfg, provider) {
   var dir        = a.dir === 'above' ? (cfg.msgDirAbove || '📈 rose above') : (cfg.msgDirBelow || '📉 dropped below');
   var notePrefix = cfg.notePrefix !== undefined ? cfg.notePrefix : '📝 ';
   var note       = a.note ? '\n' + notePrefix + a.note : '';
-  var tpl = cfg.msgTemplate || '🔔 <b>Price Alert Triggered!</b>\n\n<b>{symbol}</b> {direction} <b>{target}</b>\nCurrent price: <b>{price}</b>{note}\n<i>🕐 {datetime}</i>\n<i>— JournUp Price Alerts (cloud)</i>';
+  var tpl = cfg.msgTemplate || '🔔 <b>Price Alert Triggered!</b>\n\n<b>{symbol}</b> {direction} <b>{target}</b>\nCurrent price: <b>{price}</b> (via {provider}){note}\n<i>🕐 {datetime}</i>\n<i>— JournUp Price Alerts (cloud)</i>';
   var datetime   = fmtDatetime(cfg.datetimeFmt);
-  return tpl.replace(/\{symbol\}/g, a.symbol).replace(/\{direction\}/g, dir).replace(/\{target\}/g, fmtPrice(a.target)).replace(/\{price\}/g, fmtPrice(price)).replace(/\{note\}/g, note).replace(/\{datetime\}/g, datetime);
+  return tpl.replace(/\{symbol\}/g, a.symbol).replace(/\{direction\}/g, dir).replace(/\{target\}/g, fmtPrice(a.target)).replace(/\{price\}/g, fmtPrice(price)).replace(/\{note\}/g, note).replace(/\{datetime\}/g, datetime).replace(/\{provider\}/g, providerLabel(provider));
 }
 
-function buildDiscordEmbed(a, price, cfg) {
+function buildDiscordEmbed(a, price, cfg, provider) {
   var notePrefix  = cfg && cfg.notePrefix !== undefined ? cfg.notePrefix : '📝 ';
   var colorAbove  = cfg && cfg.discordColorAbove ? parseInt(cfg.discordColorAbove.replace('#',''), 16) : 0x34c97a;
   var colorBelow  = cfg && cfg.discordColorBelow ? parseInt(cfg.discordColorBelow.replace('#',''), 16) : 0xe85555;
   var footerText  = (cfg && cfg.discordFooter) || 'JournUp Price Alerts (cloud)';
   var titlePrefix = (cfg && cfg.discordTitlePrefix) || '🔔 Price Alert: ';
-  var fields = [{ name:'Direction', value: a.dir==='above'?'↑ Above':'↓ Below', inline:true },{ name:'Target', value:fmtPrice(a.target), inline:true },{ name:'Current', value:fmtPrice(price), inline:true }];
+  var fields = [{ name:'Direction', value: a.dir==='above'?'↑ Above':'↓ Below', inline:true },{ name:'Target', value:fmtPrice(a.target), inline:true },{ name:'Current', value:fmtPrice(price), inline:true },{ name:'Provider', value: providerLabel(provider), inline:true }];
   if (a.note) fields.push({ name: notePrefix ? notePrefix.trim() || 'Note' : 'Note', value: a.note });
   return { embeds:[{ title: titlePrefix + a.symbol, color: a.dir==='above' ? colorAbove : colorBelow, fields:fields, footer:{text: footerText}, timestamp:new Date().toISOString() }] };
 }
