@@ -875,6 +875,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
     // ── Neutral dark ──────────────────────────────────
     'Midnight Blue':{bg:'#0f1117',bg2:'#161b27',bg3:'#1e2535',bg4:'#252d3f',border:'#2a3347',border2:'#3a4560',text:'#e8eaf0',text2:'#aab0c8',text3:'#7a8298',accent:'#4f8ef7',accent2:'#3a7aee',green:'#3ecf8e',red:'#f56565',amber:'#f6ad55',purple:'#a78bfa'},
     'Pure Black':{bg:'#000000',bg2:'#0c0c0c',bg3:'#141414',bg4:'#1c1c1c',border:'#242424',border2:'#303030',text:'#f0f0f0',text2:'#aaaaaa',text3:'#707070',accent:'#3b82f6',accent2:'#2563eb',green:'#22c55e',red:'#ef4444',amber:'#f59e0b',purple:'#a855f7'},
+    'AMOLED':{bg:'#000000',bg2:'#080808',bg3:'#101010',bg4:'#181818',border:'#1e1e1e',border2:'#282828',text:'#ffffff',text2:'#a0a8b8',text3:'#606878',accent:'#60a5fa',accent2:'#3b82f6',green:'#34d399',red:'#f87171',amber:'#fbbf24',purple:'#c084fc'},
     'Charcoal':{bg:'#111111',bg2:'#1a1a1a',bg3:'#222222',bg4:'#2a2a2a',border:'#2e2e2e',border2:'#3a3a3a',text:'#ebebeb',text2:'#aaaaaa',text3:'#787878',accent:'#60a5fa',accent2:'#3b82f6',green:'#4ade80',red:'#f87171',amber:'#fbbf24',purple:'#c084fc'},
     // ── Colored dark ──────────────────────────────────
     'Cobalt':{bg:'#020b18',bg2:'#061220',bg3:'#0a1a30',bg4:'#0e2240',border:'#152f52',border2:'#1e4070',text:'#c0d8f8',text2:'#7a9ac8',text3:'#4a6888',accent:'#1d6feb',accent2:'#1558cc',green:'#10b981',red:'#dc2626',amber:'#d97706',purple:'#7c3aed'},
@@ -889,7 +890,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
   // Themes removed for being near-duplicates of another entry (slight darkness/hue
   // shifts only) map to their closest surviving replacement, so anyone with an old
   // theme saved doesn't silently fall back to the untouched :root defaults.
-  var LEGACY_THEME_MAP={'AMOLED':'Pure Black','Electric Blue':'Cobalt','Slate':'Midnight Blue','Steel Blue':'Midnight Blue','Arctic':'Cloud'};
+  var LEGACY_THEME_MAP={'Electric Blue':'Cobalt','Slate':'Midnight Blue','Steel Blue':'Midnight Blue','Arctic':'Cloud'};
   try{
     var name=localStorage.getItem('tj-theme');
     if(name&&LEGACY_THEME_MAP[name])name=LEGACY_THEME_MAP[name];
@@ -3096,15 +3097,12 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       #page-price-alerts .pa-asset-group.collapsed .pa-group-cards{display:none;}
       #page-price-alerts .pa-asset-group.collapsed{margin-bottom:8px;}
       #page-price-alerts .pa-alert-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;position:relative;transition:border-color .18s,background .18s;}
-      /* Fired/triggered card backgrounds: layer a translucent tint OVER var(--bg3) (via
-         stacked backgrounds) instead of a hardcoded dark rgba. A flat rgba(14,20,14,.85)
-         is a near-black color in its own right, so on a light theme it painted the card
-         almost black regardless of the active palette. Layering the tint on top of
-         var(--bg3) means the tint rides on whatever the current theme's card color is,
-         so it stays subtle-dark-green on dark themes and subtle-light-green on light ones. */
-      #page-price-alerts .pa-alert-card.triggered{border-color:rgba(232,160,48,.4);background:linear-gradient(rgba(232,160,48,.08),rgba(232,160,48,.08)),var(--bg3);}
-      #page-price-alerts .pa-alert-card.fired{border-color:rgba(52,201,122,.45);background:linear-gradient(rgba(52,201,122,.12),rgba(52,201,122,.12)),var(--bg3);box-shadow:0 0 0 1px rgba(52,201,122,.2) inset;}
-      #page-price-alerts .pa-alert-card.fired.fired-below{border-color:rgba(232,85,85,.45);background:linear-gradient(rgba(232,85,85,.12),rgba(232,85,85,.12)),var(--bg3);box-shadow:0 0 0 1px rgba(232,85,85,.2) inset;}
+      /* Fired/triggered cards: a faint tint layered over var(--bg3) (not a flat rgba)
+         so it still adapts to the active theme, but kept subtle — this should read as
+         "mostly the normal card, faintly darkened/tinted" rather than a colored card. */
+      #page-price-alerts .pa-alert-card.triggered{border-color:rgba(232,160,48,.4);background:linear-gradient(rgba(232,160,48,.04),rgba(232,160,48,.04)),var(--bg3);}
+      #page-price-alerts .pa-alert-card.fired{border-color:rgba(52,201,122,.45);background:linear-gradient(rgba(52,201,122,.05),rgba(52,201,122,.05)),var(--bg3);box-shadow:0 0 0 1px rgba(52,201,122,.2) inset;}
+      #page-price-alerts .pa-alert-card.fired.fired-below{border-color:rgba(232,85,85,.45);background:linear-gradient(rgba(232,85,85,.05),rgba(232,85,85,.05)),var(--bg3);box-shadow:0 0 0 1px rgba(232,85,85,.2) inset;}
       #page-price-alerts .pa-alert-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
       #page-price-alerts .pa-alert-symbol{font-family:DM Mono,monospace;font-size:13px;font-weight:700;color:var(--text);background:var(--bg4);border:1px solid var(--border2);border-radius:5px;padding:3px 8px;}
       #page-price-alerts .pa-alert-dir{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:4px;}
@@ -9832,6 +9830,7 @@ var THEMES={
   // ── Neutral dark ──────────────────────────────────
   'Midnight Blue':{bg:'#0f1117',bg2:'#161b27',bg3:'#1e2535',bg4:'#252d3f',border:'#2a3347',border2:'#3a4560',text:'#e8eaf0',text2:'#aab0c8',text3:'#7a8298',accent:'#4f8ef7',accent2:'#3a7aee',green:'#3ecf8e',red:'#f56565',amber:'#f6ad55',purple:'#a78bfa'},
   'Pure Black':{bg:'#000000',bg2:'#0c0c0c',bg3:'#141414',bg4:'#1c1c1c',border:'#242424',border2:'#303030',text:'#f0f0f0',text2:'#aaaaaa',text3:'#707070',accent:'#3b82f6',accent2:'#2563eb',green:'#22c55e',red:'#ef4444',amber:'#f59e0b',purple:'#a855f7'},
+  'AMOLED':{bg:'#000000',bg2:'#080808',bg3:'#101010',bg4:'#181818',border:'#1e1e1e',border2:'#282828',text:'#ffffff',text2:'#a0a8b8',text3:'#606878',accent:'#60a5fa',accent2:'#3b82f6',green:'#34d399',red:'#f87171',amber:'#fbbf24',purple:'#c084fc'},
   'Charcoal':{bg:'#111111',bg2:'#1a1a1a',bg3:'#222222',bg4:'#2a2a2a',border:'#2e2e2e',border2:'#3a3a3a',text:'#ebebeb',text2:'#aaaaaa',text3:'#787878',accent:'#60a5fa',accent2:'#3b82f6',green:'#4ade80',red:'#f87171',amber:'#fbbf24',purple:'#c084fc'},
   // ── Colored dark ──────────────────────────────────
   'Cobalt':{bg:'#020b18',bg2:'#061220',bg3:'#0a1a30',bg4:'#0e2240',border:'#152f52',border2:'#1e4070',text:'#c0d8f8',text2:'#7a9ac8',text3:'#4a6888',accent:'#1d6feb',accent2:'#1558cc',green:'#10b981',red:'#dc2626',amber:'#d97706',purple:'#7c3aed'},
@@ -9846,7 +9845,7 @@ var THEMES={
 // Legacy theme names (previously near-duplicate palettes that got merged away) map to
 // their closest surviving replacement, kept in sync with the identical map in the
 // theme-preload script above so a saved-but-removed name still resolves consistently.
-var LEGACY_THEME_MAP={'AMOLED':'Pure Black','Electric Blue':'Cobalt','Slate':'Midnight Blue','Steel Blue':'Midnight Blue','Arctic':'Cloud'};
+var LEGACY_THEME_MAP={'Electric Blue':'Cobalt','Slate':'Midnight Blue','Steel Blue':'Midnight Blue','Arctic':'Cloud'};
 function openThemeModal(){
   var swatches=document.getElementById('theme-swatches');
   var cur=localStorage.getItem('tj-theme')||'Midnight Blue';
