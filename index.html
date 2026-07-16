@@ -17488,6 +17488,10 @@ function cmFetchPrices(){
 // cron schedule, fires Telegram/Discord alerts, and serves /config, /alerts,
 // and /status to the page above. Config is entirely runtime (pushed via
 // cmBuildConfig → /config) so this file rarely needs redeploying.
+//
+// SYNC NOTE (for Claude/agents): the template string below is an exact copy
+// of the standalone price-alerts-worker.js file. Whenever that file changes,
+// update this template to match verbatim (and vice versa).
 function cfDownloadWorker(){
   var src = `/**
  * JournUp Price Alerts — Cloudflare Worker
@@ -17507,6 +17511,10 @@ function cfDownloadWorker(){
  *                                                                              allows deleting messages up to 48h
  *                                                                              old. Runs on the cron schedule, so
  *                                                                              it works even when the app isn't open.
+ *
+ * SYNC NOTE (for Claude/agents): this file is duplicated verbatim inside the
+ * \`cfDownloadWorker()\` template string in trading_journal.html. Any change
+ * here MUST be mirrored there so the two stay an exact copy.
  */
 
 function corsHeaders(origin) {
@@ -17673,17 +17681,23 @@ async function paCheckAll() {
   // active alerts left to price-check above — so nothing pending gets missed.
   // Note: Telegram only allows bots to delete messages up to 48 hours old;
   // deletion attempts past that window fail harmlessly and are not retried.
+  // Once the Telegram message is gone, the alert itself is dropped from the
+  // list too (rather than just clearing tgMessageId), so the Price Alerts
+  // page mirrors Telegram: same single KV write either way, no extra KV usage.
   var deleteHours = parseInt(cfg.deleteHours, 10);
   if (deleteHours > 0 && cfg.telegramToken && cfg.telegramChatId) {
     var cutoff = Date.now() - (deleteHours * 3600000);
+    var keptAlerts = [];
     for (var j = 0; j < alerts.length; j++) {
       var al = alerts[j];
       if (al.fired && al.tgMessageId && al.firedAt && al.firedAt < cutoff) {
         try { await sendTelegramDelete(al.tgMessageId, cfg); } catch(e) {}
-        al.tgMessageId = null; // clear so we don't retry every run
         changed = true;
+        continue; // drop the alert — its Telegram message is gone
       }
+      keptAlerts.push(al);
     }
+    alerts = keptAlerts;
   }
 
   if (changed) await JOURNUP_KV.put('alerts', JSON.stringify(alerts));
@@ -18041,8 +18055,7 @@ async function sendTelegramDelete(messageId, cfg) {
   });
   var d = await r.json().catch(function(){ return {}; });
   return !!d.ok;
-}
-`;
+}`;
   var blob = new Blob([src], { type: 'text/javascript' });
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
