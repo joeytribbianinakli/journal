@@ -15297,20 +15297,27 @@ function paTgDeleteMessage(messageId){
 }
 // Delete fired alert messages older than the configured number of hours.
 // Note: Telegram only allows bots to delete messages up to 48 hours old.
+// Once a message is auto-deleted, the alert is dropped from the list too
+// (not just its tgMessageId cleared) so the Price Alerts page mirrors
+// Telegram — same behavior as the worker-side cron cleanup.
 function paTgDeleteOldMessages(){
   var hours = parseInt(localStorage.getItem('tj-pa-delete-days') || '0', 10);
   if(!hours || hours < 1) return;
   var cutoff = Date.now() - (hours * 60 * 60 * 1000);
   var changed = false;
-  _paAlerts.forEach(function(a){
-    if(!a.fired || !a.tgMessageId) return;
-    if(a.firedAt && a.firedAt < cutoff){
+  _paAlerts = _paAlerts.filter(function(a){
+    if(a.fired && a.tgMessageId && a.firedAt && a.firedAt < cutoff){
       paTgDeleteMessage(a.tgMessageId);
-      a.tgMessageId = null; // clear so we don't retry
       changed = true;
+      return false; // drop — its Telegram message is gone
     }
+    return true;
   });
-  if(changed) paSave();
+  if(changed){
+    paPruneOrphanedSymbols();
+    paSave();
+    paRender();
+  }
 }
 // ── Direction toggle ──────────────────────────────────────────
 function paSetDir(dir){
@@ -15364,6 +15371,11 @@ function paPruneOrphanedSymbols(){
   Object.keys(_paFallbackToastAt).forEach(function(sym){ if(!live.has(sym)) delete _paFallbackToastAt[sym]; });
 }
 function paDeleteAlert(id){
+  var target = _paAlerts.find(function(a){ return a.id === id; });
+  // If this alert already fired and still has a live Telegram message,
+  // deleting it here (before the auto-delete window) should remove that
+  // Telegram message too, so the two stay in sync either direction.
+  if(target && target.fired && target.tgMessageId){ paTgDeleteMessage(target.tgMessageId); }
   _paAlerts = _paAlerts.filter(function(a){ return a.id !== id; });
   paPruneOrphanedSymbols();
   paSave();
@@ -15452,6 +15464,11 @@ function paCancelEdit(){
 }
 function paClearFired(){
   var before = _paAlerts.length;
+  // Delete any still-live Telegram message for the fired alerts being
+  // cleared, so clearing early keeps Telegram in sync with the page too.
+  _paAlerts.forEach(function(a){
+    if(a.fired && a.tgMessageId) paTgDeleteMessage(a.tgMessageId);
+  });
   _paAlerts = _paAlerts.filter(function(a){ return !a.fired; });
   paPruneOrphanedSymbols();
   paSave();
@@ -15629,7 +15646,7 @@ async function paRender(){
     // ── Detail section (hidden until expanded) — full meta, note, provider chain, fired info ──
     html += '<div class="pa-detail">';
     html += '<div class="pa-alert-meta">';
-    html += '<span>Set ' + escHtml(createdStr) + '</span>';
+    html += '<span>Created on: ' + escHtml(createdStr) + '</span>';
     if(a.fired){
       // Fired alert: show the price at trigger time, not the live price.
       // paUpdatePrices skips these spans so this value is never overwritten.
@@ -15654,17 +15671,7 @@ async function paRender(){
     }
     if(a.fired && a.firedAt){
       var firedStr = new Date(a.firedAt).toLocaleDateString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-      var firedColor = a.dir === 'below' ? 'var(--red)' : 'var(--green)';
-      var firedBg    = a.dir === 'below' ? 'rgba(232,85,85,.08)'  : 'rgba(52,201,122,.08)';
-      var firedBd    = a.dir === 'below' ? 'rgba(232,85,85,.2)'   : 'rgba(52,201,122,.2)';
-      var firedIcon  = a.dir === 'below' ? '🔔' : '🔔';
-      html += '<div style="margin-top:8px;padding:8px 10px;background:' + firedBg + ';border:1px solid ' + firedBd + ';border-radius:5px;display:flex;align-items:center;gap:8px;">';
-      html += '<span style="font-size:16px;line-height:1;">' + firedIcon + '</span>';
-      html += '<div>';
-      html += '<div style="font-size:11px;font-weight:700;color:' + firedColor + ';">Alert triggered' + (a.firedByCloud ? ' <span style="font-size:9px;font-weight:700;background:rgba(77,127,255,.1);color:var(--accent);border:1px solid rgba(77,127,255,.2);border-radius:3px;padding:1px 5px;vertical-align:middle;letter-spacing:.03em;">☁ Cloud</span>' : '') + '</div>';
-      html += '<div style="font-size:10px;color:var(--text3);margin-top:1px;">at ' + escHtml(firedStr) + '</div>';
-      html += '</div>';
-      html += '</div>';
+      html += '<div class="pa-alert-note"><span style="opacity:.6;margin-right:4px;">⏱</span>Triggered on: ' + escHtml(firedStr) + (a.firedByCloud ? ' <span style="font-size:9px;font-weight:700;background:rgba(77,127,255,.1);color:var(--accent);border:1px solid rgba(77,127,255,.2);border-radius:3px;padding:1px 5px;vertical-align:middle;letter-spacing:.03em;">☁ Cloud</span>' : '') + '</div>';
     }
     // Provider + countdown footer (only for active/unfired alerts)
     if(!a.fired){
