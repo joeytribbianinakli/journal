@@ -16411,7 +16411,7 @@ function paFetchOanda(sym, apiKey, env, cb){
   });
 }
 // ── Check alerts and fire ─────────────────────────────────────
-function paCheckAlerts(sym, price){
+function paCheckAlerts(sym, price, provider){
   var fired = false;
   _paAlerts.forEach(function(a){
     if(a.fired || a.symbol !== sym) return;
@@ -16426,7 +16426,7 @@ function paCheckAlerts(sym, price){
       // Immediately update this card's DOM class for instant visual feedback
       var cardEl = document.getElementById('pa-card-' + a.id);
       if(cardEl) cardEl.className = 'pa-alert-card fired' + (a.dir === 'below' ? ' fired-below' : '');
-      paFireAlert(a, price);
+      paFireAlert(a, price, provider);
     }
   });
   if(fired){
@@ -16434,9 +16434,16 @@ function paCheckAlerts(sym, price){
     paRender();
   }
 }
-function paFireAlert(a, currentPrice){
-  var _paProvAssetType = (typeof paDetectAssetType === 'function') ? paDetectAssetType(a.symbol.toUpperCase()) : null;
-  var _paProvUsed = (_paProvAssetType && _paActiveProviders[_paProvAssetType]) || _paLastProvider || '';
+function paFireAlert(a, currentPrice, provider){
+  // Prefer the provider passed in directly (e.g. from the cloud worker's
+  // /price response, which is the only source of truth in cloud mode —
+  // _paActiveProviders is never populated there). Fall back to the
+  // asset-type tracking used by the local (non-worker) polling path.
+  var _paProvUsed = provider;
+  if(!_paProvUsed){
+    var _paProvAssetType = (typeof paDetectAssetType === 'function') ? paDetectAssetType(a.symbol.toUpperCase()) : null;
+    _paProvUsed = (_paProvAssetType && _paActiveProviders[_paProvAssetType]) || _paLastProvider || '';
+  }
   var msg = paBuildMessage(a, currentPrice, _paProvUsed);
   if(paIsConfigured()){
     paTgSendMessage(msg, function(ok, messageId){
@@ -16995,7 +17002,7 @@ function cmFetchPrices(){
       _paPrices[upper] = parseFloat(info.price);
       if(info.time) _paPriceUpdatedAt[upper] = info.time;
       // Fire alerts locally using the fresh price — was missing in cloud path
-      paCheckAlerts(upper, parseFloat(info.price));
+      paCheckAlerts(upper, parseFloat(info.price), info.provider);
       _paAlerts.forEach(function(a){
         if(a.fired || a.symbol.toUpperCase() !== upper) return;
         var chipEl = document.querySelector('[data-pa-prov="' + a.id + '"]');
@@ -17419,7 +17426,7 @@ function cmFetchPrices(){
       _paPrices[upper] = parseFloat(info.price);
       if(info.time) _paPriceUpdatedAt[upper] = info.time;
       // Fire alerts locally using the fresh price — was missing in cloud path
-      paCheckAlerts(upper, parseFloat(info.price));
+      paCheckAlerts(upper, parseFloat(info.price), info.provider);
       _paAlerts.forEach(function(a){
         if(a.fired || a.symbol.toUpperCase() !== upper) return;
         var chipEl = document.querySelector('[data-pa-prov="' + a.id + '"]');
