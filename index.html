@@ -1016,7 +1016,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="dash-filter-row">
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session type</div>
-              <select id="dash-sessiontype-filter" onchange="populateSessionSelects().then(function(){renderDashboard();updateFilterSessionSummary('dash-session-filter','dash-filter-summary')})">
+              <select id="dash-sessiontype-filter" onchange="saveSessionTypeFilterPref('dash-sessiontype-filter');populateSessionSelects().then(function(){renderDashboard();updateFilterSessionSummary('dash-session-filter','dash-filter-summary')})">
                 <option value="">All types</option>
                 <option value="live">Live</option>
                 <option value="paperlive">Paper Live</option>
@@ -1118,7 +1118,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="dash-filter-row">
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session type</div>
-              <select id="trd-sessiontype-filter" onchange="populateSessionSelects().then(function(){renderTradeAnalytics();updateFilterSessionSummary('trd-session-filter','trd-filter-summary')})">
+              <select id="trd-sessiontype-filter" onchange="saveSessionTypeFilterPref('trd-sessiontype-filter');populateSessionSelects().then(function(){renderTradeAnalytics();updateFilterSessionSummary('trd-session-filter','trd-filter-summary')})">
                 <option value="">All types</option>
                 <option value="live">Live</option>
                 <option value="paperlive">Paper Live</option>
@@ -1420,7 +1420,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="dash-filter-row">
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session type</div>
-              <select id="cal-sessiontype-filter" onchange="calPopulateSessionFilter().then(function(){calJumpToMostRecent().then(function(){renderCalendar();})})">
+              <select id="cal-sessiontype-filter" onchange="saveSessionTypeFilterPref('cal-sessiontype-filter');calPopulateSessionFilter().then(function(){calJumpToMostRecent().then(function(){renderCalendar();})})">
                 <option value="">All types</option>
                 <option value="live">Live</option>
                 <option value="paperlive">Paper Live</option>
@@ -1468,7 +1468,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <div class="ai-filter-bar">
         <div class="ai-filter-group">
           <div class="ai-filter-label">Session type</div>
-          <select id="ai-sessiontype-filter" style="font-size:11px;padding:5px 8px" onchange="aiPopulateSessionFilter()">
+          <select id="ai-sessiontype-filter" style="font-size:11px;padding:5px 8px" onchange="saveSessionTypeFilterPref('ai-sessiontype-filter');aiPopulateSessionFilter()">
             <option value="">All types</option>
             <option value="live">Live</option>
             <option value="paperlive">Paper Live</option>
@@ -2401,7 +2401,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="hist-filter-row">
             <div class="hist-filter-group">
               <div class="hist-filter-label">Session type</div>
-              <select id="flt-sessiontype" onchange="populateSessionSelects().then(function(){renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary')})">
+              <select id="flt-sessiontype" onchange="saveSessionTypeFilterPref('flt-sessiontype');populateSessionSelects().then(function(){renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary')})">
                 <option value="">All types</option>
                 <option value="live">Live</option>
                 <option value="paperlive">Paper Live</option>
@@ -2411,31 +2411,31 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Session</div>
-              <select id="flt-session" onchange="renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary')"><option value="">All sessions</option></select>
+              <select id="flt-session" onchange="saveHistFilterPref('flt-session');renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary')"><option value="">All sessions</option></select>
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Asset type</div>
-              <select id="flt-asset-type" onchange="renderHistory();updateHistChips()"><option value="">All asset types</option></select>
+              <select id="flt-asset-type" onchange="saveHistFilterPref('flt-asset-type');renderHistory();updateHistChips()"><option value="">All asset types</option></select>
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Pair</div>
-              <select id="flt-pair" onchange="renderHistory();updateHistChips()"><option value="">All pairs</option></select>
+              <select id="flt-pair" onchange="saveHistFilterPref('flt-pair');renderHistory();updateHistChips()"><option value="">All pairs</option></select>
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Direction</div>
-              <select id="flt-type" onchange="renderHistory();updateHistChips()"><option value="">Long &amp; Short</option><option value="Long">Long</option><option value="Short">Short</option></select>
+              <select id="flt-type" onchange="saveHistFilterPref('flt-type');renderHistory();updateHistChips()"><option value="">Long &amp; Short</option><option value="Long">Long</option><option value="Short">Short</option></select>
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Strategy</div>
-              <select id="flt-strategy" onchange="renderHistory();updateHistChips()"><option value="">All strategies</option></select>
+              <select id="flt-strategy" onchange="saveHistFilterPref('flt-strategy');renderHistory();updateHistChips()"><option value="">All strategies</option></select>
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Result</div>
-              <select id="flt-result" onchange="renderHistory();updateHistChips()"><option value="">Win &amp; Loss</option><option value="win">Wins</option><option value="loss">Losses</option></select>
+              <select id="flt-result" onchange="saveHistFilterPref('flt-result');renderHistory();updateHistChips()"><option value="">Win &amp; Loss</option><option value="win">Wins</option><option value="loss">Losses</option></select>
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Trade type</div>
-              <select id="flt-skipped" onchange="renderHistory();updateHistChips()">
+              <select id="flt-skipped" onchange="saveHistFilterPref('flt-skipped');renderHistory();updateHistChips()">
                 <option value="taken">Taken trades</option>
                 <option value="skipped">Skipped trades</option>
               </select>
@@ -2462,7 +2462,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
             <div class="frow" style="min-width:140px;margin-bottom:0">
               <label class="flabel">Session type</label>
-              <select id="mc-sessiontype-filter" style="font-size:12px" onchange="populateSessionSelects()">
+              <select id="mc-sessiontype-filter" style="font-size:12px" onchange="saveSessionTypeFilterPref('mc-sessiontype-filter');populateSessionSelects()">
                 <option value="">All types</option>
                 <option value="live">Live</option>
                 <option value="paperlive">Paper Live</option>
@@ -5159,6 +5159,49 @@ var SESSION_TYPE_BADGE_CLASS={live:'badge-blue',paperlive:'badge-green',backtest
 function sessionTypeOf(s){return s.type||(s.isDemo?'demo':'live');}
 // Reads a "Session type" filter select's current value; missing element = no type filter.
 function getSessionTypeFilterVal(id){var el=document.getElementById(id);return el?el.value:'';}
+// Persist a chosen "session type" filter value to localStorage (per page, keyed by element id)
+// so it's remembered as the new default next time the app loads — purely local, never synced
+// to the GitHub backup.
+var SESSIONTYPE_PREF_KEY='tj-sessiontype-filter-prefs';
+function saveSessionTypeFilterPref(id){
+  try{
+    var el=document.getElementById(id);if(!el)return;
+    var m=JSON.parse(localStorage.getItem(SESSIONTYPE_PREF_KEY)||'{}');
+    m[id]=el.value;
+    localStorage.setItem(SESSIONTYPE_PREF_KEY,JSON.stringify(m));
+  }catch(e){}
+}
+// Restores all saved "session type" filter defaults on load, before the first populate/render.
+function restoreSessionTypeFilterPrefs(){
+  try{
+    var m=JSON.parse(localStorage.getItem(SESSIONTYPE_PREF_KEY)||'{}');
+    Object.keys(m).forEach(function(id){var el=document.getElementById(id);if(el)el.value=m[id];});
+  }catch(e){}
+}
+// Persist the History page's other filter dropdowns (session/asset-type/pair/direction/
+// strategy/result/trade-type) to localStorage, same purely-local/never-synced pattern as
+// the session-type pref above — so History keeps its last-picked filters across reloads
+// and page switches without needing to be reset on every page other than History itself.
+var HIST_FILTER_PREF_KEY='tj-hist-filter-prefs';
+var HIST_FILTER_IDS=['flt-session','flt-asset-type','flt-pair','flt-type','flt-strategy','flt-result','flt-skipped'];
+function saveHistFilterPref(id){
+  try{
+    var el=document.getElementById(id);if(!el)return;
+    var m=JSON.parse(localStorage.getItem(HIST_FILTER_PREF_KEY)||'{}');
+    m[id]=el.value;
+    localStorage.setItem(HIST_FILTER_PREF_KEY,JSON.stringify(m));
+  }catch(e){}
+}
+// Restores all saved History filter defaults. Safe to call any time after the relevant
+// <select>'s options exist (dynamic ones — session/pair/strategy/asset-type — are populated
+// by populateSessionSelects()/populateFilters() first); assigning a value with no matching
+// option is a no-op, so this never throws even if a saved pair/strategy/session was deleted.
+function restoreHistFilterPrefs(){
+  try{
+    var m=JSON.parse(localStorage.getItem(HIST_FILTER_PREF_KEY)||'{}');
+    HIST_FILTER_IDS.forEach(function(id){if(m[id]===undefined)return;var el=document.getElementById(id);if(el)el.value=m[id];});
+  }catch(e){}
+}
 // Set of session ids matching the given "session type" filter's current value, or null when
 // the filter is "All types" (no restriction). Used to keep "All sessions" honoring the type
 // filter instead of showing every type once no specific session is picked.
@@ -6379,7 +6422,7 @@ function nav(id,btn){
       if(fb) fb.style.display = 'none';
     }
   }
-  if(id==='history'){populateSessionSelects().then(function(){populateFilters();renderHistory();});}
+  if(id==='history'){populateSessionSelects().then(function(){populateFilters();restoreHistFilterPrefs();renderHistory();});}
   if(id==='sessions')renderSessionsList();
   if(id==='checklist-editor'){renderChecklistEditor();}
   if(id==='pre-checklist'){preClRender();}
@@ -9629,9 +9672,10 @@ function _renderDowAnalytics(trades){
 }
 // ══ Sidebar stats ══════════════════════════════════
 // Tiny always-visible summary (trade count + win rate) shown in the nav sidebar on every
-// page, independent of whatever filters the Dashboard/Analytics pages currently have set.
-// Only excludes archived-session trades — no demo-mode split, no other filters. Called via
-// the guarded wrapper `updateSidebarStats()` after any save/delete/import so it stays fresh.
+// page, independent of whatever filters the Dashboard/Analytics pages currently have set —
+// including session type (live/paperlive/backtest/demo) and the demo-mode toggle. Only
+// excludes archived-session trades. Called via the guarded wrapper `updateSidebarStats()`
+// after any save/delete/import so it stays fresh.
 async function _updateSidebarStatsImpl(){
   var trades=await dbGetAllCached('trades');
   var sessions=await dbGetAllCached('sessions');
@@ -9899,7 +9943,7 @@ function toggleTrdLtf(){
 }
 function resetTrdFilters(){
   ['trd-session-filter','trd-pair-filter','trd-direction-filter','trd-error-filter'].forEach(function(id){var el=document.getElementById(id);if(el)el.selectedIndex=0;});
-  var tst=document.getElementById('trd-sessiontype-filter');if(tst)tst.value='backtest';
+  var tst=document.getElementById('trd-sessiontype-filter');if(tst){tst.value='backtest';saveSessionTypeFilterPref('trd-sessiontype-filter');}
   var tsk=document.getElementById('trd-skipped-filter');if(tsk)tsk.value='taken';
   _dashDemoMode=false;
   _histDemoMode=false;
@@ -10224,10 +10268,12 @@ if(!window._tjKeydownListenerRegistered){
 // to the render calls it feeds into.
 openDB().then(async function(){
   loadSavedTheme();
+  restoreSessionTypeFilterPrefs();
   await populatePairSelect();
   await populateStrategySelect();
   await populateSessionSelects();
   await populateFilters();
+  restoreHistFilterPrefs();
   await renderChecklist();
   generateTradeNum().then(function(n){var el=document.getElementById('f-num');if(el)el.value=n;});
   renderDashboard();updateSidebarStats();
