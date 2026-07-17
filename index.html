@@ -11113,9 +11113,12 @@ function flowBackToCalc(){
 }
 // Step 1 of the guided flow: open the economic calendar page (checklist review happens after)
 async function openPreChecklist() {
-  // Step 1 of flow is now the economic calendar
+  // Step 1 of flow is now the economic calendar. nav()'s `id` (which page/content loads)
+  // and `btn` (which nav item gets .active) are independent, so we load the fxstreet page
+  // but highlight the "Full trade flow" nav item that the user actually clicked — not the
+  // standalone "Economic calendar" nav item, which is a separate, direct entry point.
   _flowActive = true;
-  nav('fxstreet', document.getElementById('nav-fxstreet'));
+  nav('fxstreet', document.getElementById('nav-pre-checklist'));
 }
 // Render the pre-trade checklist page from the user's configured checklist sections and refresh the completion status
 async function preClRender() {
