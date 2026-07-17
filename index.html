@@ -263,6 +263,7 @@ table.data tbody tr:hover td{background:var(--bg3);color:var(--text)}
 .opt-pink.selected{background:rgba(240,100,170,.18);border-color:#f064aa}
 .opt-gray{background:rgba(107,115,138,.08);color:var(--text2);border-color:var(--border)}
 .opt-gray.selected{background:rgba(107,115,138,.18);border-color:var(--text2)}
+.opt-pill.locked{opacity:.25 !important;pointer-events:none;cursor:not-allowed}
 /* ── Form fields: .form-section/.frow/.flabel used by every input row in Log Trade and settings forms ── */
 .form-section{margin-bottom:20px}
 .fsec-title{font-size:9px;font-weight:700;color:var(--text2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
@@ -1005,13 +1006,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div style="display:flex;align-items:center;gap:8px">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
             <span style="font-size:13px;font-weight:600">Filters</span>
+            <span id="dash-filter-summary" style="font-size:11px;font-weight:500;color:var(--text3);padding-left:8px;border-left:1px solid var(--border)"></span>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
-            <!-- Demo toggle — stops propagation so clicking it doesn't open/close the filter panel -->
-            <button id="dash-demo-toggle" onclick="event.stopPropagation();toggleDemoMode()" title="Toggle demo data view" style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(232,160,48,.35);background:rgba(232,160,48,.08);color:var(--amber);font-family:inherit;letter-spacing:.04em;transition:all .12s">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <span id="dash-demo-label">Demo OFF</span>
-            </button>
             <svg id="dash-filter-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
         </div>
@@ -1019,7 +1016,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="dash-filter-row">
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session</div>
-              <select id="dash-session-filter" onchange="renderDashboard()"><option value="">All sessions</option></select>
+              <select id="dash-session-filter" onchange="renderDashboard();updateFilterSessionSummary('dash-session-filter','dash-filter-summary')"><option value="">All sessions</option></select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Asset type</div>
@@ -1101,12 +1098,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div style="display:flex;align-items:center;gap:8px">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
             <span style="font-size:13px;font-weight:600">Filters</span>
+            <span id="trd-filter-summary" style="font-size:11px;font-weight:500;color:var(--text3);padding-left:8px;border-left:1px solid var(--border)"></span>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
-            <button id="trd-demo-toggle" onclick="event.stopPropagation();toggleTrdDemoMode()" title="Toggle demo data view" style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(232,160,48,.35);background:rgba(232,160,48,.08);color:var(--amber);font-family:inherit;letter-spacing:.04em;transition:all .12s">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <span id="trd-demo-label">Demo OFF</span>
-            </button>
             <svg id="trd-filter-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
         </div>
@@ -1114,7 +1108,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="dash-filter-row">
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session</div>
-              <select id="trd-session-filter" onchange="renderTradeAnalytics()"><option value="">All sessions</option></select>
+              <select id="trd-session-filter" onchange="renderTradeAnalytics();updateFilterSessionSummary('trd-session-filter','trd-filter-summary')"><option value="">All sessions</option></select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Asset / Pair</div>
@@ -1396,12 +1390,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div style="display:flex;align-items:center;gap:8px">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
             <span style="font-size:13px;font-weight:600">Filters</span>
+            <span id="cal-filter-summary" style="font-size:11px;font-weight:500;color:var(--text3);padding-left:8px;border-left:1px solid var(--border)"></span>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
-            <button id="cal-demo-toggle" onclick="event.stopPropagation();toggleCalDemoMode()" title="Toggle demo data view" style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(232,160,48,.35);background:rgba(232,160,48,.08);color:var(--amber);font-family:inherit;letter-spacing:.04em;transition:all .12s">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <span id="cal-demo-label">Demo OFF</span>
-            </button>
             <svg id="cal-filter-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
         </div>
@@ -1409,7 +1400,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="dash-filter-row">
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session</div>
-              <select id="cal-session-filter" onchange="calJumpToMostRecent().then(function(){renderCalendar();})"><option value="">All sessions</option></select>
+              <select id="cal-session-filter" onchange="calJumpToMostRecent().then(function(){renderCalendar();});updateFilterSessionSummary('cal-session-filter','cal-filter-summary')"><option value="">All sessions</option></select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Trade type</div>
@@ -2342,15 +2333,13 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
               Filters
             </button>
+            <span id="hist-filter-summary" style="font-size:11px;font-weight:500;color:var(--text3);padding-left:8px;border-left:1px solid var(--border)"></span>
           </div>
           <div style="display:flex;gap:6px;align-items:center">
             <input type="text" id="flt-search" placeholder="Search pair, notes…" oninput="_debouncedRenderHistory()" onclick="event.stopPropagation()" style="font-size:12px;padding:6px 10px;width:180px">
             <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openColumnManager()" title="Customize columns">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="18"/></svg>
               Columns
-            </button>
-            <button id="hist-demo-toggle" onclick="event.stopPropagation();toggleHistDemoMode()" title="Toggle demo data view" style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(232,160,48,.35);background:rgba(232,160,48,.08);color:var(--amber);font-family:inherit;letter-spacing:.04em;transition:all .12s">
-              ✦ <span id="hist-demo-label">Demo OFF</span>
             </button>
             <button id="hist-starred-toggle" onclick="event.stopPropagation();toggleHistStarredOnly()" title="Show only starred trades" style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(232,160,48,.35);background:rgba(232,160,48,.08);color:var(--amber);font-family:inherit;letter-spacing:.04em;transition:all .12s">
               ★ <span id="hist-starred-label">Starred OFF</span>
@@ -2372,7 +2361,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="hist-filter-row">
             <div class="hist-filter-group">
               <div class="hist-filter-label">Session</div>
-              <select id="flt-session" onchange="renderHistory();updateHistChips()"><option value="">All sessions</option></select>
+              <select id="flt-session" onchange="renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary')"><option value="">All sessions</option></select>
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Asset type</div>
@@ -4168,10 +4157,21 @@ document.addEventListener('DOMContentLoaded',function(){
       <div class="sess-modal-layout" style="display:block;height:auto">
         <!-- LEFT: session fields -->
         <div class="sess-modal-left">
-          <div class="frow" style="margin-bottom:12px"><label class="flabel">Session name <span style="color:var(--text3);font-weight:400">(optional)</span></label><input type="text" id="sm-name" placeholder="e.g. Session 8 — or leave blank for auto-name"></div>
+          <div class="frow" style="margin-bottom:12px">
+            <label class="flabel">Session type</label>
+            <div class="opt-group" id="sm-type-group" style="display:flex;flex-wrap:wrap;gap:6px">
+              <span class="opt-pill opt-blue" data-val="live" onclick="selectSessionType(this)">Live</span>
+              <span class="opt-pill opt-green" data-val="paperlive" onclick="selectSessionType(this)">Paper Live</span>
+              <span class="opt-pill opt-amber" data-val="backtest" onclick="selectSessionType(this)">Backtest</span>
+              <span class="opt-pill opt-purple" data-val="demo" onclick="selectSessionType(this)">Demo</span>
+            </div>
+            <input type="hidden" id="sm-type-val" value="live">
+            <div id="sm-type-lock-hint" style="display:none;font-size:10px;color:var(--purple);margin-top:6px;line-height:1.4">✦ Locked to Demo — this session was created with the demo generator, so it must stay categorized as Demo.</div>
+          </div>
+          <div class="frow" style="margin-bottom:12px"><label class="flabel">Session name <span style="color:var(--text3);font-weight:400">(auto-generated)</span></label><input type="text" id="sm-name" placeholder="Auto-filled from type &amp; dates — edit to override"><div style="font-size:10px;color:var(--text3);margin-top:5px;line-height:1.4">Automatically built from the session number, type, and date range — updates as you change the type or dates above, e.g. <span class="mono" style="font-size:10px">[3] [Live] Jul 16 - Present [2026]</span></div></div>
           <div class="frow-inline" style="margin-bottom:12px">
-            <div class="frow"><label class="flabel">Start date</label><input type="date" id="sm-start"></div>
-            <div class="frow"><label class="flabel">End date</label><input type="date" id="sm-end"></div>
+            <div class="frow"><label class="flabel">Start date</label><input type="date" id="sm-start" onchange="refreshSessionAutoDateRange()"></div>
+            <div class="frow"><label class="flabel">End date</label><input type="date" id="sm-end" onchange="refreshSessionAutoDateRange()"></div>
           </div>
           <div class="frow" style="margin-bottom:16px">
             <label class="flabel">Starting equity ($) <span style="color:var(--text3);font-weight:400">— auto-updates after each trade</span></label>
@@ -4194,19 +4194,14 @@ document.addEventListener('DOMContentLoaded',function(){
               </span>
             </label>
           </div>
-          <!-- Demo session option -->
-          <div id="demo-session-section" style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:16px">
-            <div class="frow" style="margin-bottom:0">
-              <label style="display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none">
-                <input type="checkbox" id="sm-demo" style="width:14px;height:14px;accent-color:var(--purple);cursor:pointer;flex-shrink:0" onchange="toggleDemoSessionOptions()">
-                <span>
-                  <span class="flabel" style="display:block;cursor:pointer;color:var(--purple)">✦ Create demo session</span>
-                  <span style="font-size:10px;color:var(--text3);line-height:1.4">Auto-populate with realistic trades for testing. Also generates skipped trades (≈ half of taken count).</span>
-                </span>
-              </label>
+          <!-- Demo session options — shown automatically when Session type = Demo (new sessions only) -->
+          <div id="demo-session-section" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-bottom:16px">
+            <div class="frow" style="margin-bottom:12px">
+              <span class="flabel" style="display:block;color:var(--purple)">✦ Demo session options</span>
+              <span style="font-size:10px;color:var(--text3);line-height:1.4">Auto-populate with realistic trades for testing. Also generates skipped trades (≈ half of taken count).</span>
             </div>
             <!-- Demo options panel -->
-            <div id="demo-session-options" style="display:none;margin-top:12px;background:rgba(155,127,240,.04);border:1px solid rgba(155,127,240,.2);border-radius:var(--radius-lg);padding:13px">
+            <div id="demo-session-options" style="margin-top:0;background:rgba(155,127,240,.04);border:1px solid rgba(155,127,240,.2);border-radius:var(--radius-lg);padding:13px">
               <div style="font-size:9px;font-weight:700;color:var(--purple);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px">Demo options</div>
               <div class="frow-inline" style="margin-bottom:12px">
                 <div class="frow" style="max-width:110px">
@@ -5086,6 +5081,154 @@ function setOptPill(groupId,val){
 }
 // ══ Sessions ══════════════════════════════════════
 var editingSessionId=null;
+// ── Session types ──────────────────────────────────────────────────────
+// Every session belongs to exactly one type. Types are freely choosable — including Demo,
+// which doubles as the demo-data generator: picking it for a *new* session reveals the
+// demo options panel (see updateDemoSectionVisibility below) so synthetic trades always
+// live under Session type: Demo. Editing an existing session that already contains
+// generated demo data (isDemo) locks the picker to Demo so it can't be recategorized.
+var SESSION_TYPE_META={
+  live:{label:'Live',prefix:'[Live] '},
+  paperlive:{label:'Paper Live',prefix:'[Paper Live] '},
+  backtest:{label:'Backtest',prefix:'[Backtest] '},
+  demo:{label:'Demo',prefix:'[Demo] '}
+};
+var SESSION_TYPE_BADGE_CLASS={live:'badge-blue',paperlive:'badge-green',backtest:'badge-amber',demo:'badge-purple'};
+// Matches a bare "[Type] " prefix — kept around to recognize/migrate legacy names that were
+// saved before the "[N] [Type] name [Year]" auto-name format existed.
+var SESSION_TYPE_PREFIX_RE=/^\[(Live|Paper Live|Backtest|Demo)\]\s*/i;
+// Updates pill visuals + hidden value only — does NOT touch the name field. Used when opening
+// the edit modal so we don't rewrite an existing session's name just because it was opened.
+function setSessionTypePillUI(type){
+  if(!SESSION_TYPE_META[type])type='live';
+  var grp=document.getElementById('sm-type-group');
+  if(grp)grp.querySelectorAll('.opt-pill').forEach(function(p){p.classList.toggle('selected',p.dataset.val===type);});
+  var hidden=document.getElementById('sm-type-val');
+  if(hidden)hidden.value=type;
+}
+// ── Session name auto-format: "[number] [Type] Month Day - Month Day/Present [Year]" ────
+// The number and type live at the front, the year at the back; the middle segment is always
+// the session's date range (derived from the Start/End date fields), not free-typed text.
+function parseSessionName(name){
+  var s=(name||'').trim();
+  var numMatch=s.match(/^\[(\d+)\]\s*/);
+  var num=numMatch?numMatch[1]:null;
+  if(numMatch)s=s.slice(numMatch[0].length);
+  var type=null,typeMatch=s.match(SESSION_TYPE_PREFIX_RE);
+  if(typeMatch){
+    var lbl=typeMatch[1].toLowerCase();
+    for(var k in SESSION_TYPE_META){if(SESSION_TYPE_META[k].label.toLowerCase()===lbl){type=k;break;}}
+    s=s.slice(typeMatch[0].length);
+  }
+  var yearMatch=s.match(/\s*\[(\d{4})\]\s*$/);
+  var year=yearMatch?yearMatch[1]:null;
+  if(yearMatch)s=s.slice(0,s.length-yearMatch[0].length);
+  return{num:num,type:type,core:s.trim(),year:year};
+}
+function composeSessionName(num,type,core,year){
+  var meta=SESSION_TYPE_META[type]||SESSION_TYPE_META.live;
+  var bits=['['+num+']','['+meta.label+']'];
+  if(core)bits.push(core);
+  bits.push('['+year+']');
+  return bits.join(' ');
+}
+// Formats a "YYYY-MM-DD" date-input value as "Mon D" (e.g. "Jul 16"), parsed as a local
+// calendar date (not UTC) so it can never drift a day off from what's shown in the picker.
+function formatSessionDateShort(iso){
+  if(!iso)return'';
+  var p=iso.split('-');
+  if(p.length!==3)return'';
+  var d=new Date(parseInt(p[0],10),parseInt(p[1],10)-1,parseInt(p[2],10));
+  if(isNaN(d.getTime()))return'';
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+// Builds the "Month Day - Month Day" (or "Month Day - Present" when no end date is set) label
+// used as the middle segment of the auto session name.
+function sessionDateRangeLabel(startIso,endIso){
+  var startLbl=formatSessionDateShort(startIso);
+  if(!startLbl)return'';
+  return startLbl+' - '+(endIso?formatSessionDateShort(endIso):'Present');
+}
+// "Last session number used within this category, + 1" — scans existing sessions of the
+// given type, pulls the leading [N] out of each name, and returns the highest one found + 1
+// (falls back to 1 if the category has no sessions yet). excludeId omits the session being
+// edited so it doesn't count toward its own next-number.
+function nextSessionNumberForType(allSessions,type,excludeId){
+  var max=0;
+  (allSessions||[]).forEach(function(s){
+    if(excludeId&&s.id===excludeId)return;
+    var t=s.type||(s.isDemo?'demo':'live');
+    if(t!==type)return;
+    var n=parseInt(parseSessionName(s.name).num,10);
+    if(!isNaN(n)&&n>max)max=n;
+  });
+  return max+1;
+}
+// Rebuilds the name field for the given type: recalculates the number as "last number used
+// in that category + 1", rebuilds the date-range segment from the current Start/End date
+// fields, and keeps the existing year (or defaults to the current year). This is what makes
+// the textfield visibly show "[3] [Live] Jul 16 - Present [2026]".
+async function applySessionTypePrefix(type){
+  var nameInput=document.getElementById('sm-name');
+  if(!nameInput)return;
+  var parsed=parseSessionName(nameInput.value);
+  var year=parsed.year||new Date().getFullYear();
+  var startVal=(document.getElementById('sm-start')||{}).value;
+  var endVal=(document.getElementById('sm-end')||{}).value;
+  var dateLabel=sessionDateRangeLabel(startVal,endVal);
+  var allSessions=await dbGetAllCached('sessions');
+  var nextNum=nextSessionNumberForType(allSessions,type,editingSessionId);
+  nameInput.value=composeSessionName(nextNum,type,dateLabel,year);
+}
+// Rebuilds just the date-range segment of the name field in place — used when the Start/End
+// date inputs change. Deliberately does NOT touch the number (so tweaking a date never
+// renumbers an already-assigned session).
+function refreshSessionAutoDateRange(){
+  var nameInput=document.getElementById('sm-name');
+  if(!nameInput)return;
+  var parsed=parseSessionName(nameInput.value);
+  if(!parsed.num)return; // nothing auto-generated to refresh
+  var type=parsed.type||(document.getElementById('sm-type-val')||{}).value||'live';
+  var year=parsed.year||new Date().getFullYear();
+  var startVal=(document.getElementById('sm-start')||{}).value;
+  var endVal=(document.getElementById('sm-end')||{}).value;
+  var dateLabel=sessionDateRangeLabel(startVal,endVal);
+  nameInput.value=composeSessionName(parsed.num,type,dateLabel,year);
+}
+// Interactive selection (pill click, or programmatic new-session default) — updates the pill
+// UI AND rewrites the name field's number/type/year to match. Returns the async rewrite's
+// promise so callers that need the field populated before continuing can await it.
+function selectSessionType(pillOrType){
+  var type=typeof pillOrType==='string'?pillOrType:pillOrType.dataset.val;
+  setSessionTypePillUI(type);
+  updateDemoSectionVisibility();
+  return applySessionTypePrefix(type);
+}
+// Locks the type picker to Demo-only (used when editing an existing session that already
+// contains generated demo data) or unlocks all 4 types again.
+function lockSessionTypePills(lock){
+  var grp=document.getElementById('sm-type-group');
+  var hint=document.getElementById('sm-type-lock-hint');
+  if(grp)grp.querySelectorAll('.opt-pill').forEach(function(p){p.classList.toggle('locked',lock&&p.dataset.val!=='demo');});
+  if(hint)hint.style.display=lock?'block':'none';
+}
+// Safety net applied right before saving: guarantees the stored name always follows the
+// "[N] [Type] Month Day - Month Day/Present [Year]" format, regardless of what the user typed
+// or whether JS state drifted. Reuses whatever number/year are already in the name; only
+// recalculates the number fresh (last-used-in-category + 1) if the name doesn't have one
+// (e.g. field was cleared). The date-range segment is always rebuilt from the current
+// Start/End date values so it can never go stale.
+async function ensureSessionNamePrefix(name,type,startVal,endVal){
+  var parsed=parseSessionName(name);
+  var year=parsed.year||new Date().getFullYear();
+  var num=parseInt(parsed.num,10);
+  if(isNaN(num)){
+    var allSessions=await dbGetAllCached('sessions');
+    num=nextSessionNumberForType(allSessions,type,editingSessionId);
+  }
+  var dateLabel=sessionDateRangeLabel(startVal,endVal);
+  return composeSessionName(num,type,dateLabel,year);
+}
 // ── Retro panel toggle ─────────────────────────────────────────────────
 function _syncRetroButtonLabel(){
   var ed=document.getElementById('retro-editor');
@@ -5135,14 +5278,16 @@ function toggleRetroPanel(forceOpen){
 async function openNewSessionModal(){
   editingSessionId=null;
   document.getElementById('sm-title').textContent='New Session';
-  // Auto-increment session name for non-demo sessions
-  var allSessions=await dbGetAll('sessions');
-  var nonDemoCount=allSessions.filter(function(s){return !s.isDemo;}).length;
-  var nextNum=nonDemoCount+1;
-  var currentYear=new Date().getFullYear();
-  document.getElementById('sm-name').value='['+nextNum+']  ['+currentYear+']';
+  // Clear the name field and set the default start date first, so selectSessionType() below
+  // builds a fresh auto-name that already reflects today's date, e.g. "[3] [Live] Jul 16 - Present [2026]".
+  document.getElementById('sm-name').value='';
   document.getElementById('sm-start').value=new Date().toISOString().slice(0,10);
   document.getElementById('sm-end').value='';
+  // Reset session type to Live and make sure the picker is unlocked (in case a prior demo
+  // session left it locked) — selectSessionType() also (re)builds the auto-name above and
+  // hides the demo options panel since the type is no longer Demo.
+  lockSessionTypePills(false);
+  await selectSessionType('live');
   document.getElementById('sm-equity').value='5000';
   var drElN=document.getElementById('sm-default-risk');
   if(drElN)drElN.value='1';
@@ -5154,25 +5299,27 @@ async function openNewSessionModal(){
   var ed=document.getElementById('retro-editor');if(ed)ed.innerHTML='';
   // Always hide retro panel for new sessions
   toggleRetroPanel(false);
-  // Reset demo options
-  var demoCb=document.getElementById('sm-demo');
-  if(demoCb){demoCb.checked=false;}
-  var demoSection=document.getElementById('demo-session-section');
-  if(demoSection)demoSection.style.display='';
   var saveBtn=document.getElementById('sm-save-btn');
-  if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='Save session';}
+  if(saveBtn){saveBtn.disabled=false;}
   // Reset visibility radio to Yes
   var visYes=document.getElementById('demo-vis-yes');
   if(visYes){visYes.checked=true;}
   onDemoVisibilityChange();
-  toggleDemoSessionOptions();
-  populateDemoAssetTypePills();
+  // Type is 'live' at this point (set above), so this hides the demo panel and resets the
+  // save button label; populateDemoAssetTypePills/loadDemoDefaults run automatically if the
+  // user then picks the Demo pill.
+  updateDemoSectionVisibility();
   document.getElementById('session-modal').classList.add('open');
 }
 function openEditSessionModal(sess,hasTrades){
   editingSessionId=sess.id;
   document.getElementById('sm-title').textContent='Edit Session';
   document.getElementById('sm-name').value=sess.name||'';
+  // Show the session's saved type (defaults to 'live' for sessions created before this
+  // feature existed) — do NOT rewrite the name field just from opening the modal.
+  var initType=sess.type||(sess.isDemo?'demo':'live');
+  setSessionTypePillUI(initType);
+  lockSessionTypePills(!!sess.isDemo);
   document.getElementById('sm-start').value=sess.startDate||'';
   document.getElementById('sm-end').value=sess.endDate||'';
   document.getElementById('sm-equity').value=sess.startingEquity||5000;
@@ -5196,9 +5343,9 @@ function openEditSessionModal(sess,hasTrades){
   // Auto-open retro panel if session already has retrospective content
   var shouldOpen=!!(sess.retrospective&&sess.retrospective.replace(/<[^>]*>/g,'').trim().length>0);
   toggleRetroPanel(shouldOpen);
-  // Hide demo section when editing
-  var demoSection=document.getElementById('demo-session-section');
-  if(demoSection)demoSection.style.display='none';
+  // Demo options panel never shows when editing (editingSessionId is set above), regardless
+  // of type — synthetic data is only ever generated at creation time.
+  updateDemoSectionVisibility();
   var saveBtn=document.getElementById('sm-save-btn');
   if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='Save session';}
   document.getElementById('session-modal').classList.add('open');
@@ -5213,36 +5360,22 @@ async function editSessionById(id){
 }
 function closeSessionModal(){document.getElementById('session-modal').classList.remove('open');}
 // ══ Demo Session ══════════════════════════════════
-function toggleDemoSessionOptions(){
-  var cb=document.getElementById('sm-demo');
-  var panel=document.getElementById('demo-session-options');
+// The "Demo" session type doubles as the demo-data generator: whenever a *new* session's
+// type is set to Demo (via the type pills), this panel appears so you can configure and
+// auto-populate it with synthetic trades. Editing an existing session never shows this
+// panel — synthetic data is only ever generated once, at creation time.
+function updateDemoSectionVisibility(){
+  var section=document.getElementById('demo-session-section');
   var saveBtn=document.getElementById('sm-save-btn');
-  var nameInput=document.getElementById('sm-name');
-  if(!cb||!panel)return;
-  var show=cb.checked&&!editingSessionId;
-  panel.style.display=show?'block':'none';
+  if(!section)return;
+  var type=(document.getElementById('sm-type-val')||{}).value;
+  var show=type==='demo'&&!editingSessionId;
+  section.style.display=show?'block':'none';
   if(saveBtn)saveBtn.textContent=show?'Create demo session':'Save session';
-  if(nameInput){
-    if(show&&(!nameInput.value||/^\[\d+\]\s+\[\d{4}\]$/.test(nameInput.value))){
-      (async function(){
-        var allSessions=await dbGetAll('sessions');
-        var demoCount=allSessions.filter(function(s){return !!s.isDemo;}).length;
-        var nextDemoNum=demoCount+1;
-        nameInput.value='[demo] ['+nextDemoNum+']';
-      }());
-    }
-    else if(!show&&/^\[demo\] \[\d+\]$/.test(nameInput.value)){
-      (async function(){
-        var allSessions=await dbGetAll('sessions');
-        var nonDemoCount=allSessions.filter(function(s){return !s.isDemo;}).length;
-        var nextNum=nonDemoCount+1;
-        var currentYear=new Date().getFullYear();
-        nameInput.value='['+nextNum+']  ['+currentYear+']';
-      }());
-    }
+  if(show){
+    populateDemoAssetTypePills();
+    (async function(){await loadDemoDefaults();onDemoDurationModeChange();}());
   }
-  if(show)populateDemoAssetTypePills();
-  if(show)(async function(){await loadDemoDefaults();onDemoDurationModeChange();}());
 }
 async function saveDemoDefaults(){
   var val={
@@ -5777,8 +5910,7 @@ async function saveSession(){
   var startDate=document.getElementById('sm-start').value;
   if(!startDate){toast('Start date required','err');return;}
   var sessions=await dbGetAll('sessions');
-  var n=sessions.length+1;
-  var name=document.getElementById('sm-name').value.trim()||('['+n+'] '+startDate);
+  var rawName=document.getElementById('sm-name').value.trim();
   var endDate=document.getElementById('sm-end').value;
   var startingEquity=parseFloat(document.getElementById('sm-equity').value)||5000;
   var defaultRisk=parseFloat(document.getElementById('sm-default-risk').value)||1;
@@ -5790,8 +5922,10 @@ async function saveSession(){
     var sessHasTrades=allTrades.some(function(t){return t.sessionId===editingSessionId;});
     if(sessHasTrades){toast('Starting equity cannot be changed once trades exist','err');return;}
   }
-  // Check if demo session requested (only for new sessions)
-  var isDemoSession=!editingSessionId&&document.getElementById('sm-demo')&&document.getElementById('sm-demo').checked;
+  // Check if demo session requested: only for new sessions with Session type = Demo (the
+  // Demo type doubles as the demo-data generator — see updateDemoSectionVisibility).
+  var selectedSessionType=(document.getElementById('sm-type-val')||{}).value||'live';
+  var isDemoSession=!editingSessionId&&selectedSessionType==='demo';
   var demoCount=0;
   var selectedDemoAssets=[];
   if(isDemoSession){
@@ -5820,9 +5954,15 @@ async function saveSession(){
     var demoVisNo=document.getElementById('demo-vis-no');
     if(demoVisNo&&demoVisNo.checked){archived=true;}
   }
+  // Session type: freely selectable via the type pills. Falls back to 'live' if the picker
+  // ever ends up with an unrecognized value.
+  var sessionType=selectedSessionType;
+  if(!SESSION_TYPE_META[sessionType])sessionType='live';
+  // Always guarantee the saved name follows the "[N] [Type] Month Day - Month Day/Present [Year]" format for sessionType.
+  var name=await ensureSessionNamePrefix(rawName,sessionType,startDate,endDate);
   var sess={
     id:editingSessionId||(Date.now().toString(36)+Math.random().toString(36).slice(2)),
-    name,startDate,endDate,
+    name,type:sessionType,startDate,endDate,
     startingEquity:startingEquity,
     defaultRisk:defaultRisk,
     currentEquity:(function(){
@@ -5866,6 +6006,8 @@ async function saveSession(){
         var latest=latestExit>latestEntry?latestExit:latestEntry;
         sess.startDate=earliest;
         sess.endDate=latest;
+        // Keep the name's date-range segment in sync with the derived dates above.
+        sess.name=await ensureSessionNamePrefix(sess.name,sessionType,sess.startDate,sess.endDate);
       }
       // Update session equity
       sess.currentEquity=result.finalEquity;
@@ -5951,7 +6093,7 @@ async function renderSessionsList(){
   // Pre-compute net equity for all sessions
   var netEquityMap={};
   for(var _s of sessions){ netEquityMap[_s.id]=await computeSessionNetEquityAsync(_s,trades); }
-  el.innerHTML=sessions.map(function(s){
+  function renderRow(s){
     var count=trades.filter(function(t){return t.sessionId===s.id}).length;
     var dateStr=s.startDate+(s.endDate?' → '+s.endDate:'');
     var netEq=netEquityMap[s.id]!==undefined?netEquityMap[s.id]:(s.currentEquity||s.startingEquity);
@@ -5964,6 +6106,23 @@ async function renderSessionsList(){
       +'<button class="btn btn-ghost btn-sm" style="color:var(--purple)" onclick="event.stopPropagation();openRetroView(\''+s.id+'\')" title="View/add retrospective">Retro</button>'
       +'<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editSessionById(\''+s.id+'\')">Edit</button>'
       +'<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteSession(\''+s.id+'\')">Delete</button></div></div>';
+  }
+  // Group sessions into their category (session type) sections, in a fixed display order.
+  var order=['live','paperlive','backtest','demo'];
+  var groups={live:[],paperlive:[],backtest:[],demo:[]};
+  sessions.forEach(function(s){
+    var t=s.type||(s.isDemo?'demo':'live');
+    if(!groups[t])groups[t]=[];
+    groups[t].push(s);
+  });
+  el.innerHTML=order.filter(function(t){return groups[t]&&groups[t].length;}).map(function(t){
+    var meta=SESSION_TYPE_META[t];
+    var list=groups[t];
+    return'<div class="sess-cat-header" style="padding:9px 14px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">'
+      +'<span class="badge '+(SESSION_TYPE_BADGE_CLASS[t]||'badge-blue')+'">'+meta.label+'</span>'
+      +'<span style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase">'+list.length+' session'+(list.length===1?'':'s')+'</span>'
+      +'</div>'
+      +list.map(renderRow).join('');
   }).join('');
 }
 async function populateSessionSelects(restoreSessionId){
@@ -6075,6 +6234,11 @@ async function populateSessionSelects(restoreSessionId){
   // Calculator backtest session select
   var cbF=document.getElementById('calc-backtest-session');
   if(cbF){var cbv=cbF.value;cbF.innerHTML='<option value="">— select session —</option>'+activeSessions.filter(function(s){return !s.isDemo;}).map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');cbF.value=cbv;}
+  // Keep the collapsed filter headers' session summary text in sync with the selects above.
+  updateFilterSessionSummary('dash-session-filter','dash-filter-summary');
+  updateFilterSessionSummary('trd-session-filter','trd-filter-summary');
+  updateFilterSessionSummary('cal-session-filter','cal-filter-summary');
+  updateFilterSessionSummary('flt-session','hist-filter-summary');
 }
 // ══ Navigation ════════════════════════════════════
 var pageMap={'pre-checklist':{title:'Pre-trade checklist',sub:'Calendar → Checklist → Calculator → Log trade'},dashboard:{title:'Dashboard',sub:'Overview of your trading performance'},log:{title:'Log trade',sub:'Record a new trade entry'},history:{title:'Trade history',sub:'Browse and filter all your trades'},sessions:{title:'Sessions',sub:'Manage your trading session periods'},'checklist-editor':{title:'Checklist editor',sub:'Edit checklist items globally'},backup:{title:'Backup & restore',sub:'Export, import or clear your journal data'},montecarlo:{title:'Monte Carlo',sub:'Simulate future equity paths from historical trade data'},calculator:{title:'Position Size Calculator',sub:'Forex · Crypto · Gold · Stocks · Indices'},calendar:{title:'Calendar view',sub:'Visual trade activity by day, week and year'},'ai-analyzer':{title:'AI Trade Analyzer',sub:'Intelligent session review powered by AI'},'price-alerts':{title:'Price Alerts',sub:'Get notified on your phone when a price target is hit'},fxstreet:{title:'Economic calendar',sub:'ForexFactory calendar — check before trading'},'trade-analytics':{title:'Trade Analytics',sub:'Ratings, error types, direction & entry-time performance'}};;
@@ -9500,6 +9664,15 @@ function escHtml(s){if(!s)return'';return String(s).replace(/[&<>"]/g,function(c
 // specifically for the Dashboard/Trade-Analytics filter rows; new collapsible sections
 // elsewhere should prefer calling toggleCollapsible(bodyId, chevronId) directly instead of
 // adding another one-off toggle function like these.
+// Shows the currently selected session (or "All sessions") as plain text next to a
+// filter panel's header/title, so the selection is visible without expanding it.
+function updateFilterSessionSummary(selectId,summaryId){
+  var sel=document.getElementById(selectId);
+  var sum=document.getElementById(summaryId);
+  if(!sel||!sum)return;
+  var opt=sel.options[sel.selectedIndex];
+  sum.textContent=opt?opt.text:'All sessions';
+}
 function toggleDashFilters(){
   var body=document.getElementById('dash-filter-body');
   var chevron=document.getElementById('dash-filter-chevron');
@@ -12925,6 +13098,7 @@ async function calPopulateSessionFilter(){
     var active=sessions.find(function(s){return s.startDate<=today&&(!s.endDate||s.endDate>=today);});
     sel.value=active?active.id:(sessions[0]?sessions[0].id:'');
   }
+  updateFilterSessionSummary('cal-session-filter','cal-filter-summary');
 }
 // ── Main render entry ─────────────────────────────────────
 function renderCalendar(){ guardedRender('renderCalendar', _renderCalendarImpl); }
