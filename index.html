@@ -1015,6 +1015,16 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         <div class="dash-filter-body" id="dash-filter-body" style="display:none">
           <div class="dash-filter-row">
             <div class="dash-filter-group">
+              <div class="dash-filter-label">Session type</div>
+              <select id="dash-sessiontype-filter" onchange="populateSessionSelects().then(function(){renderDashboard();updateFilterSessionSummary('dash-session-filter','dash-filter-summary')})">
+                <option value="">All types</option>
+                <option value="live">Live</option>
+                <option value="paperlive">Paper Live</option>
+                <option value="backtest" selected>Backtest</option>
+                <option value="demo">Demo</option>
+              </select>
+            </div>
+            <div class="dash-filter-group">
               <div class="dash-filter-label">Session</div>
               <select id="dash-session-filter" onchange="renderDashboard();updateFilterSessionSummary('dash-session-filter','dash-filter-summary')"><option value="">All sessions</option></select>
             </div>
@@ -1106,6 +1116,16 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         </div>
         <div class="dash-filter-body" id="trd-filter-body" style="display:none">
           <div class="dash-filter-row">
+            <div class="dash-filter-group">
+              <div class="dash-filter-label">Session type</div>
+              <select id="trd-sessiontype-filter" onchange="populateSessionSelects().then(function(){renderTradeAnalytics();updateFilterSessionSummary('trd-session-filter','trd-filter-summary')})">
+                <option value="">All types</option>
+                <option value="live">Live</option>
+                <option value="paperlive">Paper Live</option>
+                <option value="backtest" selected>Backtest</option>
+                <option value="demo">Demo</option>
+              </select>
+            </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session</div>
               <select id="trd-session-filter" onchange="renderTradeAnalytics();updateFilterSessionSummary('trd-session-filter','trd-filter-summary')"><option value="">All sessions</option></select>
@@ -1399,6 +1419,16 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         <div class="dash-filter-body" id="cal-filter-body" style="display:none">
           <div class="dash-filter-row">
             <div class="dash-filter-group">
+              <div class="dash-filter-label">Session type</div>
+              <select id="cal-sessiontype-filter" onchange="calPopulateSessionFilter().then(function(){calJumpToMostRecent().then(function(){renderCalendar();})})">
+                <option value="">All types</option>
+                <option value="live">Live</option>
+                <option value="paperlive">Paper Live</option>
+                <option value="backtest" selected>Backtest</option>
+                <option value="demo">Demo</option>
+              </select>
+            </div>
+            <div class="dash-filter-group">
               <div class="dash-filter-label">Session</div>
               <select id="cal-session-filter" onchange="calJumpToMostRecent().then(function(){renderCalendar();});updateFilterSessionSummary('cal-session-filter','cal-filter-summary')"><option value="">All sessions</option></select>
             </div>
@@ -1436,6 +1466,16 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       </div>
       <!-- Filter + Run -->
       <div class="ai-filter-bar">
+        <div class="ai-filter-group">
+          <div class="ai-filter-label">Session type</div>
+          <select id="ai-sessiontype-filter" style="font-size:11px;padding:5px 8px" onchange="aiPopulateSessionFilter()">
+            <option value="">All types</option>
+            <option value="live">Live</option>
+            <option value="paperlive">Paper Live</option>
+            <option value="backtest" selected>Backtest</option>
+            <option value="demo">Demo</option>
+          </select>
+        </div>
         <div class="ai-filter-group">
           <div class="ai-filter-label">Session</div>
           <select id="ai-session-filter" style="font-size:11px;padding:5px 8px"><option value="">All sessions</option></select>
@@ -2360,6 +2400,16 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         <div class="history-filter-body" id="hist-filter-body" style="display:none">
           <div class="hist-filter-row">
             <div class="hist-filter-group">
+              <div class="hist-filter-label">Session type</div>
+              <select id="flt-sessiontype" onchange="populateSessionSelects().then(function(){renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary')})">
+                <option value="">All types</option>
+                <option value="live">Live</option>
+                <option value="paperlive">Paper Live</option>
+                <option value="backtest" selected>Backtest</option>
+                <option value="demo">Demo</option>
+              </select>
+            </div>
+            <div class="hist-filter-group">
               <div class="hist-filter-label">Session</div>
               <select id="flt-session" onchange="renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary')"><option value="">All sessions</option></select>
             </div>
@@ -2410,6 +2460,16 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <div class="card" style="margin-bottom:18px">
         <div class="card-body" style="padding:16px">
           <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
+            <div class="frow" style="min-width:140px;margin-bottom:0">
+              <label class="flabel">Session type</label>
+              <select id="mc-sessiontype-filter" style="font-size:12px" onchange="populateSessionSelects()">
+                <option value="">All types</option>
+                <option value="live">Live</option>
+                <option value="paperlive">Paper Live</option>
+                <option value="backtest" selected>Backtest</option>
+                <option value="demo">Demo</option>
+              </select>
+            </div>
             <div class="frow" style="min-width:160px;margin-bottom:0">
               <label class="flabel">Data source</label>
               <select id="mc-session" style="font-size:12px">
@@ -5094,6 +5154,19 @@ var SESSION_TYPE_META={
   demo:{label:'Demo',prefix:'[Demo] '}
 };
 var SESSION_TYPE_BADGE_CLASS={live:'badge-blue',paperlive:'badge-green',backtest:'badge-amber',demo:'badge-purple'};
+// Resolves a session's type key (live/paperlive/backtest/demo), falling back to the legacy
+// isDemo flag for sessions saved before the explicit `type` field existed.
+function sessionTypeOf(s){return s.type||(s.isDemo?'demo':'live');}
+// Reads a "Session type" filter select's current value; missing element = no type filter.
+function getSessionTypeFilterVal(id){var el=document.getElementById(id);return el?el.value:'';}
+// Set of session ids matching the given "session type" filter's current value, or null when
+// the filter is "All types" (no restriction). Used to keep "All sessions" honoring the type
+// filter instead of showing every type once no specific session is picked.
+function sessionIdsMatchingType(sessions,typeFilterId){
+  var t=getSessionTypeFilterVal(typeFilterId);
+  if(!t)return null;
+  return new Set(sessions.filter(function(s){return sessionTypeOf(s)===t;}).map(function(s){return s.id;}));
+}
 // Matches a bare "[Type] " prefix — kept around to recognize/migrate legacy names that were
 // saved before the "[N] [Type] name [Year]" auto-name format existed.
 var SESSION_TYPE_PREFIX_RE=/^\[(Live|Paper Live|Backtest|Demo)\]\s*/i;
@@ -6174,32 +6247,43 @@ async function populateSessionSelects(restoreSessionId){
   var dashDefaultSession=demoOn
     ? (dashFilterSessions[0]||null)
     : defaultFilterSession;
+  // Each session filter below has a paired "session type" select (defaults to Backtest);
+  // its value narrows the session list before the active/default session is picked.
   var dashF=document.getElementById('dash-session-filter');
   var dv=dashF.value;
+  var dashTypeVal=getSessionTypeFilterVal('dash-sessiontype-filter');
+  var dashFilterSessionsTyped=dashFilterSessions.filter(function(s){return !dashTypeVal||sessionTypeOf(s)===dashTypeVal;});
+  var dashDefaultSessionTyped=(dashDefaultSession&&dashFilterSessionsTyped.find(function(s){return s.id===dashDefaultSession.id;}))?dashDefaultSession:(dashFilterSessionsTyped[0]||null);
   // Record the auto-default so badge doesn't count it as an active filter
-  _defaultDashSessionId=dashDefaultSession?dashDefaultSession.id:'';
-  dashF.innerHTML='<option value="">All sessions</option>'+dashFilterSessions.map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');
+  _defaultDashSessionId=dashDefaultSessionTyped?dashDefaultSessionTyped.id:'';
+  dashF.innerHTML='<option value="">All sessions</option>'+dashFilterSessionsTyped.map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');
   // Preserve valid user selection; reset if mode switched; always apply default otherwise
-  if(dv&&dashFilterSessions.find(function(s){return s.id===dv;})){dashF.value=dv;}
-  else if(dashDefaultSession){dashF.value=dashDefaultSession.id;}
+  if(dv&&dashFilterSessionsTyped.find(function(s){return s.id===dv;})){dashF.value=dv;}
+  else if(dashDefaultSessionTyped){dashF.value=dashDefaultSessionTyped.id;}
   else{dashF.value='';}
   // Calendar session filter — same demo-aware list as dashboard
   var calF2=document.getElementById('cal-session-filter');
   if(calF2){
     var cv=calF2.value;
-    calF2.innerHTML='<option value="">All sessions</option>'+dashFilterSessions.map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');
-    if(cv&&dashFilterSessions.find(function(s){return s.id===cv;})){calF2.value=cv;}
-    else if(dashDefaultSession){calF2.value=dashDefaultSession.id;}
+    var calTypeVal=getSessionTypeFilterVal('cal-sessiontype-filter');
+    var calFilterSessionsTyped=dashFilterSessions.filter(function(s){return !calTypeVal||sessionTypeOf(s)===calTypeVal;});
+    var calDefaultSessionTyped=(dashDefaultSession&&calFilterSessionsTyped.find(function(s){return s.id===dashDefaultSession.id;}))?dashDefaultSession:(calFilterSessionsTyped[0]||null);
+    calF2.innerHTML='<option value="">All sessions</option>'+calFilterSessionsTyped.map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');
+    if(cv&&calFilterSessionsTyped.find(function(s){return s.id===cv;})){calF2.value=cv;}
+    else if(calDefaultSessionTyped){calF2.value=calDefaultSessionTyped.id;}
     else{calF2.value='';}
   }
   // Trade Analytics session filter — same demo-aware list + default-active-session logic as dashboard
   var trdF=document.getElementById('trd-session-filter');
   if(trdF){
     var tv=trdF.value;
-    _defaultTrdSessionId=dashDefaultSession?dashDefaultSession.id:'';
-    trdF.innerHTML='<option value="">All sessions</option>'+dashFilterSessions.map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');
-    if(tv&&dashFilterSessions.find(function(s){return s.id===tv;})){trdF.value=tv;}
-    else if(dashDefaultSession){trdF.value=dashDefaultSession.id;}
+    var trdTypeVal=getSessionTypeFilterVal('trd-sessiontype-filter');
+    var trdFilterSessionsTyped=dashFilterSessions.filter(function(s){return !trdTypeVal||sessionTypeOf(s)===trdTypeVal;});
+    var trdDefaultSessionTyped=(dashDefaultSession&&trdFilterSessionsTyped.find(function(s){return s.id===dashDefaultSession.id;}))?dashDefaultSession:(trdFilterSessionsTyped[0]||null);
+    _defaultTrdSessionId=trdDefaultSessionTyped?trdDefaultSessionTyped.id:'';
+    trdF.innerHTML='<option value="">All sessions</option>'+trdFilterSessionsTyped.map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');
+    if(tv&&trdFilterSessionsTyped.find(function(s){return s.id===tv;})){trdF.value=tv;}
+    else if(trdDefaultSessionTyped){trdF.value=trdDefaultSessionTyped.id;}
     else{trdF.value='';}
   }
   var hF=document.getElementById('flt-session');
@@ -6211,11 +6295,14 @@ async function populateSessionSelects(restoreSessionId){
     var histDefaultSession=!!_histDemoMode
       ?(histDemoSessions[0]||null)
       :defaultFilterSession;
+    var histTypeVal=getSessionTypeFilterVal('flt-sessiontype');
+    var histSessionsTyped=histDemoSessions.filter(function(s){return !histTypeVal||sessionTypeOf(s)===histTypeVal;});
+    var histDefaultSessionTyped=(histDefaultSession&&histSessionsTyped.find(function(s){return s.id===histDefaultSession.id;}))?histDefaultSession:(histSessionsTyped[0]||null);
     // Record the auto-default so chips don't appear for it
-    _defaultHistSessionId=histDefaultSession?histDefaultSession.id:'';
-    hF.innerHTML='<option value="">All sessions</option>'+histDemoSessions.map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');
-    if(hv&&histDemoSessions.find(function(s){return s.id===hv;})){hF.value=hv;}
-    else if(histDefaultSession){hF.value=histDefaultSession.id;}
+    _defaultHistSessionId=histDefaultSessionTyped?histDefaultSessionTyped.id:'';
+    hF.innerHTML='<option value="">All sessions</option>'+histSessionsTyped.map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');
+    if(hv&&histSessionsTyped.find(function(s){return s.id===hv;})){hF.value=hv;}
+    else if(histDefaultSessionTyped){hF.value=histDefaultSessionTyped.id;}
     else{hF.value='';}
   }
   // Monte Carlo session select — also demo-aware (mirrors dashboard mode)
@@ -6225,10 +6312,13 @@ async function populateSessionSelects(restoreSessionId){
     var mcSessions=demoOn
       ? activeSessions.filter(function(s){return !!s.isDemo;})
       : filterSessions;
+    var mcTypeVal=getSessionTypeFilterVal('mc-sessiontype-filter');
+    var mcSessionsTyped=mcSessions.filter(function(s){return !mcTypeVal||sessionTypeOf(s)===mcTypeVal;});
     var mcDefault=demoOn?(mcSessions[0]||null):defaultFilterSession;
-    mcF.innerHTML='<option value="">All sessions</option>'+mcSessions.map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');
-    if(mcv&&mcSessions.find(function(s){return s.id===mcv;})){mcF.value=mcv;}
-    else if(mcDefault){mcF.value=mcDefault.id;}
+    var mcDefaultTyped=(mcDefault&&mcSessionsTyped.find(function(s){return s.id===mcDefault.id;}))?mcDefault:(mcSessionsTyped[0]||null);
+    mcF.innerHTML='<option value="">All sessions</option>'+mcSessionsTyped.map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');
+    if(mcv&&mcSessionsTyped.find(function(s){return s.id===mcv;})){mcF.value=mcv;}
+    else if(mcDefaultTyped){mcF.value=mcDefaultTyped.id;}
     else{mcF.value='';}
   }
   // Calculator backtest session select
@@ -7989,6 +8079,7 @@ async function _renderHistoryImpl(){
   var fp=document.getElementById('flt-pair').value,ft=document.getElementById('flt-type').value,
       fs=document.getElementById('flt-strategy').value,fr=document.getElementById('flt-result').value,
       fses=document.getElementById('flt-session').value,
+      histTypeIds=sessionIdsMatchingType(sessions,'flt-sessiontype'),
       fat=(document.getElementById('flt-asset-type')||{}).value||'',
       fskip=(document.getElementById('flt-skipped')||{}).value||'taken',
       fsrch=(document.getElementById('flt-search').value||'').toLowerCase();
@@ -7996,6 +8087,7 @@ async function _renderHistoryImpl(){
     if(fp&&t.pair!==fp)return false;if(ft&&t.type!==ft)return false;if(fs&&t.strategy!==fs)return false;
     if(fr==='win'&&t.winLoss!==1)return false;if(fr==='loss'&&t.winLoss!==0)return false;
     if(fses&&t.sessionId!==fses)return false;
+    if(!fses&&histTypeIds&&!histTypeIds.has(t.sessionId))return false;
     if(fat&&t.assetType!==fat)return false;
     if(fskip==='skipped'&&!t.skipped)return false;
     if(fskip==='taken'&&t.skipped)return false;
@@ -8011,7 +8103,7 @@ async function _renderHistoryImpl(){
   // Reset to page 1 only when the filter/sort inputs actually changed — NOT when
   // histGoToPage() re-renders for pagination, and NOT when a trade edit/add/delete
   // triggers a re-render with the same filters (so the user stays on their page).
-  var filterSig=JSON.stringify([fp,ft,fs,fr,fses,fat,fskip,fsrch,_histSort.key,_histSort.dir,histDemoOn,_histStarredOnly]);
+  var filterSig=JSON.stringify([fp,ft,fs,fr,fses,getSessionTypeFilterVal('flt-sessiontype'),fat,fskip,fsrch,_histSort.key,_histSort.dir,histDemoOn,_histStarredOnly]);
   if(_histLastFilterSig!==null&&_histLastFilterSig!==filterSig)_histPage=1;
   _histLastFilterSig=filterSig;
   // Apply sort — compound: session desc + loggedAt desc when key is loggedAt (default)
@@ -8660,6 +8752,7 @@ async function _renderDashboardImpl(){
   var demoIds=new Set(allSess.filter(function(s){return !!s.isDemo;}).map(function(s){return s.id;}));
   var demoOn=!!_dashDemoMode;
   var sesF=document.getElementById('dash-session-filter').value;
+  var dashTypeIds=sessionIdsMatchingType(allSess,'dash-sessiontype-filter');
   var atF=(document.getElementById('dash-asset-type-filter')||{}).value||'';
   var pairF=(document.getElementById('dash-pair-filter')||{}).value||'';
   var stratF=(document.getElementById('dash-strategy-filter')||{}).value||'';
@@ -8670,6 +8763,7 @@ async function _renderDashboardImpl(){
     if(demoOn&&!demoIds.has(t.sessionId))return false;
     if(!demoOn&&demoIds.has(t.sessionId))return false;
     if(sesF&&t.sessionId!==sesF)return false;
+    if(!sesF&&dashTypeIds&&!dashTypeIds.has(t.sessionId))return false;
     if(atF&&t.assetType!==atF)return false;
     if(pairF&&t.pair!==pairF)return false;
     if(stratF&&t.strategy!==stratF)return false;
@@ -8696,7 +8790,7 @@ async function _renderDashboardImpl(){
   }
   // Compute baseline equity early so stat card P/L% is correct
   // Only consider sessions matching current demo mode
-  var allSessForBase=allSess.filter(function(s){return !s.archived&&(demoOn?!!s.isDemo:!s.isDemo);});
+  var allSessForBase=allSess.filter(function(s){return !s.archived&&(demoOn?!!s.isDemo:!s.isDemo)&&(!dashTypeIds||dashTypeIds.has(s.id));});
   var baselineForStats;
   if(sesF){
     var thisSessB=allSessForBase.find(function(s){return s.id===sesF;});
@@ -8931,6 +9025,7 @@ async function _renderTradeAnalyticsImpl(){
   var demoIds=new Set(allSess.filter(function(s){return !!s.isDemo;}).map(function(s){return s.id;}));
   var demoOn=!!_dashDemoMode;
   var sesF=(document.getElementById('trd-session-filter')||{}).value||'';
+  var trdTypeIds=sessionIdsMatchingType(allSess,'trd-sessiontype-filter');
   var pairF=(document.getElementById('trd-pair-filter')||{}).value||'';
   var dirF=(document.getElementById('trd-direction-filter')||{}).value||'';
   var errF=(document.getElementById('trd-error-filter')||{}).value||'';
@@ -8944,6 +9039,7 @@ async function _renderTradeAnalyticsImpl(){
     if(skipF==='skipped'&&!t.skipped)return false;
     if(skipF==='taken'&&t.skipped)return false;
     if(sesF&&t.sessionId!==sesF)return false;
+    if(!sesF&&trdTypeIds&&!trdTypeIds.has(t.sessionId))return false;
     if(pairF&&t.pair!==pairF)return false;
     if(dirF&&t.type!==dirF)return false;
     if(errF==='__clean__'){ if(t.error&&ERR_NONE_F.indexOf(t.error)===-1)return false; }
@@ -9318,7 +9414,8 @@ function _renderDrawdownAnalytics(trades,allSess){
   var c=chartColors();
   var demoOn=!!_dashDemoMode;
   var sesF=(document.getElementById('dash-session-filter')||{}).value||'';
-  var allSessForBase=allSess.filter(function(s){return !s.archived&&(demoOn?!!s.isDemo:!s.isDemo);});
+  var ddTypeIds=sessionIdsMatchingType(allSess,'dash-sessiontype-filter');
+  var allSessForBase=allSess.filter(function(s){return !s.archived&&(demoOn?!!s.isDemo:!s.isDemo)&&(!ddTypeIds||ddTypeIds.has(s.id));});
   var baselineEquity;
   if(sesF){
     var thisSessB=allSessForBase.find(function(s){return s.id===sesF;});
@@ -9802,6 +9899,7 @@ function toggleTrdLtf(){
 }
 function resetTrdFilters(){
   ['trd-session-filter','trd-pair-filter','trd-direction-filter','trd-error-filter'].forEach(function(id){var el=document.getElementById(id);if(el)el.selectedIndex=0;});
+  var tst=document.getElementById('trd-sessiontype-filter');if(tst)tst.value='backtest';
   var tsk=document.getElementById('trd-skipped-filter');if(tsk)tsk.value='taken';
   _dashDemoMode=false;
   _histDemoMode=false;
@@ -10170,6 +10268,8 @@ async function initMonteCarlo(){
   // after every session save / demo-mode toggle).  We just need to ensure the equity field is filled.
   var sessions=await dbGetAll('sessions');
   sessions=sessions.filter(function(s){return !s.archived;});
+  var mcTypeVal=getSessionTypeFilterVal('mc-sessiontype-filter');
+  if(mcTypeVal)sessions=sessions.filter(function(s){return sessionTypeOf(s)===mcTypeVal;});
   sessions.sort(function(a,b){return new Date(b.startDate)-new Date(a.startDate)});
   var sel=document.getElementById('mc-session');
   // Load saved defaults — prefer IndexedDB, fall back to localStorage
@@ -10213,6 +10313,7 @@ async function runMonteCarlo(){
   var archivedIds=new Set(allSess.filter(function(s){return s.archived;}).map(function(s){return s.id;}));
   var demoIds=new Set(allSess.filter(function(s){return !!s.isDemo;}).map(function(s){return s.id;}));
   var mcDemoOn=!!_dashDemoMode;
+  var mcTypeIds=sessionIdsMatchingType(allSess,'mc-sessiontype-filter');
   var mcSkipF=(document.getElementById('mc-skipped-filter')||{}).value||'taken';
   var pool=sesId
     ?allTrades.filter(function(t){
@@ -10225,6 +10326,7 @@ async function runMonteCarlo(){
         if(archivedIds.has(t.sessionId))return false;
         if(mcDemoOn&&!demoIds.has(t.sessionId))return false;
         if(!mcDemoOn&&demoIds.has(t.sessionId))return false;
+        if(mcTypeIds&&!mcTypeIds.has(t.sessionId))return false;
         if(mcSkipF==='taken'&&t.skipped)return false;
         if(mcSkipF==='skipped'&&!t.skipped)return false;
         return true;
@@ -13064,12 +13166,14 @@ async function calJumpToMostRecent(){
   var demoIds=new Set(allSess.filter(function(s){return !!s.isDemo;}).map(function(s){return s.id;}));
   var demoOn=!!_dashDemoMode;
   var sesF=(document.getElementById('cal-session-filter')||{}).value||'';
+  var calTypeIds=sessionIdsMatchingType(allSess,'cal-sessiontype-filter');
   var calSkipF=(document.getElementById('cal-skipped-filter')||{}).value||'taken';
   var filtered=allTrades.filter(function(t){
     if(archivedIds.has(t.sessionId))return false;
     if(demoOn&&!demoIds.has(t.sessionId))return false;
     if(!demoOn&&demoIds.has(t.sessionId))return false;
     if(sesF&&t.sessionId!==sesF)return false;
+    if(!sesF&&calTypeIds&&!calTypeIds.has(t.sessionId))return false;
     if(calSkipF==='taken'&&t.skipped)return false;
     if(calSkipF==='skipped'&&!t.skipped)return false;
     return !!t.entryTime;
@@ -13085,6 +13189,8 @@ async function calPopulateSessionFilter(){
   var sessions=await dbGetAll('sessions');
   var demoOn=!!_dashDemoMode;
   sessions=sessions.filter(function(s){return !s.archived&&(demoOn?!!s.isDemo:!s.isDemo);});
+  var calTypeVal=getSessionTypeFilterVal('cal-sessiontype-filter');
+  sessions=sessions.filter(function(s){return !calTypeVal||sessionTypeOf(s)===calTypeVal;});
   sessions.sort(function(a,b){return new Date(b.startDate)-new Date(a.startDate);});
   var existing=sel.value;
   sel.innerHTML='<option value="">All sessions</option>'+sessions.map(function(s){
@@ -13109,12 +13215,14 @@ async function _renderCalendarImpl(){
   var demoIds=new Set(allSess.filter(function(s){return !!s.isDemo;}).map(function(s){return s.id;}));
   var demoOn=!!_dashDemoMode;
   var sesF=(document.getElementById('cal-session-filter')||{}).value||'';
+  var calTypeIds=sessionIdsMatchingType(allSess,'cal-sessiontype-filter');
   var calSkipF=(document.getElementById('cal-skipped-filter')||{}).value||'taken';
   _calTrades=allTrades.filter(function(t){
     if(archivedIds.has(t.sessionId))return false;
     if(demoOn&&!demoIds.has(t.sessionId))return false;
     if(!demoOn&&demoIds.has(t.sessionId))return false;
     if(sesF&&t.sessionId!==sesF)return false;
+    if(!sesF&&calTypeIds&&!calTypeIds.has(t.sessionId))return false;
     if(calSkipF==='taken'&&t.skipped)return false;
     if(calSkipF==='skipped'&&!t.skipped)return false;
     return true;
@@ -13816,6 +13924,8 @@ async function aiPopulateSessionFilter(){
   var sessions=await dbGetAll('sessions');
   var demoOn=_aiDemoMode;
   sessions=sessions.filter(function(s){return !s.archived&&(demoOn?!!s.isDemo:!s.isDemo);});
+  var aiTypeVal=getSessionTypeFilterVal('ai-sessiontype-filter');
+  sessions=sessions.filter(function(s){return !aiTypeVal||sessionTypeOf(s)===aiTypeVal;});
   sessions.sort(function(a,b){return new Date(b.startDate)-new Date(a.startDate);});
   sel.innerHTML='<option value="">All sessions</option>'+sessions.map(function(s){
     return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>';
@@ -14423,6 +14533,7 @@ async function runAiAnalysis(){
     var allTrades=await dbGetAllCached('trades');
     var allSessions=await dbGetAllCached('sessions');
     var sesF=(document.getElementById('ai-session-filter')||{}).value||'';
+    var aiTypeIds=sessionIdsMatchingType(allSessions,'ai-sessiontype-filter');
     var typeF=(document.getElementById('ai-trade-type-filter')||{}).value||'taken';
     var depth=(document.getElementById('ai-depth-filter')||{}).value||'standard';
     // Filter by demo mode
@@ -14434,6 +14545,7 @@ async function runAiAnalysis(){
       if(demoOn&&!demoIds.has(t.sessionId))return false;
       if(!demoOn&&demoIds.has(t.sessionId))return false;
       if(sesF&&t.sessionId!==sesF)return false;
+      if(!sesF&&aiTypeIds&&!aiTypeIds.has(t.sessionId))return false;
       if(typeF==='taken'&&t.skipped)return false;
       if(typeF==='skipped'&&!t.skipped)return false;
       return true;
