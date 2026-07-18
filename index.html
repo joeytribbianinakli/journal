@@ -1187,7 +1187,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <button class="cal-view-tab" data-view="year" onclick="setErrorEvoView('year',this)">Yearly</button>
           </div>
         </div>
-        <div style="font-size:11px;color:var(--text3);padding:8px 16px 10px">Each line is one error type. The top chart plots the % of that period's trades it was tagged on, so you can see which mistakes you're growing out of and which are creeping back in; the bottom chart shows the same trend in raw trade counts. Dashed green is your clean-trade rate for comparison.</div>
+        <div style="font-size:11px;color:var(--text3);padding:8px 16px 10px">The top chart plots the % of that period's trades each error type was tagged on, so you can see which mistakes you're growing out of and which are creeping back in; the bottom chart shows the same trend in raw trade counts. Dashed green is your clean-trade rate for comparison. Click a name in the legend to isolate that line in both charts (hide the rest); click it again to bring everyone back.</div>
         <div class="chart-wrap" style="height:220px;padding:0 16px 16px"><canvas id="chart-error-evo"></canvas></div>
         <div style="padding:0 16px 4px;font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase">By trade count</div>
         <div class="chart-wrap" style="height:220px;padding:0 16px 16px"><canvas id="chart-error-evo-count"></canvas></div>
@@ -9357,17 +9357,40 @@ function setErrorEvoView(view,btnEl){
   }
   _renderErrorEvo(_errorEvoTrades);
 }
+// ── Legend click handler: isolate a single series instead of the default
+// show/hide toggle. First click on a name hides every other line — in BOTH
+// evolution charts, since they share the same series (every error type +
+// Clean, same order) — so you can read that one error type's trend cleanly
+// across both the % and count views at once. Clicking it again (or clicking
+// while it's already isolated) restores all lines in both charts. Clicking a
+// different name while one is isolated switches the isolation to the new one.
+function isolateLegendClick(e,legendItem,legend){
+  var idx=legendItem.datasetIndex;
+  var chart=legend.chart;
+  var onlyThisVisible=chart.data.datasets.every(function(ds,i){return i===idx?chart.isDatasetVisible(i):!chart.isDatasetVisible(i);});
+  var showAll=onlyThisVisible;
+  [charts.errorEvo,charts.errorEvoCount].forEach(function(ch){
+    if(!ch||!ch.data||!ch.data.datasets||ch.data.datasets.length<=idx)return;
+    ch.data.datasets.forEach(function(ds,i){ch.setDatasetVisibility(i,showAll?true:i===idx);});
+    ch.update();
+  });
+}
+// Swaps the cursor to a pointer while hovering a clickable legend item (and
+// back to default on leave), since the browser has no way to know a canvas
+// legend label is interactive unless we tell it.
+function legendHoverCursor(e,legendItem,legend){legend.chart.canvas.style.cursor='pointer';}
+function legendLeaveCursor(e,legendItem,legend){legend.chart.canvas.style.cursor='default';}
 function _renderErrorEvo(trades){
   trades=trades||[];
   _errorEvoTrades=trades;
   var c=chartColors();
-  var errTypePalette=[c.red,c.amber,c.purple,c.accent,'#64d4fc','#ff8a5c','#c968e0'];
+  var errTypePalette=[c.red,c.amber,c.purple,c.accent,'#64d4fc','#ff8a5c','#c968e0','#e0c440','#5cd6a0'];
   var dated=trades.filter(function(t){return !!t.entryTime;});
   var occCounts={};
   dated.forEach(function(t){
     tradeActiveErrors(t).forEach(function(e){occCounts[e]=(occCounts[e]||0)+1;});
   });
-  var evoErrKeys=Object.keys(occCounts).sort(function(a,b){return occCounts[b]-occCounts[a];}).slice(0,6); // top 6 by occurrence — keeps the chart legible
+  var evoErrKeys=Object.keys(occCounts).sort(function(a,b){return occCounts[b]-occCounts[a];}); // all error types, ranked by occurrence — legend isolate-click (see isolateLegendClick) handles decluttering interactively now, so nothing needs to be dropped up front
   var isMonth=_errorEvoView==='month';
   var byPeriod={};
   dated.forEach(function(t){
@@ -9388,25 +9411,24 @@ function _renderErrorEvo(trades){
         return mode==='pct'?(arr.length?parseFloat((withErr/arr.length*100).toFixed(1)):0):withErr;
       });
       var color=errTypePalette[i%errTypePalette.length];
-      return {label:k.length>18?k.slice(0,18)+'…':k,data:data,borderColor:color,backgroundColor:color,fill:false,tension:.3,pointRadius:2,pointHoverRadius:4,borderWidth:2};
+      return {label:k,data:data,borderColor:color,backgroundColor:color,fill:false,tension:0,pointRadius:2,pointHoverRadius:5,borderWidth:1.75};
     });
-    if(mode==='pct'){
-      var cleanData=periodKeys.map(function(pk){
-        var arr=byPeriod[pk],cl=arr.filter(function(t){return tradeActiveErrors(t).length===0;}).length;
-        return arr.length?parseFloat((cl/arr.length*100).toFixed(1)):0;
-      });
-      ds.push({label:'Clean',data:cleanData,borderColor:c.green,backgroundColor:c.green,fill:false,tension:.3,pointRadius:2,pointHoverRadius:4,borderWidth:2,borderDash:[5,3]});
-    }
+    var cleanData=periodKeys.map(function(pk){
+      var arr=byPeriod[pk],cl=arr.filter(function(t){return tradeActiveErrors(t).length===0;}).length;
+      if(mode==='pct')return arr.length?parseFloat((cl/arr.length*100).toFixed(1)):0;
+      return cl;
+    });
+    ds.push({label:'Clean',data:cleanData,borderColor:c.green,backgroundColor:c.green,fill:false,tension:0,pointRadius:2,pointHoverRadius:5,borderWidth:1.75,borderDash:[5,3]});
     return ds;
   }
   // ── % of period's trades (top chart) ──
   if(charts.errorEvo)charts.errorEvo.destroy();
   var _cvEE=document.getElementById('chart-error-evo');
-  if(_cvEE)charts.errorEvo=safeChart(_cvEE.getContext('2d'),{type:'line',data:{labels:evoLabels,datasets:buildDatasets('pct')},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'bottom',labels:{color:c.tick,font:{size:10},boxWidth:10,padding:8}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.parsed.y+'% of trades that '+(isMonth?'month':'year');}}}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},min:0,suggestedMax:100}}}});
+  if(_cvEE)charts.errorEvo=safeChart(_cvEE.getContext('2d'),{type:'line',data:{labels:evoLabels,datasets:buildDatasets('pct')},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'bottom',onClick:isolateLegendClick,onHover:legendHoverCursor,onLeave:legendLeaveCursor,labels:{color:c.tick,font:{size:10},boxWidth:10,padding:8}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.parsed.y+'% of trades that '+(isMonth?'month':'year');}}}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},min:0,suggestedMax:100}}}});
   // ── Raw trade count (bottom chart) ──
   if(charts.errorEvoCount)charts.errorEvoCount.destroy();
   var _cvEC=document.getElementById('chart-error-evo-count');
-  if(_cvEC)charts.errorEvoCount=safeChart(_cvEC.getContext('2d'),{type:'line',data:{labels:evoLabels,datasets:buildDatasets('count')},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'bottom',labels:{color:c.tick,font:{size:10},boxWidth:10,padding:8}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.parsed.y+' trade'+(ctx.parsed.y===1?'':'s');}}}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},stepSize:1,precision:0},grid:{color:c.grid}}}}});
+  if(_cvEC)charts.errorEvoCount=safeChart(_cvEC.getContext('2d'),{type:'line',data:{labels:evoLabels,datasets:buildDatasets('count')},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'bottom',onClick:isolateLegendClick,onHover:legendHoverCursor,onLeave:legendLeaveCursor,labels:{color:c.tick,font:{size:10},boxWidth:10,padding:8}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.parsed.y+' trade'+(ctx.parsed.y===1?'':'s');}}}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},stepSize:1,precision:0},grid:{color:c.grid}}}}});
 }
 // ══ Trade Analytics page — its own filtered data set ═══════════════
 // Orchestrator for the "Trade Analytics" page: applies that page's own filter row
