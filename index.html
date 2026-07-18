@@ -1168,7 +1168,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <div class="stats-grid" id="dash-quality-stats"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
         <div class="card"><div class="card-header"><span class="card-title">Rating distribution</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-rating-dist"></canvas></div></div></div>
-        <div class="card"><div class="card-header"><span class="card-title">Error type breakdown</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-error-dist"></canvas></div></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Error type frequency</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-error-dist"></canvas></div></div></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
         <div class="card"><div class="card-header"><span class="card-title">Win rate by rating</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-rating-perf"></canvas></div></div></div>
@@ -1176,7 +1176,13 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       </div>
       <div class="card" style="margin-bottom:22px">
         <div class="card-header"><span class="card-title">Error type impact</span></div>
+        <div style="font-size:11px;color:var(--text3);padding:8px 16px 10px">Sorted by "Edge lost" — total R this mistake has cost you vs. your clean-trade baseline, worst first. "Win rate"/"Avg RR" count a trade toward every tag it carries (so they can add up to more than your total trades); "Solo WR (n)" isolates trades where this was the <em>only</em> tagged error, to check whether the mistake is bad on its own or only in combination — watch the n, small samples aren't conclusive.</div>
         <div class="table-wrap" id="dash-error-table"></div>
+      </div>
+      <div class="card" style="margin-bottom:22px">
+        <div class="card-header"><span class="card-title">Error combinations</span></div>
+        <div style="font-size:11px;color:var(--text3);padding:8px 16px 10px">Mutually exclusive — grouped by each trade's exact set of tagged errors, so every trade appears in exactly one row and the Trades column always sums to your total trade count.</div>
+        <div class="table-wrap" id="dash-error-combo-table"></div>
       </div>
       <div class="analytics-group-label">Volume &amp; Outcome</div>
       <!-- Trade volume over time (monthly / yearly) — collapsible, collapsed by default -->
@@ -1869,9 +1875,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               <label class="flabel">Rating <span style="color:var(--red);margin-left:2px">*</span></label>
               <select id="f-rating"><option value="">— select —</option><option>⭐</option><option>⭐⭐</option><option>⭐⭐⭐</option><option>⭐⭐⭐⭐</option><option>⭐⭐⭐⭐⭐</option></select>
             </div>
-            <div class="frow" style="min-width:130px">
-              <label class="flabel">Error type <button type="button" class="btn btn-ghost btn-sm" style="padding:0 4px;font-size:10px;height:auto;font-weight:600;color:var(--text3);letter-spacing:.04em" onclick="openErrorTypeManager()">manage</button></label>
-              <select id="f-error"><option value="">— none —</option></select>
+            <div class="frow" style="flex:1;min-width:220px">
+              <label class="flabel">Error type(s) <button type="button" class="btn btn-ghost btn-sm" style="padding:0 4px;font-size:10px;height:auto;font-weight:600;color:var(--text3);letter-spacing:.04em" onclick="openErrorTypeManager()">manage</button></label>
+              <div class="opt-group" id="opt-error"></div>
+              <input type="hidden" id="f-error-val" value="">
             </div>
           </div>
           <!-- TRADE PLAN (moved from Analysis tab) -->
@@ -1894,7 +1901,6 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                 <div class="opt-group" id="opt-slplace">
                   <span class="opt-pill opt-amber" data-val="Confirmation" onclick="pickOpt(this,'tp-slplace-val')">Confirmation</span>
                   <span class="opt-pill opt-purple" data-val="Zone" onclick="pickOpt(this,'tp-slplace-val')">Zone</span>
-                  <span class="opt-pill opt-amber" data-val="Candle H/L" onclick="pickOpt(this,'tp-slplace-val')">Candle H/L</span>
                 </div>
                 <input type="hidden" id="tp-slplace-val" value="">
               </div>
@@ -4693,6 +4699,23 @@ async function getSetting(key,def){try{var s=await dbGet('settings',key);return 
 async function setSetting(key,value){await dbPut('settings',{id:key,value:value});}
 async function getStrategies(){return await getSetting('strategies',DEFAULT_STRATEGIES.slice());}
 async function getErrorTypes(){return await getSetting('errorTypes',DEFAULT_ERROR_TYPES.slice());}
+// Trades can carry error types two ways: the current multi-select array (t.errors), or the
+// legacy single-string field (t.error) from before multi-select existed. This helper is the
+// single point of truth for reading them back out — every place that needs a trade's error
+// tags (rename/delete guards, history table, detail view, analytics, AI analyzer) should read
+// through here rather than touching t.error / t.errors directly, so old and new trades behave
+// identically. tradeActiveErrors() additionally strips legacy "no error" placeholder strings
+// ('None', '— none —', 'Valid - Natural') that some old trades stored instead of leaving blank.
+function tradeErrorList(t){
+  if(!t)return[];
+  if(Array.isArray(t.errors))return t.errors.filter(Boolean);
+  if(t.error)return[t.error];
+  return[];
+}
+var ERR_NONE_VALUES=['','None','— none —','Valid - Natural'];
+function tradeActiveErrors(t){
+  return tradeErrorList(t).filter(function(e){return ERR_NONE_VALUES.indexOf(e)===-1;});
+}
 async function getChecklist(){return await getSetting('checklist',JSON.parse(JSON.stringify(DEFAULT_CHECKLIST)));}
 // ══ Strategy manager ══════════════════════════════
 // Strategies are just a plain string array in settings ('strategies'), shown as
@@ -4811,7 +4834,7 @@ async function deleteErrorType(idx){
   var types=await getErrorTypes();
   var name=types[idx];
   var trades=await dbGetAll('trades');
-  var using=trades.filter(function(t){return t.error===name;});
+  var using=trades.filter(function(t){return tradeErrorList(t).indexOf(name)!==-1;});
   if(using.length){toast('Cannot delete "'+name+'" — used in '+using.length+' trade'+(using.length>1?'s':'')+' (including archived)','err');return;}
   if(!confirm('Delete "'+name+'"?'))return;
   types.splice(idx,1);await setSetting('errorTypes',types);renderErrorTypeList();populateErrorTypeSelect();toast('Error type deleted','ok');ghAutoSyncConfig();
@@ -4824,11 +4847,18 @@ async function updateErrorType(idx,name){
   if(types.includes(name)&&types.indexOf(name)!==idx){toast('Already exists','err');renderErrorTypeList();return;}
   types[idx]=name;
   await setSetting('errorTypes',types);
-  // Update all trades that used the old name
+  // Update all trades that used the old name — both the current array field and the
+  // legacy single-string field, so trades saved before multi-select existed still migrate.
   var trades=await dbGetAll('trades');
   var updated=0;
   for(var t of trades){
-    if(t.error===oldName){t.error=name;await dbPut('trades',t);updated++;}
+    var changed=false;
+    if(Array.isArray(t.errors)&&t.errors.indexOf(oldName)!==-1){
+      t.errors=t.errors.map(function(e){return e===oldName?name:e;});
+      changed=true;
+    }
+    if(t.error===oldName){t.error=name;changed=true;}
+    if(changed){await dbPut('trades',t);updated++;}
   }
   populateErrorTypeSelect();
   if(updated)toast('Error type renamed — updated '+updated+' trade'+(updated>1?'s':''),'ok');
@@ -4837,10 +4867,58 @@ async function updateErrorType(idx,name){
 // Rebuilds the Log Trade form's error-type dropdown from settings, preserving the
 // current selection if it still exists (called after any add/rename/delete above,
 // and once on page init).
+// Multi-select pills for Error type(s): unlike pickOpt/pickOptDeselectable (single-choice
+// groups), clicking a pill here just toggles it independently of its siblings. Selected
+// values are kept in the f-error-val hidden input as a comma-joined list (mirrors the
+// single-value "-val" hidden inputs used elsewhere, just multi-valued).
+function toggleErrorPill(pill){
+  pill.classList.toggle('selected');
+  var grp=pill.closest('.opt-group');
+  var hidden=document.getElementById('f-error-val');
+  if(hidden&&grp){
+    var vals=Array.from(grp.querySelectorAll('.opt-pill.selected')).map(function(p){return p.dataset.val;});
+    hidden.value=vals.join(',');
+  }
+}
+// Programmatically select a set of error-type pills (comma-string or array) — used when
+// loading a trade for edit and when restoring a captured form snapshot.
+function setErrorPills(list){
+  if(typeof list==='string')list=list.split(',').filter(Boolean);
+  list=list||[];
+  var grp=document.getElementById('opt-error');
+  var hidden=document.getElementById('f-error-val');
+  if(grp)grp.querySelectorAll('.opt-pill').forEach(function(p){p.classList.toggle('selected',list.indexOf(p.dataset.val)!==-1);});
+  if(hidden)hidden.value=list.join(',');
+}
+// Non-green color classes cycle for error pills — green is reserved elsewhere in the app for
+// "Clean"/good outcomes, so keeping errors out of that color avoids confusing the two.
+var ERR_PILL_COLORS=['opt-red','opt-amber','opt-purple','opt-blue','opt-gray'];
 async function populateErrorTypeSelect(){
-  var types=await getErrorTypes();var sel=document.getElementById('f-error');var cur=sel.value;
-  sel.innerHTML='<option value="">— none —</option>'+types.map(function(s){return'<option value="'+escHtml(s)+'">'+escHtml(s)+'</option>'}).join('');
-  if(cur&&types.includes(cur))sel.value=cur;
+  var types=await getErrorTypes();
+  var grp=document.getElementById('opt-error');
+  var hidden=document.getElementById('f-error-val');
+  if(!grp)return;
+  var cur=hidden?hidden.value.split(',').filter(Boolean):[];
+  grp.innerHTML=types.map(function(s,i){
+    var cls=ERR_PILL_COLORS[i%ERR_PILL_COLORS.length];
+    var sel=cur.indexOf(s)!==-1?' selected':'';
+    return'<span class="opt-pill '+cls+sel+'" data-val="'+escHtml(s)+'" onclick="toggleErrorPill(this)">'+escHtml(s)+'</span>';
+  }).join('');
+  // Drop any selections that no longer exist in the list (e.g. after a rename elsewhere)
+  if(hidden)hidden.value=cur.filter(function(v){return types.indexOf(v)!==-1;}).join(',');
+  await populateErrorFilterSelect();
+}
+// Rebuilds the Trade Analytics "Error type" filter dropdown from settings. Kept in sync
+// alongside populateErrorTypeSelect so newly added/renamed/deleted error types are reflected
+// there too (this dropdown used to be hardcoded in HTML and never updated with custom types).
+async function populateErrorFilterSelect(){
+  var types=await getErrorTypes();
+  var sel=document.getElementById('trd-error-filter');
+  if(!sel)return;
+  var cur=sel.value;
+  sel.innerHTML='<option value="">All trades</option><option value="__clean__">Clean (no error)</option>'
+    +types.map(function(s){return'<option value="'+escHtml(s)+'">'+escHtml(s)+'</option>'}).join('');
+  if(cur==='__clean__'||types.indexOf(cur)!==-1)sel.value=cur;
 }
 // ══ Checklist editor ══════════════════════════════
 // The checklist (array of {section, items[]}) is edited via an in-memory draft
@@ -5740,7 +5818,7 @@ async function generateDemoTrades(sessionId,sessionStartDate,sessionEndDate,star
   if(!winExitCrits.length)winExitCrits=allExitCrits;
   if(!lossExitCrits.length)lossExitCrits=allExitCrits;
   var ratings=selectVals('f-rating');
-  var errors=selectVals('f-error');
+  var errors=pillVals('opt-error');
   var biasOptions=['bull','bear','neutral'];
   var narrativeTemplates=['Price swept liquidity at the low before reversing bullish.','Strong impulsive move away from the zone, confirmed on LTF.','Mitigation of the daily FVG with bullish reaction.','Clean break of structure to the upside after consolidation.','Price rejected the daily order block with engulfing candle.','Bearish BOS on 4h confirmed the short bias.','Premium array aligned with weekly bearish OB.'];
   var ledToTradeTemplates=['1. Clear BOS on 4H\n2. LTF confirmation via 15m engulf\n3. Volume spike at zone','1. HTF bearish bias\n2. Price in premium\n3. FVG fill entry','1. Structure aligned across all TFs\n2. Clean order block\n3. Confluence of indicators'];
@@ -5883,7 +5961,7 @@ async function generateDemoTrades(sessionId,sessionStartDate,sessionEndDate,star
       method:method,
       ltf:ltf,
       rating:rating,
-      error:error,
+      errors:error?[error]:[],
       acct:acct,
       riskpct:riskPct,
       riskDollar:parseFloat(riskDollar.toFixed(2)),
@@ -6061,7 +6139,7 @@ async function generateDemoTrades(sessionId,sessionStartDate,sessionEndDate,star
       method:randChoice(methods),
       ltf:randChoice(ltfs),
       rating:sRating,
-      error:sError,
+      errors:sError?[sError]:[],
       acct:sAcct,
       riskpct:riskPct,
       riskDollar:parseFloat(sRiskDollar.toFixed(2)),
@@ -7412,7 +7490,7 @@ async function saveTrade(){
   if(!methodVal){toast('Entry method is required','err');switchTab(0,null);return;}
   var ratingVal=document.getElementById('f-rating').value;
   if(!ratingVal){toast('Rating is required','err');switchTab(0,null);return;}
-  var errorVal=document.getElementById('f-error').value;
+  var errorVal=document.getElementById('f-error-val').value;
   var trrVal=document.getElementById('f-trr').value;
   if(!trrVal){toast('Target RR is required','err');switchTab(0,null);return;}
   var etimeTime=(document.getElementById('f-etime-time-24').value||'').trim()||(parseTimeInput(document.getElementById('f-etime-time').value||'')||{h24:''}).h24;
@@ -7553,7 +7631,7 @@ async function saveTrade(){
     type,strategy:document.getElementById('f-strategy').value,
     model:document.getElementById('f-model-val').value,method:document.getElementById('f-method-val').value,
     ltf:document.getElementById('f-ltf-val').value,rating:document.getElementById('f-rating').value,
-    error:document.getElementById('f-error').value,
+    errors:(document.getElementById('f-error-val').value||'').split(',').filter(Boolean),
     acct,riskpct,riskDollar:parseFloat(riskDollar.toFixed(2)),
     entryPrice:entry,stopLoss:sl,exitPrice:exit,qty:actualQty,
     targetRR:trr,actualRR:(arr!=null)?parseFloat(arr.toFixed(3)):null,
@@ -7642,12 +7720,12 @@ async function clearForm(skipCancelEdit){
   document.getElementById('f-etime-date').value='';document.getElementById('f-etime-time').value='';document.getElementById('f-etime-time-24').value='';
   document.getElementById('f-xtime-date').value='';document.getElementById('f-xtime-time').value='';document.getElementById('f-xtime-time-24').value='';
   document.getElementById('f-pair').selectedIndex=0;document.getElementById('f-asset-type').value='';
-  document.getElementById('f-error').selectedIndex=0;document.getElementById('f-rating').selectedIndex=0;
+  document.getElementById('f-rating').selectedIndex=0;
   var wld2=document.getElementById('f-winloss-display');if(wld2){wld2.value='';wld2.style.color='';}
   var wlh2=document.getElementById('f-winloss');if(wlh2)wlh2.value='';
   document.getElementById('trail-trigger').selectedIndex=0;document.getElementById('tpchg-dir').selectedIndex=0;
   // Reset opt pills - clear all selections (no defaults)
-  ['opt-type','opt-model','opt-method','opt-ltf','opt-trail','opt-criteria','opt-slplace','opt-tpplace','opt-exit-a'].forEach(function(gid){
+  ['opt-type','opt-model','opt-method','opt-ltf','opt-trail','opt-criteria','opt-slplace','opt-tpplace','opt-exit-a','opt-error'].forEach(function(gid){
     var grp=document.getElementById(gid);if(!grp)return;
     grp.querySelectorAll('.opt-pill').forEach(function(p){p.classList.remove('selected')});
   });
@@ -7656,6 +7734,7 @@ async function clearForm(skipCancelEdit){
   document.getElementById('f-method-val').value='';
   document.getElementById('f-ltf-val').value='';
   document.getElementById('f-trail-val').value='';
+  document.getElementById('f-error-val').value='';
   document.getElementById('tp-criteria-val').value='';
   document.getElementById('tp-slplace-val').value='';
   document.getElementById('tp-tpplace-val').value='';
@@ -7709,7 +7788,7 @@ async function editTrade(id){
   setOptPill('opt-method',trade.method);s('f-method-val',trade.method);
   setOptPill('opt-ltf',trade.ltf);s('f-ltf-val',trade.ltf);
   setOptPill('opt-trail',trade.tpTrail||'');s('f-trail-val',trade.tpTrail||'');
-  s('f-strategy',trade.strategy);s('f-error',trade.error);s('f-rating',trade.rating);
+  s('f-strategy',trade.strategy);setErrorPills(tradeErrorList(trade));s('f-rating',trade.rating);
   // Set f-acct to the equity *before* this trade was entered.
   // Correct for any trade position (1st, 2nd, Nth):
   //   startingEquity + sum of plDollar of all session trades that entered BEFORE this one.
@@ -7920,7 +7999,7 @@ var ALL_HISTORY_COLS=[
   {key:'strategy',  label:'Strategy',  sortVal:function(t){return t.strategy||'';},               render:function(t){return'<td style="font-size:11px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(t.strategy||'—')+'</td>';}},
   {key:'durationMin',label:'Duration', sortVal:function(t){return t.durationMin||0;},             render:function(t){if(!t.durationMin)return'<td>—</td>';var total=t.durationMin,days=Math.floor(total/1440),h=Math.floor((total%1440)/60),m=total%60;if(days>0){var label=days+'d'+(h>0?' '+h+'h':'');return'<td><span style="display:inline-flex;align-items:center;gap:4px;background:rgba(155,127,240,.12);border:1px solid rgba(155,127,240,.25);color:var(--purple);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;font-family:DM Mono,monospace;white-space:nowrap">⏱ '+label+'</span></td>';}return'<td style="font-size:12px;color:var(--text2)">'+(h>0?h+'h ':'')+m+'m</td>';}},
   {key:'rating',    label:'Rating',    sortVal:function(t){return(t.rating||'').length;},         render:function(t){return'<td><span class="stars">'+(t.rating||'')+'</span></td>';}},
-  {key:'error',     label:'Error type',sortVal:function(t){return t.error||'';},                  render:function(t){return'<td style="font-size:11px;color:var(--text2)">'+escHtml(t.error||'—')+'</td>';}},
+  {key:'error',     label:'Error type',sortVal:function(t){return tradeErrorList(t).join(', ');},                  render:function(t){var el=tradeErrorList(t);return'<td style="font-size:11px;color:var(--text2)">'+(el.length?escHtml(el.join(', ')):'—')+'</td>';}},
   {key:'model',     label:'Model',     sortVal:function(t){return t.model||'';},                  render:function(t){return'<td style="font-size:11px;color:var(--text2)">'+escHtml(t.model||'—')+'</td>';}},
   {key:'method',    label:'Method',    sortVal:function(t){return t.method||'';},                 render:function(t){return'<td style="font-size:11px;color:var(--text2)">'+escHtml(t.method||'—')+'</td>';}},
   {key:'ltf',       label:'LTF',       sortVal:function(t){return t.ltf||'';},                    render:function(t){return'<td style="font-size:11px;color:var(--text2)">'+escHtml(t.ltf||'—')+'</td>';}},
@@ -8588,7 +8667,7 @@ async function openDetail(id,opts){
     +(trade.partialTPs&&trade.partialTPs.length&&trade.partialDesc?
       '<div class="detail-item" style="grid-column:1/-1"><div class="di-label">Partial TPs — how taken</div><div class="di-val js-pre">'+escHtml(trade.partialDesc)+'</div></div>'
     :'')
-    +'<div class="detail-item"><div class="di-label">Mistake/error</div><div class="di-val">'+(trade.error||'—')+'</div></div>'
+    +'<div class="detail-item"><div class="di-label">Mistake/error</div><div class="di-val">'+(tradeErrorList(trade).join(', ')||'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Rating</div><div class="di-val">'+(trade.rating||'—')+'</div></div>'
     +'</div>'
     +biasHtml
@@ -9055,8 +9134,6 @@ function totalPLof(arr){return arr.reduce(function(a,t){return a+(t.plDollar||0)
 // how self-assessed trade quality and specific mistakes relate to actual outcomes.
 function _renderQualityAnalytics(trades){
   trades=trades||[];
-  // 'Valid - Natural' is retired from the picker but old trades may still carry it — treat as clean.
-  var ERR_NONE=['','None','— none —','Valid - Natural'];
   var c=chartColors();
   // ── Bucket trades by star rating (rating string length = star count, 1-5) ──
   var ratingBuckets={1:[],2:[],3:[],4:[],5:[]};
@@ -9066,18 +9143,18 @@ function _renderQualityAnalytics(trades){
   });
   var rated=[].concat(ratingBuckets[1],ratingBuckets[2],ratingBuckets[3],ratingBuckets[4],ratingBuckets[5]);
   var avgRating=rated.length?rated.reduce(function(a,t){return a+t.rating.length;},0)/rated.length:0;
-  // ── Bucket trades by error type (skip blank/none-like values) ──
+  // ── Bucket trades by error type (skip blank/none-like values). A trade tagged with more
+  // than one error type is counted in every relevant bucket — see tradeActiveErrors(). ──
   var errorBuckets={};
   trades.forEach(function(t){
-    var e=t.error;
-    if(e&&ERR_NONE.indexOf(e)===-1){
+    tradeActiveErrors(t).forEach(function(e){
       if(!errorBuckets[e])errorBuckets[e]=[];
       errorBuckets[e].push(t);
-    }
+    });
   });
   var errKeys=Object.keys(errorBuckets).sort(function(a,b){return errorBuckets[b].length-errorBuckets[a].length;});
   var topErr=errKeys[0]||null;
-  var cleanTrades=trades.filter(function(t){return !t.error||ERR_NONE.indexOf(t.error)!==-1;});
+  var cleanTrades=trades.filter(function(t){return tradeActiveErrors(t).length===0;});
   var hiQ=[].concat(ratingBuckets[4],ratingBuckets[5]);
   var loQ=[].concat(ratingBuckets[1],ratingBuckets[2]);
   var hiWR=winRate(hiQ),loWR=winRate(loQ);
@@ -9110,17 +9187,21 @@ function _renderQualityAnalytics(trades){
   if(charts.ratingDist)charts.ratingDist.destroy();
   var _cvRD=document.getElementById('chart-rating-dist');
   if(_cvRD)charts.ratingDist=safeChart(_cvRD.getContext('2d'),{type:'bar',data:{labels:ratingLabels,datasets:[{label:'Trades',data:ratingCounts,backgroundColor:ratingColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:11}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},stepSize:1,precision:0},grid:{color:c.grid}}}}});
-  // ── Error type breakdown (doughnut, includes Clean baseline) ──
+  // ── Error type frequency (bar, includes Clean baseline) ──
+  // Was previously a doughnut, but a doughnut/pie visually implies its slices are
+  // parts of one whole summing to 100% — which isn't true here, since a multi-tagged
+  // trade contributes to more than one slice. A bar of raw occurrence counts makes no
+  // such claim, so it's the honest chart type for overlapping tag data.
   // Clean is always green, so error-type colors are drawn from a palette that
   // deliberately excludes green — otherwise an error type can render in the same
-  // color as "Clean" and become impossible to tell apart in the legend.
+  // color as "Clean" and become impossible to tell apart.
   var errTypePalette=[c.red,c.amber,c.purple,c.accent,'#64d4fc','#ff8a5c','#c968e0'];
   var errLabels=errKeys.concat(['Clean']);
   var errData=errKeys.map(function(k){return errorBuckets[k].length;}).concat([cleanTrades.length]);
   var errColors=errKeys.map(function(k,i){return errTypePalette[i%errTypePalette.length];}).concat([c.green]);
   if(charts.errorDist)charts.errorDist.destroy();
   var _cvED=document.getElementById('chart-error-dist');
-  if(_cvED)charts.errorDist=safeChart(_cvED.getContext('2d'),{type:'doughnut',data:{labels:errLabels,datasets:[{data:errData,backgroundColor:errColors,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:c.legend,font:{size:10},padding:8,boxWidth:9}}}}});
+  if(_cvED)charts.errorDist=safeChart(_cvED.getContext('2d'),{type:'bar',data:{labels:errLabels.map(function(k){return k.length>14?k.slice(0,14)+'…':k;}),datasets:[{label:'Occurrences',data:errData,backgroundColor:errColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y+' occurrence'+(ctx.parsed.y===1?'':'s');}}}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},stepSize:1,precision:0},grid:{color:c.grid}}}}});
   // ── Win rate by rating (bar) ──
   var wrByRating=[1,2,3,4,5].map(function(n){var wr=winRate(ratingBuckets[n]);return wr!=null?parseFloat(wr.toFixed(1)):0;});
   var wrColors=[1,2,3,4,5].map(function(n){var wr=winRate(ratingBuckets[n]);return wr!=null&&wr>=50?c.green:c.red;});
@@ -9136,19 +9217,86 @@ function _renderQualityAnalytics(trades){
   var _cvEP=document.getElementById('chart-error-pl');
   if(_cvEP)charts.errorPL=safeChart(_cvEP.getContext('2d'),{type:'bar',data:{labels:errPLLabels.map(function(k){return k.length>14?k.slice(0,14)+'…':k;}),datasets:[{label:'Avg P/L ($)',data:errPLData,backgroundColor:errPLColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return'$'+v;}},grid:{color:c.grid}}}}});
   // ── Error type impact table ──
-  var tblRows=[{label:'Clean (no error)',arr:cleanTrades}].concat(errKeys.map(function(k){return{label:k,arr:errorBuckets[k]};}));
+  // Row order and the two right-most columns answer the questions a raw average
+  // can't:
+  //  - "Solo WR (n)": win rate ONLY on trades where this was the single tagged
+  //    error (no co-occurring tags) — compare it to the "Win rate" column (which,
+  //    like the chart above, counts a trade toward every tag it carries) to see
+  //    whether this mistake is bad on its own or only bad in combination with
+  //    something else. n is always shown since solo samples are often thin.
+  //  - "Edge lost (R)": (clean-trade avg R − this bucket's avg R) × occurrences —
+  //    the total R this specific leak has cost you relative to your clean
+  //    baseline, across every time it happened. This is what average P/L can't
+  //    tell you: a mild mistake that happens often can cost more overall than a
+  //    severe one that happens rarely. Rows are sorted by this, worst leak first,
+  //    so the top of the table is literally "fix this next."
+  var rrClean=avgRRof(cleanTrades);
+  function edgeLostR(arr){
+    if(rrClean==null||!arr.length)return null;
+    var rr=avgRRof(arr);
+    return rr==null?null:(rrClean-rr)*arr.length;
+  }
+  var soloBuckets={};
+  errKeys.forEach(function(k){
+    soloBuckets[k]=trades.filter(function(t){var errs=tradeActiveErrors(t);return errs.length===1&&errs[0]===k;});
+  });
+  var errKeysByCost=errKeys.slice().sort(function(a,b){
+    var ea=edgeLostR(errorBuckets[a]),eb=edgeLostR(errorBuckets[b]);
+    if(ea==null&&eb==null)return 0;
+    if(ea==null)return 1;
+    if(eb==null)return -1;
+    return eb-ea;
+  });
+  var tblRows=[{label:'Clean (no error)',arr:cleanTrades,isClean:true}].concat(errKeysByCost.map(function(k){return{label:k,arr:errorBuckets[k],solo:soloBuckets[k]};}));
   var tblHtml=tblRows.map(function(r){
     var wr=winRate(r.arr),rr=avgRRof(r.arr),tp=totalPLof(r.arr);
+    var soloCell='<span style="color:var(--text3)">—</span>',costCell='<span style="color:var(--text3)">—</span>';
+    if(!r.isClean){
+      var swr=winRate(r.solo);
+      soloCell=(swr!=null?swr.toFixed(0)+'%':'—')+' <span style="color:var(--text3);font-size:10.5px">(n='+r.solo.length+')</span>';
+      var cost=edgeLostR(r.arr);
+      if(cost!=null)costCell='<span style="color:'+(cost>0?'var(--red)':'var(--green)')+'">'+(cost>0?'-':'+')+Math.abs(cost).toFixed(2)+'R</span>';
+    }
     return '<tr>'+
       '<td style="font-weight:600;color:var(--text)">'+escHtml(r.label)+'</td>'+
       '<td class="mono">'+r.arr.length+'</td>'+
       '<td class="mono" style="color:'+(wr!=null?(wr>=50?'var(--green)':'var(--red)'):'var(--text3)')+'">'+(wr!=null?wr.toFixed(1)+'%':'—')+'</td>'+
       '<td class="mono">'+(rr!=null?rr.toFixed(2)+'R':'—')+'</td>'+
       '<td class="mono" style="color:'+(tp>=0?'var(--green)':'var(--red)')+'">'+(tp>=0?'+':'')+tp.toFixed(2)+'</td>'+
+      '<td class="mono">'+soloCell+'</td>'+
+      '<td class="mono">'+costCell+'</td>'+
       '</tr>';
   }).join('');
   var tblEl=document.getElementById('dash-error-table');
-  if(tblEl)tblEl.innerHTML=!trades.length?'<div class="empty-state"><p>No trades yet</p></div>':'<table class="data"><thead><tr><th>Category</th><th>Trades</th><th>Win rate</th><th>Avg RR</th><th>Total P/L</th></tr></thead><tbody>'+tblHtml+'</tbody></table>';
+  if(tblEl)tblEl.innerHTML=!trades.length?'<div class="empty-state"><p>No trades yet</p></div>':'<table class="data"><thead><tr><th>Category</th><th>Trades</th><th>Win rate</th><th>Avg RR</th><th>Total P/L</th><th>Solo WR (n)</th><th>Edge lost (R)</th></tr></thead><tbody>'+tblHtml+'</tbody></table>';
+  // ── Error combinations (mutually exclusive) ──
+  // The table above (and the doughnut/bar charts) count a multi-tagged trade once per
+  // tag — a trade with both "Checklist" and "FOMO" adds to both rows, so summing the
+  // Trades column there can exceed trades.length by design (it's meant to show each
+  // error type's own correlation with outcome, independent of what else was tagged).
+  // This table instead partitions trades by their exact *set* of active error tags
+  // (sorted + joined), so every trade lands in exactly one row and Trades always
+  // sums to trades.length — the "does it actually add up" view.
+  var comboBuckets={};
+  trades.forEach(function(t){
+    var errs=tradeActiveErrors(t).slice().sort();
+    var label=errs.length?errs.join(' + '):'Clean (no error)';
+    if(!comboBuckets[label])comboBuckets[label]=[];
+    comboBuckets[label].push(t);
+  });
+  var comboKeys=Object.keys(comboBuckets).sort(function(a,b){return comboBuckets[b].length-comboBuckets[a].length;});
+  var comboHtml=comboKeys.map(function(k){
+    var arr=comboBuckets[k],wr=winRate(arr),rr=avgRRof(arr),tp=totalPLof(arr);
+    return '<tr>'+
+      '<td style="font-weight:600;color:var(--text)">'+escHtml(k)+'</td>'+
+      '<td class="mono">'+arr.length+'</td>'+
+      '<td class="mono" style="color:'+(wr!=null?(wr>=50?'var(--green)':'var(--red)'):'var(--text3)')+'">'+(wr!=null?wr.toFixed(1)+'%':'—')+'</td>'+
+      '<td class="mono">'+(rr!=null?rr.toFixed(2)+'R':'—')+'</td>'+
+      '<td class="mono" style="color:'+(tp>=0?'var(--green)':'var(--red)')+'">'+(tp>=0?'+':'')+tp.toFixed(2)+'</td>'+
+      '</tr>';
+  }).join('');
+  var comboEl=document.getElementById('dash-error-combo-table');
+  if(comboEl)comboEl.innerHTML=!trades.length?'<div class="empty-state"><p>No trades yet</p></div>':'<table class="data"><thead><tr><th>Error combination</th><th>Trades</th><th>Win rate</th><th>Avg RR</th><th>Total P/L</th></tr></thead><tbody>'+comboHtml+'</tbody></table>';
 }
 // ══ Trade Analytics page — its own filtered data set ═══════════════
 // Orchestrator for the "Trade Analytics" page: applies that page's own filter row
@@ -9171,7 +9319,6 @@ async function _renderTradeAnalyticsImpl(){
   var dirF=(document.getElementById('trd-direction-filter')||{}).value||'';
   var errF=(document.getElementById('trd-error-filter')||{}).value||'';
   var skipF=(document.getElementById('trd-skipped-filter')||{}).value||'taken';
-  var ERR_NONE_F=['','None','— none —','Valid - Natural'];
   var trades=allTrades.filter(function(t){
     if(archivedIds.has(t.sessionId))return false;
     // Enforce demo/real split, same convention as the dashboard
@@ -9183,8 +9330,8 @@ async function _renderTradeAnalyticsImpl(){
     if(!sesF&&trdTypeIds&&!trdTypeIds.has(t.sessionId))return false;
     if(pairF&&t.pair!==pairF)return false;
     if(dirF&&t.type!==dirF)return false;
-    if(errF==='__clean__'){ if(t.error&&ERR_NONE_F.indexOf(t.error)===-1)return false; }
-    else if(errF){ if(t.error!==errF)return false; }
+    if(errF==='__clean__'){ if(tradeActiveErrors(t).length>0)return false; }
+    else if(errF){ if(tradeActiveErrors(t).indexOf(errF)===-1)return false; }
     return true;
   });
   trades=enrichSkippedPL(trades);
@@ -11716,7 +11863,7 @@ function captureLogFormSnapshot(){
   // Phantom fields from old version removed; missing fields added.
   [
     // Tab 0 — trade info
-    'f-pair','f-asset-type','f-session','f-strategy','f-rating','f-error',
+    'f-pair','f-asset-type','f-session','f-strategy','f-rating','f-error-val',
     'f-entry','f-sl-price','f-exit','f-qty','f-acct','f-riskpct','f-trr','f-winloss',
     'f-etime-date','f-etime-time','f-etime-time-24',
     'f-xtime-date','f-xtime-time','f-xtime-time-24',
@@ -11756,7 +11903,7 @@ function restoreLogFormSnapshot(snap){
   // Skip readonly display-only fields (f-num, f-logged-at, f-asset-type set via onPairChange).
   // Allow empty string restore so cleared fields aren't left with stale values.
   [
-    'f-pair','f-session','f-strategy','f-rating','f-error',
+    'f-pair','f-session','f-strategy','f-rating','f-error-val',
     'f-entry','f-sl-price','f-exit','f-qty','f-acct','f-riskpct','f-trr','f-winloss',
     'f-etime-date','f-etime-time','f-etime-time-24',
     'f-xtime-date','f-xtime-time','f-xtime-time-24',
@@ -11799,6 +11946,8 @@ function restoreLogFormSnapshot(snap){
       p.classList.toggle('selected', p.dataset.val===snap['f-tpchg-val']);
     });
   }
+  // Error type(s) — multi-select pills, restored separately from the single-value optPillMap above
+  if(snap['f-error-val']!==undefined) setErrorPills(snap['f-error-val']);
   // Pair change updates asset-type display and pair-dependent UI
   if(snap['f-pair']){
     var ps=document.getElementById('f-pair');
@@ -14480,7 +14629,7 @@ function aiComputeMetrics(trades,sessions){
   taken.forEach(function(t){if(t.rating)ratingCounts[t.rating]=(ratingCounts[t.rating]||0)+1;});
   // Error types
   var errorCounts={};
-  taken.forEach(function(t){if(t.error&&t.error!=='None'&&t.error!=='— none —'&&t.error!='')errorCounts[t.error]=(errorCounts[t.error]||0)+1;});
+  taken.forEach(function(t){tradeActiveErrors(t).forEach(function(e){errorCounts[e]=(errorCounts[e]||0)+1;});});
   // Reflection completion
   var reflFields=['emoBefore','emoAfter','emoComplete','mistakes','lessons','good','postAnalysis'];
   var reflScores=taken.map(function(t){
@@ -14635,7 +14784,7 @@ function aiBuilderPrompt(m,sessionInfo,depth){
       var row='Trade #'+(i+1)+': '+t.pair+' | '+(t.type||'?')+' | '+(t.winLoss===1?'WIN':'LOSS')+' | P/L: $'+(parseFloat(t.plDollar)||0).toFixed(2);
       if(t.actualRR!=null)row+=' | RR: '+parseFloat(t.actualRR).toFixed(2)+'R';
       if(t.strategy)row+=' | Strategy: '+t.strategy;
-      if(t.error&&t.error!=='None'&&t.error!=='— none —'&&t.error)row+=' | Error: '+t.error;
+      if(tradeActiveErrors(t).length)row+=' | Error: '+tradeActiveErrors(t).join(', ');
       if(t.rating)row+=' | Rating: '+t.rating;
       if(t.checklist&&t.checklist.length){
         var checked=t.checklist.filter(function(c){return c.checked;}).length;
