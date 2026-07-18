@@ -1870,8 +1870,8 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               <select id="f-rating"><option value="">— select —</option><option>⭐</option><option>⭐⭐</option><option>⭐⭐⭐</option><option>⭐⭐⭐⭐</option><option>⭐⭐⭐⭐⭐</option></select>
             </div>
             <div class="frow" style="min-width:130px">
-              <label class="flabel">Error type</label>
-              <select id="f-error"><option value="">— none —</option><option>Invalid - Manual</option><option>Checklist</option></select>
+              <label class="flabel">Error type <button type="button" class="btn btn-ghost btn-sm" style="padding:0 4px;font-size:10px;height:auto;font-weight:600;color:var(--text3);letter-spacing:.04em" onclick="openErrorTypeManager()">manage</button></label>
+              <select id="f-error"><option value="">— none —</option></select>
             </div>
           </div>
           <!-- TRADE PLAN (moved from Analysis tab) -->
@@ -4467,6 +4467,30 @@ document.addEventListener('DOMContentLoaded',function(){
     </div>
   </div>
 </div>
+<!-- Error Type modal -->
+<div class="modal-overlay" id="errtype-modal" onclick="document.getElementById('errtype-modal').classList.remove('open')">
+  <div class="modal-box" style="max-width:480px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h3 style="margin-bottom:2px">Error types</h3>
+        <div style="font-size:11px;color:var(--text3);font-weight:400">Click a name to rename inline</div>
+      </div>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="document.getElementById('errtype-modal').classList.remove('open')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <!-- Add new error type -->
+      <div style="display:flex;gap:7px;margin-bottom:16px">
+        <input type="text" id="new-errtype-inp" placeholder="e.g. Oversized position, Revenge trade…" style="flex:1" onkeydown="if(event.key==='Enter')addErrorType()">
+        <button class="btn btn-primary" onclick="addErrorType()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add
+        </button>
+      </div>
+      <!-- Error type list -->
+      <div id="errtype-list"></div>
+    </div>
+  </div>
+</div>
 <!-- Asset Manager modal -->
 <div class="modal-overlay" id="asset-modal" onclick="closeAssetModal()">
   <div class="modal-box" style="max-width:780px;display:flex;flex-direction:column;max-height:88vh" onclick="event.stopPropagation()">
@@ -4607,6 +4631,7 @@ var editingId=null,charts={};
 var activePasteZone=null;
 var biasState={narrative:{W:'neutral',D:'neutral','4h':'neutral','1h':'neutral','15m':'neutral','5m':'neutral','1m':'neutral'}};
 var DEFAULT_STRATEGIES=['S&D - Imbalance (Limit Buy) - JeaFx','S&D - Imbalance (Liquidation candle) - Brad'];
+var DEFAULT_ERROR_TYPES=['Invalid - Manual','Checklist'];
 var DEFAULT_CHECKLIST=[
   {section:'1. Trade rules',items:['Not a forced trade','Physically / mentally / emotionally sound']},
   {section:'2. Narrative',items:['Bias match — MTF','Consolidation check']},
@@ -4667,6 +4692,7 @@ function dbGetAllCached(store){
 async function getSetting(key,def){try{var s=await dbGet('settings',key);return s?s.value:def;}catch(e){return def;}}
 async function setSetting(key,value){await dbPut('settings',{id:key,value:value});}
 async function getStrategies(){return await getSetting('strategies',DEFAULT_STRATEGIES.slice());}
+async function getErrorTypes(){return await getSetting('errorTypes',DEFAULT_ERROR_TYPES.slice());}
 async function getChecklist(){return await getSetting('checklist',JSON.parse(JSON.stringify(DEFAULT_CHECKLIST)));}
 // ══ Strategy manager ══════════════════════════════
 // Strategies are just a plain string array in settings ('strategies'), shown as
@@ -4743,6 +4769,78 @@ async function populateStrategySelect(){
   var strats=await getStrategies();var sel=document.getElementById('f-strategy');var cur=sel.value;
   sel.innerHTML=strats.map(function(s){return'<option value="'+escHtml(s)+'">'+escHtml(s)+'</option>'}).join('');
   if(strats.includes(cur))sel.value=cur;
+}
+// ══ Error type manager ══════════════════════════════
+// Same pattern as the Strategy manager above: error types are a plain string
+// array in settings ('errorTypes'), shown as editable cards here and as
+// <option> values in the Log Trade "Error type" <select> (populateErrorTypeSelect).
+// Trades store the error type *name* (not an id), so renaming/deleting has to
+// walk every trade and update/guard on that name — see updateErrorType
+// (cascading rename) and deleteErrorType (blocks delete if any trade still
+// references the name, including archived).
+function openErrorTypeManager(){renderErrorTypeList();document.getElementById('errtype-modal').classList.add('open');}
+async function renderErrorTypeList(){
+  var types=await getErrorTypes();
+  var el=document.getElementById('errtype-list');
+  if(!types.length){
+    el.innerHTML='<div style="text-align:center;padding:28px 0 20px;color:var(--text3)">'
+      +'<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="opacity:.35;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+      +'<div style="font-size:13px;font-weight:600;margin-bottom:4px">No error types yet</div>'
+      +'<div style="font-size:11px">Add your first error type above</div>'
+      +'</div>';
+    return;
+  }
+  el.innerHTML='<div style="display:flex;flex-direction:column;gap:6px">'+types.map(function(s,i){
+    var color=STRAT_COLORS[i%STRAT_COLORS.length];
+    return'<div class="strat-card" style="--sc:#'+color.replace('#','')+';" >'
+      +'<div class="strat-card-bar" style="background:'+color+'"></div>'
+      +'<span contenteditable="true" id="ee-'+i+'" class="strat-card-name" onblur="updateErrorType('+i+',this.textContent.trim())" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur()}">'+escHtml(s)+'</span>'
+      +'<div class="strat-card-actions">'
+      +'<button class="btn btn-ghost btn-sm btn-icon" title="Rename" onclick="document.getElementById(\'ee-'+i+'\').focus();var r=window.getSelection();var rng=document.createRange();rng.selectNodeContents(document.getElementById(\'ee-'+i+'\'));r.removeAllRanges();r.addRange(rng)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>'
+      +'<button class="btn btn-danger btn-sm btn-icon" title="Delete" onclick="deleteErrorType('+i+')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>'
+      +'</div></div>';
+  }).join('')+'</div>';
+}
+async function addErrorType(){
+  var inp=document.getElementById('new-errtype-inp');var name=inp.value.trim();
+  if(!name){toast('Enter a name','err');return;}
+  var types=await getErrorTypes();if(types.includes(name)){toast('Already exists','err');return;}
+  types.push(name);await setSetting('errorTypes',types);inp.value='';renderErrorTypeList();populateErrorTypeSelect();toast('Error type added','ok');ghAutoSyncConfig();
+}
+async function deleteErrorType(idx){
+  var types=await getErrorTypes();
+  var name=types[idx];
+  var trades=await dbGetAll('trades');
+  var using=trades.filter(function(t){return t.error===name;});
+  if(using.length){toast('Cannot delete "'+name+'" — used in '+using.length+' trade'+(using.length>1?'s':'')+' (including archived)','err');return;}
+  if(!confirm('Delete "'+name+'"?'))return;
+  types.splice(idx,1);await setSetting('errorTypes',types);renderErrorTypeList();populateErrorTypeSelect();toast('Error type deleted','ok');ghAutoSyncConfig();
+}
+async function updateErrorType(idx,name){
+  if(!name)return;
+  var types=await getErrorTypes();
+  var oldName=types[idx];
+  if(oldName===name)return;
+  if(types.includes(name)&&types.indexOf(name)!==idx){toast('Already exists','err');renderErrorTypeList();return;}
+  types[idx]=name;
+  await setSetting('errorTypes',types);
+  // Update all trades that used the old name
+  var trades=await dbGetAll('trades');
+  var updated=0;
+  for(var t of trades){
+    if(t.error===oldName){t.error=name;await dbPut('trades',t);updated++;}
+  }
+  populateErrorTypeSelect();
+  if(updated)toast('Error type renamed — updated '+updated+' trade'+(updated>1?'s':''),'ok');
+  ghAutoSync();
+}
+// Rebuilds the Log Trade form's error-type dropdown from settings, preserving the
+// current selection if it still exists (called after any add/rename/delete above,
+// and once on page init).
+async function populateErrorTypeSelect(){
+  var types=await getErrorTypes();var sel=document.getElementById('f-error');var cur=sel.value;
+  sel.innerHTML='<option value="">— none —</option>'+types.map(function(s){return'<option value="'+escHtml(s)+'">'+escHtml(s)+'</option>'}).join('');
+  if(cur&&types.includes(cur))sel.value=cur;
 }
 // ══ Checklist editor ══════════════════════════════
 // The checklist (array of {section, items[]}) is edited via an in-memory draft
@@ -9732,7 +9830,7 @@ function recomputeTradeFields(t){
 // Single point of truth: call this instead of repeating the chain everywhere.
 async function refreshUI(){
   loadSavedTheme();
-  await Promise.all([renderDashboard(),updateSidebarStats(),populateSessionSelects(),renderHistory(),populatePairSelect(),populateStrategySelect()]);
+  await Promise.all([renderDashboard(),updateSidebarStats(),populateSessionSelects(),renderHistory(),populatePairSelect(),populateStrategySelect(),populateErrorTypeSelect()]);
 }
 // Restores a full JSON backup (as produced by exportBackup() above, or a GitHub cloud
 // snapshot — same shape). Trades are de-duplicated by a num|pair|entryTime composite key
@@ -10271,6 +10369,7 @@ openDB().then(async function(){
   restoreSessionTypeFilterPrefs();
   await populatePairSelect();
   await populateStrategySelect();
+  await populateErrorTypeSelect();
   await populateSessionSelects();
   await populateFilters();
   restoreHistFilterPrefs();
@@ -11944,6 +12043,7 @@ var GH_BKP_ALERTS_FILE='bkp/alerts_backup.json'; // single alerts backup (manual
 async function ghBuildConfigPayload(){
   var checklist=await getChecklist();
   var strategies=await getStrategies();
+  var errorTypes=await getErrorTypes();
   var assets=await getAssets();
   var histCols=await getHistColConfig();
   // Other user preferences stored in IndexedDB settings
@@ -11966,7 +12066,7 @@ async function ghBuildConfigPayload(){
   var cloudinaryConfig=cloudinaryGetConfig();
   return{
     version:2,
-    checklist,strategies,assets,histCols,
+    checklist,strategies,errorTypes,assets,histCols,
     theme,calView,mcDefaults,calcCapital,demoDefaults,
     aiConfig,cloudinaryConfig
   };
@@ -12015,6 +12115,7 @@ async function ghPushConfigFile(cfg){
 async function ghApplyConfigData(data){
   if(data.checklist)await setSetting('checklist',data.checklist);
   if(data.strategies)await setSetting('strategies',data.strategies);
+  if(data.errorTypes)await setSetting('errorTypes',data.errorTypes);
   if(data.assets){await setSetting('assets',data.assets);_invalidateAssetFeesCache();}
   if(data.histCols){await setSetting('hist-cols',data.histCols);_histColConfigCache=null;}
   if(data.theme){await setSetting('tj-theme',data.theme);localStorage.setItem('tj-theme',data.theme);if(typeof applyThemeVars==='function'&&typeof THEMES!=='undefined'&&THEMES[data.theme])applyThemeVars(data.theme);}
@@ -12634,6 +12735,7 @@ async function ghRestoreConfigBackup(){
     if(missingStrats.length||missingPairs.length)await syncConfigFromTrades(trades);
     toast('Config restored','ok');
     await populateStrategySelect();
+    await populateErrorTypeSelect();
     await populatePairSelect();
     if(typeof renderChecklistEditor==='function')renderChecklistEditor();
     if(typeof renderChecklist==='function')renderChecklist();
