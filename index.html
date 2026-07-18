@@ -1180,9 +1180,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         <div class="table-wrap" id="dash-error-table"></div>
       </div>
       <div class="card" style="margin-bottom:22px">
-        <div class="card-header"><span class="card-title">Error combinations</span></div>
-        <div style="font-size:11px;color:var(--text3);padding:8px 16px 10px">Mutually exclusive — grouped by each trade's exact set of tagged errors, so every trade appears in exactly one row and the Trades column always sums to your total trade count.</div>
-        <div class="table-wrap" id="dash-error-combo-table"></div>
+        <div class="card-header"><span class="card-title">Issue evolution over time</span></div>
+        <div style="font-size:11px;color:var(--text3);padding:8px 16px 10px">Each line is one error type, plotted as the % of that month's trades it was tagged on — so you can see which mistakes you're growing out of and which ones are creeping back in. Dashed green is your clean-trade rate for comparison.</div>
+        <div class="chart-wrap" style="height:220px;padding:0 16px 16px"><canvas id="chart-error-evo"></canvas></div>
       </div>
       <div class="analytics-group-label">Volume &amp; Outcome</div>
       <!-- Trade volume over time (monthly / yearly) — collapsible, collapsed by default -->
@@ -9302,34 +9302,43 @@ function _renderQualityAnalytics(trades){
   }).join('');
   var tblEl=document.getElementById('dash-error-table');
   if(tblEl)tblEl.innerHTML=!trades.length?'<div class="empty-state"><p>No trades yet</p></div>':'<table class="data"><thead><tr><th>Category</th><th>Trades</th><th>Win rate</th><th>Avg RR</th><th>Total P/L</th><th>Solo WR (n)</th><th>Edge lost (R)</th></tr></thead><tbody>'+tblHtml+'</tbody></table>';
-  // ── Error combinations (mutually exclusive) ──
-  // The table above (and the doughnut/bar charts) count a multi-tagged trade once per
-  // tag — a trade with both "Checklist" and "FOMO" adds to both rows, so summing the
-  // Trades column there can exceed trades.length by design (it's meant to show each
-  // error type's own correlation with outcome, independent of what else was tagged).
-  // This table instead partitions trades by their exact *set* of active error tags
-  // (sorted + joined), so every trade lands in exactly one row and Trades always
-  // sums to trades.length — the "does it actually add up" view.
-  var comboBuckets={};
-  trades.forEach(function(t){
-    var errs=tradeActiveErrors(t).slice().sort();
-    var label=errs.length?errs.join(' + '):'Clean (no error)';
-    if(!comboBuckets[label])comboBuckets[label]=[];
-    comboBuckets[label].push(t);
+  // ── Issue evolution over time (line chart, % of month's trades per error type) ──
+  // Buckets dated trades by entry month, then for each of the top error types (by total
+  // occurrence — same ranking as errKeys above) plots what % of that month's trades carried
+  // the tag. Unlike a mutually-exclusive combo breakdown, this tracks each mistake's own
+  // trajectory: is it fading out as you fix it, holding steady, or creeping back in? A trade
+  // still counts toward every tag it carries (consistent with the frequency chart/impact
+  // table above), and a dashed "Clean" line is included as a baseline to compare against.
+  var evoDated=trades.filter(function(t){return !!t.entryTime;});
+  var evoByMonth={};
+  evoDated.forEach(function(t){
+    var d=new Date(t.entryTime);
+    if(isNaN(d.getTime()))return;
+    var mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    if(!evoByMonth[mk])evoByMonth[mk]=[];
+    evoByMonth[mk].push(t);
   });
-  var comboKeys=Object.keys(comboBuckets).sort(function(a,b){return comboBuckets[b].length-comboBuckets[a].length;});
-  var comboHtml=comboKeys.map(function(k){
-    var arr=comboBuckets[k],wr=winRate(arr),rr=avgRRof(arr),tp=totalPLof(arr);
-    return '<tr>'+
-      '<td style="font-weight:600;color:var(--text)">'+escHtml(k)+'</td>'+
-      '<td class="mono">'+arr.length+'</td>'+
-      '<td class="mono" style="color:'+(wr!=null?(wr>=50?'var(--green)':'var(--red)'):'var(--text3)')+'">'+(wr!=null?wr.toFixed(1)+'%':'—')+'</td>'+
-      '<td class="mono">'+(rr!=null?rr.toFixed(2)+'R':'—')+'</td>'+
-      '<td class="mono" style="color:'+(tp>=0?'var(--green)':'var(--red)')+'">'+(tp>=0?'+':'')+tp.toFixed(2)+'</td>'+
-      '</tr>';
-  }).join('');
-  var comboEl=document.getElementById('dash-error-combo-table');
-  if(comboEl)comboEl.innerHTML=!trades.length?'<div class="empty-state"><p>No trades yet</p></div>':'<table class="data"><thead><tr><th>Error combination</th><th>Trades</th><th>Win rate</th><th>Avg RR</th><th>Total P/L</th></tr></thead><tbody>'+comboHtml+'</tbody></table>';
+  var evoMonthKeys=Object.keys(evoByMonth).sort();
+  var evoMonthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function evoMonthLabel(mk){var p=mk.split('-');return evoMonthNames[parseInt(p[1],10)-1]+' \''+p[0].slice(2);}
+  var evoLabels=evoMonthKeys.map(evoMonthLabel);
+  var evoErrKeys=errKeys.slice(0,6); // top 6 error types by total occurrence — keeps the chart legible
+  var evoDatasets=evoErrKeys.map(function(k,i){
+    var data=evoMonthKeys.map(function(mk){
+      var arr=evoByMonth[mk],withErr=arr.filter(function(t){return tradeActiveErrors(t).indexOf(k)!==-1;}).length;
+      return arr.length?parseFloat((withErr/arr.length*100).toFixed(1)):0;
+    });
+    var color=errTypePalette[i%errTypePalette.length];
+    return {label:k.length>18?k.slice(0,18)+'…':k,data:data,borderColor:color,backgroundColor:color,fill:false,tension:.3,pointRadius:2,pointHoverRadius:4,borderWidth:2};
+  });
+  var evoCleanData=evoMonthKeys.map(function(mk){
+    var arr=evoByMonth[mk],cl=arr.filter(function(t){return tradeActiveErrors(t).length===0;}).length;
+    return arr.length?parseFloat((cl/arr.length*100).toFixed(1)):0;
+  });
+  evoDatasets.push({label:'Clean',data:evoCleanData,borderColor:c.green,backgroundColor:c.green,fill:false,tension:.3,pointRadius:2,pointHoverRadius:4,borderWidth:2,borderDash:[5,3]});
+  if(charts.errorEvo)charts.errorEvo.destroy();
+  var _cvEE=document.getElementById('chart-error-evo');
+  if(_cvEE)charts.errorEvo=safeChart(_cvEE.getContext('2d'),{type:'line',data:{labels:evoLabels,datasets:evoDatasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'bottom',labels:{color:c.tick,font:{size:10},boxWidth:10,padding:8}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.parsed.y+'% of trades that month';}}}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},min:0,suggestedMax:100}}}});
 }
 // ══ Trade Analytics page — its own filtered data set ═══════════════
 // Orchestrator for the "Trade Analytics" page: applies that page's own filter row
