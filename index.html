@@ -1180,9 +1180,17 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         <div class="table-wrap" id="dash-error-table"></div>
       </div>
       <div class="card" style="margin-bottom:22px">
-        <div class="card-header"><span class="card-title">Issue evolution over time</span></div>
-        <div style="font-size:11px;color:var(--text3);padding:8px 16px 10px">Each line is one error type, plotted as the % of that month's trades it was tagged on — so you can see which mistakes you're growing out of and which ones are creeping back in. Dashed green is your clean-trade rate for comparison.</div>
+        <div class="card-header">
+          <span class="card-title">Issue evolution over time</span>
+          <div class="cal-view-tabs" id="error-evo-tabs">
+            <button class="cal-view-tab active" data-view="month" onclick="setErrorEvoView('month',this)">Monthly</button>
+            <button class="cal-view-tab" data-view="year" onclick="setErrorEvoView('year',this)">Yearly</button>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);padding:8px 16px 10px">Each line is one error type. The top chart plots the % of that period's trades it was tagged on, so you can see which mistakes you're growing out of and which are creeping back in; the bottom chart shows the same trend in raw trade counts. Dashed green is your clean-trade rate for comparison.</div>
         <div class="chart-wrap" style="height:220px;padding:0 16px 16px"><canvas id="chart-error-evo"></canvas></div>
+        <div style="padding:0 16px 4px;font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase">By trade count</div>
+        <div class="chart-wrap" style="height:220px;padding:0 16px 16px"><canvas id="chart-error-evo-count"></canvas></div>
       </div>
       <div class="analytics-group-label">Volume &amp; Outcome</div>
       <!-- Trade volume over time (monthly / yearly) — collapsible, collapsed by default -->
@@ -9213,6 +9221,30 @@ function _renderQualityAnalytics(trades){
       return 'rgb('+Math.round(ar+(br-ar)*t)+','+Math.round(ag+(bg-ag)*t)+','+Math.round(ab+(bb-ab)*t)+')';
     }catch(e){return a;}
   }
+  // ── Helper: continuous red→amber→green gradient by win-rate value (0-100) —
+  // unlike a >=50 binary split (which paints every bar the same green once it
+  // clears 50%, however close), this scales smoothly so a 51% bar and a 95% bar
+  // are visibly different shades. Null (no trades) falls back to a neutral tick color.
+  function wrGradientColor(wr){
+    if(wr==null)return c.tick;
+    var t=Math.max(0,Math.min(100,wr))/100;
+    return t<=0.5?mixHex(c.red,c.amber,t/0.5):mixHex(c.amber,c.green,(t-0.5)/0.5);
+  }
+  // ── Helper: wrap a label onto multiple lines (array = one Chart.js line each)
+  // instead of truncating with "…", so multi-word tags like "Aggressive Trailing"
+  // stay fully readable, just stacked ("Aggressive" / "Trailing") rather than clipped.
+  function wrapLabel(s,maxLen){
+    maxLen=maxLen||12;
+    var words=String(s).split(' ');
+    if(words.length===1)return s;
+    var lines=[],cur='';
+    words.forEach(function(w){
+      if(cur&&(cur+' '+w).length>maxLen){lines.push(cur);cur=w;}
+      else cur=cur?cur+' '+w:w;
+    });
+    if(cur)lines.push(cur);
+    return lines;
+  }
   // ── Rating distribution (bar, red→green scale) ──
   var ratingLabels=['1★','2★','3★','4★','5★'];
   var ratingColors=[c.red,mixHex(c.red,c.amber,.5),c.amber,mixHex(c.amber,c.green,.5),c.green];
@@ -9234,10 +9266,10 @@ function _renderQualityAnalytics(trades){
   var errColors=errKeys.map(function(k,i){return errTypePalette[i%errTypePalette.length];}).concat([c.green]);
   if(charts.errorDist)charts.errorDist.destroy();
   var _cvED=document.getElementById('chart-error-dist');
-  if(_cvED)charts.errorDist=safeChart(_cvED.getContext('2d'),{type:'bar',data:{labels:errLabels.map(function(k){return k.length>14?k.slice(0,14)+'…':k;}),datasets:[{label:'Occurrences',data:errData,backgroundColor:errColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y+' occurrence'+(ctx.parsed.y===1?'':'s');}}}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},stepSize:1,precision:0},grid:{color:c.grid}}}}});
+  if(_cvED)charts.errorDist=safeChart(_cvED.getContext('2d'),{type:'bar',data:{labels:errLabels.map(function(k){return wrapLabel(k,12);}),datasets:[{label:'Occurrences',data:errData,backgroundColor:errColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y+' occurrence'+(ctx.parsed.y===1?'':'s');}}}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},stepSize:1,precision:0},grid:{color:c.grid}}}}});
   // ── Win rate by rating (bar) ──
   var wrByRating=[1,2,3,4,5].map(function(n){var wr=winRate(ratingBuckets[n]);return wr!=null?parseFloat(wr.toFixed(1)):0;});
-  var wrColors=[1,2,3,4,5].map(function(n){var wr=winRate(ratingBuckets[n]);return wr!=null&&wr>=50?c.green:c.red;});
+  var wrColors=[1,2,3,4,5].map(function(n){return wrGradientColor(winRate(ratingBuckets[n]));});
   if(charts.ratingPerf)charts.ratingPerf.destroy();
   var _cvRP=document.getElementById('chart-rating-perf');
   if(_cvRP)charts.ratingPerf=safeChart(_cvRP.getContext('2d'),{type:'bar',data:{labels:ratingLabels,datasets:[{label:'Win rate %',data:wrByRating,backgroundColor:wrColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var n=ctx.dataIndex+1;return ctx.parsed.y+'% win rate ('+ratingBuckets[n].length+' trades)';}}}},scales:{x:{ticks:{color:c.tick,font:{size:11}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},suggestedMax:100}}}});
@@ -9294,51 +9326,87 @@ function _renderQualityAnalytics(trades){
       '<td style="font-weight:600;color:var(--text)">'+escHtml(r.label)+'</td>'+
       '<td class="mono">'+r.arr.length+'</td>'+
       '<td class="mono" style="color:'+(wr!=null?(wr>=50?'var(--green)':'var(--red)'):'var(--text3)')+'">'+(wr!=null?wr.toFixed(1)+'%':'—')+'</td>'+
+      '<td class="mono">'+soloCell+'</td>'+
       '<td class="mono">'+(rr!=null?rr.toFixed(2)+'R':'—')+'</td>'+
       '<td class="mono" style="color:'+(tp>=0?'var(--green)':'var(--red)')+'">'+(tp>=0?'+':'')+tp.toFixed(2)+'</td>'+
-      '<td class="mono">'+soloCell+'</td>'+
       '<td class="mono">'+costCell+'</td>'+
       '</tr>';
   }).join('');
   var tblEl=document.getElementById('dash-error-table');
-  if(tblEl)tblEl.innerHTML=!trades.length?'<div class="empty-state"><p>No trades yet</p></div>':'<table class="data"><thead><tr><th>Category</th><th>Trades</th><th>Win rate</th><th>Avg RR</th><th>Total P/L</th><th>Solo WR (n)</th><th>Edge lost (R)</th></tr></thead><tbody>'+tblHtml+'</tbody></table>';
-  // ── Issue evolution over time (line chart, % of month's trades per error type) ──
-  // Buckets dated trades by entry month, then for each of the top error types (by total
-  // occurrence — same ranking as errKeys above) plots what % of that month's trades carried
-  // the tag. Unlike a mutually-exclusive combo breakdown, this tracks each mistake's own
-  // trajectory: is it fading out as you fix it, holding steady, or creeping back in? A trade
-  // still counts toward every tag it carries (consistent with the frequency chart/impact
-  // table above), and a dashed "Clean" line is included as a baseline to compare against.
-  var evoDated=trades.filter(function(t){return !!t.entryTime;});
-  var evoByMonth={};
-  evoDated.forEach(function(t){
+  if(tblEl)tblEl.innerHTML=!trades.length?'<div class="empty-state"><p>No trades yet</p></div>':'<table class="data"><thead><tr><th>Category</th><th>Trades</th><th>Win rate</th><th>Solo WR (n)</th><th>Avg RR</th><th>Total P/L</th><th>Edge lost (R)</th></tr></thead><tbody>'+tblHtml+'</tbody></table>';
+  _renderErrorEvo(trades);
+}
+// ── Issue evolution over time (line charts: % and count, monthly/yearly) ──
+// Tracks each error type's own trajectory rather than a mutually-exclusive combo
+// breakdown: is a given mistake fading out, holding steady, or creeping back in?
+// Two charts share one month/year toggle — the top plots % of that period's trades
+// carrying the tag (comparable across periods of different volume), the bottom
+// plots raw counts (shows whether it's an isolated blip or a growing pattern in
+// absolute terms). A trade counts toward every tag it carries, consistent with the
+// frequency chart/impact table above. A dashed "Clean" line anchors the % chart.
+// Pulled out as its own function (like _renderVolumeAnalytics) so the month/year
+// toggle can re-render just these two charts without re-running the whole quality
+// analytics pass.
+var _errorEvoView='month'; // 'month' | 'year' — remembered across re-renders in this session
+var _errorEvoTrades=[]; // cached filtered trade set, so the view toggle can re-render without a full re-filter
+function setErrorEvoView(view,btnEl){
+  _errorEvoView=view;
+  if(btnEl){
+    var tabs=document.getElementById('error-evo-tabs');
+    if(tabs)Array.prototype.forEach.call(tabs.querySelectorAll('.cal-view-tab'),function(b){b.classList.toggle('active',b===btnEl);});
+  }
+  _renderErrorEvo(_errorEvoTrades);
+}
+function _renderErrorEvo(trades){
+  trades=trades||[];
+  _errorEvoTrades=trades;
+  var c=chartColors();
+  var errTypePalette=[c.red,c.amber,c.purple,c.accent,'#64d4fc','#ff8a5c','#c968e0'];
+  var dated=trades.filter(function(t){return !!t.entryTime;});
+  var occCounts={};
+  dated.forEach(function(t){
+    tradeActiveErrors(t).forEach(function(e){occCounts[e]=(occCounts[e]||0)+1;});
+  });
+  var evoErrKeys=Object.keys(occCounts).sort(function(a,b){return occCounts[b]-occCounts[a];}).slice(0,6); // top 6 by occurrence — keeps the chart legible
+  var isMonth=_errorEvoView==='month';
+  var byPeriod={};
+  dated.forEach(function(t){
     var d=new Date(t.entryTime);
     if(isNaN(d.getTime()))return;
-    var mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-    if(!evoByMonth[mk])evoByMonth[mk]=[];
-    evoByMonth[mk].push(t);
+    var k=isMonth?(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')):String(d.getFullYear());
+    if(!byPeriod[k])byPeriod[k]=[];
+    byPeriod[k].push(t);
   });
-  var evoMonthKeys=Object.keys(evoByMonth).sort();
-  var evoMonthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  function evoMonthLabel(mk){var p=mk.split('-');return evoMonthNames[parseInt(p[1],10)-1]+' \''+p[0].slice(2);}
-  var evoLabels=evoMonthKeys.map(evoMonthLabel);
-  var evoErrKeys=errKeys.slice(0,6); // top 6 error types by total occurrence — keeps the chart legible
-  var evoDatasets=evoErrKeys.map(function(k,i){
-    var data=evoMonthKeys.map(function(mk){
-      var arr=evoByMonth[mk],withErr=arr.filter(function(t){return tradeActiveErrors(t).indexOf(k)!==-1;}).length;
-      return arr.length?parseFloat((withErr/arr.length*100).toFixed(1)):0;
+  var periodKeys=Object.keys(byPeriod).sort();
+  var monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function periodLabel(k){if(!isMonth)return k;var p=k.split('-');return monthNames[parseInt(p[1],10)-1]+' \''+p[0].slice(2);}
+  var evoLabels=periodKeys.map(periodLabel);
+  function buildDatasets(mode){ // mode: 'pct' | 'count'
+    var ds=evoErrKeys.map(function(k,i){
+      var data=periodKeys.map(function(pk){
+        var arr=byPeriod[pk],withErr=arr.filter(function(t){return tradeActiveErrors(t).indexOf(k)!==-1;}).length;
+        return mode==='pct'?(arr.length?parseFloat((withErr/arr.length*100).toFixed(1)):0):withErr;
+      });
+      var color=errTypePalette[i%errTypePalette.length];
+      return {label:k.length>18?k.slice(0,18)+'…':k,data:data,borderColor:color,backgroundColor:color,fill:false,tension:.3,pointRadius:2,pointHoverRadius:4,borderWidth:2};
     });
-    var color=errTypePalette[i%errTypePalette.length];
-    return {label:k.length>18?k.slice(0,18)+'…':k,data:data,borderColor:color,backgroundColor:color,fill:false,tension:.3,pointRadius:2,pointHoverRadius:4,borderWidth:2};
-  });
-  var evoCleanData=evoMonthKeys.map(function(mk){
-    var arr=evoByMonth[mk],cl=arr.filter(function(t){return tradeActiveErrors(t).length===0;}).length;
-    return arr.length?parseFloat((cl/arr.length*100).toFixed(1)):0;
-  });
-  evoDatasets.push({label:'Clean',data:evoCleanData,borderColor:c.green,backgroundColor:c.green,fill:false,tension:.3,pointRadius:2,pointHoverRadius:4,borderWidth:2,borderDash:[5,3]});
+    if(mode==='pct'){
+      var cleanData=periodKeys.map(function(pk){
+        var arr=byPeriod[pk],cl=arr.filter(function(t){return tradeActiveErrors(t).length===0;}).length;
+        return arr.length?parseFloat((cl/arr.length*100).toFixed(1)):0;
+      });
+      ds.push({label:'Clean',data:cleanData,borderColor:c.green,backgroundColor:c.green,fill:false,tension:.3,pointRadius:2,pointHoverRadius:4,borderWidth:2,borderDash:[5,3]});
+    }
+    return ds;
+  }
+  // ── % of period's trades (top chart) ──
   if(charts.errorEvo)charts.errorEvo.destroy();
   var _cvEE=document.getElementById('chart-error-evo');
-  if(_cvEE)charts.errorEvo=safeChart(_cvEE.getContext('2d'),{type:'line',data:{labels:evoLabels,datasets:evoDatasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'bottom',labels:{color:c.tick,font:{size:10},boxWidth:10,padding:8}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.parsed.y+'% of trades that month';}}}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},min:0,suggestedMax:100}}}});
+  if(_cvEE)charts.errorEvo=safeChart(_cvEE.getContext('2d'),{type:'line',data:{labels:evoLabels,datasets:buildDatasets('pct')},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'bottom',labels:{color:c.tick,font:{size:10},boxWidth:10,padding:8}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.parsed.y+'% of trades that '+(isMonth?'month':'year');}}}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},min:0,suggestedMax:100}}}});
+  // ── Raw trade count (bottom chart) ──
+  if(charts.errorEvoCount)charts.errorEvoCount.destroy();
+  var _cvEC=document.getElementById('chart-error-evo-count');
+  if(_cvEC)charts.errorEvoCount=safeChart(_cvEC.getContext('2d'),{type:'line',data:{labels:evoLabels,datasets:buildDatasets('count')},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,position:'bottom',labels:{color:c.tick,font:{size:10},boxWidth:10,padding:8}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.parsed.y+' trade'+(ctx.parsed.y===1?'':'s');}}}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},stepSize:1,precision:0},grid:{color:c.grid}}}}});
 }
 // ══ Trade Analytics page — its own filtered data set ═══════════════
 // Orchestrator for the "Trade Analytics" page: applies that page's own filter row
