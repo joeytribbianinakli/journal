@@ -4479,7 +4479,7 @@ document.addEventListener('DOMContentLoaded',function(){
     <div class="modal-header">
       <div>
         <h3 style="margin-bottom:2px">Error types</h3>
-        <div style="font-size:11px;color:var(--text3);font-weight:400">Click a name to rename inline</div>
+        <div style="font-size:11px;color:var(--text3);font-weight:400">Click a name to rename inline · drag ⠿ to reorder</div>
       </div>
       <button class="btn btn-ghost btn-icon btn-sm" onclick="document.getElementById('errtype-modal').classList.remove('open')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
@@ -4813,16 +4813,49 @@ async function renderErrorTypeList(){
       +'</div>';
     return;
   }
-  el.innerHTML='<div style="display:flex;flex-direction:column;gap:6px">'+types.map(function(s,i){
+  // Built as real DOM nodes (rather than one innerHTML string, as before) so each row
+  // can carry its own drag-and-drop listeners — same pattern as the history column
+  // manager's reorderable rows (renderColumnManager). Order in the 'errorTypes'
+  // setting array IS the display order everywhere else (select dropdown, log-trade
+  // pills), so reordering here just splices that array and re-saves it.
+  el.innerHTML='';
+  var wrap=document.createElement('div');
+  wrap.style.cssText='display:flex;flex-direction:column;gap:6px';
+  types.forEach(function(s,i){
     var color=STRAT_COLORS[i%STRAT_COLORS.length];
-    return'<div class="strat-card" style="--sc:#'+color.replace('#','')+';" >'
+    var row=document.createElement('div');
+    row.className='strat-card';
+    row.style.setProperty('--sc','#'+color.replace('#',''));
+    row.draggable=true;
+    row.innerHTML=
+      '<span class="cl-item-drag-handle" title="Drag to reorder"><svg viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.4" fill="currentColor"/><circle cx="15" cy="6" r="1.4" fill="currentColor"/><circle cx="9" cy="12" r="1.4" fill="currentColor"/><circle cx="15" cy="12" r="1.4" fill="currentColor"/><circle cx="9" cy="18" r="1.4" fill="currentColor"/><circle cx="15" cy="18" r="1.4" fill="currentColor"/></svg></span>'
       +'<div class="strat-card-bar" style="background:'+color+'"></div>'
       +'<span contenteditable="true" id="ee-'+i+'" class="strat-card-name" onblur="updateErrorType('+i+',this.textContent.trim())" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur()}">'+escHtml(s)+'</span>'
       +'<div class="strat-card-actions">'
       +'<button class="btn btn-ghost btn-sm btn-icon" title="Rename" onclick="document.getElementById(\'ee-'+i+'\').focus();var r=window.getSelection();var rng=document.createRange();rng.selectNodeContents(document.getElementById(\'ee-'+i+'\'));r.removeAllRanges();r.addRange(rng)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>'
       +'<button class="btn btn-danger btn-sm btn-icon" title="Delete" onclick="deleteErrorType('+i+')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>'
-      +'</div></div>';
-  }).join('')+'</div>';
+      +'</div>';
+    row.addEventListener('dragstart',function(e){e.dataTransfer.setData('text/plain',String(i));row.style.opacity='.4';});
+    row.addEventListener('dragend',function(){row.style.opacity='';});
+    row.addEventListener('dragover',function(e){e.preventDefault();row.style.background='var(--bg4)';});
+    row.addEventListener('dragleave',function(){row.style.background='';});
+    row.addEventListener('drop',function(e){
+      e.preventDefault();row.style.background='';
+      var srcIdx=parseInt(e.dataTransfer.getData('text/plain'),10);
+      if(isNaN(srcIdx)||srcIdx===i)return;
+      reorderErrorTypes(srcIdx,i);
+    });
+    wrap.appendChild(row);
+  });
+  el.appendChild(wrap);
+}
+async function reorderErrorTypes(srcIdx,dstIdx){
+  var types=await getErrorTypes();
+  if(srcIdx<0||srcIdx>=types.length||dstIdx<0||dstIdx>=types.length)return;
+  var item=types.splice(srcIdx,1)[0];
+  types.splice(dstIdx,0,item);
+  await setSetting('errorTypes',types);
+  renderErrorTypeList();populateErrorTypeSelect();ghAutoSyncConfig();
 }
 async function addErrorType(){
   var inp=document.getElementById('new-errtype-inp');var name=inp.value.trim();
