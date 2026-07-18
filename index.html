@@ -1016,7 +1016,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="dash-filter-row">
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session type</div>
-              <select id="dash-sessiontype-filter" onchange="saveSessionTypeFilterPref('dash-sessiontype-filter');populateSessionSelects().then(function(){renderDashboard();updateFilterSessionSummary('dash-session-filter','dash-filter-summary')})">
+              <select id="dash-sessiontype-filter" onchange="saveSessionTypeFilterPref('dash-sessiontype-filter');populateSessionSelects().then(function(){renderDashboard();updateFilterSessionSummary('dash-session-filter','dash-filter-summary','dash-skipped-filter')})">
                 <option value="">All types</option>
                 <option value="live">Live</option>
                 <option value="paperlive">Paper Live</option>
@@ -1026,7 +1026,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session</div>
-              <select id="dash-session-filter" onchange="renderDashboard();updateFilterSessionSummary('dash-session-filter','dash-filter-summary')"><option value="">All sessions</option></select>
+              <select id="dash-session-filter" onchange="renderDashboard();updateFilterSessionSummary('dash-session-filter','dash-filter-summary','dash-skipped-filter')"><option value="">All sessions</option></select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Asset type</div>
@@ -1042,7 +1042,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Trade type</div>
-              <select id="dash-skipped-filter" onchange="renderDashboard()">
+              <select id="dash-skipped-filter" onchange="renderDashboard();updateFilterSessionSummary('dash-session-filter','dash-filter-summary','dash-skipped-filter')">
                 <option value="taken">Taken trades</option>
                 <option value="skipped">Skipped trades</option>
               </select>
@@ -1118,7 +1118,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="dash-filter-row">
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session type</div>
-              <select id="trd-sessiontype-filter" onchange="saveSessionTypeFilterPref('trd-sessiontype-filter');populateSessionSelects().then(function(){renderTradeAnalytics();updateFilterSessionSummary('trd-session-filter','trd-filter-summary')})">
+              <select id="trd-sessiontype-filter" onchange="saveSessionTypeFilterPref('trd-sessiontype-filter');populateSessionSelects().then(function(){renderTradeAnalytics();updateFilterSessionSummary('trd-session-filter','trd-filter-summary','trd-skipped-filter')})">
                 <option value="">All types</option>
                 <option value="live">Live</option>
                 <option value="paperlive">Paper Live</option>
@@ -1128,7 +1128,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session</div>
-              <select id="trd-session-filter" onchange="renderTradeAnalytics();updateFilterSessionSummary('trd-session-filter','trd-filter-summary')"><option value="">All sessions</option></select>
+              <select id="trd-session-filter" onchange="renderTradeAnalytics();updateFilterSessionSummary('trd-session-filter','trd-filter-summary','trd-skipped-filter')"><option value="">All sessions</option></select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Asset / Pair</div>
@@ -1144,7 +1144,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Trade type</div>
-              <select id="trd-skipped-filter" onchange="renderTradeAnalytics()">
+              <select id="trd-skipped-filter" onchange="renderTradeAnalytics();updateFilterSessionSummary('trd-session-filter','trd-filter-summary','trd-skipped-filter')">
                 <option value="taken">Taken trades</option>
                 <option value="skipped">Skipped trades</option>
               </select>
@@ -1434,7 +1434,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="dash-filter-row">
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session type</div>
-              <select id="cal-sessiontype-filter" onchange="saveSessionTypeFilterPref('cal-sessiontype-filter');calPopulateSessionFilter().then(function(){calJumpToMostRecent().then(function(){renderCalendar();})})">
+              <select id="cal-sessiontype-filter" onchange="saveSessionTypeFilterPref('cal-sessiontype-filter');calPopulateSessionFilter().then(function(){calJumpToMostRecent().then(function(){renderCalendar();updateFilterSessionSummary('cal-session-filter','cal-filter-summary','cal-skipped-filter')})})">
                 <option value="">All types</option>
                 <option value="live">Live</option>
                 <option value="paperlive">Paper Live</option>
@@ -1444,11 +1444,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session</div>
-              <select id="cal-session-filter" onchange="calJumpToMostRecent().then(function(){renderCalendar();});updateFilterSessionSummary('cal-session-filter','cal-filter-summary')"><option value="">All sessions</option></select>
+              <select id="cal-session-filter" onchange="calJumpToMostRecent().then(function(){renderCalendar();});updateFilterSessionSummary('cal-session-filter','cal-filter-summary','cal-skipped-filter')"><option value="">All sessions</option></select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Trade type</div>
-              <select id="cal-skipped-filter" onchange="calJumpToMostRecent().then(function(){renderCalendar();})">
+              <select id="cal-skipped-filter" onchange="calJumpToMostRecent().then(function(){renderCalendar();});updateFilterSessionSummary('cal-session-filter','cal-filter-summary','cal-skipped-filter')">
                 <option value="taken">Taken trades</option>
                 <option value="skipped">Skipped trades</option>
               </select>
@@ -2415,7 +2415,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="hist-filter-row">
             <div class="hist-filter-group">
               <div class="hist-filter-label">Session type</div>
-              <select id="flt-sessiontype" onchange="saveSessionTypeFilterPref('flt-sessiontype');populateSessionSelects().then(function(){renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary')})">
+              <select id="flt-sessiontype" onchange="saveSessionTypeFilterPref('flt-sessiontype');populateSessionSelects().then(function(){renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary','flt-skipped')})">
                 <option value="">All types</option>
                 <option value="live">Live</option>
                 <option value="paperlive">Paper Live</option>
@@ -2425,7 +2425,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Session</div>
-              <select id="flt-session" onchange="saveHistFilterPref('flt-session');renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary')"><option value="">All sessions</option></select>
+              <select id="flt-session" onchange="saveHistFilterPref('flt-session');renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary','flt-skipped')"><option value="">All sessions</option></select>
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Asset type</div>
@@ -2449,7 +2449,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Trade type</div>
-              <select id="flt-skipped" onchange="saveHistFilterPref('flt-skipped');renderHistory();updateHistChips()">
+              <select id="flt-skipped" onchange="saveHistFilterPref('flt-skipped');renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary','flt-skipped')">
                 <option value="taken">Taken trades</option>
                 <option value="skipped">Skipped trades</option>
               </select>
@@ -6585,10 +6585,10 @@ async function populateSessionSelects(restoreSessionId){
   var cbF=document.getElementById('calc-backtest-session');
   if(cbF){var cbv=cbF.value;cbF.innerHTML='<option value="">— select session —</option>'+activeSessions.filter(function(s){return !s.isDemo;}).map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');cbF.value=cbv;}
   // Keep the collapsed filter headers' session summary text in sync with the selects above.
-  updateFilterSessionSummary('dash-session-filter','dash-filter-summary');
-  updateFilterSessionSummary('trd-session-filter','trd-filter-summary');
-  updateFilterSessionSummary('cal-session-filter','cal-filter-summary');
-  updateFilterSessionSummary('flt-session','hist-filter-summary');
+  updateFilterSessionSummary('dash-session-filter','dash-filter-summary','dash-skipped-filter');
+  updateFilterSessionSummary('trd-session-filter','trd-filter-summary','trd-skipped-filter');
+  updateFilterSessionSummary('cal-session-filter','cal-filter-summary','cal-skipped-filter');
+  updateFilterSessionSummary('flt-session','hist-filter-summary','flt-skipped');
 }
 // ══ Navigation ════════════════════════════════════
 var pageMap={'pre-checklist':{title:'Pre-trade checklist',sub:'Calendar → Checklist → Calculator → Log trade'},dashboard:{title:'Dashboard',sub:'Overview of your trading performance'},log:{title:'Log trade',sub:'Record a new trade entry'},history:{title:'Trade history',sub:'Browse and filter all your trades'},sessions:{title:'Sessions',sub:'Manage your trading session periods'},'checklist-editor':{title:'Checklist editor',sub:'Edit checklist items globally'},backup:{title:'Backup & restore',sub:'Export, import or clear your journal data'},montecarlo:{title:'Monte Carlo',sub:'Simulate future equity paths from historical trade data'},calculator:{title:'Position Size Calculator',sub:'Forex · Crypto · Gold · Stocks · Indices'},calendar:{title:'Calendar view',sub:'Visual trade activity by day, week and year'},'ai-analyzer':{title:'AI Trade Analyzer',sub:'Intelligent session review powered by AI'},'price-alerts':{title:'Price Alerts',sub:'Get notified on your phone when a price target is hit'},fxstreet:{title:'Economic calendar',sub:'ForexFactory calendar — check before trading'},'trade-analytics':{title:'Trade Analytics',sub:'Ratings, error types, direction & entry-time performance'}};;
@@ -10184,12 +10184,21 @@ function escHtml(s){if(!s)return'';return String(s).replace(/[&<>"]/g,function(c
 // adding another one-off toggle function like these.
 // Shows the currently selected session (or "All sessions") as plain text next to a
 // filter panel's header/title, so the selection is visible without expanding it.
-function updateFilterSessionSummary(selectId,summaryId){
+// skippedId (optional) is the id of that page's "Trade type" (taken/skipped) select;
+// when given, its current option text is appended so both are visible at a glance.
+function updateFilterSessionSummary(selectId,summaryId,skippedId){
   var sel=document.getElementById(selectId);
   var sum=document.getElementById(summaryId);
   if(!sel||!sum)return;
   var opt=sel.options[sel.selectedIndex];
-  sum.textContent=opt?opt.text:'All sessions';
+  var text=opt?opt.text:'All sessions';
+  if(skippedId){
+    var skipSel=document.getElementById(skippedId);
+    if(skipSel&&skipSel.options[skipSel.selectedIndex]){
+      text+=' · '+skipSel.options[skipSel.selectedIndex].text;
+    }
+  }
+  sum.textContent=text;
 }
 function toggleDashFilters(){
   var body=document.getElementById('dash-filter-body');
@@ -13633,7 +13642,7 @@ async function calPopulateSessionFilter(){
     var active=sessions.find(function(s){return s.startDate<=today&&(!s.endDate||s.endDate>=today);});
     sel.value=active?active.id:(sessions[0]?sessions[0].id:'');
   }
-  updateFilterSessionSummary('cal-session-filter','cal-filter-summary');
+  updateFilterSessionSummary('cal-session-filter','cal-filter-summary','cal-skipped-filter');
 }
 // ── Main render entry ─────────────────────────────────────
 function renderCalendar(){ guardedRender('renderCalendar', _renderCalendarImpl); }
