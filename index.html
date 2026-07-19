@@ -8541,10 +8541,16 @@ async function openDetail(id,opts){
   document.getElementById('dm-title').textContent='#'+trade.num+' — '+trade.pair;
   var win=trade.winLoss===1;
   var pendingTrade=!trade.exitPrice;
+  // Actual RR chip shown next to the star rating in the header badge row — colored
+  // green/red to match win/loss, falls back to a dash when RR can't be computed (e.g. no exit yet).
+  var dmArrColor=(trade.actualRR==null)?'var(--text2)':(trade.actualRR>0?'var(--green)':(trade.actualRR<0?'var(--red)':'var(--text2)'));
+  var dmArrText=(trade.actualRR!=null)?(trade.actualRR>0?'+':'')+trade.actualRR.toFixed(2)+'R':'—';
+  var dmArrHtml='<span class="badge badge-gray mono" style="color:'+dmArrColor+'" title="Actual RR">'+dmArrText+'</span>';
   document.getElementById('dm-badges').innerHTML=
     (trade.skipped?'<span class="skipped-badge">⊘ Skipped</span>':'')+
     (pendingTrade?'<span class="badge badge-amber">Pending</span>':'<span class="badge '+(win?'badge-green':'badge-red')+'">'+(win?'Win':'Loss')+'</span>')+
     '<span class="badge '+(trade.type==='Long'?'badge-green':'badge-red')+'">'+trade.type+'</span>'+
+    dmArrHtml+
     (trade.strategy?'<span class="badge badge-gray">'+escHtml(trade.strategy)+'</span>':'')+
     '<span class="stars">'+trade.rating+'</span>';
   document.getElementById('dm-edit-btn').onclick=function(){editTrade(id)};
