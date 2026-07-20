@@ -8666,8 +8666,10 @@ async function openDetail(id,opts){
     if(legacyLabels.length)sections.push({header:'Checklist errors',items:legacyLabels});
     if(!sections.length)return '';
     var html='';
-    sections.forEach(function(sec){
-      html+='<div style="margin-bottom:10px">'
+    sections.forEach(function(sec,idx){
+      // First sub-section gets extra margin-top so it isn't flush against whatever precedes
+      // checklistUnmetHtml in leftHtml (e.g. the Narrative bias pill-row, which has no margin-bottom of its own).
+      html+='<div style="margin-bottom:10px'+(idx===0?';margin-top:14px':'')+'">'
         +'<div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">'+escHtml(sec.header)+'</div>'
         +'<div style="display:flex;flex-wrap:wrap;gap:5px">'
         +sec.items.map(function(item){return'<span style="font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;background:rgba(239,83,80,.1);border:1px solid rgba(239,83,80,.3);color:var(--red)">\u2717 '+escHtml(item)+'</span>';}).join('')
