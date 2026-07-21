@@ -7650,9 +7650,10 @@ async function saveTrade(){
   var oldSessionId=null; // track original session when editing, to rebalance it if the trade is moved
   var _oldLoggedAt=null;
   var _oldPinned=false;
+  var _oldStarred=false;
   if(editingId){
     var old=await dbGet('trades',editingId);
-    if(old){imageIds=JSON.parse(JSON.stringify(old.imageIds||_emptyIds));oldSessionId=old.sessionId||null;_oldLoggedAt=old.loggedAt||null;num=old.num||num;_oldPinned=!!old.pinned;}
+    if(old){imageIds=JSON.parse(JSON.stringify(old.imageIds||_emptyIds));oldSessionId=old.sessionId||null;_oldLoggedAt=old.loggedAt||null;num=old.num||num;_oldPinned=!!old.pinned;_oldStarred=!!old.starred;}
     if(pendingImages._deleted){
       for(var z2 in imageIds)imageIds[z2]=(imageIds[z2]||[]).filter(function(id){return!pendingImages._deleted.includes(id)});
       for(var did of pendingImages._deleted)await dbDelete('images',did);
@@ -7708,6 +7709,7 @@ async function saveTrade(){
     partialDesc:partialDesc,
     htfTf:tfState.htf,mtfTf:tfState.mtf,ltfTf:tfState.ltf,
     pinned:_oldPinned,
+    starred:_oldStarred,
     loggedAt:editingId?(_oldLoggedAt||new Date().toISOString()):new Date().toISOString()
   };
   await dbPut('trades',trade);
