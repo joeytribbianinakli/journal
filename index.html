@@ -1331,6 +1331,24 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="card"><div class="card-header"><span class="card-title">Avg P/L by entry time</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-time-pl"></canvas></div></div></div>
         </div>
       </div>
+      <!-- Market session analysis (named, asset-aware sessions — Asian/London/NY for FX,
+           Pre-Market/Opening Range/Power Hour/etc for stocks) — collapsible, collapsed by default -->
+      <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdMarketSession()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">Performance by Market Session</span>
+        <svg id="trd-marketsession-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="trd-marketsession-body" style="display:none">
+        <div class="stats-grid" id="dash-marketsession-stats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="card"><div class="card-header"><span class="card-title">Win rate by market session</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-marketsession-wr"></canvas></div></div></div>
+          <div class="card"><div class="card-header"><span class="card-title">Avg P/L by market session</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-marketsession-pl"></canvas></div></div></div>
+        </div>
+        <div class="card" style="margin-bottom:22px">
+          <div class="card-header"><span class="card-title">Market session breakdown</span></div>
+          <div class="table-wrap" id="dash-marketsession-table"></div>
+        </div>
+      </div>
       <!-- LTF entry analysis — collapsible, collapsed by default -->
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdLtf()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
@@ -1977,6 +1995,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               <label class="flabel">Win / Loss <span style="color:var(--text3);font-weight:400">(auto)</span></label>
               <input type="text" id="f-winloss-display" readonly style="color:var(--text3);cursor:default;font-family:DM Mono,monospace;font-weight:600">
               <input type="hidden" id="f-winloss" value="">
+            </div>
+            <div class="frow">
+              <label class="flabel">Market session <span style="color:var(--text3);font-weight:400">(auto)</span></label>
+              <input type="text" id="f-session-display" readonly style="color:var(--text3);cursor:default;font-family:DM Mono,monospace;font-weight:600" title="Auto-calculated from entry time — New York time, daylight-saving aware">
             </div>
           </div>
           <input type="hidden" id="f-sl" value="">
@@ -5319,14 +5341,21 @@ function onPairChange(){
   var opt=sel.options[sel.selectedIndex];
   var asset=opt?opt.getAttribute('data-asset'):'';
   document.getElementById('f-asset-type').value=asset||'';
-  // Re-trigger fee calc on pair change (asset type may have changed)
-  var entry=parseFloat((document.getElementById('f-entry')||{}).value)||0;
-  var qty=parseFloat((document.getElementById('f-qty')||{}).value)||0;
-  var edt=getDT?getDT('f-etime-date','f-etime-time'):null;
-  var xdt=getDT?getDT('f-xtime-date','f-xtime-time'):null;
-  var durMin=0;
-  if(edt&&xdt){var ms2=new Date(xdt)-new Date(edt);if(ms2>0)durMin=Math.round(ms2/60000);}
-  if(typeof recalcFeesAsync==='function') recalcFeesAsync(entry, qty, durMin);
+  // Re-run the full recalc on pair change — asset type may have changed, which affects both
+  // fees (asset-type-specific) and the auto-populated market session (equities use different
+  // hours than FX/commodities/crypto/indices/futures — see marketSessionTableFor()).
+  if(typeof recalc==='function'){
+    recalc();
+  }else{
+    // Fallback: recalc isn't defined yet — at least keep fees in sync
+    var entry=parseFloat((document.getElementById('f-entry')||{}).value)||0;
+    var qty=parseFloat((document.getElementById('f-qty')||{}).value)||0;
+    var edt=getDT?getDT('f-etime-date','f-etime-time'):null;
+    var xdt=getDT?getDT('f-xtime-date','f-xtime-time'):null;
+    var durMin=0;
+    if(edt&&xdt){var ms2=new Date(xdt)-new Date(edt);if(ms2>0)durMin=Math.round(ms2/60000);}
+    if(typeof recalcFeesAsync==='function') recalcFeesAsync(entry, qty, durMin);
+  }
 }
 // ══ Option pills ══════════════════════════════════
 function pickOpt(pill,hiddenId){
@@ -6932,6 +6961,90 @@ function to12h(h24){
   var h12=h%12||12;
   return h12+':'+pad2(mn)+' '+ap;
 }
+// ── Market session (auto-calculated, DST-aware) ───────────────────────
+// Classifies a trade's entry time into a named forex market session (Asian, London,
+// New York open/close, etc). Buckets are defined in New York wall-clock minutes;
+// converting an entryTime into NY time via Intl.DateTimeFormat({timeZone:'America/New_York'})
+// automatically accounts for daylight saving — the US DST switchover (and any DST
+// observed in the trader's own local timezone) is resolved by the browser's IANA
+// timezone database for the exact calendar date of the trade, so the session label
+// stays correct year-round without any manual EST/EDT offset math.
+// Boundaries reflect the commonly-cited forex session hours in NY wall-clock time:
+// Tokyo/Asian ~7:00PM-4:00AM, London ~3:00AM-12:00PM, New York ~8:00AM-5:00PM.
+// "London Open" is kept to the true first hour of the session (3-4AM) rather than a
+// multi-hour block, and a distinct "NY Pre-Market" bucket covers 7-8AM — after London
+// has been running a while but before the London/NY overlap (the most liquid window,
+// 8AM-12PM) begins. Adjust these boundaries if your own strategy defines sessions
+// differently (e.g. equities pre-market is conventionally 4AM-9:30AM, not this window).
+var MARKET_SESSIONS=[
+  {start:0,   end:180,  label:'Asian Session',        badge:'badge-purple'},
+  {start:180, end:240,  label:'London Open',          badge:'badge-blue'},
+  {start:240, end:420,  label:'London Session',       badge:'badge-blue'},
+  {start:420, end:480,  label:'NY Pre-Market',        badge:'badge-gray'},
+  {start:480, end:720,  label:'London/NY Overlap',    badge:'badge-green'},
+  {start:720, end:810,  label:'NY Lunch',             badge:'badge-gray'},
+  {start:810, end:960,  label:'NY PM Session',        badge:'badge-green'},
+  {start:960, end:1020, label:'NY Close',             badge:'badge-amber'},
+  {start:1020,end:1140, label:'Post-Close',           badge:'badge-gray'},
+  {start:1140,end:1440, label:'Asian Session',        badge:'badge-purple'},
+];
+// Equities (individual stocks/ETFs) don't trade nearly round-the-clock like FX/commodities/
+// crypto/indices/futures do — they're confined to NYSE/Nasdaq hours, so the Asian/London/NY
+// forex buckets above don't mean anything for them. This is a separate table using the
+// conventional US equity-market windows (NY wall-clock minutes, same shape as MARKET_SESSIONS
+// so the same lookup loop in getMarketSession() works for either table):
+// pre-market 4:00-9:30AM, regular session 9:30AM-4:00PM (opening range/midday/afternoon/power
+// hour), after-hours 4:00-8:00PM, and closed the rest of the time.
+var EQUITY_SESSIONS=[
+  {start:0,   end:240,  label:'Market Closed',        badge:'badge-gray'},
+  {start:240, end:570,  label:'Pre-Market',           badge:'badge-blue'},
+  {start:570, end:630,  label:'Opening Range',        badge:'badge-green'},
+  {start:630, end:840,  label:'Midday Session',       badge:'badge-green'},
+  {start:840, end:900,  label:'Afternoon Session',    badge:'badge-green'},
+  {start:900, end:960,  label:'Power Hour',           badge:'badge-amber'},
+  {start:960, end:1200, label:'After-Hours',          badge:'badge-gray'},
+  {start:1200,end:1440, label:'Market Closed',        badge:'badge-gray'},
+];
+var MARKET_SESSION_COLORS={'badge-purple':'var(--purple)','badge-blue':'var(--accent)','badge-green':'var(--green)','badge-amber':'var(--amber)','badge-gray':'var(--text3)'};
+// Which session table applies to a given asset type. Stocks/ETFs get the equity-hours table;
+// everything else (forex, commodity, crypto, index, futures, or an unrecognized/custom asset
+// type) trades close enough to round-the-clock that the FX-style session windows still apply.
+// Keyword match against the asset type's name, same approach as _getDefaultFees() uses for fees.
+function marketSessionTableFor(assetType){
+  var n=(assetType||'').toLowerCase();
+  if(n.includes('stock')||n.includes('etf')||n.includes('share')||n.includes('equity'))return EQUITY_SESSIONS;
+  return MARKET_SESSIONS;
+}
+// Label -> start-minute / badge lookups spanning BOTH tables (first occurrence wins). Used by
+// analytics to sort session buckets chronologically and to color a session's badge, even when
+// the filtered trade set mixes asset classes (e.g. some FX-style labels + some equity-hours
+// labels) — see _renderMarketSessionAnalytics.
+var SESSION_ORDER_MAP={},SESSION_BADGE_MAP={};
+MARKET_SESSIONS.concat(EQUITY_SESSIONS).forEach(function(s){
+  if(!(s.label in SESSION_ORDER_MAP)){SESSION_ORDER_MAP[s.label]=s.start;SESSION_BADGE_MAP[s.label]=s.badge;}
+});
+// entryTime is the app's usual "YYYY-MM-DDTHH:MM" string, parsed the same way it is
+// everywhere else (new Date(str) → browser-local wall clock), then re-expressed in
+// New York time for session lookup. assetType picks which session table applies (see
+// marketSessionTableFor above) — omit it to fall back to the FX-style table. Returns
+// {label,badge} or null if no valid time.
+function getMarketSession(entryTime,assetType){
+  if(!entryTime||entryTime.length<16)return null;
+  var d=new Date(entryTime);
+  if(isNaN(d.getTime()))return null;
+  var hh=0,mm=0;
+  try{
+    var parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(d);
+    parts.forEach(function(p){if(p.type==='hour')hh=parseInt(p.value)%24;if(p.type==='minute')mm=parseInt(p.value);});
+  }catch(e){return null;}
+  var mins=hh*60+mm;
+  var table=marketSessionTableFor(assetType);
+  for(var i=0;i<table.length;i++){
+    var s=table[i];
+    if(mins>=s.start&&mins<s.end)return{label:s.label,badge:s.badge};
+  }
+  return null;
+}
 function onTimeInput(el){
   // Only allow digits, max 4 (HHMM format while typing)
   var raw=el.value.replace(/[^0-9]/g,'').slice(0,4);
@@ -7284,6 +7397,14 @@ function recalc(){
   var durMin=0;
   if(edt&&xdt){var ms=new Date(xdt)-new Date(edt);if(ms>0){durMin=Math.round(ms/60000);var d=Math.floor(ms/86400000),h=Math.floor((ms%86400000)/3600000),m=Math.floor((ms%3600000)/60000);var durStr=d>0?d+'d'+(h>0?' '+h+'h':'')+(m>0?' '+m+'m':''):(h>0?h+'h ':'')+m+'m';set('c-dur',durStr);}else set('c-dur','—');}
   else set('c-dur','—');
+  // Market session (auto, read-only) — derived from entry time + asset type, New York time, DST-aware
+  var sessDisp=document.getElementById('f-session-display');
+  if(sessDisp){
+    var sessAssetType=(document.getElementById('f-asset-type')||{}).value||'';
+    var mktSess=getMarketSession(edt,sessAssetType);
+    if(mktSess){sessDisp.value=mktSess.label;sessDisp.style.color=MARKET_SESSION_COLORS[mktSess.badge]||'';}
+    else{sessDisp.value='';sessDisp.style.color='';}
+  }
   // Async fee update (debounced to avoid rapid IDB reads)
   recalcFeesAsync(entry, qty, durMin);
 }
@@ -8033,6 +8154,7 @@ var ALL_HISTORY_COLS=[
   {key:'plPct',     label:'P/L (%)',   sortVal:function(t){return parseFloat(t.plPct)||0;},       render:function(t){var p=parseFloat(t.plPct)||0;return'<td class="mono" style="color:'+(p>=0?'var(--green)':'var(--red)')+'">'+((p>=0?'+':'')+p.toFixed(2))+'%</td>';}},
   {key:'actualRR',  label:'RR',        sortVal:function(t){return t.actualRR!=null?parseFloat(t.actualRR):-999;},render:function(t){return'<td class="mono">'+(t.actualRR!=null?parseFloat(t.actualRR).toFixed(2)+'R':'—')+'</td>';}},
   {key:'entryTime', label:'Date',      sortVal:function(t){return t.entryTime||t.savedAt||'';},   render:function(t){if(!t.entryTime)return'<td style="color:var(--text3);font-size:12px">—</td>';var timeStr=t.entryTime.length>10?' <span style="color:var(--text3);font-size:10px">'+to12h(t.entryTime.slice(11,16))+'</span>':'';return'<td style="color:var(--text3);font-size:12px;white-space:nowrap">'+t.entryTime.slice(0,10)+timeStr+'</td>';}},
+  {key:'marketSession',label:'Market Session',sortVal:function(t){var ms=getMarketSession(t.entryTime,t.assetType);return ms?ms.label:'';},render:function(t){var ms=getMarketSession(t.entryTime,t.assetType);return'<td>'+(ms?'<span class="badge '+ms.badge+'">'+ms.label+'</span>':'<span style="color:var(--text3)">—</span>')+'</td>';}},
   {key:'entryPrice',label:'Entry',     sortVal:function(t){return parseFloat(t.entryPrice)||0;},  render:function(t){return'<td class="mono">'+escHtml(String(t.entryPrice||'—'))+'</td>';}},
   {key:'exitPrice', label:'Exit',      sortVal:function(t){return parseFloat(t.exitPrice)||0;},   render:function(t){return'<td class="mono">'+escHtml(String(t.exitPrice||'—'))+'</td>';}},
   {key:'stopLoss',  label:'SL',        sortVal:function(t){return parseFloat(t.stopLoss)||0;},    render:function(t){return'<td class="mono">'+escHtml(String(t.stopLoss||'—'))+'</td>';}},
@@ -8080,7 +8202,7 @@ function histSetPageSize(val){
   renderHistory();
 }
 // Default visible columns for history table (used when no saved config exists)
-var DEFAULT_HIST_COL_KEYS=['num','sessionName','pair','assetType','type','result','plDollar','plPct','actualRR','entryTime','entryPrice','exitPrice','stopLoss','qty','riskpct','strategy','durationMin','rating','error','loggedAt','fees','netPL'];
+var DEFAULT_HIST_COL_KEYS=['num','sessionName','pair','assetType','type','result','plDollar','plPct','actualRR','entryTime','marketSession','entryPrice','exitPrice','stopLoss','qty','riskpct','strategy','durationMin','rating','error','loggedAt','fees','netPL'];
 var _histColConfigCache=null;
 async function getHistColConfig(){
   if(_histColConfigCache)return _histColConfigCache;
@@ -8697,6 +8819,7 @@ async function openDetail(id,opts){
     +'<div class="detail-item"><div class="di-label">Asset type</div><div class="di-val">'+(trade.assetType||'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Entry date/time</div><div class="di-val mono">'+(trade.entryTime?trade.entryTime.slice(0,10)+(trade.entryTime.length>10?' '+to12h(trade.entryTime.slice(11,16)):''):'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Exit date/time</div><div class="di-val mono">'+(trade.exitTime?trade.exitTime.slice(0,10)+(trade.exitTime.length>10?' '+to12h(trade.exitTime.slice(11,16)):''):'—')+'</div></div>'
+    +(function(){var ms=getMarketSession(trade.entryTime,trade.assetType);return'<div class="detail-item"><div class="di-label">Market session</div><div class="di-val">'+(ms?'<span class="badge '+ms.badge+'">'+ms.label+'</span>':'—')+'</div></div>';})()
     +'<div class="detail-item"><div class="di-label">Model</div><div class="di-val">'+(trade.model||'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Entry method</div><div class="di-val">'+(trade.method||'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">SL placed at</div><div class="di-val">'+(trade.tpSlPlace||'—')+'</div></div>'
@@ -9487,6 +9610,7 @@ async function _renderTradeAnalyticsImpl(){
   _renderChecklistAnalytics(trades);
   _renderDirectionAnalytics(trades);
   _renderTimeAnalytics(trades);
+  _renderMarketSessionAnalytics(trades);
   _renderHoldTimeAnalytics(trades);
   _renderDowAnalytics(trades);
   _renderCategoryAnalytics(trades,'assetType','Uncategorized','dash-assettype-stats','chart-assettype-wr','chart-assettype-pl','dash-assettype-table','assetTypeWR','assetTypePL','Asset type');
@@ -9985,6 +10109,62 @@ function _renderTimeAnalytics(trades){
   var _cvTP=document.getElementById('chart-time-pl');
   if(_cvTP)charts.timePL=safeChart(_cvTP.getContext('2d'),{type:'bar',data:{labels:blockLabels,datasets:[{label:'Avg P/L ($)',data:plData,backgroundColor:plData.map(function(v){return v>=0?c.green:c.red;}),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:9}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return'$'+v;}},grid:{color:c.grid}}}}});
 }
+// ── Performance by Market Session (named, asset-aware — see getMarketSession) ────────
+// Unlike the raw 4h local-time blocks above, this groups by the actual named session
+// (Asian/London/NY Overlap/… for FX-style assets, Pre-Market/Opening Range/Power Hour/…
+// for stocks — see marketSessionTableFor), New York time, DST-aware. Buckets are sorted
+// chronologically (by each label's start minute, via SESSION_ORDER_MAP) rather than by
+// trade volume, so the chart reads left-to-right as the day progresses.
+function _renderMarketSessionAnalytics(trades){
+  trades=trades||[];
+  var c=chartColors();
+  var buckets={};
+  trades.forEach(function(t){
+    var ms=getMarketSession(t.entryTime,t.assetType);
+    if(!ms)return;
+    if(!buckets[ms.label])buckets[ms.label]=[];
+    buckets[ms.label].push(t);
+  });
+  var keys=Object.keys(buckets).sort(function(a,b){return(SESSION_ORDER_MAP[a]||0)-(SESSION_ORDER_MAP[b]||0);});
+  var timedCount=keys.reduce(function(a,k){return a+buckets[k].length;},0);
+  var byVolume=null;
+  keys.forEach(function(k){if(!byVolume||buckets[k].length>buckets[byVolume].length)byVolume=k;});
+  var bestKey=null,bestWR=-1,worstKey=null,worstPL=Infinity;
+  keys.forEach(function(k){
+    var arr=buckets[k],wr=winRate(arr),pl=avgPLof(arr);
+    if(arr.length>=3&&wr!=null&&wr>bestWR){bestWR=wr;bestKey=k;}
+    if(arr.length>=3&&pl!=null&&pl<worstPL){worstPL=pl;worstKey=k;}
+  });
+  var statsEl=document.getElementById('dash-marketsession-stats');
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="stat-card"><div class="stat-label">Trades with a session</div><div class="stat-value">'+timedCount+'</div><div class="stat-sub">of '+trades.length+' in current filter</div></div>'+
+      '<div class="stat-card"><div class="stat-label">Most traded session</div><div class="stat-value" style="font-size:15px">'+(byVolume?escHtml(byVolume):'—')+'</div><div class="stat-sub">'+(byVolume?buckets[byVolume].length+' trades':'no trades')+'</div></div>'+
+      '<div class="stat-card '+(bestKey?'green':'')+'"><div class="stat-label">Best session (win rate)</div><div class="stat-value" style="font-size:15px">'+(bestKey?escHtml(bestKey):'—')+'</div><div class="stat-sub">'+(bestKey?bestWR.toFixed(0)+'% win rate · '+buckets[bestKey].length+' trades':'need 3+ trades in a session')+'</div></div>'+
+      '<div class="stat-card '+(worstKey?'red':'')+'"><div class="stat-label">Weakest session (avg P/L)</div><div class="stat-value" style="font-size:15px">'+(worstKey?escHtml(worstKey):'—')+'</div><div class="stat-sub">'+(worstKey?'$'+worstPL.toFixed(0)+' avg · '+buckets[worstKey].length+' trades':'need 3+ trades in a session')+'</div></div>';
+  }
+  var wrData=keys.map(function(k){var wr=winRate(buckets[k]);return wr!=null?parseFloat(wr.toFixed(1)):0;});
+  var wrColors=keys.map(function(k){var wr=winRate(buckets[k]);return wr!=null&&wr>=50?c.green:c.red;});
+  if(charts.marketSessionWR)charts.marketSessionWR.destroy();
+  var _cvMSW=document.getElementById('chart-marketsession-wr');
+  if(_cvMSW)charts.marketSessionWR=safeChart(_cvMSW.getContext('2d'),{type:'bar',data:{labels:keys.map(function(k){return k.length>14?k.slice(0,14)+'…':k;}),datasets:[{label:'Win rate %',data:wrData,backgroundColor:wrColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y+'% win rate ('+buckets[keys[ctx.dataIndex]].length+' trades)';}}}},scales:{x:{ticks:{color:c.tick,font:{size:9}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},suggestedMax:100}}}});
+  var plData=keys.map(function(k){var v=avgPLof(buckets[k]);return v!=null?parseFloat(v.toFixed(2)):0;});
+  if(charts.marketSessionPL)charts.marketSessionPL.destroy();
+  var _cvMSP=document.getElementById('chart-marketsession-pl');
+  if(_cvMSP)charts.marketSessionPL=safeChart(_cvMSP.getContext('2d'),{type:'bar',data:{labels:keys.map(function(k){return k.length>14?k.slice(0,14)+'…':k;}),datasets:[{label:'Avg P/L ($)',data:plData,backgroundColor:plData.map(function(v){return v>=0?c.green:c.red;}),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:9}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return'$'+v;}},grid:{color:c.grid}}}}});
+  var tblHtml=keys.map(function(k){
+    var arr=buckets[k],wr=winRate(arr),rr=avgRRof(arr),tp=totalPLof(arr),badge=SESSION_BADGE_MAP[k]||'badge-gray';
+    return '<tr>'+
+      '<td><span class="badge '+badge+'">'+escHtml(k)+'</span></td>'+
+      '<td class="mono">'+arr.length+'</td>'+
+      '<td class="mono" style="color:'+(wr!=null?(wr>=50?'var(--green)':'var(--red)'):'var(--text3)')+'">'+(wr!=null?wr.toFixed(1)+'%':'—')+'</td>'+
+      '<td class="mono">'+(rr!=null?rr.toFixed(2)+'R':'—')+'</td>'+
+      '<td class="mono" style="color:'+(tp>=0?'var(--green)':'var(--red)')+'">'+(tp>=0?'+':'')+tp.toFixed(2)+'</td>'+
+      '</tr>';
+  }).join('');
+  var tblEl=document.getElementById('dash-marketsession-table');
+  if(tblEl)tblEl.innerHTML=!keys.length?'<div class="empty-state"><p>No trades with a valid entry time yet</p></div>':'<table class="data"><thead><tr><th>Session</th><th>Trades</th><th>Win rate</th><th>Avg RR</th><th>Total P/L</th></tr></thead><tbody>'+tblHtml+'</tbody></table>';
+}
 // ── Hold-time bucket breakdown (uses durationMin) ──────────
 // The Dashboard shows one blended "Avg hold time" figure — this breaks it
 // into buckets so a trader can see whether quick scalps or longer-held
@@ -10303,6 +10483,14 @@ function toggleTrdTime(){
   if(!wasOpen){
     if(charts.timeWR)charts.timeWR.resize();
     if(charts.timePL)charts.timePL.resize();
+  }
+}
+function toggleTrdMarketSession(){
+  var wasOpen=(document.getElementById('trd-marketsession-body')||{}).style.display==='block';
+  toggleCollapsible('trd-marketsession-body','trd-marketsession-chevron');
+  if(!wasOpen){
+    if(charts.marketSessionWR)charts.marketSessionWR.resize();
+    if(charts.marketSessionPL)charts.marketSessionPL.resize();
   }
 }
 function toggleTrdHold(){
