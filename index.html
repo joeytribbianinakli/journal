@@ -622,6 +622,18 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .hist-filter-group select{font-size:11px;padding:5px 8px}
 .hist-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(77,127,255,.1);color:var(--accent);cursor:pointer}
 .hist-chip:hover{background:rgba(77,127,255,.18)}
+/* ── Filter lock-to-top: optional per-user toggle (pin icon in the filter header) that
+   makes the filter bar (still a normal horizontal row, unchanged layout) stick to the
+   top of the scroll area once you scroll past it — so it's reachable without scrolling
+   all the way back up. Off by default; state is remembered in localStorage and applied
+   by applyFilterLockState() to all four filter bars (Dashboard/Trade Analytics/Calendar/
+   History). --topbar-h is measured at runtime in the init script near the end of body. ── */
+.filter-lock-btn{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;border:1px solid transparent;background:transparent;color:var(--text3);cursor:pointer;transition:all .12s;flex-shrink:0}
+.filter-lock-btn:hover{background:var(--bg4);color:var(--text2)}
+.filter-lock-btn.active{background:rgba(77,127,255,.14);color:var(--accent);border-color:rgba(77,127,255,.3)}
+.filter-lock-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.filter-sticky-locked{position:sticky;top:var(--topbar-h,54px);z-index:40;box-shadow:0 6px 16px rgba(0,0,0,.28)}
+
 /* ── Theme swatches: color-preview tiles inside the theme modal — swatch colors come from THEME_VARS below (theme-preload script) and the matching object in the main script ── */
 .theme-swatch{border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:border-color .12s,transform .12s}
 .theme-swatch:hover{transform:translateY(-2px);border-color:var(--border2)}
@@ -1009,6 +1021,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <span id="dash-filter-summary" style="font-size:11px;font-weight:500;color:var(--text3);padding-left:8px;border-left:1px solid var(--border)"></span>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
+            <button class="filter-lock-btn" id="dash-filter-lock-btn" onclick="toggleFilterLock(event)" title="Lock filter bar to top while scrolling">
+              <svg viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+            </button>
             <svg id="dash-filter-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
         </div>
@@ -1111,6 +1126,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <span id="trd-filter-summary" style="font-size:11px;font-weight:500;color:var(--text3);padding-left:8px;border-left:1px solid var(--border)"></span>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
+            <button class="filter-lock-btn" id="trd-filter-lock-btn" onclick="toggleFilterLock(event)" title="Lock filter bar to top while scrolling">
+              <svg viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+            </button>
             <svg id="trd-filter-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
         </div>
@@ -1318,6 +1336,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="card"><div class="card-header"><span class="card-title">Avg P/L: Long vs Short</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-direction-pl"></canvas></div></div></div>
         </div>
       </div>
+      <div class="analytics-group-label">Timing &amp; Session Patterns</div>
       <!-- Entry-time analysis — collapsible, collapsed by default -->
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdTime()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -1445,6 +1464,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <span id="cal-filter-summary" style="font-size:11px;font-weight:500;color:var(--text3);padding-left:8px;border-left:1px solid var(--border)"></span>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
+            <button class="filter-lock-btn" id="cal-filter-lock-btn" onclick="toggleFilterLock(event)" title="Lock filter bar to top while scrolling">
+              <svg viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+            </button>
             <svg id="cal-filter-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
         </div>
@@ -2431,6 +2453,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               <option value="250">250</option>
               <option value="all">All</option>
             </select>
+            <button class="filter-lock-btn" id="hist-filter-lock-btn" onclick="event.stopPropagation();toggleFilterLock(event)" title="Lock filter bar to top while scrolling">
+              <svg viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+            </button>
           </div>
         </div>
         <div class="history-filter-body" id="hist-filter-body" style="display:none">
@@ -19024,6 +19049,48 @@ document.addEventListener('DOMContentLoaded',function(){
     });
   });
 });
+</script>
+<script>
+// ══ Filter lock-to-top ═══════════════════════════
+// Optional per-user toggle (pin icon in each filter header) that sticks the filter
+// bar to the top of the page while scrolling, instead of scrolling away with the
+// rest of the content. The bar's own layout/markup never changes — this only flips
+// position:sticky on/off via the .filter-sticky-locked class. One shared preference
+// applies to all four filter bars (Dashboard/Trade Analytics/Calendar/History) so
+// they behave consistently; state is remembered in localStorage across sessions.
+var FILTER_LOCK_KEY='tj-filter-lock';
+var FILTER_BAR_IDS=['dash-filter-bar','trd-filter-bar','cal-filter-bar','hist-filter-panel'];
+var FILTER_LOCK_BTN_IDS=['dash-filter-lock-btn','trd-filter-lock-btn','cal-filter-lock-btn','hist-filter-lock-btn'];
+var _filterLocked=false;
+try{_filterLocked=localStorage.getItem(FILTER_LOCK_KEY)==='1';}catch(e){}
+function updateTopbarHeightVar(){
+  var tb=document.querySelector('.topbar');
+  if(!tb)return;
+  document.documentElement.style.setProperty('--topbar-h',tb.getBoundingClientRect().height+'px');
+}
+function applyFilterLockState(){
+  FILTER_BAR_IDS.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el)el.classList.toggle('filter-sticky-locked',_filterLocked);
+  });
+  FILTER_LOCK_BTN_IDS.forEach(function(id){
+    var btn=document.getElementById(id);
+    if(!btn)return;
+    btn.classList.toggle('active',_filterLocked);
+    btn.title=_filterLocked?'Unlock filter bar (stop sticking to top)':'Lock filter bar to top while scrolling';
+  });
+}
+function toggleFilterLock(evt){
+  if(evt)evt.stopPropagation();
+  _filterLocked=!_filterLocked;
+  try{localStorage.setItem(FILTER_LOCK_KEY,_filterLocked?'1':'0');}catch(e){}
+  applyFilterLockState();
+}
+document.addEventListener('DOMContentLoaded',function(){
+  updateTopbarHeightVar();
+  applyFilterLockState();
+});
+window.addEventListener('resize',updateTopbarHeightVar);
 </script>
 </body>
 </html>
