@@ -3024,6 +3024,14 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <!-- Backtest session picker (shown by default) -->
           <div id="calc-backtest-session-row" style="display:block;margin-top:12px;margin-bottom:4px">
             <div style="background:rgba(77,127,255,.06);border:1px solid rgba(77,127,255,.2);border-radius:var(--radius);padding:10px 12px">
+              <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:7px">Session type</div>
+              <select id="calc-sessiontype-filter" onchange="saveSessionTypeFilterPref('calc-sessiontype-filter');calcPopulateBacktestSessions()" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:7px 28px 7px 10px;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2711%27 height=%2711%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%233d4457%27 stroke-width=%272.5%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpolyline points=%276 9 12 15 18 9%27/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 9px center;margin-bottom:10px">
+                <option value="" selected>All types</option>
+                <option value="live">Live</option>
+                <option value="paperlive">Paper Live</option>
+                <option value="backtest">Backtest</option>
+                <option value="demo">Demo</option>
+              </select>
               <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:7px">Session</div>
               <select id="calc-backtest-session" onchange="calcOnBacktestSessionChange()" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:7px 28px 7px 10px;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2711%27 height=%2711%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%233d4457%27 stroke-width=%272.5%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpolyline points=%276 9 12 15 18 9%27/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 9px center"><option value="">— select session —</option></select>
               <div id="calc-backtest-hint" style="font-size:10px;color:var(--text3);margin-top:5px;line-height:1.5;display:none">Balance and risk % auto-filled from session</div>
@@ -6519,29 +6527,29 @@ async function populateSessionSelects(restoreSessionId){
   var activeSessions=sessions.filter(function(s){return !s.archived;});
   // Find currently active session (date-based)
   var activeSession=activeSessions.find(function(s){return isSessionActive(s);})||null;
-  var tradeOpts='<option value="">— select session —</option>'+activeSessions.filter(function(s){return !s.isDemo;}).map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');
+  // Trade info Session field: only currently-active (date-based), non-archived, non-demo sessions
+  var tradeFormSessions=activeSessions.filter(function(s){return !s.isDemo&&isSessionActive(s);});
+  var tradeOpts='<option value="">— select session —</option>'+tradeFormSessions.map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');
   document.getElementById('f-session').innerHTML=tradeOpts;
   if(restoreSessionId){
     // Editing a trade — restore its original session (could be archived or inactive)
     // If not in select list, add a disabled option so it shows correctly
-    var inList=activeSessions.find(function(s){return s.id===restoreSessionId&&!s.isDemo;});
+    var inList=tradeFormSessions.find(function(s){return s.id===restoreSessionId;});
     if(!inList){
       var orig=sessions.find(function(s){return s.id===restoreSessionId;});
       if(orig){
         var extraOpt=document.createElement('option');
-        extraOpt.value=orig.id;extraOpt.textContent=orig.name+(orig.isDemo?' ✦ demo':'')+(orig.archived?' (archived)':'');
+        extraOpt.value=orig.id;extraOpt.textContent=orig.name+(orig.isDemo?' ✦ demo':'')+(orig.archived?' (archived)':(!isSessionActive(orig)?' (inactive)':''));
         document.getElementById('f-session').appendChild(extraOpt);
       }
     }
     document.getElementById('f-session').value=restoreSessionId;
     onSessionChange();
   } else if(!editingId){
-    // New trade: auto-select the active non-demo session created first; if none active, most recent non-demo session
-    var nonDemoSessions=activeSessions.filter(function(s){return !s.isDemo;});
-    var activeNonDemoList=nonDemoSessions.filter(function(s){return isSessionActive(s);});
-    var activeNonDemo=activeNonDemoList.length
-      ?activeNonDemoList.slice().sort(function(a,b){return new Date(a.createdAt||a.startDate)-new Date(b.createdAt||b.startDate);})[0]
-      :(nonDemoSessions[0]||null);
+    // New trade: auto-select the active non-demo session created first (only active sessions are in the list)
+    var activeNonDemo=tradeFormSessions.length
+      ?tradeFormSessions.slice().sort(function(a,b){return new Date(a.createdAt||a.startDate)-new Date(b.createdAt||b.startDate);})[0]
+      :null;
     var targetId=activeNonDemo?activeNonDemo.id:'';
     document.getElementById('f-session').value=targetId;
     onSessionChange();
@@ -10867,6 +10875,43 @@ if(!window._tjKeydownListenerRegistered){
   }
   });
 } // end _tjKeydownListenerRegistered guard
+// ══ Auto-numbered list textareas ══════════════════
+// The analysis/reflection textareas (setup notes, led-to-trade, mistakes, lessons, etc.)
+// are pre-filled with a "1. " starting point. This makes Enter continue the numbering
+// (2., 3., ...) like a normal numbered list, and pressing Enter again on an empty
+// numbered line (e.g. after "3. " with nothing typed) drops the numbering instead of
+// piling up empty items — mirrors the list behavior in Word/Google Docs/Notion.
+var AUTO_NUMBER_TEXTAREA_IDS=['setup-notes','led-to-trade','why-skipped-notes','issues-notes',
+  'post-analysis','f-news','emo-before','emo-after','emo-complete','l-mistakes','l-lessons','l-good'];
+if(!window._tjAutoNumberListenerRegistered){
+  window._tjAutoNumberListenerRegistered=true;
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Enter'||e.shiftKey||e.isComposing)return;
+    var el=e.target;
+    if(!el||el.tagName!=='TEXTAREA'||AUTO_NUMBER_TEXTAREA_IDS.indexOf(el.id)===-1)return;
+    var val=el.value,pos=el.selectionStart;
+    if(pos!==el.selectionEnd)return; // leave text-replacement selections to default behavior
+    var lineStart=val.lastIndexOf('\n',pos-1)+1;
+    var currentLine=val.slice(lineStart,pos);
+    var m=currentLine.match(/^(\d+)\.\s(.*)$/);
+    if(!m)return; // not sitting on a numbered line — normal newline
+    e.preventDefault();
+    var num=parseInt(m[1],10),content=m[2];
+    var newVal,newPos;
+    if(content.trim()===''){
+      // Empty numbered item — pressing Enter again exits the list instead of adding "n+1. "
+      newVal=val.slice(0,lineStart)+val.slice(pos);
+      newPos=lineStart;
+    }else{
+      var insert='\n'+(num+1)+'. ';
+      newVal=val.slice(0,pos)+insert+val.slice(pos);
+      newPos=pos+insert.length;
+    }
+    el.value=newVal;
+    el.selectionStart=el.selectionEnd=newPos;
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+}
 // ══ Init ══════════════════════════════════════════
 // App bootstrap, runs once after the IndexedDB connection opens. Order matters: theme is
 // applied first (avoids a flash of the wrong theme), then selects/dropdowns are populated
@@ -11832,25 +11877,38 @@ function calcSetMode(mode){
     calcCalc();
   }
 }
-// Populate the backtest-mode session dropdown with non-archived, non-demo sessions and
-// auto-select today's active session (earliest-created, if more than one is active)
+// Populate the backtest-mode session dropdown, scoped to the "Session type" filter above it
+// (defaults to All types) and — regardless of type — to only currently-active sessions (i.e.
+// today falls within the session's date range, same definition as the "● Active" badge on
+// the Sessions page). Demo sessions stay excluded unless the type filter is explicitly set to
+// Demo, matching the demoOn/type-filter convention used by the other session-type filters
+// (dashboard, trade analytics, calendar, history, AI analyzer, Monte Carlo).
 async function calcPopulateBacktestSessions(){
   var sel=document.getElementById('calc-backtest-session');
   if(!sel)return;
   var sessions=await dbGetAll('sessions');
   sessions.sort(function(a,b){return new Date(b.startDate)-new Date(a.startDate);});
-  var active=sessions.filter(function(s){return !s.archived&&!s.isDemo;});
+  var typeVal=getSessionTypeFilterVal('calc-sessiontype-filter');
+  var typeIds=sessionIdsMatchingType(sessions,'calc-sessiontype-filter');
+  var showDemo=typeVal==='demo';
+  var active=sessions.filter(function(s){
+    return !s.archived&&(showDemo?!!s.isDemo:!s.isDemo)&&(!typeIds||typeIds.has(s.id))&&isSessionActive(s);
+  });
   sel.innerHTML='<option value="">— select session —</option>'+active.map(function(s){
     return '<option value="'+s.id+'">'+escHtml(s.name)+'</option>';
   }).join('');
   // Auto-select the currently active session — if several are active today, pick the one
   // that was created first, matching the same convention used for the trade-log form and
   // history filters (createdAt, falling back to startDate for legacy sessions without it).
-  var activeToday=active.filter(isSessionActive);
-  var cur=activeToday.length
-    ?activeToday.slice().sort(function(a,b){return new Date(a.createdAt||a.startDate)-new Date(b.createdAt||b.startDate);})[0]
+  var cur=active.length
+    ?active.slice().sort(function(a,b){return new Date(a.createdAt||a.startDate)-new Date(b.createdAt||b.startDate);})[0]
     :null;
   if(cur){sel.value=cur.id;calcOnBacktestSessionChange();}
+  else{
+    // No active session matches — clear any stale auto-fill hint/values from a previous selection.
+    var hint=document.getElementById('calc-backtest-hint');
+    if(hint)hint.style.display='none';
+  }
 }
 // Auto-fill balance + risk% from the selected backtest session (skipped-trade base equity, or
 // running net equity after fees otherwise), then recalculate
