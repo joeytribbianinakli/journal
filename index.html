@@ -6713,8 +6713,10 @@ function nav(id,btn){
   if(id==='trade-analytics'){populateSessionSelects().then(function(){populateTrdFilters().then(function(){renderTradeAnalytics();});});}
 }
 function startNewTrade(){
-  var logBtn=document.querySelector('.nav-item[onclick*="nav(\'log\'"]');
-  nav('log',logBtn);
+  // Always kick off the full guided flow (Calendar → Checklist → Calculator → Log trade)
+  // rather than jumping straight to the bare log form — same entry point as the
+  // "Full trade flow" sidebar nav item.
+  openPreChecklist();
 }
 // ══ Tab switching ══════════════════════════════════
 function switchTab(idx,btn){
@@ -7271,9 +7273,31 @@ function clearPartialTPs(){
   var descEl=document.getElementById('partial-tp-desc');if(descEl)descEl.value='';
   var qvEl=document.getElementById('qty-partial-validation');if(qvEl)qvEl.style.display='none';
 }
+// ══ Quote-currency conversion for realized P/L ═══
+// `qty` throughout this app is stored in BASE-currency units (e.g. 169,119 units of
+// USD/JPY = 169,119 USD notional). For pairs quoted in USD (EUR/USD, GBP/USD, XAU/USD,
+// crypto, stocks, indices…) a raw (priceDiff × qty) is already a USD figure. But for
+// pairs where the QUOTE currency isn't USD (USD/JPY, USD/CHF, USD/CAD, …), that raw
+// number is denominated in the quote currency (JPY, CHF, CAD) and must be converted to
+// USD before it's a real dollar P/L — otherwise it's off by a factor equal to the
+// exchange rate (e.g. ~163x too large for USD/JPY around 163.xx). This mirrors the
+// position-size calculator's own pip-value fallback (`pvp=(contract*pip)/entry`), which
+// is why the calculator's Risk/Reward preview was correct while saved trades were not.
+// We use `entry` (not exit) as the conversion rate so a trade's realized P/L reconciles
+// with the Risk/Reward preview shown before the trade was taken.
+function quoteConvFactor(pair, entry){
+  if(!pair||typeof pair!=='string'||!entry)return 1;
+  var slashIdx=pair.indexOf('/');
+  if(slashIdx===-1)return 1; // not a "XXX/YYY" style symbol (stock ticker, index, etc.) — already USD
+  var quoteCcy=pair.slice(slashIdx+1).trim().toUpperCase();
+  return quoteCcy==='USD'?1:entry;
+}
+function toAccountPL(rawPL, pair, entry){
+  return rawPL/quoteConvFactor(pair, entry);
+}
 // Compute blended P/L when partials exist.
 // Returns {pl, plPct, arr, winLoss, effectiveExitPrice} or null if insufficient data.
-function computePartialPL(entry, sl, qty, type, acct, riskDollar){
+function computePartialPL(entry, sl, qty, type, acct, riskDollar, pair){
   if(!entry||!qty||!acct)return null;
   // Filter valid partials
   var partials=_partialTPs.filter(function(p){return parseFloat(p.price)>0&&parseFloat(p.qty)>0;});
@@ -7298,6 +7322,7 @@ function computePartialPL(entry, sl, qty, type, acct, riskDollar){
     var remDiff=type==='Long'?(finalExit-entry):(entry-finalExit);
     totalPL+=remDiff*remainderQty;
   }
+  totalPL=toAccountPL(totalPL,pair,entry);
   var plPct=(totalPL/acct)*100;
   var slDist=sl&&sl!==entry?Math.abs(entry-sl):0;
   var arr=null;
@@ -7773,7 +7798,7 @@ async function saveTrade(){
   var partialDesc=(document.getElementById('partial-tp-desc')||{}).value||'';
   // Compute P/L: use partial-aware if partials exist, else standard
   var pl, plPct, arr, winLoss;
-  var partialResult=partialTPsSaved.length>0?computePartialPL(entry,sl,actualQty,type,acct,riskDollar):null;
+  var partialResult=partialTPsSaved.length>0?computePartialPL(entry,sl,actualQty,type,acct,riskDollar,pair):null;
   if(partialResult){
     pl=partialResult.pl;
     plPct=partialResult.plPct;
@@ -7783,7 +7808,7 @@ async function saveTrade(){
     if(partialResult.effectiveExit>0)exit=parseFloat(partialResult.effectiveExit.toFixed(5));
   } else {
     var diff=entry&&exit?(type==='Long'?exit-entry:entry-exit):0;
-    pl=actualQty?diff*actualQty:0;
+    pl=actualQty?toAccountPL(diff*actualQty,pair,entry):0;
     plPct=acct?(pl/acct)*100:0;
     arr=null;
     if(entry&&exit&&actualQty&&diff!==0){
@@ -7792,7 +7817,7 @@ async function saveTrade(){
         var exitDist=Math.abs(exit-entry);
         arr=(diff>=0?1:-1)*(exitDist/slDist);
       } else if(riskDollar>0){
-        arr=diff*actualQty/riskDollar;
+        arr=pl/riskDollar;
       }
     }
     var wlVal=document.getElementById('f-winloss').value;
@@ -8352,6 +8377,7 @@ function enrichSkippedPL(trades){
         var remDiff=isLong?(exit-entry):(entry-exit);
         totalPL+=remDiff*remainderQty;
       }
+      totalPL=toAccountPL(totalPL,t.pair,entry);
       plDollar=parseFloat(totalPL.toFixed(2));
       plPct=acct?parseFloat(((plDollar/acct)*100).toFixed(4)):0;
       winLoss=plDollar>0?1:(plDollar<0?0:0.5);
@@ -8379,7 +8405,7 @@ function enrichSkippedPL(trades){
     } else {
       if(!exit)return t; // no exit price and no partials — leave as-is
       var priceDiff=isLong?(exit-entry):(entry-exit);
-      plDollar=parseFloat((priceDiff*qty).toFixed(2));
+      plDollar=parseFloat(toAccountPL(priceDiff*qty,t.pair,entry).toFixed(2));
       plPct=acct?parseFloat(((plDollar/acct)*100).toFixed(4)):0;
       actualRR=(slDist&&priceDiff!==0)?parseFloat((priceDiff/slDist).toFixed(3)):null;
       winLoss=plDollar>0?1:(plDollar<0?0:0.5);
@@ -10310,6 +10336,7 @@ function recomputeTradeFields(t){
   var entry=parseFloat(t.entryPrice)||0;
   var exit=parseFloat(t.exitPrice)||0;
   var qty=parseFloat(t.qty)||0;
+  var sl=parseFloat(t.stopLoss)||0;
   var riskDollar=parseFloat(t.riskDollar)||0;
   var acct=parseFloat(t.acct)||5000;
   var riskpct=parseFloat(t.riskpct)||0;
@@ -10318,11 +10345,20 @@ function recomputeTradeFields(t){
   var typ=t.type||'Long';
   if(entry&&exit&&qty){
     var diff=typ==='Long'?exit-entry:entry-exit;
-    var pl=diff*qty;
+    var pl=toAccountPL(diff*qty,t.pair,entry);
     t.plDollar=parseFloat(pl.toFixed(2));
     t.plPct=acct?parseFloat((pl/acct*100).toFixed(4)):0;
     t.winLoss=diff>0?1:(diff<0?0:0.5);
-    if(riskDollar>0){
+    // Prefer the SL-distance ratio for RR (currency-agnostic, matches saveTrade()'s
+    // logic) — only fall back to pl/riskDollar when no usable SL is present. This
+    // function used to always use pl/riskDollar, which — combined with the unconverted
+    // `pl` above — is what silently corrupted actualRR on every GitHub Pull/import for
+    // any non-USD-quoted pair.
+    if(sl&&sl!==entry){
+      var slDist=Math.abs(entry-sl);
+      var exitDist=Math.abs(exit-entry);
+      t.actualRR=parseFloat(((diff>=0?1:-1)*(exitDist/slDist)).toFixed(3));
+    } else if(riskDollar>0){
       t.actualRR=parseFloat((pl/riskDollar).toFixed(3));
     }
   }
