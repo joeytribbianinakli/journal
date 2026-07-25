@@ -7355,14 +7355,44 @@ function computePartialPL(entry, sl, qty, type, acct, riskDollar, pair){
   var effectiveExit=wQty>0?wSum/wQty:0;
   return{pl:totalPL,plPct:plPct,arr:arr,winLoss:totalPL>0?1:(totalPL<0?0:0.5),effectiveExit:effectiveExit};
 }
+// Shared pl/plPct/arr math for recalc() (live calc-strip) and saveTrade() (persisted record).
+// Both used to reimplement this arithmetic independently, which is how the quote-currency
+// conversion bug got fixed in one place and not the other. Centralizing it here means a future
+// fix (or the next new pair quirk) only has to happen once and both callers stay in sync.
+// Delegates to computePartialPL() when partial TPs are in use, exactly as both callers did
+// before. Returns {partialResult, pl, plPct, arr} — arr is null when there isn't enough info
+// (no exit yet, no qty, no SL and no risk$ to fall back to). Callers are still responsible for
+// their own display/storage decisions (e.g. showing '—' vs a stored 0) and for winLoss, which
+// intentionally isn't included here — see the comment above the winLoss line in saveTrade().
+function computeTradeStats(entry, sl, exit, qty, type, acct, riskDollar, pair){
+  var partialResult = computePartialPL(entry, sl, qty, type, acct, riskDollar, pair);
+  if(partialResult){
+    return {partialResult:partialResult, pl:partialResult.pl, plPct:partialResult.plPct, arr:partialResult.arr};
+  }
+  var diff = (entry&&exit) ? (type==='Long'?exit-entry:entry-exit) : 0;
+  var pl = qty ? toAccountPL(diff*qty, pair, entry) : 0;
+  var plPct = acct ? (pl/acct)*100 : 0;
+  var arr = null;
+  if(entry&&exit&&qty){
+    var slDist = (entry&&sl) ? Math.abs(entry-sl) : 0;
+    if(slDist>0){
+      var exitDist=Math.abs(exit-entry);
+      arr=(diff>=0?1:-1)*(exitDist/slDist);
+    } else if(riskDollar>0){
+      arr=pl/riskDollar;
+    }
+  }
+  return {partialResult:null, pl:pl, plPct:plPct, arr:arr};
+}
 // ══ Recalc engine ═════════════════════════════════
 // Core live-calc for the Log Trade form: re-run on every relevant input change (entry/SL/exit/
 // qty/risk%/account/partial-TP edits — see the oninput handlers throughout this tab) to update
 // the read-only calc-strip fields (risk $, SL distance, position value, R-multiple, P/L, P/L%,
-// win/loss, duration) without a page reload. Delegates to computePartialPL() above when partial
-// TPs are in use, otherwise computes straight from entry/exit/qty. Fee display is intentionally
-// NOT computed synchronously here — it's kicked off via the debounced recalcFeesAsync() below
-// since fee lookups need an IDB read and shouldn't block typing.
+// win/loss, duration) without a page reload. P/L, P/L%, and R-multiple come from
+// computeTradeStats() above (shared with saveTrade()); this function is just responsible for
+// pulling form values, calling it, and writing the results into the calc-strip DOM. Fee display
+// is intentionally NOT computed synchronously here — it's kicked off via the debounced
+// recalcFeesAsync() below since fee lookups need an IDB read and shouldn't block typing.
 function recalc(){
   var entry=parseFloat(document.getElementById('f-entry').value)||0;
   var slPrice=parseFloat(document.getElementById('f-sl-price').value)||0;
@@ -7373,6 +7403,7 @@ function recalc(){
   var trr=parseFloat(document.getElementById('f-trr').value)||0;
   var typeEl=document.getElementById('f-type-val');
   var type=typeEl?typeEl.value:'Long';
+  var pair=(document.getElementById('f-pair')||{}).value||'';
   var riskDollar=acct*(riskpct/100);
   function set(id,val,cls){var el=document.getElementById(id);if(!el)return;el.textContent=val;el.className='ci-val'+(cls?' '+cls:'');}
   set('c-risk','$'+riskDollar.toFixed(2));
@@ -7388,29 +7419,20 @@ function recalc(){
   // Position size display
   if(qty) set('c-qty',qty.toLocaleString(undefined,{maximumFractionDigits:4}));
   else set('c-qty','—');
-  // Position value (entry × qty)
+  // Position value (entry × qty, converted to account currency — same quote-currency
+  // conversion as P/L below, since entry×qty is denominated in the quote currency,
+  // not always USD, e.g. USD/JPY)
   if(entry&&qty){
-    var posVal=entry*qty;
+    var posVal=(entry*qty)/quoteConvFactor(pair,entry);
     set('c-posval','$'+posVal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}));
   } else set('c-posval','—');
   // Check if partials override the calculation
-  var partialResult=entry&&qty?computePartialPL(entry,slPrice,qty,type,acct,riskDollar):null;
+  var stats=computeTradeStats(entry,slPrice,exit,qty,type,acct,riskDollar,pair);
+  var partialResult=stats.partialResult;
   var pNote=document.getElementById('c-partial-note');
   if(pNote)pNote.style.display=partialResult?'':'none';
   // Actual RR — use partials if available, else standard
-  var arr=null;
-  if(partialResult){
-    arr=partialResult.arr;
-  } else if(entry&&exit&&qty){
-    var exitDiff=type==='Long'?exit-entry:entry-exit;
-    var pl=exitDiff*qty;
-    if(entry&&slPrice&&slDist>0){
-      var exitDist=Math.abs(exit-entry);
-      arr=(exitDiff>=0?1:-1)*(exitDist/slDist);
-    } else if(riskDollar>0){
-      arr=pl/riskDollar;
-    }
-  }
+  var arr=stats.arr;
   if(arr!=null){
     var arrCls=arr>=0?'pos':'neg';
     set('c-arr',arr.toFixed(2)+'R',arrCls);
@@ -7421,7 +7443,7 @@ function recalc(){
   }
   // P/L + Auto Win/Loss
   if(partialResult){
-    var pl2=partialResult.pl;var plPct=partialResult.plPct;
+    var pl2=stats.pl;var plPct=stats.plPct;
     var isWin=pl2>0;
     var winLossDisplay=isWin?'Win':(pl2<0?'Loss':'Break-even');
     var cls2=pl2>=0?'pos':'neg';
@@ -7437,8 +7459,8 @@ function recalc(){
     var wld=document.getElementById('f-winloss-display');if(wld){wld.value=winLossDisplay;wld.style.color=isWin?'var(--green)':(diff<0?'var(--red)':'var(--amber)');}
     var wlh=document.getElementById('f-winloss');if(wlh)wlh.value=isWin?'1':(diff<0?'0':'0.5');
     if(qty){
-      var pl2=diff*qty;
-      var plPct=(pl2/acct)*100;
+      var pl2=stats.pl;
+      var plPct=stats.plPct;
       var cls2=pl2>=0?'pos':'neg';
       set('c-pl',(pl2>=0?'+':'')+pl2.toFixed(2),cls2);
       set('c-plpct',(plPct>=0?'+':'')+plPct.toFixed(2)+'%',cls2);
@@ -7796,30 +7818,29 @@ async function saveTrade(){
     .filter(function(p){return parseFloat(p.price)>0&&parseFloat(p.qty)>0;})
     .map(function(p){return{price:parseFloat(p.price),qty:parseFloat(p.qty)};});
   var partialDesc=(document.getElementById('partial-tp-desc')||{}).value||'';
-  // Compute P/L: use partial-aware if partials exist, else standard
+  // Compute P/L: use partial-aware if partials exist, else standard. Core math is shared with
+  // recalc() via computeTradeStats() above; what's saveTrade-specific is layered on right after
+  // it (effectiveExit override for partials; the break-even-arr and winLoss-field handling for
+  // the non-partial case — see comments below).
   var pl, plPct, arr, winLoss;
-  var partialResult=partialTPsSaved.length>0?computePartialPL(entry,sl,actualQty,type,acct,riskDollar,pair):null;
+  var stats=computeTradeStats(entry,sl,exit,actualQty,type,acct,riskDollar,pair);
+  var partialResult=stats.partialResult;
   if(partialResult){
-    pl=partialResult.pl;
-    plPct=partialResult.plPct;
-    arr=partialResult.arr;
+    pl=stats.pl;
+    plPct=stats.plPct;
+    arr=stats.arr;
     winLoss=partialResult.winLoss;
     // When partials cover full qty, use weighted-average as stored exitPrice
     if(partialResult.effectiveExit>0)exit=parseFloat(partialResult.effectiveExit.toFixed(5));
   } else {
     var diff=entry&&exit?(type==='Long'?exit-entry:entry-exit):0;
-    pl=actualQty?toAccountPL(diff*actualQty,pair,entry):0;
-    plPct=acct?(pl/acct)*100:0;
-    arr=null;
-    if(entry&&exit&&actualQty&&diff!==0){
-      if(sl&&sl!==entry){
-        var slDist=Math.abs(entry-sl);
-        var exitDist=Math.abs(exit-entry);
-        arr=(diff>=0?1:-1)*(exitDist/slDist);
-      } else if(riskDollar>0){
-        arr=pl/riskDollar;
-      }
-    }
+    pl=stats.pl;
+    plPct=stats.plPct;
+    // No R-multiple recorded for an exact break-even exit (diff===0) when there are no
+    // partials — this matches the saved record's original behavior (recalc()'s live preview
+    // shows 0.00R for a break-even trade, but the persisted record has always left this null
+    // in that case; preserved here rather than changed as part of the pl/plPct/arr cleanup).
+    arr=diff!==0?stats.arr:null;
     var wlVal=document.getElementById('f-winloss').value;
     winLoss=wlVal!==''?parseFloat(wlVal):(exit?(pl>=0?1:0):null);
   }
