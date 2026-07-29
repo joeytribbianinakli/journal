@@ -69,6 +69,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .stat-value{font-size:22px;font-weight:600;font-family:DM Mono,monospace;line-height:1;letter-spacing:-.02em}
 .stat-value.pos{color:var(--green)}.stat-value.neg{color:var(--red)}
 .stat-sub{font-size:10px;color:var(--text3);margin-top:5px}
+/* ── Edge Analyzer: verdict banner ── */
+.edge-verdict{border-radius:var(--radius-xl);padding:20px 22px;margin-bottom:18px;border:1px solid var(--border);background:var(--bg2);display:flex;gap:16px;align-items:flex-start}
+.edge-verdict.green{background:rgba(52,201,122,.08);border-color:rgba(52,201,122,.35)}
+.edge-verdict.red{background:rgba(232,85,85,.08);border-color:rgba(232,85,85,.35)}
+.edge-verdict.amber{background:rgba(232,160,48,.08);border-color:rgba(232,160,48,.35)}
+.edge-verdict.gray{background:var(--bg2);border-color:var(--border)}
+.edge-verdict-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.edge-verdict.green .edge-verdict-icon{background:rgba(52,201,122,.15);color:var(--green)}
+.edge-verdict.red .edge-verdict-icon{background:rgba(232,85,85,.15);color:var(--red)}
+.edge-verdict.amber .edge-verdict-icon{background:rgba(232,160,48,.15);color:var(--amber)}
+.edge-verdict.gray .edge-verdict-icon{background:var(--bg3);color:var(--text3)}
+.edge-verdict-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px}
+.edge-verdict-desc{font-size:12px;color:var(--text2);line-height:1.6}
+.edge-verdict-desc b{color:var(--text)}
 /* ── Cards: generic .card/.card-header/.card-body container used across every page ── */
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
 .card-header{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border)}
@@ -939,6 +953,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
     <button class="nav-item" onclick="nav('trade-analytics',this)">
       <svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>Trade Analytics
     </button>
+    <button class="nav-item" onclick="nav('edge',this)">
+      <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Edge Analyzer
+    </button>
     <button class="nav-item" onclick="nav('calendar',this)">
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendar
     </button>
@@ -1427,6 +1444,115 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         <div class="card" style="margin-bottom:22px">
           <div class="card-header"><span class="card-title">Asset type breakdown</span></div>
           <div class="table-wrap" id="dash-assettype-table"></div>
+        </div>
+      </div>
+    </div>
+    <!-- EDGE ANALYZER -->
+    <div class="page" id="page-edge">
+      <div class="dash-filter-bar" id="edg-filter-bar">
+        <div class="dash-filter-header" onclick="toggleEdgFilters()">
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            <span style="font-size:13px;font-weight:600">Filters</span>
+            <span id="edg-filter-summary" style="font-size:11px;font-weight:500;color:var(--text3);padding-left:8px;border-left:1px solid var(--border)"></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button class="filter-lock-btn" id="edg-filter-lock-btn" onclick="toggleFilterLock(event)" title="Lock filter bar to top while scrolling">
+              <svg viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
+            </button>
+            <svg id="edg-filter-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+        <div class="dash-filter-body" id="edg-filter-body" style="display:none">
+          <div class="dash-filter-row">
+            <div class="dash-filter-group">
+              <div class="dash-filter-label">Session type</div>
+              <select id="edg-sessiontype-filter" onchange="saveSessionTypeFilterPref('edg-sessiontype-filter');populateSessionSelects().then(function(){renderEdgeAnalyzer();updateFilterSessionSummary('edg-session-filter','edg-filter-summary','edg-skipped-filter')})">
+                <option value="">All types</option>
+                <option value="live">Live</option>
+                <option value="paperlive">Paper Live</option>
+                <option value="backtest" selected>Backtest</option>
+                <option value="demo">Demo</option>
+              </select>
+            </div>
+            <div class="dash-filter-group">
+              <div class="dash-filter-label">Session</div>
+              <select id="edg-session-filter" onchange="renderEdgeAnalyzer();updateFilterSessionSummary('edg-session-filter','edg-filter-summary','edg-skipped-filter')"><option value="">All sessions</option></select>
+            </div>
+            <div class="dash-filter-group">
+              <div class="dash-filter-label">Asset / Pair</div>
+              <select id="edg-pair-filter" onchange="renderEdgeAnalyzer()"><option value="">All pairs</option></select>
+            </div>
+            <div class="dash-filter-group">
+              <div class="dash-filter-label">Direction</div>
+              <select id="edg-direction-filter" onchange="renderEdgeAnalyzer()">
+                <option value="">All</option>
+                <option value="Long">Long only</option>
+                <option value="Short">Short only</option>
+              </select>
+            </div>
+            <div class="dash-filter-group">
+              <div class="dash-filter-label">Trade type</div>
+              <select id="edg-skipped-filter" onchange="renderEdgeAnalyzer();updateFilterSessionSummary('edg-session-filter','edg-filter-summary','edg-skipped-filter')">
+                <option value="taken">Taken trades</option>
+                <option value="skipped">Skipped trades</option>
+              </select>
+            </div>
+            <div class="dash-filter-group">
+              <div class="dash-filter-label">Error type</div>
+              <select id="edg-error-filter" onchange="renderEdgeAnalyzer()">
+                <option value="">All trades</option>
+                <option value="__clean__">Clean (no error)</option>
+                <option>Invalid - Manual</option>
+                <option>Checklist</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:8px;text-align:right">
+            <button class="btn btn-ghost btn-sm" onclick="resetEdgFilters()">Reset filters</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="edg-verdict-wrap"></div>
+
+      <div class="analytics-group-label first">Edge Statistics</div>
+      <div style="font-size:11px;color:var(--text3);padding:0 2px 12px">
+        Built from every filtered trade's R-multiple (actual result ÷ initial risk). Expectancy is your average R per trade — the number that determines whether you make money over a large sample. Significance testing asks: could this expectancy plausibly be zero (no real edge) and you're just seeing noise? Small samples make that hard to rule out, so treat anything under ~30 R-tracked trades as a hint, not a verdict.
+      </div>
+      <div class="stats-grid" id="edg-core-stats"></div>
+      <div class="stats-grid" id="edg-stat-stats"></div>
+
+      <div class="card" style="margin-bottom:22px">
+        <div class="card-header"><span class="card-title">Equity curve (cumulative R)</span></div>
+        <div style="font-size:11px;color:var(--text3);padding:8px 16px 0">Running total of R across trades in chronological order. A real edge should trend up and to the right more often than not, even with drawdowns along the way.</div>
+        <div class="card-body"><div class="chart-wrap" style="height:220px"><canvas id="chart-edge-equity"></canvas></div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:22px">
+        <div class="card-header"><span class="card-title">Rolling expectancy (20-trade average R)</span></div>
+        <div style="font-size:11px;color:var(--text3);padding:8px 16px 0">Average R of each trade and its previous 19, plotted through time. Watch whether it stays above the dashed zero line — an edge that's drifting toward zero may be decaying (market conditions changing, discipline slipping, etc.).</div>
+        <div class="card-body"><div class="chart-wrap" style="height:200px"><canvas id="chart-edge-rolling"></canvas></div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:22px">
+        <div class="card-header"><span class="card-title">R-multiple distribution</span></div>
+        <div class="card-body"><div class="chart-wrap" style="height:170px"><canvas id="chart-edge-dist"></canvas></div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:22px" id="edg-methodology-card">
+        <div class="card-header"><span class="card-title">How this is calculated</span></div>
+        <div style="padding:12px 16px;font-size:11px;color:var(--text3);line-height:1.8">
+          <div><b style="color:var(--text2)">Expectancy</b> = mean R across R-tracked trades in the current filter.</div>
+          <div><b style="color:var(--text2)">Std. deviation</b> = sample standard deviation of R (n−1).</div>
+          <div><b style="color:var(--text2)">SQN / t-stat</b> = expectancy ÷ (std. dev ÷ √n) — Van Tharp's System Quality Number; also the test statistic for "is mean R different from zero". Rule of thumb: &lt;1.0 poor, 1.0–1.6 below average, 1.7–2.5 average, 2.6–3.9 good, 4.0–6.9 excellent, 7.0+ exceptional (and worth double-checking for errors).</div>
+          <div><b style="color:var(--text2)">p-value</b> = one-tailed probability of seeing an expectancy this far from zero, in the observed direction, if the true long-run edge were exactly zero (exact Student's t-distribution, n−1 degrees of freedom — not a normal approximation, which would understate this at small n). Below 0.05 is the conventional "statistically significant" bar.</div>
+          <div><b style="color:var(--text2)">95% CI</b> = expectancy ± (t-critical value for n−1 df) × standard error — the range your true long-run expectancy plausibly falls in.</div>
+          <div><b style="color:var(--text2)">Period covered</b> = calendar days between the first and last R-tracked trade in the filter, and trades/week over that span.</div>
+          <div><b style="color:var(--text2)">Fee drag / Net expectancy</b> = the verdict and all stats above are computed on R-multiples <b>net of estimated trading costs</b> (spread, commission, overnight/swap), using your current per-asset-type fee settings (Manage Assets &amp; Pairs) applied to each trade's qty/entry price/duration. This matters because the raw R-multiple logged per trade is pure price-move vs. stop-distance and never includes costs — a gross edge can be statistically real and still be flat or a net loser once real costs are counted, especially for small-target or high-frequency setups. Two caveats: it uses your <i>currently</i> configured fees applied retroactively, so it won't reflect a broker or fee change partway through your history; and trades missing asset type, quantity, or risk-dollar data are left at gross R (treated as zero-fee) since no cost can be estimated for them — check the "Fee drag" card's coverage count if this matters to you.</div>
+          <div><b style="color:var(--text2)">Breakeven win rate</b> = 100 ÷ (1 + payoff ratio) — the win rate you'd need just to break even given your current avg win/loss size.</div>
+          <div style="margin-top:6px;padding-top:8px;border-top:1px solid var(--border)"><b style="color:var(--text2)">"Statistically significant edge" (green) requires all of:</b> 30+ R-tracked trades, at least 30 days between the first and last of them, and the 95% CI staying above zero. A p-value below 0.05 alone is not enough — a handful of trades can pass that test by luck, and trades clustered in a short window only ever test one market regime. Below either floor, the verdict caps at amber even if the math already looks significant.</div>
+          <div style="margin-top:6px">This is a statistical estimate from historical data, not a guarantee — it assumes trades are independent and R is roughly stable over time, which is rarely perfectly true in live markets. It also can't correct for filter-shopping: slicing by enough pairs, sessions, or directions will eventually turn up a subset that looks "significant" by chance alone, so treat a good result on a narrow filter with extra skepticism, not less. Use it as one input, not the whole decision.</div>
         </div>
       </div>
     </div>
@@ -6608,6 +6734,19 @@ async function populateSessionSelects(restoreSessionId){
     else if(trdDefaultSessionTyped){trdF.value=trdDefaultSessionTyped.id;}
     else{trdF.value='';}
   }
+  // Edge Analyzer session filter — same demo-aware list + default-active-session logic as Trade Analytics
+  var edgF=document.getElementById('edg-session-filter');
+  if(edgF){
+    var ev=edgF.value;
+    var edgTypeVal=getSessionTypeFilterVal('edg-sessiontype-filter');
+    var edgFilterSessionsTyped=dashFilterSessions.filter(function(s){return !edgTypeVal||sessionTypeOf(s)===edgTypeVal;});
+    var edgDefaultSessionTyped=(dashDefaultSession&&edgFilterSessionsTyped.find(function(s){return s.id===dashDefaultSession.id;}))?dashDefaultSession:(edgFilterSessionsTyped[0]||null);
+    _defaultEdgSessionId=edgDefaultSessionTyped?edgDefaultSessionTyped.id:'';
+    edgF.innerHTML='<option value="">All sessions</option>'+edgFilterSessionsTyped.map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');
+    if(ev&&edgFilterSessionsTyped.find(function(s){return s.id===ev;})){edgF.value=ev;}
+    else if(edgDefaultSessionTyped){edgF.value=edgDefaultSessionTyped.id;}
+    else{edgF.value='';}
+  }
   var hF=document.getElementById('flt-session');
   if(hF){
     var hv=hF.value;
@@ -6651,9 +6790,10 @@ async function populateSessionSelects(restoreSessionId){
   updateFilterSessionSummary('trd-session-filter','trd-filter-summary','trd-skipped-filter');
   updateFilterSessionSummary('cal-session-filter','cal-filter-summary','cal-skipped-filter');
   updateFilterSessionSummary('flt-session','hist-filter-summary','flt-skipped');
+  updateFilterSessionSummary('edg-session-filter','edg-filter-summary','edg-skipped-filter');
 }
 // ══ Navigation ════════════════════════════════════
-var pageMap={'pre-checklist':{title:'Pre-trade checklist',sub:'Calendar → Checklist → Calculator → Log trade'},dashboard:{title:'Dashboard',sub:'Overview of your trading performance'},log:{title:'Log trade',sub:'Record a new trade entry'},history:{title:'Trade history',sub:'Browse and filter all your trades'},sessions:{title:'Sessions',sub:'Manage your trading session periods'},'checklist-editor':{title:'Checklist editor',sub:'Edit checklist items globally'},backup:{title:'Backup & restore',sub:'Export, import or clear your journal data'},montecarlo:{title:'Monte Carlo',sub:'Simulate future equity paths from historical trade data'},calculator:{title:'Position Size Calculator',sub:'Forex · Crypto · Gold · Stocks · Indices'},calendar:{title:'Calendar view',sub:'Visual trade activity by day, week and year'},'ai-analyzer':{title:'AI Trade Analyzer',sub:'Intelligent session review powered by AI'},'price-alerts':{title:'Price Alerts',sub:'Get notified on your phone when a price target is hit'},fxstreet:{title:'Economic calendar',sub:'ForexFactory calendar — check before trading'},'trade-analytics':{title:'Trade Analytics',sub:'Ratings, error types, direction & entry-time performance'}};;
+var pageMap={'pre-checklist':{title:'Pre-trade checklist',sub:'Calendar → Checklist → Calculator → Log trade'},dashboard:{title:'Dashboard',sub:'Overview of your trading performance'},log:{title:'Log trade',sub:'Record a new trade entry'},history:{title:'Trade history',sub:'Browse and filter all your trades'},sessions:{title:'Sessions',sub:'Manage your trading session periods'},'checklist-editor':{title:'Checklist editor',sub:'Edit checklist items globally'},backup:{title:'Backup & restore',sub:'Export, import or clear your journal data'},montecarlo:{title:'Monte Carlo',sub:'Simulate future equity paths from historical trade data'},calculator:{title:'Position Size Calculator',sub:'Forex · Crypto · Gold · Stocks · Indices'},calendar:{title:'Calendar view',sub:'Visual trade activity by day, week and year'},'ai-analyzer':{title:'AI Trade Analyzer',sub:'Intelligent session review powered by AI'},'price-alerts':{title:'Price Alerts',sub:'Get notified on your phone when a price target is hit'},fxstreet:{title:'Economic calendar',sub:'ForexFactory calendar — check before trading'},'trade-analytics':{title:'Trade Analytics',sub:'Ratings, error types, direction & entry-time performance'},edge:{title:'Edge Analyzer',sub:'Is there a statistically real edge in your logged trades?'}};;
 var _currentPage='dashboard';
 function nav(id,btn){
   // Reset log form when navigating away — but preserve it if going back to calc within the flow
@@ -6711,6 +6851,7 @@ function nav(id,btn){
   if(id==='ai-analyzer'){aiAnalyzerInit();}
   if(id==='fxstreet'){fxsOnPageEnter();}
   if(id==='trade-analytics'){populateSessionSelects().then(function(){populateTrdFilters().then(function(){renderTradeAnalytics();});});}
+  if(id==='edge'){populateSessionSelects().then(function(){populateEdgFilters().then(function(){renderEdgeAnalyzer();});});}
 }
 function startNewTrade(){
   // Always kick off the full guided flow (Calendar → Checklist → Calculator → Log trade)
@@ -7355,44 +7496,14 @@ function computePartialPL(entry, sl, qty, type, acct, riskDollar, pair){
   var effectiveExit=wQty>0?wSum/wQty:0;
   return{pl:totalPL,plPct:plPct,arr:arr,winLoss:totalPL>0?1:(totalPL<0?0:0.5),effectiveExit:effectiveExit};
 }
-// Shared pl/plPct/arr math for recalc() (live calc-strip) and saveTrade() (persisted record).
-// Both used to reimplement this arithmetic independently, which is how the quote-currency
-// conversion bug got fixed in one place and not the other. Centralizing it here means a future
-// fix (or the next new pair quirk) only has to happen once and both callers stay in sync.
-// Delegates to computePartialPL() when partial TPs are in use, exactly as both callers did
-// before. Returns {partialResult, pl, plPct, arr} — arr is null when there isn't enough info
-// (no exit yet, no qty, no SL and no risk$ to fall back to). Callers are still responsible for
-// their own display/storage decisions (e.g. showing '—' vs a stored 0) and for winLoss, which
-// intentionally isn't included here — see the comment above the winLoss line in saveTrade().
-function computeTradeStats(entry, sl, exit, qty, type, acct, riskDollar, pair){
-  var partialResult = computePartialPL(entry, sl, qty, type, acct, riskDollar, pair);
-  if(partialResult){
-    return {partialResult:partialResult, pl:partialResult.pl, plPct:partialResult.plPct, arr:partialResult.arr};
-  }
-  var diff = (entry&&exit) ? (type==='Long'?exit-entry:entry-exit) : 0;
-  var pl = qty ? toAccountPL(diff*qty, pair, entry) : 0;
-  var plPct = acct ? (pl/acct)*100 : 0;
-  var arr = null;
-  if(entry&&exit&&qty){
-    var slDist = (entry&&sl) ? Math.abs(entry-sl) : 0;
-    if(slDist>0){
-      var exitDist=Math.abs(exit-entry);
-      arr=(diff>=0?1:-1)*(exitDist/slDist);
-    } else if(riskDollar>0){
-      arr=pl/riskDollar;
-    }
-  }
-  return {partialResult:null, pl:pl, plPct:plPct, arr:arr};
-}
 // ══ Recalc engine ═════════════════════════════════
 // Core live-calc for the Log Trade form: re-run on every relevant input change (entry/SL/exit/
 // qty/risk%/account/partial-TP edits — see the oninput handlers throughout this tab) to update
 // the read-only calc-strip fields (risk $, SL distance, position value, R-multiple, P/L, P/L%,
-// win/loss, duration) without a page reload. P/L, P/L%, and R-multiple come from
-// computeTradeStats() above (shared with saveTrade()); this function is just responsible for
-// pulling form values, calling it, and writing the results into the calc-strip DOM. Fee display
-// is intentionally NOT computed synchronously here — it's kicked off via the debounced
-// recalcFeesAsync() below since fee lookups need an IDB read and shouldn't block typing.
+// win/loss, duration) without a page reload. Delegates to computePartialPL() above when partial
+// TPs are in use, otherwise computes straight from entry/exit/qty. Fee display is intentionally
+// NOT computed synchronously here — it's kicked off via the debounced recalcFeesAsync() below
+// since fee lookups need an IDB read and shouldn't block typing.
 function recalc(){
   var entry=parseFloat(document.getElementById('f-entry').value)||0;
   var slPrice=parseFloat(document.getElementById('f-sl-price').value)||0;
@@ -7403,7 +7514,6 @@ function recalc(){
   var trr=parseFloat(document.getElementById('f-trr').value)||0;
   var typeEl=document.getElementById('f-type-val');
   var type=typeEl?typeEl.value:'Long';
-  var pair=(document.getElementById('f-pair')||{}).value||'';
   var riskDollar=acct*(riskpct/100);
   function set(id,val,cls){var el=document.getElementById(id);if(!el)return;el.textContent=val;el.className='ci-val'+(cls?' '+cls:'');}
   set('c-risk','$'+riskDollar.toFixed(2));
@@ -7419,20 +7529,29 @@ function recalc(){
   // Position size display
   if(qty) set('c-qty',qty.toLocaleString(undefined,{maximumFractionDigits:4}));
   else set('c-qty','—');
-  // Position value (entry × qty, converted to account currency — same quote-currency
-  // conversion as P/L below, since entry×qty is denominated in the quote currency,
-  // not always USD, e.g. USD/JPY)
+  // Position value (entry × qty)
   if(entry&&qty){
-    var posVal=(entry*qty)/quoteConvFactor(pair,entry);
+    var posVal=entry*qty;
     set('c-posval','$'+posVal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}));
   } else set('c-posval','—');
   // Check if partials override the calculation
-  var stats=computeTradeStats(entry,slPrice,exit,qty,type,acct,riskDollar,pair);
-  var partialResult=stats.partialResult;
+  var partialResult=entry&&qty?computePartialPL(entry,slPrice,qty,type,acct,riskDollar):null;
   var pNote=document.getElementById('c-partial-note');
   if(pNote)pNote.style.display=partialResult?'':'none';
   // Actual RR — use partials if available, else standard
-  var arr=stats.arr;
+  var arr=null;
+  if(partialResult){
+    arr=partialResult.arr;
+  } else if(entry&&exit&&qty){
+    var exitDiff=type==='Long'?exit-entry:entry-exit;
+    var pl=exitDiff*qty;
+    if(entry&&slPrice&&slDist>0){
+      var exitDist=Math.abs(exit-entry);
+      arr=(exitDiff>=0?1:-1)*(exitDist/slDist);
+    } else if(riskDollar>0){
+      arr=pl/riskDollar;
+    }
+  }
   if(arr!=null){
     var arrCls=arr>=0?'pos':'neg';
     set('c-arr',arr.toFixed(2)+'R',arrCls);
@@ -7443,7 +7562,7 @@ function recalc(){
   }
   // P/L + Auto Win/Loss
   if(partialResult){
-    var pl2=stats.pl;var plPct=stats.plPct;
+    var pl2=partialResult.pl;var plPct=partialResult.plPct;
     var isWin=pl2>0;
     var winLossDisplay=isWin?'Win':(pl2<0?'Loss':'Break-even');
     var cls2=pl2>=0?'pos':'neg';
@@ -7459,8 +7578,8 @@ function recalc(){
     var wld=document.getElementById('f-winloss-display');if(wld){wld.value=winLossDisplay;wld.style.color=isWin?'var(--green)':(diff<0?'var(--red)':'var(--amber)');}
     var wlh=document.getElementById('f-winloss');if(wlh)wlh.value=isWin?'1':(diff<0?'0':'0.5');
     if(qty){
-      var pl2=stats.pl;
-      var plPct=stats.plPct;
+      var pl2=diff*qty;
+      var plPct=(pl2/acct)*100;
       var cls2=pl2>=0?'pos':'neg';
       set('c-pl',(pl2>=0?'+':'')+pl2.toFixed(2),cls2);
       set('c-plpct',(plPct>=0?'+':'')+plPct.toFixed(2)+'%',cls2);
@@ -7502,7 +7621,8 @@ function recalcFeesAsync(entry, qty, durMin){
     }
     _getAssetFeesForType(assetTypeName).then(function(fees){
       if(!fees){ var sec=document.getElementById('c-fees-section'); if(sec)sec.style.display='none'; _lastCalcFees=null; return; }
-      var feeResult = calcTradeFees(fees, qty, entry, durMin);
+      var pairVal = (document.getElementById('f-pair')||{}).value || '';
+      var feeResult = calcTradeFees(fees, qty, entry, durMin, pairVal);
       _lastCalcFees = feeResult;
       _renderFeeStrip(feeResult, qty > 0 ? entry : 0);
     });
@@ -7818,29 +7938,30 @@ async function saveTrade(){
     .filter(function(p){return parseFloat(p.price)>0&&parseFloat(p.qty)>0;})
     .map(function(p){return{price:parseFloat(p.price),qty:parseFloat(p.qty)};});
   var partialDesc=(document.getElementById('partial-tp-desc')||{}).value||'';
-  // Compute P/L: use partial-aware if partials exist, else standard. Core math is shared with
-  // recalc() via computeTradeStats() above; what's saveTrade-specific is layered on right after
-  // it (effectiveExit override for partials; the break-even-arr and winLoss-field handling for
-  // the non-partial case — see comments below).
+  // Compute P/L: use partial-aware if partials exist, else standard
   var pl, plPct, arr, winLoss;
-  var stats=computeTradeStats(entry,sl,exit,actualQty,type,acct,riskDollar,pair);
-  var partialResult=stats.partialResult;
+  var partialResult=partialTPsSaved.length>0?computePartialPL(entry,sl,actualQty,type,acct,riskDollar,pair):null;
   if(partialResult){
-    pl=stats.pl;
-    plPct=stats.plPct;
-    arr=stats.arr;
+    pl=partialResult.pl;
+    plPct=partialResult.plPct;
+    arr=partialResult.arr;
     winLoss=partialResult.winLoss;
     // When partials cover full qty, use weighted-average as stored exitPrice
     if(partialResult.effectiveExit>0)exit=parseFloat(partialResult.effectiveExit.toFixed(5));
   } else {
     var diff=entry&&exit?(type==='Long'?exit-entry:entry-exit):0;
-    pl=stats.pl;
-    plPct=stats.plPct;
-    // No R-multiple recorded for an exact break-even exit (diff===0) when there are no
-    // partials — this matches the saved record's original behavior (recalc()'s live preview
-    // shows 0.00R for a break-even trade, but the persisted record has always left this null
-    // in that case; preserved here rather than changed as part of the pl/plPct/arr cleanup).
-    arr=diff!==0?stats.arr:null;
+    pl=actualQty?toAccountPL(diff*actualQty,pair,entry):0;
+    plPct=acct?(pl/acct)*100:0;
+    arr=null;
+    if(entry&&exit&&actualQty&&diff!==0){
+      if(sl&&sl!==entry){
+        var slDist=Math.abs(entry-sl);
+        var exitDist=Math.abs(exit-entry);
+        arr=(diff>=0?1:-1)*(exitDist/slDist);
+      } else if(riskDollar>0){
+        arr=pl/riskDollar;
+      }
+    }
     var wlVal=document.getElementById('f-winloss').value;
     winLoss=wlVal!==''?parseFloat(wlVal):(exit?(pl>=0?1:0):null);
   }
@@ -8249,7 +8370,7 @@ var ALL_HISTORY_COLS=[
   {key:'ltf',       label:'LTF',       sortVal:function(t){return t.ltf||'';},                    render:function(t){return'<td style="font-size:11px;color:var(--text2)">'+escHtml(t.ltf||'—')+'</td>';}},
   {key:'targetRR',  label:'Target RR', sortVal:function(t){return parseFloat(t.targetRR)||0;},    render:function(t){return'<td class="mono">'+(t.targetRR?t.targetRR+'R':'—')+'</td>';}},
   {key:'loggedAt',  label:'Logged at', sortVal:function(t){return t.loggedAt||t.savedAt||'';},    render:function(t){var d=t.loggedAt||t.savedAt;if(!d)return'<td>—</td>';var dt=new Date(d);return'<td style="color:var(--text3);font-size:11px;white-space:nowrap" title="'+escHtml(d)+'">'+dt.toLocaleDateString()+' '+dt.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})+'</td>';}},
-  {key:'fees',      label:'Fees (est.)',sortVal:function(t){return 0;}, render:function(t){return'<td class="mono hist-fee-cell" data-trade-id="'+escHtml(t.id||'')+'" data-asset="'+escHtml(t.assetType||'')+'" data-entry="'+escHtml(String(t.entryPrice||''))+'" data-qty="'+escHtml(String(t.qty||''))+'" data-dur="'+escHtml(String(t.durationMin||0))+'"><span style="color:var(--text3);font-size:10px">…</span></td>';}},
+  {key:'fees',      label:'Fees (est.)',sortVal:function(t){return 0;}, render:function(t){return'<td class="mono hist-fee-cell" data-trade-id="'+escHtml(t.id||'')+'" data-asset="'+escHtml(t.assetType||'')+'" data-entry="'+escHtml(String(t.entryPrice||''))+'" data-qty="'+escHtml(String(t.qty||''))+'" data-dur="'+escHtml(String(t.durationMin||0))+'" data-pair="'+escHtml(t.pair||'')+'"><span style="color:var(--text3);font-size:10px">…</span></td>';}},
   {key:'netPL',     label:'Net P/L ($)',sortVal:function(t){return parseFloat(t.plDollar)||0;}, render:function(t){return'<td class="mono hist-netpl-cell" data-trade-id="'+escHtml(t.id||'')+'" data-pl="'+escHtml(String(t.plDollar||0))+'"><span style="color:var(--text3);font-size:10px">…</span></td>';}},
 ];
 // ── Sort state ──────────────────────────────────────
@@ -8515,6 +8636,7 @@ function safeChart(ctx, config){
 }
 function renderDashboard()     { guardedRender('renderDashboard',     _renderDashboardImpl); }
 function renderTradeAnalytics(){ guardedRender('renderTradeAnalytics', _renderTradeAnalyticsImpl); }
+function renderEdgeAnalyzer(){ guardedRender('renderEdgeAnalyzer', _renderEdgeAnalyzerImpl); }
 function updateSidebarStats()  { guardedRender('updateSidebarStats',  _updateSidebarStatsImpl); }
 // Rebuilds the History table body: loads trades + sessions, filters out
 // archived sessions, applies demo/real mode + the filter bar + starred-only
@@ -8658,12 +8780,13 @@ async function _renderHistoryImpl(){
       var entry = parseFloat(cell.dataset.entry)||0;
       var qty   = parseFloat(cell.dataset.qty)||0;
       var dur   = parseFloat(cell.dataset.dur)||0;
+      var pair  = cell.dataset.pair||'';
       var tid   = cell.dataset.tradeId;
       if(!asset||!entry||!qty){cell.innerHTML='<span style="color:var(--text3)">—</span>';continue;}
       if(!feeMap[asset]) feeMap[asset] = _getAssetFeesForType(asset);
       var assetFees = await feeMap[asset];
       if(window._histRenderGen !== myGen) return; // abort after await
-      var feeResult = assetFees ? calcTradeFees(assetFees, qty, entry, dur) : null;
+      var feeResult = assetFees ? calcTradeFees(assetFees, qty, entry, dur, pair) : null;
       var feeTotal  = (feeResult && feeResult.total > 0) ? feeResult.total : 0;
       cell.innerHTML = feeTotal > 0
         ? '<span style="color:var(--amber)">-$'+feeTotal.toFixed(4)+'</span>'
@@ -9696,6 +9819,313 @@ async function _renderTradeAnalyticsImpl(){
   _renderCategoryAnalytics(trades,'assetType','Uncategorized','dash-assettype-stats','chart-assettype-wr','chart-assettype-pl','dash-assettype-table','assetTypeWR','assetTypePL','Asset type');
   _renderCategoryAnalytics(trades,'ltf','No LTF logged','dash-ltf-stats','chart-ltf-wr','chart-ltf-pl','dash-ltf-table','ltfWR','ltfPL','LTF entry');
 }
+// ══ Edge Analyzer ═══════════════════════════════════════════════════
+// Answers "is there a statistically real edge in these trades?" from the same
+// R-multiple data (t.actualRR) already computed at log time / by enrichSkippedPL.
+// ── Standard normal CDF via Abramowitz-Stegun erf approximation (accurate to ~1.5e-7) ──
+function _edgeErf(x){
+  var sign=x<0?-1:1;x=Math.abs(x);
+  var a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  var t=1/(1+p*x);
+  var y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+  return sign*y;
+}
+function _edgeNormCdf(z){ return 0.5*(1+_edgeErf(z/Math.SQRT2)); }
+// ── Student's t-distribution (exact, via regularized incomplete beta) ──
+// Small-sample trade data (often 10-30 R values) needs a real t-test, not a normal
+// approximation — the normal curve has thinner tails than t at low degrees of freedom,
+// so it understates p-values and produces a falsely-narrow confidence interval. That's
+// exactly the kind of "looks significant but isn't yet" mistake this tool must avoid.
+function _edgeLogGamma(x){
+  var g=7,p=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,
+    -176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if(x<0.5)return Math.log(Math.PI/Math.sin(Math.PI*x))-_edgeLogGamma(1-x);
+  x-=1;var a=p[0],t=x+g+0.5;
+  for(var i=1;i<g+2;i++){a+=p[i]/(x+i);}
+  return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(a);
+}
+function _edgeBetacf(x,a,b){
+  var MAXIT=200,EPS=3e-9,FPMIN=1e-30;
+  var qab=a+b,qap=a+1,qam=a-1;
+  var c=1,d=1-qab*x/qap;
+  if(Math.abs(d)<FPMIN)d=FPMIN;
+  d=1/d;var h=d;
+  for(var m=1;m<=MAXIT;m++){
+    var m2=2*m;
+    var aa=m*(b-m)*x/((qam+m2)*(a+m2));
+    d=1+aa*d;if(Math.abs(d)<FPMIN)d=FPMIN;
+    c=1+aa/c;if(Math.abs(c)<FPMIN)c=FPMIN;
+    d=1/d;h*=d*c;
+    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+    d=1+aa*d;if(Math.abs(d)<FPMIN)d=FPMIN;
+    c=1+aa/c;if(Math.abs(c)<FPMIN)c=FPMIN;
+    d=1/d;var del=d*c;h*=del;
+    if(Math.abs(del-1)<EPS)break;
+  }
+  return h;
+}
+function _edgeRegIncBeta(x,a,b){
+  if(x<=0)return 0;if(x>=1)return 1;
+  var bt=Math.exp(_edgeLogGamma(a+b)-_edgeLogGamma(a)-_edgeLogGamma(b)+a*Math.log(x)+b*Math.log(1-x));
+  return (x<(a+1)/(a+b+2))?(bt*_edgeBetacf(x,a,b)/a):(1-bt*_edgeBetacf(1-x,b,a)/b);
+}
+// Two-tailed p-value: P(|T| > t) for t-distribution with df degrees of freedom
+function _edgeTTwoTailP(t,df){
+  if(!df||df<1)return null;
+  t=Math.abs(t);
+  var x=df/(df+t*t);
+  return _edgeRegIncBeta(x,df/2,0.5);
+}
+// Critical t-value for a 95% two-tailed interval at the given df, via bisection
+// (no closed-form inverse for the incomplete beta, so we search for it numerically)
+function _edgeTCrit95(df){
+  if(!df||df<1)return 1.96;
+  var lo=0,hi=60;
+  for(var i=0;i<60;i++){
+    var mid=(lo+hi)/2;
+    if(_edgeTTwoTailP(mid,df)>0.05)lo=mid;else hi=mid;
+  }
+  return (lo+hi)/2;
+}
+// Computes the full edge stat-block from an already-filtered trade array.
+function computeEdgeStats(trades){
+  trades=trades||[];
+  var rrTrades=trades.filter(function(t){return typeof t.actualRR==='number'&&isFinite(t.actualRR);});
+  var n=rrTrades.length;
+  var rs=rrTrades.map(function(t){return t.actualRR;});
+  var mean=n?rs.reduce(function(a,v){return a+v;},0)/n:null;
+  var variance=(n>1)?rs.reduce(function(a,v){return a+Math.pow(v-mean,2);},0)/(n-1):null;
+  var stdDev=variance!=null?Math.sqrt(variance):null;
+  var se=(stdDev!=null&&n>0)?stdDev/Math.sqrt(n):null;
+  var df=n>1?n-1:null;
+  var tStat=(se!=null&&se>0)?mean/se:null;
+  // One-tailed p-value from the exact t-distribution (two-tailed p / 2), not a normal
+  // approximation — accurate at the small sample sizes (n<30) this tool commonly sees.
+  var pValue=(tStat!=null&&df!=null)?(_edgeTTwoTailP(tStat,df)/2):null;
+  var tCrit=df!=null?_edgeTCrit95(df):1.96;
+  var ciLow=(mean!=null&&se!=null)?mean-tCrit*se:null;
+  var ciHigh=(mean!=null&&se!=null)?mean+tCrit*se:null;
+  var winRs=rs.filter(function(r){return r>0;});
+  var lossRs=rs.filter(function(r){return r<0;});
+  var winRate=n?winRs.length/n*100:null;
+  var avgWinR=winRs.length?winRs.reduce(function(a,v){return a+v;},0)/winRs.length:null;
+  var avgLossR=lossRs.length?lossRs.reduce(function(a,v){return a+v;},0)/lossRs.length:null;
+  var payoff=(avgWinR!=null&&avgLossR)?avgWinR/Math.abs(avgLossR):null;
+  var grossWin=winRs.reduce(function(a,v){return a+v;},0);
+  var grossLoss=Math.abs(lossRs.reduce(function(a,v){return a+v;},0));
+  var profitFactor=grossLoss>0?grossWin/grossLoss:(grossWin>0?Infinity:null);
+  var breakevenWR=(payoff!=null)?100/(1+payoff):null;
+  var nRequiredRaw=(mean!=null&&mean>0&&stdDev!=null&&stdDev>0)?Math.ceil(Math.pow(1.96*stdDev/mean,2)):null;
+  // Never project fewer than the tool's own 30-trade policy floor — otherwise the
+  // "trades to confirm" figure could tell the user fewer trades are needed than the
+  // verdict gate actually requires, which is the exact kind of inconsistency to avoid.
+  var nRequired=nRequiredRaw!=null?Math.max(nRequiredRaw,30):null;
+  // ── Calendar span covered by the R-tracked trades — a small/consistent sample taken over
+  // a few days only ever tests one market regime, no matter how clean the stats look, so this
+  // feeds into the verdict gate below rather than being purely informational.
+  var msDates=rrTrades.map(function(t){return new Date(t.entryTime||t.savedAt||0).getTime();}).filter(function(d){return d>0&&!isNaN(d);});
+  var spanStart=msDates.length?new Date(Math.min.apply(null,msDates)):null;
+  var spanEnd=msDates.length?new Date(Math.max.apply(null,msDates)):null;
+  var spanDays=(spanStart&&spanEnd)?Math.round((spanEnd-spanStart)/86400000):null;
+  var tradesPerWeek=(spanDays&&spanDays>0)?(n/(spanDays/7)):null;
+  // ── Verdict thresholds — both must hold before a "green" verdict is possible ──
+  var MIN_N_GREEN=30;      // matches the "30+ trades" bar already stated elsewhere in this tool
+  var MIN_SPAN_GREEN=30;   // days; guards against a lucky/consistent run all in one short window
+  // ── Verdict ──
+  var verdict;
+  if(n<10){
+    verdict={level:'gray',label:'Not enough data yet',
+      desc:'Only <b>'+n+'</b> R-tracked trade'+(n===1?'':'s')+' in this filter. You need a meaningfully larger sample — <b>30+ trades</b> is a reasonable starting bar — before any win-rate or expectancy number here means much.'};
+  } else if(mean<=0){
+    verdict={level:'red',label:'No edge — losing expectancy',
+      desc:'Average R per trade is <b>'+mean.toFixed(2)+'R</b> across '+n+' trades. On the numbers logged so far, this approach loses money over the long run before you even factor in noise. Look for a filter combination (pair, session, setup) that changes this before sizing up.'};
+  } else if(n<MIN_N_GREEN){
+    verdict={level:'amber',label:'Promising, but sample is still too small to trust',
+      desc:'Average R is <b>+'+mean.toFixed(2)+'R</b> per trade, which is a good sign, but with only '+n+' trades'+(pValue!=null&&pValue<0.05&&ciLow!=null&&ciLow>0?' — even though the confidence interval already clears zero — this tool won\'t call it a confirmed edge below <b>'+MIN_N_GREEN+' trades</b>. A handful of consistent trades can pass a significance test by chance; more data is the only way to rule that out.':' the confidence interval ('+ (ciLow!=null?ciLow.toFixed(2):'—')+'R to '+(ciHigh!=null?ciHigh.toFixed(2):'—')+'R) is too wide to call this confirmed.')+(nRequired?' At this rate, roughly <b>'+nRequired+'</b> R-tracked trades total would be needed to reach significance.':'')};
+  } else if(spanDays!=null&&spanDays<MIN_SPAN_GREEN){
+    verdict={level:'amber',label:'Enough trades, but not enough time covered',
+      desc:'You have <b>'+n+'</b> R-tracked trades with a promising average of <b>+'+mean.toFixed(2)+'R</b>, but they all fall within a <b>'+spanDays+'-day</b> window ('+(tradesPerWeek?tradesPerWeek.toFixed(1)+' trades/week':'clustered')+'). That\'s essentially one market regime — this tool wants at least <b>'+MIN_SPAN_GREEN+' days</b> of history before calling an edge confirmed, so the same approach has been tested against more than one set of conditions.'};
+  } else if(pValue!=null&&pValue<0.05&&ciLow!=null&&ciLow>0){
+    verdict={level:'green',label:'Statistically significant edge',
+      desc:'Average R is <b>+'+mean.toFixed(2)+'R</b> per trade over '+n+' trades'+(spanDays!=null?' spanning '+spanDays+' days':'')+', and the 95% confidence interval (<b>'+ciLow.toFixed(2)+'R to '+ciHigh.toFixed(2)+'R</b>) stays above zero (p ≈ '+pValue.toFixed(3)+'). This is unlikely to be pure noise — but a real edge can still degrade, so keep tracking it.'};
+  } else {
+    verdict={level:'amber',label:'Positive but not yet statistically significant',
+      desc:'Average R is <b>+'+mean.toFixed(2)+'R</b> per trade over '+n+' trades (p ≈ '+(pValue!=null?pValue.toFixed(3):'—')+'), but the 95% confidence interval ('+(ciLow!=null?ciLow.toFixed(2):'—')+'R to '+(ciHigh!=null?ciHigh.toFixed(2):'—')+'R) still dips to zero or below. Could be a real but noisy edge, or could be luck — '+(nRequired?'~'+nRequired+' trades total would help confirm it.':'more data will clarify it.')};
+  }
+  return {n:n,rs:rs,mean:mean,stdDev:stdDev,se:se,tStat:tStat,pValue:pValue,ciLow:ciLow,ciHigh:ciHigh,
+    spanStart:spanStart,spanEnd:spanEnd,spanDays:spanDays,tradesPerWeek:tradesPerWeek,
+    winRate:winRate,avgWinR:avgWinR,avgLossR:avgLossR,payoff:payoff,profitFactor:profitFactor,
+    breakevenWR:breakevenWR,nRequired:nRequired,verdict:verdict};
+}
+var _EDGE_VERDICT_ICONS={
+  green:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  red:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+  amber:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L14.71 3.86a2 2 0 0 0-3.42 0z"/></svg>',
+  gray:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+};
+async function _renderEdgeAnalyzerImpl(){
+  var allTrades=await dbGetAllCached('trades');
+  var allSess=await dbGetAllCached('sessions');
+  var archivedIds=new Set(allSess.filter(function(s){return s.archived;}).map(function(s){return s.id;}));
+  var demoIds=new Set(allSess.filter(function(s){return !!s.isDemo;}).map(function(s){return s.id;}));
+  var demoOn=!!_dashDemoMode;
+  var sesF=(document.getElementById('edg-session-filter')||{}).value||'';
+  var edgTypeIds=sessionIdsMatchingType(allSess,'edg-sessiontype-filter');
+  var pairF=(document.getElementById('edg-pair-filter')||{}).value||'';
+  var dirF=(document.getElementById('edg-direction-filter')||{}).value||'';
+  var errF=(document.getElementById('edg-error-filter')||{}).value||'';
+  var skipF=(document.getElementById('edg-skipped-filter')||{}).value||'taken';
+  var trades=allTrades.filter(function(t){
+    if(archivedIds.has(t.sessionId))return false;
+    if(demoOn&&!demoIds.has(t.sessionId))return false;
+    if(!demoOn&&demoIds.has(t.sessionId))return false;
+    if(skipF==='skipped'&&!t.skipped)return false;
+    if(skipF==='taken'&&t.skipped)return false;
+    if(sesF&&t.sessionId!==sesF)return false;
+    if(!sesF&&edgTypeIds&&!edgTypeIds.has(t.sessionId))return false;
+    if(pairF&&t.pair!==pairF)return false;
+    if(dirF&&t.type!==dirF)return false;
+    if(errF==='__clean__'){ if(tradeActiveErrors(t).length>0)return false; }
+    else if(errF){ if(tradeActiveErrors(t).indexOf(errF)===-1)return false; }
+    return true;
+  });
+  trades=enrichSkippedPL(trades);
+  trades=trades.slice().sort(function(a,b){return new Date(a.entryTime||a.savedAt||0)-new Date(b.entryTime||b.savedAt||0);});
+  var grossStats=computeEdgeStats(trades);
+  var feeInfo=await _edgeComputeNetTrades(trades);
+  var netStats=computeEdgeStats(feeInfo.netTrades);
+  _renderEdgeVerdict(netStats,trades.length,grossStats,feeInfo);
+  _renderEdgeCoreStats(netStats,trades.length,grossStats,feeInfo);
+  _renderEdgeEquityCurve(netStats);
+  _renderEdgeRollingExpectancy(netStats);
+  _renderEdgeDistribution(netStats);
+}
+function _renderEdgeVerdict(stats,totalFiltered,grossStats,feeInfo){
+  var wrap=document.getElementById('edg-verdict-wrap');
+  if(!wrap)return;
+  var v=stats.verdict;
+  var feeNote='';
+  if(feeInfo&&feeInfo.adjustedCount>0){
+    var grossM=grossStats&&grossStats.mean!=null?grossStats.mean:null;
+    var netM=stats.mean;
+    feeNote='<div class="edge-verdict-desc" style="margin-top:6px;opacity:.85">Verdict is <b>net of estimated trading costs</b> (spread/commission/overnight, from your current asset fee settings) on '+feeInfo.adjustedCount+' of '+feeInfo.totalCount+' trades — averaging <b>-'+feeInfo.avgFeeR.toFixed(3)+'R/trade</b> in fees. Gross (pre-fee) expectancy was '+(grossM!=null?_edgeSigned(grossM)+'R':'—')+' vs. net '+(netM!=null?_edgeSigned(netM)+'R':'—')+'.</div>';
+  } else if(feeInfo&&feeInfo.totalCount>0){
+    feeNote='<div class="edge-verdict-desc" style="margin-top:6px;opacity:.85">No fee data could be estimated for these trades (no fee config or missing qty/entry data) — this verdict is on <b>gross</b> R, unadjusted for costs.</div>';
+  }
+  wrap.innerHTML='<div class="edge-verdict '+v.level+'">'+
+    '<div class="edge-verdict-icon">'+_EDGE_VERDICT_ICONS[v.level]+'</div>'+
+    '<div><div class="edge-verdict-title">'+escHtml(v.label)+'</div><div class="edge-verdict-desc">'+v.desc+'</div>'+feeNote+'</div>'+
+    '</div>';
+}
+function _edgeSigned(n){return(n>=0?'+':'')+n.toFixed(2);}
+function _renderEdgeCoreStats(stats,totalFiltered,grossStats,feeInfo){
+  var core=document.getElementById('edg-core-stats');
+  if(core){
+    var hasFees=feeInfo&&feeInfo.adjustedCount>0;
+    core.innerHTML=
+      '<div class="stat-card"><div class="stat-label">R-tracked trades</div><div class="stat-value">'+stats.n+'</div><div class="stat-sub">of '+totalFiltered+' in current filter</div></div>'+
+      '<div class="stat-card '+(stats.winRate!=null?(stats.winRate>=50?'green':'amber'):'')+'"><div class="stat-label">Win rate</div><div class="stat-value">'+(stats.winRate!=null?stats.winRate.toFixed(1)+'%':'—')+'</div><div class="stat-sub">'+(stats.breakevenWR!=null?'breakeven needs '+stats.breakevenWR.toFixed(1)+'%':'—')+'</div></div>'+
+      '<div class="stat-card '+(stats.mean!=null?(stats.mean>0?'green':'red'):'')+'"><div class="stat-label">Expectancy (net)</div><div class="stat-value '+(stats.mean!=null?(stats.mean>0?'pos':'neg'):'')+'">'+(stats.mean!=null?(stats.mean>=0?'+':'')+stats.mean.toFixed(2)+'R':'—')+'</div><div class="stat-sub">'+(hasFees&&grossStats&&grossStats.mean!=null?'gross was '+_edgeSigned(grossStats.mean)+'R':'avg R per trade')+'</div></div>'+
+      '<div class="stat-card '+(stats.profitFactor!=null?(stats.profitFactor>=1.5?'green':(stats.profitFactor>=1?'amber':'red')):'')+'"><div class="stat-label">Profit factor</div><div class="stat-value">'+(stats.profitFactor!=null?(isFinite(stats.profitFactor)?stats.profitFactor.toFixed(2):'∞'):'—')+'</div><div class="stat-sub">total win R ÷ total loss R'+(hasFees?' (net)':'')+'</div></div>'+
+      '<div class="stat-card '+(stats.payoff!=null?(stats.payoff>=1?'green':'amber'):'')+'"><div class="stat-label">Payoff ratio</div><div class="stat-value">'+(stats.payoff!=null?stats.payoff.toFixed(2)+':1':'—')+'</div><div class="stat-sub">avg win R ÷ avg loss R</div></div>'+
+      '<div class="stat-card '+(stats.spanDays!=null?(stats.spanDays>=30?'green':'amber'):'')+'"><div class="stat-label">Period covered</div><div class="stat-value" style="font-size:16px">'+(stats.spanDays!=null?stats.spanDays+' day'+(stats.spanDays===1?'':'s'):'—')+'</div><div class="stat-sub">'+(stats.spanStart&&stats.spanEnd?stats.spanStart.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' – '+stats.spanEnd.toLocaleDateString(undefined,{month:'short',day:'numeric'})+(stats.tradesPerWeek?' · '+stats.tradesPerWeek.toFixed(1)+'/wk':''):'—')+'</div></div>'+
+      '<div class="stat-card '+(hasFees?(stats.mean!=null&&grossStats.mean!=null&&(stats.mean<=0&&grossStats.mean>0)?'red':'amber'):'')+'"><div class="stat-label">Fee drag</div><div class="stat-value" style="font-size:16px">'+(hasFees?'-'+feeInfo.avgFeeR.toFixed(3)+'R/trade':'not estimated')+'</div><div class="stat-sub">'+(hasFees?feeInfo.adjustedCount+' of '+feeInfo.totalCount+' trades costed':'no fee config or missing trade data')+'</div></div>';
+  }
+  var stat=document.getElementById('edg-stat-stats');
+  if(stat){
+    stat.innerHTML=
+      '<div class="stat-card"><div class="stat-label">Std. deviation (R)</div><div class="stat-value" style="font-size:18px">'+(stats.stdDev!=null?stats.stdDev.toFixed(2)+'R':'—')+'</div><div class="stat-sub">spread of outcomes</div></div>'+
+      '<div class="stat-card '+(stats.tStat!=null?(stats.tStat>=2?'green':(stats.tStat>0?'amber':'red')):'')+'"><div class="stat-label">SQN / t-stat</div><div class="stat-value" style="font-size:18px">'+(stats.tStat!=null?stats.tStat.toFixed(2):'—')+'</div><div class="stat-sub">'+_edgeSqnLabel(stats.tStat)+'</div></div>'+
+      '<div class="stat-card '+(stats.pValue!=null?(stats.pValue<0.05?(stats.mean>0?'green':'red'):'amber'):'')+'"><div class="stat-label">p-value (one-tailed)</div><div class="stat-value" style="font-size:18px">'+(stats.pValue!=null?stats.pValue.toFixed(3):'—')+'</div><div class="stat-sub">'+(stats.pValue!=null?(stats.pValue<0.05?(stats.mean>0?'below .05 — significant edge':'below .05 — significantly losing'):'above .05 — not yet significant'):'—')+'</div></div>'+
+      '<div class="stat-card"><div class="stat-label">95% confidence interval</div><div class="stat-value" style="font-size:15px">'+(stats.ciLow!=null?stats.ciLow.toFixed(2)+'R to '+stats.ciHigh.toFixed(2)+'R':'—')+'</div><div class="stat-sub">plausible range of true expectancy</div></div>'+
+      '<div class="stat-card"><div class="stat-label">Trades to confirm</div><div class="stat-value" style="font-size:18px">'+(stats.nRequired!=null?'~'+stats.nRequired:(stats.n>=(stats.nRequired||0)&&stats.mean>0?'reached':'—'))+'</div><div class="stat-sub">est. total needed for p&lt;.05</div></div>';
+  }
+}
+// ── Net-of-fees adjustment ──────────────────────────────────────────────
+// actualRR as logged is pure price-move ÷ stop-distance — it never includes spread,
+// commission, or overnight/swap costs. A gross edge that's statistically real can still
+// be flat or a net loser once real trading costs are included, especially for small-
+// target or high-frequency setups. This estimates a fee-adjusted R per trade using the
+// CURRENTLY configured per-asset-type fee settings (Manage Assets & Pairs), applied
+// retroactively — it won't reflect a broker/fee change partway through your history, and
+// trades missing qty/entry-price/risk-dollar data fall back to their gross R (treated as
+// zero-fee) since no cost can be estimated for them without that data.
+async function _edgeComputeNetTrades(trades){
+  var adjustedCount=0,totalFeeR=0;
+  var netTrades=await Promise.all(trades.map(async function(t){
+    if(t.actualRR==null)return t;
+    var riskBasis=(typeof t.riskDollar==='number'&&t.riskDollar>0)?t.riskDollar
+      :((parseFloat(t.acct)||0)&&t.riskpct?parseFloat(t.acct)*(parseFloat(t.riskpct)/100):null);
+    if(!riskBasis||!t.assetType||!t.qty||!t.entryPrice)return t;
+    var feeRes=await computeTradeFeesAsync(t);
+    if(!feeRes||!(feeRes.total>0))return t;
+    var feeR=feeRes.total/riskBasis;
+    adjustedCount++;totalFeeR+=feeR;
+    return Object.assign({},t,{actualRR:parseFloat((t.actualRR-feeR).toFixed(3))});
+  }));
+  return {netTrades:netTrades,adjustedCount:adjustedCount,totalCount:trades.length,avgFeeR:adjustedCount?totalFeeR/adjustedCount:0};
+}
+function _edgeSqnLabel(t){
+  if(t==null)return'—';
+  if(t<1.0)return'poor';
+  if(t<1.7)return'below average';
+  if(t<2.6)return'average';
+  if(t<4.0)return'good';
+  if(t<7.0)return'excellent';
+  return'exceptional (double-check data)';
+}
+function _renderEdgeEquityCurve(stats){
+  var c=chartColors();
+  var cum=0;var data=stats.rs.map(function(r){cum+=r;return parseFloat(cum.toFixed(3));});
+  var labels=data.map(function(_,i){return'#'+(i+1);});
+  if(charts.edgeEquity)charts.edgeEquity.destroy();
+  var cv=document.getElementById('chart-edge-equity');
+  if(cv)charts.edgeEquity=safeChart(cv.getContext('2d'),{type:'line',data:{labels:labels,datasets:[{label:'Cumulative R',data:data,borderColor:(cum>=0?c.green:c.red),backgroundColor:(cum>=0?c.greenBg:c.redBg),fill:true,tension:.15,pointRadius:0,pointHoverRadius:4,borderWidth:1.75}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return(ctx.parsed.y>=0?'+':'')+ctx.parsed.y+'R cumulative';}}}},scales:{x:{ticks:{color:c.tick,font:{size:9},maxTicksLimit:12},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'R';}},grid:{color:c.grid}}}}});
+}
+function _renderEdgeRollingExpectancy(stats){
+  var c=chartColors();
+  var win=20;
+  var rs=stats.rs;
+  var data=[],labels=[];
+  for(var i=0;i<rs.length;i++){
+    if(i+1<win){data.push(null);}
+    else{
+      var slice=rs.slice(i-win+1,i+1);
+      var avg=slice.reduce(function(a,v){return a+v;},0)/slice.length;
+      data.push(parseFloat(avg.toFixed(3)));
+    }
+    labels.push('#'+(i+1));
+  }
+  if(charts.edgeRolling)charts.edgeRolling.destroy();
+  var cv=document.getElementById('chart-edge-rolling');
+  if(cv)charts.edgeRolling=safeChart(cv.getContext('2d'),{type:'line',data:{labels:labels,datasets:[
+    {label:'Rolling 20-trade avg R',data:data,borderColor:c.accent,backgroundColor:c.accentBg,fill:false,tension:.2,pointRadius:0,pointHoverRadius:4,borderWidth:1.75,spanGaps:false},
+    {label:'Zero',data:labels.map(function(){return 0;}),borderColor:c.tick,borderDash:[5,3],borderWidth:1,pointRadius:0,fill:false}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:rs.length>=win,position:'bottom',labels:{color:c.tick,font:{size:10},boxWidth:10,padding:8}}},scales:{x:{ticks:{color:c.tick,font:{size:9},maxTicksLimit:12},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'R';}},grid:{color:c.grid}}}}});
+  if(rs.length<win){
+    var wrap=cv&&cv.parentElement;
+    if(wrap&&!wrap.querySelector('.edge-rolling-note')){
+      var note=document.createElement('div');
+      note.className='edge-rolling-note';
+      note.style.cssText='text-align:center;color:var(--text3);font-size:11px;padding:6px 0 0';
+      note.textContent='Need at least '+win+' R-tracked trades for a rolling window ('+rs.length+' so far).';
+      wrap.appendChild(note);
+    }
+  }
+}
+function _renderEdgeDistribution(stats){
+  var c=chartColors();
+  var binLabels=['≤ -2R','-2R to -1R','-1R to 0R','0R to 1R','1R to 2R','2R to 3R','3R+'];
+  function binIndex(r){
+    if(r<=-2)return 0;if(r<=-1)return 1;if(r<0)return 2;if(r<1)return 3;if(r<2)return 4;if(r<3)return 5;return 6;
+  }
+  var bins=[0,0,0,0,0,0,0];
+  stats.rs.forEach(function(r){bins[binIndex(r)]++;});
+  var binColors=binLabels.map(function(l,i){return i<3?c.red:c.green;});
+  if(charts.edgeDist)charts.edgeDist.destroy();
+  var cv=document.getElementById('chart-edge-dist');
+  if(cv)charts.edgeDist=safeChart(cv.getContext('2d'),{type:'bar',data:{labels:binLabels,datasets:[{label:'Trades',data:bins,backgroundColor:binColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:9}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},stepSize:1,precision:0},grid:{color:c.grid}}}}});
+}
 // ── Generic categorical breakdown (used by Asset type & LTF entry) ──────────
 // Buckets trades by an arbitrary string field on the trade object and renders
 // the same stat-card / chart / table shape as the other analytics sections.
@@ -10636,6 +11066,32 @@ async function populateTrdFilters(){
   var pf=document.getElementById('trd-pair-filter');
   if(pf){var pv=pf.value;pf.innerHTML='<option value="">All pairs</option>'+pairs.map(function(p){return'<option value="'+escHtml(p)+'">'+escHtml(p)+'</option>'}).join('');pf.value=pv;}
 }
+function toggleEdgFilters(){
+  var body=document.getElementById('edg-filter-body');
+  var chevron=document.getElementById('edg-filter-chevron');
+  var open=body.style.display==='block';
+  body.style.display=open?'none':'block';
+  chevron.style.transform=open?'':'rotate(180deg)';
+}
+function resetEdgFilters(){
+  ['edg-session-filter','edg-pair-filter','edg-direction-filter','edg-error-filter'].forEach(function(id){var el=document.getElementById(id);if(el)el.selectedIndex=0;});
+  var tst=document.getElementById('edg-sessiontype-filter');if(tst){tst.value='backtest';saveSessionTypeFilterPref('edg-sessiontype-filter');}
+  var tsk=document.getElementById('edg-skipped-filter');if(tsk)tsk.value='taken';
+  _dashDemoMode=false;
+  _histDemoMode=false;
+  _syncDemoButtons(false);
+  populateSessionSelects().then(function(){populateEdgFilters().then(function(){renderEdgeAnalyzer();});});
+}
+async function populateEdgFilters(){
+  var trades=await dbGetAllCached('trades');
+  var sessions=await dbGetAllCached('sessions');
+  var demoOn=!!_dashDemoMode;
+  var demoIds=new Set(sessions.filter(function(s){return !!s.isDemo;}).map(function(s){return s.id;}));
+  var scoped=trades.filter(function(t){return demoOn?demoIds.has(t.sessionId):!demoIds.has(t.sessionId);});
+  var pairs=[...new Set(scoped.map(function(t){return t.pair}).filter(Boolean))].sort();
+  var pf=document.getElementById('edg-pair-filter');
+  if(pf){var pv=pf.value;pf.innerHTML='<option value="">All pairs</option>'+pairs.map(function(p){return'<option value="'+escHtml(p)+'">'+escHtml(p)+'</option>'}).join('');pf.value=pv;}
+}
 function toggleCalFilters(){
   var body=document.getElementById('cal-filter-body');
   var chevron=document.getElementById('cal-filter-chevron');
@@ -10651,6 +11107,7 @@ var _histStarredOnly=false; // when true, history table only shows starred trade
 var _defaultDashSessionId='';
 var _defaultHistSessionId='';
 var _defaultTrdSessionId='';
+var _defaultEdgSessionId='';
 // ── Unified demo-mode sync helper ─────────────────────────────────────────────
 // Call this whenever demo state changes.  It updates every toggle button+label
 // across Dashboard, Calendar, History, and Monte Carlo in one place.
@@ -11284,17 +11741,24 @@ async function saveAssetsData(data){ _invalidateAssetFeesCache(); await setSetti
 // ── Fee calculation engine ─────────────────────────────────────────────────
 // Returns { total, spread, commission, overnight, exchange, breakdown }
 // qty = units (not lots), entry/exit = prices, durationMin = minutes held
-function calcTradeFees(assetFees, qty, entry, durationMin){
+function calcTradeFees(assetFees, qty, entry, durationMin, pair){
   var result = { total:0, spread:0, commission:0, overnight:0, exchange:0, breakdown:[] };
   if(!assetFees || !qty || !entry) return result;
   var fees = assetFees;
   // Detect pip size from entry price
   var pipSize = entry >= 100 ? 0.01 : entry >= 10 ? 0.001 : entry >= 1 ? 0.0001 : 0.000001;
+  // Price-based fee components (spread in pips/pts/%, commission in % notional) are derived
+  // from entry price × qty — same as raw P/L, that comes out denominated in the QUOTE currency
+  // for "XXX/YYY" pairs where YYY isn't USD (USD/JPY, USD/CHF, USD/CAD, ...). Divide through by
+  // the same quoteConvFactor used for plDollar/toAccountPL so fee drag isn't off by the exchange
+  // rate. Flat $-denominated components ($/unit, $/unit/night, $/trade) are already in account
+  // currency and must NOT be divided again.
+  var conv = quoteConvFactor(pair, entry);
   // 1. Spread
   if(fees.spread && fees.spread.enabled && fees.spread.value > 0){
     var spreadVal = 0, unit = (fees.spread.unit||'pips').toLowerCase();
-    if(unit === '%') { spreadVal = (fees.spread.value/100)*entry*qty; }
-    else if(unit === 'pts' || unit === 'pips') { spreadVal = fees.spread.value * pipSize * qty; }
+    if(unit === '%') { spreadVal = ((fees.spread.value/100)*entry*qty)/conv; }
+    else if(unit === 'pts' || unit === 'pips') { spreadVal = (fees.spread.value * pipSize * qty)/conv; }
     else { spreadVal = fees.spread.value * qty; }
     result.spread = parseFloat(spreadVal.toFixed(4));
     if(result.spread > 0) result.breakdown.push({ label:'Spread', value:result.spread });
@@ -11302,7 +11766,7 @@ function calcTradeFees(assetFees, qty, entry, durationMin){
   // 2. Commission
   if(fees.commission && fees.commission.enabled && fees.commission.value > 0){
     var commVal = 0, cunit = (fees.commission.unit||'$/unit').toLowerCase();
-    if(cunit.includes('%')) { commVal = (fees.commission.value/100)*entry*qty*2; }
+    if(cunit.includes('%')) { commVal = ((fees.commission.value/100)*entry*qty*2)/conv; }
     else { commVal = fees.commission.value * qty; }
     result.commission = parseFloat(commVal.toFixed(4));
     if(result.commission > 0) result.breakdown.push({ label:'Commission', value:result.commission });
@@ -11339,7 +11803,7 @@ async function computeTradeFeesAsync(trade){
   if(!trade || !trade.assetType || !trade.entryPrice || !trade.qty) return null;
   var fees = await _getAssetFeesForType(trade.assetType);
   if(!fees) return null;
-  return calcTradeFees(fees, parseFloat(trade.qty), parseFloat(trade.entryPrice), trade.durationMin || 0);
+  return calcTradeFees(fees, parseFloat(trade.qty), parseFloat(trade.entryPrice), trade.durationMin || 0, trade.pair);
 }
 // Compute net equity for a session by summing (grossPL - fees) across its trades.
 // Falls back to sess.currentEquity if no fees are configured for any trade.
@@ -19174,8 +19638,8 @@ document.addEventListener('DOMContentLoaded',function(){
 // applies to all four filter bars (Dashboard/Trade Analytics/Calendar/History) so
 // they behave consistently; state is remembered in localStorage across sessions.
 var FILTER_LOCK_KEY='tj-filter-lock';
-var FILTER_BAR_IDS=['dash-filter-bar','trd-filter-bar','cal-filter-bar','hist-filter-panel'];
-var FILTER_LOCK_BTN_IDS=['dash-filter-lock-btn','trd-filter-lock-btn','cal-filter-lock-btn','hist-filter-lock-btn'];
+var FILTER_BAR_IDS=['dash-filter-bar','trd-filter-bar','cal-filter-bar','hist-filter-panel','edg-filter-bar'];
+var FILTER_LOCK_BTN_IDS=['dash-filter-lock-btn','trd-filter-lock-btn','cal-filter-lock-btn','hist-filter-lock-btn','edg-filter-lock-btn'];
 var _filterLocked=false;
 try{_filterLocked=localStorage.getItem(FILTER_LOCK_KEY)==='1';}catch(e){}
 function updateTopbarHeightVar(){
