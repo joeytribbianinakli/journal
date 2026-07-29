@@ -83,6 +83,27 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .edge-verdict-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px}
 .edge-verdict-desc{font-size:12px;color:var(--text2);line-height:1.6}
 .edge-verdict-desc b{color:var(--text)}
+/* ── Edge Analyzer: "How this is calculated" methodology accordion — each metric collapses
+   to a one-line teaser so the card reads as a scannable glossary instead of a wall of text;
+   click a row (or Expand all) to read the full explanation. ── */
+.meth-toolbar{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.meth-toolbar-btn{background:none;border:none;font-size:10.5px;font-weight:700;color:var(--accent);cursor:pointer;font-family:inherit;letter-spacing:.02em;padding:2px 0}
+.meth-toolbar-btn:hover{text-decoration:underline}
+.meth-toolbar-sep{color:var(--border2);font-size:10px}
+.meth-group-label{font-size:9.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.09em;padding:12px 16px 5px;border-top:1px solid var(--border)}
+.meth-group-label:first-of-type{border-top:none;padding-top:2px}
+.meth-item+.meth-item{border-top:1px solid var(--border)}
+.meth-header{display:flex;align-items:center;gap:12px;padding:9px 16px;cursor:pointer;user-select:none;transition:background .1s}
+.meth-header:hover{background:var(--bg3)}
+.meth-term{font-size:11.5px;font-weight:700;color:var(--text2);flex-shrink:0;min-width:172px}
+.meth-teaser{font-size:11px;color:var(--text3);flex:1;line-height:1.4}
+.meth-chevron{width:12px;height:12px;stroke:var(--text3);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;transition:transform .2s}
+.meth-body{padding:0 16px 13px 16px;font-size:11.5px;color:var(--text3);line-height:1.7}
+.meth-body b{color:var(--text2)}
+.meth-callout{margin:14px 16px 0;padding:11px 13px;border-radius:var(--radius);font-size:11.5px;line-height:1.65}
+.meth-callout.rule{background:rgba(52,201,122,.07);border:1px solid rgba(52,201,122,.25);color:var(--text2)}
+.meth-callout.rule b{color:var(--green)}
+.meth-callout.caveat{background:var(--bg3);border:1px solid var(--border);color:var(--text3);margin-bottom:14px}
 /* ── Cards: generic .card/.card-header/.card-body container used across every page ── */
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
 .card-header{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border)}
@@ -1515,6 +1536,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       </div>
 
       <div id="edg-verdict-wrap"></div>
+      <div id="edg-filterview-note"></div>
 
       <div class="analytics-group-label first">Edge Statistics</div>
       <div style="font-size:11px;color:var(--text3);padding:0 2px 12px">
@@ -1541,19 +1563,107 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       </div>
 
       <div class="card" style="margin-bottom:22px" id="edg-methodology-card">
-        <div class="card-header"><span class="card-title">How this is calculated</span></div>
-        <div style="padding:12px 16px;font-size:11px;color:var(--text3);line-height:1.8">
-          <div><b style="color:var(--text2)">Expectancy</b> = mean R across R-tracked trades in the current filter.</div>
-          <div><b style="color:var(--text2)">Std. deviation</b> = sample standard deviation of R (n−1).</div>
-          <div><b style="color:var(--text2)">SQN / t-stat</b> = expectancy ÷ (std. dev ÷ √n) — Van Tharp's System Quality Number; also the test statistic for "is mean R different from zero". Rule of thumb: &lt;1.0 poor, 1.0–1.6 below average, 1.7–2.5 average, 2.6–3.9 good, 4.0–6.9 excellent, 7.0+ exceptional (and worth double-checking for errors).</div>
-          <div><b style="color:var(--text2)">p-value</b> = one-tailed probability of seeing an expectancy this far from zero, in the observed direction, if the true long-run edge were exactly zero (exact Student's t-distribution, n−1 degrees of freedom — not a normal approximation, which would understate this at small n). Below 0.05 is the conventional "statistically significant" bar.</div>
-          <div><b style="color:var(--text2)">95% CI</b> = expectancy ± (t-critical value for n−1 df) × standard error — the range your true long-run expectancy plausibly falls in.</div>
-          <div><b style="color:var(--text2)">Period covered</b> = calendar days between the first and last R-tracked trade in the filter, and trades/week over that span.</div>
-          <div><b style="color:var(--text2)">Fee drag / Net expectancy</b> = the verdict and all stats above are computed on R-multiples <b>net of estimated trading costs</b> (spread, commission, overnight/swap), using your current per-asset-type fee settings (Manage Assets &amp; Pairs) applied to each trade's qty/entry price/duration. This matters because the raw R-multiple logged per trade is pure price-move vs. stop-distance and never includes costs — a gross edge can be statistically real and still be flat or a net loser once real costs are counted, especially for small-target or high-frequency setups. Two caveats: it uses your <i>currently</i> configured fees applied retroactively, so it won't reflect a broker or fee change partway through your history; and trades missing asset type, quantity, or risk-dollar data are left at gross R (treated as zero-fee) since no cost can be estimated for them — check the "Fee drag" card's coverage count if this matters to you.</div>
-          <div><b style="color:var(--text2)">Breakeven win rate</b> = 100 ÷ (1 + payoff ratio) — the win rate you'd need just to break even given your current avg win/loss size.</div>
-          <div style="margin-top:6px;padding-top:8px;border-top:1px solid var(--border)"><b style="color:var(--text2)">"Statistically significant edge" (green) requires all of:</b> 30+ R-tracked trades, at least 30 days between the first and last of them, and the 95% CI staying above zero. A p-value below 0.05 alone is not enough — a handful of trades can pass that test by luck, and trades clustered in a short window only ever test one market regime. Below either floor, the verdict caps at amber even if the math already looks significant.</div>
-          <div style="margin-top:6px">This is a statistical estimate from historical data, not a guarantee — it assumes trades are independent and R is roughly stable over time, which is rarely perfectly true in live markets. It also can't correct for filter-shopping: slicing by enough pairs, sessions, or directions will eventually turn up a subset that looks "significant" by chance alone, so treat a good result on a narrow filter with extra skepticism, not less. Use it as one input, not the whole decision.</div>
+        <div class="card-header">
+          <span class="card-title">How this is calculated</span>
+          <div class="meth-toolbar">
+            <button class="meth-toolbar-btn" onclick="edgMethSetAll(true)">Expand all</button>
+            <span class="meth-toolbar-sep">·</span>
+            <button class="meth-toolbar-btn" onclick="edgMethSetAll(false)">Collapse all</button>
+          </div>
         </div>
+
+        <div class="meth-group-label">Core statistics</div>
+        <div class="meth-item">
+          <div class="meth-header" onclick="toggleCollapsible('edg-meth-exp','edg-meth-chev-exp')">
+            <span class="meth-term">Expectancy</span><span class="meth-teaser">Your average R per trade — the number that decides if you're profitable long-run.</span>
+            <svg id="edg-meth-chev-exp" class="meth-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meth-body" id="edg-meth-exp" style="display:none">Mean R across R-tracked trades in the current filter.</div>
+        </div>
+        <div class="meth-item">
+          <div class="meth-header" onclick="toggleCollapsible('edg-meth-sd','edg-meth-chev-sd')">
+            <span class="meth-term">Std. deviation</span><span class="meth-teaser">How much your R-multiples swing from trade to trade.</span>
+            <svg id="edg-meth-chev-sd" class="meth-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meth-body" id="edg-meth-sd" style="display:none">Sample standard deviation of R (n−1).</div>
+        </div>
+        <div class="meth-item">
+          <div class="meth-header" onclick="toggleCollapsible('edg-meth-sqn','edg-meth-chev-sqn')">
+            <span class="meth-term">SQN / t-stat</span><span class="meth-teaser">Van Tharp's System Quality Number — a quality score for the edge.</span>
+            <svg id="edg-meth-chev-sqn" class="meth-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meth-body" id="edg-meth-sqn" style="display:none">Expectancy ÷ (std. dev ÷ √n) — Van Tharp's System Quality Number; also the test statistic for "is mean R different from zero". Rule of thumb: &lt;1.0 poor, 1.0–1.6 below average, 1.7–2.5 average, 2.6–3.9 good, 4.0–6.9 excellent, 7.0+ exceptional (and worth double-checking for errors).</div>
+        </div>
+        <div class="meth-item">
+          <div class="meth-header" onclick="toggleCollapsible('edg-meth-pval','edg-meth-chev-pval')">
+            <span class="meth-term">p-value</span><span class="meth-teaser">Odds your edge is really zero and you're just seeing noise. Below 0.05 = significant.</span>
+            <svg id="edg-meth-chev-pval" class="meth-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meth-body" id="edg-meth-pval" style="display:none">One-tailed probability of seeing an expectancy this far from zero, in the observed direction, if the true long-run edge were exactly zero (exact Student's t-distribution, n−1 degrees of freedom — not a normal approximation, which would understate this at small n). Below 0.05 is the conventional "statistically significant" bar.</div>
+        </div>
+        <div class="meth-item">
+          <div class="meth-header" onclick="toggleCollapsible('edg-meth-ci','edg-meth-chev-ci')">
+            <span class="meth-term">95% CI</span><span class="meth-teaser">The range your true long-run expectancy plausibly falls in.</span>
+            <svg id="edg-meth-chev-ci" class="meth-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meth-body" id="edg-meth-ci" style="display:none">Expectancy ± (t-critical value for n−1 df) × standard error. This assumes your R's are roughly symmetric around the mean.</div>
+        </div>
+        <div class="meth-item">
+          <div class="meth-header" onclick="toggleCollapsible('edg-meth-boot','edg-meth-chev-boot')">
+            <span class="meth-term">Bootstrap 95% CI</span><span class="meth-teaser">The same range, estimated a sturdier way that doesn't assume a shape. Needs 10+ trades.</span>
+            <svg id="edg-meth-chev-boot" class="meth-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meth-body" id="edg-meth-boot" style="display:none">Resamples your actual R-multiples with replacement 2,000 times, takes the mean of each resample, and reads the 2.5th–97.5th percentile off that distribution. It makes no assumption about the shape of your results, unlike the t-based CI above — which matters because real trade outcomes are usually skewed (many small results, a few big ones). Needs 10+ R-tracked trades to compute. If the two intervals broadly agree, that's independent confirmation the t-based CI is trustworthy. If they disagree — the bootstrap dips to zero when the t-interval doesn't, or it's meaningfully wider — treat that as a sign the mean is being carried by a handful of skewed outcomes rather than a stable, repeatable process; this tool will downgrade an otherwise-green verdict when that happens.</div>
+        </div>
+        <div class="meth-item">
+          <div class="meth-header" onclick="toggleCollapsible('edg-meth-period','edg-meth-chev-period')">
+            <span class="meth-term">Period covered</span><span class="meth-teaser">How much calendar time and how frequently you've traded.</span>
+            <svg id="edg-meth-chev-period" class="meth-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meth-body" id="edg-meth-period" style="display:none">Calendar days between the first and last R-tracked trade in the filter, and trades/week over that span.</div>
+        </div>
+
+        <div class="meth-group-label">Costs &amp; profitability</div>
+        <div class="meth-item">
+          <div class="meth-header" onclick="toggleCollapsible('edg-meth-fee','edg-meth-chev-fee')">
+            <span class="meth-term">Fee drag / Net expectancy</span><span class="meth-teaser">All stats above are net of your estimated real trading costs, not raw price-move R.</span>
+            <svg id="edg-meth-chev-fee" class="meth-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meth-body" id="edg-meth-fee" style="display:none">The verdict and all stats above are computed on R-multiples <b>net of estimated trading costs</b> (spread, commission, overnight/swap), using your current per-asset-type fee settings (Manage Assets &amp; Pairs) applied to each trade's qty/entry price/duration. This matters because the raw R-multiple logged per trade is pure price-move vs. stop-distance and never includes costs — a gross edge can be statistically real and still be flat or a net loser once real costs are counted, especially for small-target or high-frequency setups. Two caveats: it uses your <i>currently</i> configured fees applied retroactively, so it won't reflect a broker or fee change partway through your history; and trades missing asset type, quantity, or risk-dollar data are left at gross R (treated as zero-fee) since no cost can be estimated for them — check the "Fee drag" card's coverage count if this matters to you.</div>
+        </div>
+        <div class="meth-item">
+          <div class="meth-header" onclick="toggleCollapsible('edg-meth-be','edg-meth-chev-be')">
+            <span class="meth-term">Breakeven win rate</span><span class="meth-teaser">The win rate you'd need just to break even, given your win/loss sizes.</span>
+            <svg id="edg-meth-chev-be" class="meth-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meth-body" id="edg-meth-be" style="display:none">100 ÷ (1 + payoff ratio) — the win rate you'd need just to break even given your current avg win/loss size.</div>
+        </div>
+
+        <div class="meth-group-label">Robustness checks</div>
+        <div class="meth-item">
+          <div class="meth-header" onclick="toggleCollapsible('edg-meth-outlier','edg-meth-chev-outlier')">
+            <span class="meth-term">Best/top-3 trade share of R</span><span class="meth-teaser">Checks whether your edge is really just one or two lucky trades.</span>
+            <svg id="edg-meth-chev-outlier" class="meth-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meth-body" id="edg-meth-outlier" style="display:none">Your single best (or best 3) R-tracked trade's result, as a % of the total R summed across the whole filtered sample — plus what average R looks like with that trade (or 3) removed. A high share, or a mean that turns flat/negative once removed, means the result is leaning on one or two lucky trades rather than a repeatable process. This check runs even on a "significant" green verdict and will downgrade it if the edge doesn't hold without the outlier.</div>
+        </div>
+        <div class="meth-item">
+          <div class="meth-header" onclick="toggleCollapsible('edg-meth-split','edg-meth-chev-split')">
+            <span class="meth-term">Split-sample check</span><span class="meth-teaser">Compares your older trades vs. recent ones — is the edge still showing up? Needs 20+ trades.</span>
+            <svg id="edg-meth-chev-split" class="meth-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meth-body" id="edg-meth-split" style="display:none">Your R-tracked trades, in chronological order, split down the middle — expectancy on the older half vs. the more recent half. The t-test and bootstrap both ask "is the full-sample average unlikely to be zero"; this asks a different question: does the second half still look like the first, or has whatever produced the edge already stopped showing up in more recent trades. Needs 20+ R-tracked trades (10+ per half) to compute. A full-sample edge that's positive only because of a hot early stretch — recent half flat or negative — will downgrade an otherwise-green verdict, the same way the outlier and bootstrap checks do.</div>
+        </div>
+        <div class="meth-item">
+          <div class="meth-header" onclick="toggleCollapsible('edg-meth-runs','edg-meth-chev-runs')">
+            <span class="meth-term">Runs test (streakiness)</span><span class="meth-teaser">Checks if wins/losses are independent, or clustering from tilt/revenge trading. Needs 20+ trades.</span>
+            <svg id="edg-meth-chev-runs" class="meth-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="meth-body" id="edg-meth-runs" style="display:none">A Wald-Wolfowitz test on the chronological win/loss sequence (breakevens excluded) — counts how many "runs" (streaks of the same outcome) actually occurred vs. how many independent, randomly-ordered trades would be expected to produce, then checks whether that gap is bigger than chance explains. This is different from every other check above: those ask whether the <i>average</i> R is real; this asks whether the trades behind that average were actually independent, which the t-test, CI, and bootstrap all assume. Needs 20+ decisive (non-breakeven) trades with at least 5 wins and 5 losses to compute. Too <i>few</i> runs means wins and losses are clustering — a sign of tilt, revenge trading after a loss, or a market regime that came and went — and will downgrade an otherwise-green verdict, since it means the significance test above is more confident than the data supports. Too <i>many</i> runs (excessive alternating) is flagged too, but doesn't move the verdict — it's unusual rather than a known risk pattern.</div>
+        </div>
+
+        <div class="meth-callout rule"><b>"Statistically significant edge" (green) requires all of:</b> 30+ R-tracked trades, at least 30 days between the first and last of them, and the 95% CI staying above zero. A p-value below 0.05 alone is not enough — a handful of trades can pass that test by luck, and trades clustered in a short window only ever test one market regime. Below either floor, the verdict caps at amber even if the math already looks significant.</div>
+        <div class="meth-callout caveat">This is a statistical estimate from historical data, not a guarantee — it assumes trades are independent and R is roughly stable over time, which is rarely perfectly true in live markets. It also can't correct for filter-shopping: slicing by enough pairs, sessions, or directions will eventually turn up a subset that looks "significant" by chance alone, so treat a good result on a narrow filter with extra skepticism, not less. Use it as one input, not the whole decision.</div>
       </div>
     </div>
     <!-- CALENDAR -->
@@ -9887,6 +9997,60 @@ function _edgeTCrit95(df){
   }
   return (lo+hi)/2;
 }
+// ── Bootstrap CI (percentile method) ──
+// The t-based CI above assumes R-multiples are roughly symmetric around the mean.
+// Real trade outcomes are usually skewed (lots of small results, a few big ones), which
+// can make that assumption wrong without it being obvious from the mean/stdev alone.
+// A percentile bootstrap resamples the trader's own R's with replacement, many times,
+// and reads the CI straight off the resulting distribution of means — no shape assumed.
+// If it disagrees a lot with the t-based CI, the mean is fragile/outlier-driven rather
+// than a robust estimate, which is exactly the gap this cross-check exists to catch.
+function _edgeBootstrapCI(rs,B){
+  var n=rs.length;
+  if(n<10)return {low:null,high:null,mean:null};
+  B=B||2000;
+  var means=new Array(B);
+  for(var b=0;b<B;b++){
+    var sum=0;
+    for(var i=0;i<n;i++){ sum+=rs[Math.floor(Math.random()*n)]; }
+    means[b]=sum/n;
+  }
+  means.sort(function(a,c){return a-c;});
+  var loIdx=Math.max(0,Math.floor(0.025*B));
+  var hiIdx=Math.min(B-1,Math.ceil(0.975*B)-1);
+  var bootMean=means.reduce(function(a,v){return a+v;},0)/B;
+  return {low:means[loIdx],high:means[hiIdx],mean:bootMean};
+}
+// ── Runs test (Wald-Wolfowitz) for streakiness / independence ──
+// The t-test, CI, and bootstrap above all treat every trade as an independent draw from
+// one stable process. That assumption can be wrong in a way none of them can see: wins and
+// losses clustering together (a hot streak feeding overconfidence, a cold streak feeding
+// revenge trading or tilt, or a market regime that came and went) rather than landing in
+// the random-looking order independence would predict. A runs test catches exactly that,
+// using only the win/loss sequence itself — not the R sizes — so it's a different kind of
+// check than the outlier/bootstrap/split-sample ones above: it asks whether the *order*
+// looks random, not whether the *average* is real. Breakeven trades (R===0) are excluded
+// since they carry no win/loss direction. Needs a reasonable count on both sides to mean
+// anything — a 95%-win-rate sample can't produce enough losses to test clustering.
+function _edgeRunsTest(signs){
+  var n1=0,n2=0,runs=signs.length?1:0;
+  for(var i=0;i<signs.length;i++){
+    if(signs[i]>0)n1++;else n2++;
+    if(i>0&&signs[i]!==signs[i-1])runs++;
+  }
+  var N=n1+n2;
+  if(N<20||n1<5||n2<5)return {n1:n1,n2:n2,N:N,runs:null,expRuns:null,z:null,pValue:null};
+  var expRuns=(2*n1*n2)/N+1;
+  var varRuns=(2*n1*n2*(2*n1*n2-N))/(N*N*(N-1));
+  if(!(varRuns>0))return {n1:n1,n2:n2,N:N,runs:runs,expRuns:expRuns,z:null,pValue:null};
+  // Continuity correction — meaningfully improves accuracy at the small N this tool
+  // typically sees, same rationale as using the exact t-distribution instead of a
+  // normal approximation for the significance test above.
+  var cc=runs<expRuns?0.5:(runs>expRuns?-0.5:0);
+  var z=(runs-expRuns+cc)/Math.sqrt(varRuns);
+  var pValue=2*(1-_edgeNormCdf(Math.abs(z)));
+  return {n1:n1,n2:n2,N:N,runs:runs,expRuns:expRuns,z:z,pValue:pValue};
+}
 // Computes the full edge stat-block from an already-filtered trade array.
 function computeEdgeStats(trades){
   trades=trades||[];
@@ -9905,6 +10069,16 @@ function computeEdgeStats(trades){
   var tCrit=df!=null?_edgeTCrit95(df):1.96;
   var ciLow=(mean!=null&&se!=null)?mean-tCrit*se:null;
   var ciHigh=(mean!=null&&se!=null)?mean+tCrit*se:null;
+  // ── Bootstrap cross-check — see _edgeBootstrapCI comment above. Flags disagreement
+  // as either a sign flip on the lower bound (the t-interval says "clears zero" but the
+  // shape-free resample says it doesn't, or vice versa) or the bootstrap interval being
+  // meaningfully wider, which signals skew the t-interval's symmetry assumption missed.
+  var boot=_edgeBootstrapCI(rs,2000);
+  var bootCiLow=boot.low,bootCiHigh=boot.high,bootMean=boot.mean;
+  var bootWidth=(bootCiLow!=null&&bootCiHigh!=null)?(bootCiHigh-bootCiLow):null;
+  var tWidth=(ciLow!=null&&ciHigh!=null)?(ciHigh-ciLow):null;
+  var bootWidthRatio=(bootWidth!=null&&tWidth&&tWidth>0)?(bootWidth/tWidth):null;
+  var bootDisagrees=(bootCiLow!=null&&ciLow!=null)&&(((ciLow>0)!==(bootCiLow>0))||(bootWidthRatio!=null&&bootWidthRatio>=1.5));
   var winRs=rs.filter(function(r){return r>0;});
   var lossRs=rs.filter(function(r){return r<0;});
   var winRate=n?winRs.length/n*100:null;
@@ -9915,6 +10089,54 @@ function computeEdgeStats(trades){
   var grossLoss=Math.abs(lossRs.reduce(function(a,v){return a+v;},0));
   var profitFactor=grossLoss>0?grossWin/grossLoss:(grossWin>0?Infinity:null);
   var breakevenWR=(payoff!=null)?100/(1+payoff):null;
+  // ── Outlier contribution check — how much of total R comes from the single best
+  // trade (or top 3)? This is the single most common way traders fool themselves:
+  // a flat-to-losing track record with one huge winner can still show a positive,
+  // even "significant", mean. Only meaningful when total R is positive (a net-losing
+  // sample is already flagged red regardless of how it's distributed).
+  var sortedDescR=rs.slice().sort(function(a,b){return b-a;});
+  var sumR=n?rs.reduce(function(a,v){return a+v;},0):null;
+  var top1R=n?sortedDescR[0]:null;
+  var top3Count=Math.min(3,n);
+  var top3R=n?sortedDescR.slice(0,top3Count).reduce(function(a,v){return a+v;},0):null;
+  var top1PctOfSum=(n&&sumR>0)?(top1R/sumR*100):null;
+  var top3PctOfSum=(n&&sumR>0)?(top3R/sumR*100):null;
+  var meanExTop1=(n>1)?((sumR-top1R)/(n-1)):null;
+  var meanExTop3=(n>top3Count)?((sumR-top3R)/(n-top3Count)):null;
+  // Flag as concentrated if either: the best trade alone is half+ of total R, or removing
+  // just that one trade would erase the edge entirely (mean drops to zero or below).
+  var outlierConcentrated=(top1PctOfSum!=null&&top1PctOfSum>=50)||(mean!=null&&mean>0&&meanExTop1!=null&&meanExTop1<=0);
+  // ── Split-sample check — first half vs second half, chronologically ──
+  // The t-test and bootstrap both treat every trade as a draw from one stable
+  // process. Real edges drift: a setup stops working, a market's regime shifts,
+  // discipline slips. Splitting the same R's in half by time and comparing
+  // expectancy asks a different question than either of those — not "is the
+  // full-sample average unlikely to be zero" but "does the second half still
+  // look like the first half". An edge that's only significant because of a
+  // hot early stretch is not the same as one that's held up more recently.
+  // rs is already in chronological order (rrTrades preserves the order it was
+  // passed in, and callers sort trades oldest-first before calling this).
+  var MIN_N_SPLIT=20; // need 10+ per half for either half's mean to mean anything
+  var splitMid=Math.floor(n/2);
+  var firstHalfRs=n>=MIN_N_SPLIT?rs.slice(0,splitMid):null;
+  var secondHalfRs=n>=MIN_N_SPLIT?rs.slice(splitMid):null;
+  var firstHalfN=firstHalfRs?firstHalfRs.length:null;
+  var secondHalfN=secondHalfRs?secondHalfRs.length:null;
+  var firstHalfMean=firstHalfRs?firstHalfRs.reduce(function(a,v){return a+v;},0)/firstHalfRs.length:null;
+  var secondHalfMean=secondHalfRs?secondHalfRs.reduce(function(a,v){return a+v;},0)/secondHalfRs.length:null;
+  // Flag as faded/reversed when the full sample is net positive but the more
+  // recent half alone is flat or negative — i.e. the edge isn't showing up in
+  // the trades that matter most for whether it keeps working.
+  var splitSampleWeak=(mean!=null&&mean>0&&secondHalfMean!=null&&secondHalfMean<=0);
+  // ── Runs test — see _edgeRunsTest comment above. Uses the same chronological order
+  // as the split-sample check, but on win/loss direction rather than R size. A result
+  // that's "too few runs" (wins and losses clustering) means trades aren't independent
+  // draws, which the t-test and CI both assume — so a clustered sequence can pass the
+  // significance bar on paper while actually resting on a run of correlated outcomes.
+  var runsSigns=rs.filter(function(r){return r!==0;}).map(function(r){return r>0?1:-1;});
+  var runsTest=_edgeRunsTest(runsSigns);
+  var runsClustered=(runsTest.pValue!=null&&runsTest.pValue<0.05&&runsTest.z<0);
+  var runsAlternating=(runsTest.pValue!=null&&runsTest.pValue<0.05&&runsTest.z>0);
   var nRequiredRaw=(mean!=null&&mean>0&&stdDev!=null&&stdDev>0)?Math.ceil(Math.pow(1.96*stdDev/mean,2)):null;
   // Never project fewer than the tool's own 30-trade policy floor — otherwise the
   // "trades to confirm" figure could tell the user fewer trades are needed than the
@@ -9938,7 +10160,7 @@ function computeEdgeStats(trades){
       desc:'Only <b>'+n+'</b> R-tracked trade'+(n===1?'':'s')+' in this filter. You need a meaningfully larger sample — <b>30+ trades</b> is a reasonable starting bar — before any win-rate or expectancy number here means much.'};
   } else if(mean<=0){
     verdict={level:'red',label:'No edge — losing expectancy',
-      desc:'Average R per trade is <b>'+mean.toFixed(2)+'R</b> across '+n+' trades. On the numbers logged so far, this approach loses money over the long run before you even factor in noise. Look for a filter combination (pair, session, setup) that changes this before sizing up.'};
+      desc:'Average R per trade is <b>'+mean.toFixed(2)+'R</b> across '+n+' trades, with a 95% confidence interval of <b>'+(ciLow!=null?ciLow.toFixed(2):'—')+'R to '+(ciHigh!=null?ciHigh.toFixed(2):'—')+'R</b>'+(ciHigh!=null&&ciHigh>0?' — technically still touching positive territory, but the average itself is already negative':' — which doesn\'t even reach positive territory')+'. On the numbers logged so far, this approach loses money over the long run before you even factor in noise. Look for a filter combination (pair, session, setup) that changes this before sizing up.'};
   } else if(n<MIN_N_GREEN){
     verdict={level:'amber',label:'Promising, but sample is still too small to trust',
       desc:'Average R is <b>+'+mean.toFixed(2)+'R</b> per trade, which is a good sign, but with only '+n+' trades'+(pValue!=null&&pValue<0.05&&ciLow!=null&&ciLow>0?' — even though the confidence interval already clears zero — this tool won\'t call it a confirmed edge below <b>'+MIN_N_GREEN+' trades</b>. A handful of consistent trades can pass a significance test by chance; more data is the only way to rule that out.':' the confidence interval ('+ (ciLow!=null?ciLow.toFixed(2):'—')+'R to '+(ciHigh!=null?ciHigh.toFixed(2):'—')+'R) is too wide to call this confirmed.')+(nRequired?' At this rate, roughly <b>'+nRequired+'</b> R-tracked trades total would be needed to reach significance.':'')};
@@ -9952,10 +10174,68 @@ function computeEdgeStats(trades){
     verdict={level:'amber',label:'Positive but not yet statistically significant',
       desc:'Average R is <b>+'+mean.toFixed(2)+'R</b> per trade over '+n+' trades (p ≈ '+(pValue!=null?pValue.toFixed(3):'—')+'), but the 95% confidence interval ('+(ciLow!=null?ciLow.toFixed(2):'—')+'R to '+(ciHigh!=null?ciHigh.toFixed(2):'—')+'R) still dips to zero or below. Could be a real but noisy edge, or could be luck — '+(nRequired?'~'+nRequired+' trades total would help confirm it.':'more data will clarify it.')};
   }
+  // ── Outlier gate — applies on top of whatever verdict was just assigned. A single
+  // huge winner can make a flat-to-losing system look green (or "promising"); this
+  // catches that before the user sees a confidence they shouldn't have.
+  if(mean!=null&&mean>0&&outlierConcentrated){
+    if(verdict.level==='green'){
+      verdict={level:'amber',label:'Green on paper, but carried by one trade',
+        desc:'Average R clears every bar for a confirmed edge (+'+mean.toFixed(2)+'R over '+n+' trades, CI above zero) — but your single best trade alone accounts for <b>'+top1PctOfSum.toFixed(0)+'%</b> of total R here.'+(meanExTop1<=0?' Take that one trade out and the remaining '+(n-1)+' trades average <b>'+_edgeSigned(meanExTop1)+'R</b> — i.e. the rest of your history shows no edge at all.':' Take it out and average R drops to <b>'+_edgeSigned(meanExTop1)+'R</b> per trade.')+' That one trade may be a real, repeatable part of your edge, or it may be a lucky outlier — this tool can\'t tell the difference, so treat this as promising rather than confirmed until it holds up without relying on it.'};
+    } else if(verdict.level==='amber'){
+      verdict.desc+=' <b>Also worth checking:</b> your single best trade accounts for <b>'+top1PctOfSum.toFixed(0)+'%</b> of total R in this sample'+(meanExTop1!=null?' — excluding just that one trade, average R would be <b>'+_edgeSigned(meanExTop1)+'R</b> per trade':'')+'. Worth confirming this isn\'t one lucky trade doing most of the work.';
+    }
+  }
+  // ── Bootstrap gate — applies on top of whatever verdict was just assigned (after the
+  // outlier gate). The t-interval assumes symmetry; the bootstrap doesn't. When they
+  // disagree, trust the bootstrap and pull the verdict back rather than let a
+  // symmetry-assuming interval claim more confidence than the data actually supports.
+  if(mean!=null&&mean>0&&bootDisagrees&&bootCiLow!=null){
+    if(verdict.level==='green'){
+      verdict={level:'amber',label:'Green on paper, but the bootstrap doesn\'t confirm it',
+        desc:'The t-based 95% CI (<b>'+ciLow.toFixed(2)+'R to '+ciHigh.toFixed(2)+'R</b>) clears zero, but that assumes your R\'s are roughly symmetric around the mean. Resampling your actual R\'s directly (no shape assumed) gives a 95% range of <b>'+bootCiLow.toFixed(2)+'R to '+bootCiHigh.toFixed(2)+'R</b>'+(bootCiLow<=0?', which dips to zero or below':' — a meaningfully wider range')+'. That gap usually means your results are skewed (a few large outcomes doing most of the work) rather than evenly spread, so the t-interval is overstating how solid this edge is.'};
+    } else if(verdict.level==='amber'){
+      verdict.desc+=' <b>Bootstrap cross-check:</b> resampling your actual R\'s (no symmetry assumed) gives a 95% range of <b>'+bootCiLow.toFixed(2)+'R to '+bootCiHigh.toFixed(2)+'R</b>, vs. <b>'+ciLow.toFixed(2)+'R to '+ciHigh.toFixed(2)+'R</b> from the t-test — '+(bootCiLow<=0?'it doesn\'t clear zero either, reinforcing this isn\'t confirmed yet.':'a noticeably wider spread, another sign of skew rather than a tight, reliable edge.');
+    }
+  }
+  // ── Split-sample gate — applies on top of whatever verdict was just assigned
+  // (after the outlier and bootstrap gates). Catches an edge that's statistically
+  // real over the full sample but has already gone flat or reversed in the more
+  // recent half of trades — which is the half that actually predicts what happens
+  // next, not the older one propping up the full-sample average.
+  if(splitSampleWeak){
+    if(verdict.level==='green'){
+      verdict={level:'amber',label:'Green on paper, but the edge has faded recently',
+        desc:'Average R clears every bar for a confirmed edge (+'+mean.toFixed(2)+'R over '+n+' trades) — but split chronologically in half, the first '+firstHalfN+' trades averaged <b>'+_edgeSigned(firstHalfMean)+'R</b> while the most recent '+secondHalfN+' averaged <b>'+_edgeSigned(secondHalfMean)+'R</b>. Whatever drove the full-sample edge isn\'t showing up in the more recent half, which matters more for whether it keeps working than the older half does. Treat this as promising rather than confirmed until the recent trades turn back around.'};
+    } else if(verdict.level==='amber'){
+      verdict.desc+=' <b>Also worth checking:</b> split chronologically in half, the first '+firstHalfN+' trades averaged <b>'+_edgeSigned(firstHalfMean)+'R</b> vs. <b>'+_edgeSigned(secondHalfMean)+'R</b> for the most recent '+secondHalfN+' — the edge may already be fading.';
+    }
+  }
+  // ── Runs-test gate — applies on top of whatever verdict was just assigned (after the
+  // outlier, bootstrap, and split-sample gates). Those three all ask whether the mean is
+  // real; this asks whether the trades feeding that mean were actually independent. A
+  // clustered win/loss sequence means the effective sample size behind the t-test and CI
+  // is smaller than n suggests, so a "significant" result can be an artifact of streakiness
+  // (tilt, revenge trading, or a regime that already ended) rather than a stable edge.
+  if(runsClustered){
+    if(verdict.level==='green'){
+      verdict={level:'amber',label:'Green on paper, but wins/losses aren\'t independent',
+        desc:'Average R clears every bar for a confirmed edge (+'+mean.toFixed(2)+'R over '+n+' trades, CI above zero) — but a runs test on the win/loss sequence found only <b>'+runsTest.runs+'</b> streaks across '+runsTest.N+' decisive trades, vs. <b>'+runsTest.expRuns.toFixed(1)+'</b> expected if outcomes were independent (p ≈ '+runsTest.pValue.toFixed(3)+'). Wins and losses are clustering more than chance predicts — a sign of tilt, revenge trading after a loss, or a market regime that came and went, not necessarily an outlier of yours. The t-test and CI above both assume independent trades, so this clustering means they\'re more confident than the data actually supports. Treat this as promising rather than confirmed until the win/loss sequence looks less streaky.'};
+    } else if(verdict.level==='amber'){
+      verdict.desc+=' <b>Also worth checking:</b> a runs test on the win/loss sequence found only <b>'+runsTest.runs+'</b> streaks across '+runsTest.N+' decisive trades, vs. <b>'+runsTest.expRuns.toFixed(1)+'</b> expected by chance (p ≈ '+runsTest.pValue.toFixed(3)+') — wins and losses are clustering, which undermines the independence the significance test assumes.';
+    }
+  }
   return {n:n,rs:rs,mean:mean,stdDev:stdDev,se:se,tStat:tStat,pValue:pValue,ciLow:ciLow,ciHigh:ciHigh,
     spanStart:spanStart,spanEnd:spanEnd,spanDays:spanDays,tradesPerWeek:tradesPerWeek,
     winRate:winRate,avgWinR:avgWinR,avgLossR:avgLossR,payoff:payoff,profitFactor:profitFactor,
-    breakevenWR:breakevenWR,nRequired:nRequired,verdict:verdict};
+    breakevenWR:breakevenWR,nRequired:nRequired,
+    sumR:sumR,top1R:top1R,top3R:top3R,top1PctOfSum:top1PctOfSum,top3PctOfSum:top3PctOfSum,
+    meanExTop1:meanExTop1,meanExTop3:meanExTop3,outlierConcentrated:outlierConcentrated,
+    bootCiLow:bootCiLow,bootCiHigh:bootCiHigh,bootMean:bootMean,bootDisagrees:bootDisagrees,
+    firstHalfN:firstHalfN,secondHalfN:secondHalfN,firstHalfMean:firstHalfMean,secondHalfMean:secondHalfMean,
+    splitSampleWeak:splitSampleWeak,
+    runsN1:runsTest.n1,runsN2:runsTest.n2,runsN:runsTest.N,runsCount:runsTest.runs,runsExpected:runsTest.expRuns,
+    runsZ:runsTest.z,runsPValue:runsTest.pValue,runsClustered:runsClustered,runsAlternating:runsAlternating,
+    verdict:verdict};
 }
 var _EDGE_VERDICT_ICONS={
   green:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
@@ -9963,6 +10243,34 @@ var _EDGE_VERDICT_ICONS={
   amber:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L14.71 3.86a2 2 0 0 0-3.42 0z"/></svg>',
   gray:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
 };
+// ── Filter-shopping soft counter ──────────────────────────────────────
+// At a 5% significance threshold, roughly 1 in 20 filtered views will look
+// "significant" by pure chance if you check enough different slices (pair, session,
+// direction, error type...) — the more combinations you try, the more likely one of
+// them turns green for no reason but noise. This doesn't change the verdict (it can't
+// know which slice, if any, is the "real" one) — it just keeps a soft, session-scoped
+// count of distinct filter combinations viewed so the number of comparisons made stays
+// visible. Stored in sessionStorage (per-tab, clears when the tab closes) rather than
+// localStorage since it's meant to reflect "this sitting", not a running lifetime total.
+var EDGE_FILTERVIEW_KEY='tj-edge-filterviews-seen';
+function _edgeTrackFilterView(sig){
+  var seen=[];
+  try{seen=JSON.parse(sessionStorage.getItem(EDGE_FILTERVIEW_KEY)||'[]');}catch(e){seen=[];}
+  if(seen.indexOf(sig)===-1){
+    seen.push(sig);
+    try{sessionStorage.setItem(EDGE_FILTERVIEW_KEY,JSON.stringify(seen));}catch(e){}
+  }
+  return seen.length;
+}
+function _renderEdgeFilterViewNote(count){
+  var el=document.getElementById('edg-filterview-note');
+  if(!el)return;
+  if(!count||count<5){el.innerHTML='';return;}
+  el.innerHTML='<div style="font-size:11px;color:var(--text3);padding:2px 2px 12px;line-height:1.6">'+
+    '\u26A0\uFE0F You\u2019ve looked at <b style="color:var(--text2)">'+count+'</b> different filter combinations this visit. '+
+    'At a 5% threshold, roughly 1-in-20 filtered views will look \u201Csignificant\u201D by chance alone if you check enough of them \u2014 '+
+    'treat a good verdict on a narrow slice you found by scrolling through filters with more skepticism than one on your main, pre-chosen setup.</div>';
+}
 async function _renderEdgeAnalyzerImpl(){
   var allTrades=await dbGetAllCached('trades');
   var allSess=await dbGetAllCached('sessions');
@@ -9991,6 +10299,8 @@ async function _renderEdgeAnalyzerImpl(){
   });
   trades=enrichSkippedPL(trades);
   trades=trades.slice().sort(function(a,b){return new Date(a.entryTime||a.savedAt||0)-new Date(b.entryTime||b.savedAt||0);});
+  var filterSig=[sesF,pairF,dirF,errF,skipF,demoOn?'demo':'live'].join('|');
+  _renderEdgeFilterViewNote(_edgeTrackFilterView(filterSig));
   var grossStats=computeEdgeStats(trades);
   var feeInfo=await _edgeComputeNetTrades(trades);
   var netStats=computeEdgeStats(feeInfo.netTrades);
@@ -10029,7 +10339,11 @@ function _renderEdgeCoreStats(stats,totalFiltered,grossStats,feeInfo){
       '<div class="stat-card '+(stats.profitFactor!=null?(stats.profitFactor>=1.5?'green':(stats.profitFactor>=1?'amber':'red')):'')+'"><div class="stat-label">Profit factor</div><div class="stat-value">'+(stats.profitFactor!=null?(isFinite(stats.profitFactor)?stats.profitFactor.toFixed(2):'∞'):'—')+'</div><div class="stat-sub">total win R ÷ total loss R'+(hasFees?' (net)':'')+'</div></div>'+
       '<div class="stat-card '+(stats.payoff!=null?(stats.payoff>=1?'green':'amber'):'')+'"><div class="stat-label">Payoff ratio</div><div class="stat-value">'+(stats.payoff!=null?stats.payoff.toFixed(2)+':1':'—')+'</div><div class="stat-sub">avg win R ÷ avg loss R</div></div>'+
       '<div class="stat-card '+(stats.spanDays!=null?(stats.spanDays>=30?'green':'amber'):'')+'"><div class="stat-label">Period covered</div><div class="stat-value" style="font-size:16px">'+(stats.spanDays!=null?stats.spanDays+' day'+(stats.spanDays===1?'':'s'):'—')+'</div><div class="stat-sub">'+(stats.spanStart&&stats.spanEnd?stats.spanStart.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' – '+stats.spanEnd.toLocaleDateString(undefined,{month:'short',day:'numeric'})+(stats.tradesPerWeek?' · '+stats.tradesPerWeek.toFixed(1)+'/wk':''):'—')+'</div></div>'+
-      '<div class="stat-card '+(hasFees?(stats.mean!=null&&grossStats.mean!=null&&(stats.mean<=0&&grossStats.mean>0)?'red':'amber'):'')+'"><div class="stat-label">Fee drag</div><div class="stat-value" style="font-size:16px">'+(hasFees?'-'+feeInfo.avgFeeR.toFixed(3)+'R/trade':'not estimated')+'</div><div class="stat-sub">'+(hasFees?feeInfo.adjustedCount+' of '+feeInfo.totalCount+' trades costed':'no fee config or missing trade data')+'</div></div>';
+      '<div class="stat-card '+(hasFees?(stats.mean!=null&&grossStats.mean!=null&&(stats.mean<=0&&grossStats.mean>0)?'red':'amber'):'')+'"><div class="stat-label">Fee drag</div><div class="stat-value" style="font-size:16px">'+(hasFees?'-'+feeInfo.avgFeeR.toFixed(3)+'R/trade':'not estimated')+'</div><div class="stat-sub">'+(hasFees?feeInfo.adjustedCount+' of '+feeInfo.totalCount+' trades costed':'no fee config or missing trade data')+'</div></div>'+
+      '<div class="stat-card '+(stats.top1PctOfSum!=null?(stats.top1PctOfSum>=50?'red':(stats.top1PctOfSum>=30?'amber':'green')):'')+'"><div class="stat-label">Best trade\u2019s share of R</div><div class="stat-value" style="font-size:18px">'+(stats.top1PctOfSum!=null?stats.top1PctOfSum.toFixed(0)+'%':'—')+'</div><div class="stat-sub">'+(stats.meanExTop1!=null?'ex-best: '+_edgeSigned(stats.meanExTop1)+'R avg':'—')+'</div></div>'+
+      '<div class="stat-card '+(stats.top3PctOfSum!=null?(stats.top3PctOfSum>=70?'red':(stats.top3PctOfSum>=50?'amber':'green')):'')+'"><div class="stat-label">Top 3 trades\u2019 share of R</div><div class="stat-value" style="font-size:18px">'+(stats.top3PctOfSum!=null?stats.top3PctOfSum.toFixed(0)+'%':'—')+'</div><div class="stat-sub">'+(stats.meanExTop3!=null?'ex-top3: '+_edgeSigned(stats.meanExTop3)+'R avg':'—')+'</div></div>'+
+      '<div class="stat-card '+(stats.firstHalfMean!=null?(stats.splitSampleWeak?'red':(stats.secondHalfMean<stats.firstHalfMean?'amber':'green')):'')+'"><div class="stat-label">Split-sample check</div><div class="stat-value" style="font-size:15px">'+(stats.firstHalfMean!=null?_edgeSigned(stats.firstHalfMean)+'R → '+_edgeSigned(stats.secondHalfMean)+'R':'—')+'</div><div class="stat-sub">'+(stats.firstHalfMean!=null?'1st half ('+stats.firstHalfN+') vs 2nd half ('+stats.secondHalfN+')':'needs 20+ trades')+'</div></div>'+
+      '<div class="stat-card '+(stats.runsPValue!=null?(stats.runsClustered?'red':'green'):'')+'"><div class="stat-label">Runs test (streakiness)</div><div class="stat-value" style="font-size:15px">'+(stats.runsCount!=null?stats.runsCount+' runs <span style="opacity:.6;font-size:12px">(exp. '+stats.runsExpected.toFixed(1)+')</span>':'—')+'</div><div class="stat-sub">'+(stats.runsPValue!=null?(stats.runsClustered?'⚠ clustered, p ≈ '+stats.runsPValue.toFixed(3):(stats.runsAlternating?'over-alternating, p ≈ '+stats.runsPValue.toFixed(3):'looks independent')):'needs 20+ decisive trades, 5+ per side')+'</div></div>';
   }
   var stat=document.getElementById('edg-stat-stats');
   if(stat){
@@ -10038,6 +10352,7 @@ function _renderEdgeCoreStats(stats,totalFiltered,grossStats,feeInfo){
       '<div class="stat-card '+(stats.tStat!=null?(stats.tStat>=2?'green':(stats.tStat>0?'amber':'red')):'')+'"><div class="stat-label">SQN / t-stat</div><div class="stat-value" style="font-size:18px">'+(stats.tStat!=null?stats.tStat.toFixed(2):'—')+'</div><div class="stat-sub">'+_edgeSqnLabel(stats.tStat)+'</div></div>'+
       '<div class="stat-card '+(stats.pValue!=null?(stats.pValue<0.05?(stats.mean>0?'green':'red'):'amber'):'')+'"><div class="stat-label">p-value (one-tailed)</div><div class="stat-value" style="font-size:18px">'+(stats.pValue!=null?stats.pValue.toFixed(3):'—')+'</div><div class="stat-sub">'+(stats.pValue!=null?(stats.pValue<0.05?(stats.mean>0?'below .05 — significant edge':'below .05 — significantly losing'):'above .05 — not yet significant'):'—')+'</div></div>'+
       '<div class="stat-card"><div class="stat-label">95% confidence interval</div><div class="stat-value" style="font-size:15px">'+(stats.ciLow!=null?stats.ciLow.toFixed(2)+'R to '+stats.ciHigh.toFixed(2)+'R':'—')+'</div><div class="stat-sub">plausible range of true expectancy</div></div>'+
+      '<div class="stat-card '+(stats.bootCiLow!=null?(stats.bootDisagrees?'amber':'green'):'')+'"><div class="stat-label">Bootstrap 95% CI</div><div class="stat-value" style="font-size:15px">'+(stats.bootCiLow!=null?stats.bootCiLow.toFixed(2)+'R to '+stats.bootCiHigh.toFixed(2)+'R':'—')+'</div><div class="stat-sub">'+(stats.bootCiLow!=null?(stats.bootDisagrees?'⚠ disagrees with t-based CI':'agrees — no shape assumed'):'needs 10+ trades')+'</div></div>'+
       '<div class="stat-card"><div class="stat-label">Trades to confirm</div><div class="stat-value" style="font-size:18px">'+(stats.nRequired!=null?'~'+stats.nRequired:(stats.n>=(stats.nRequired||0)&&stats.mean>0?'reached':'—'))+'</div><div class="stat-sub">est. total needed for p&lt;.05</div></div>';
   }
 }
@@ -11072,6 +11387,14 @@ function toggleEdgFilters(){
   var open=body.style.display==='block';
   body.style.display=open?'none':'block';
   chevron.style.transform=open?'':'rotate(180deg)';
+}
+function edgMethSetAll(open){
+  ['exp','sd','sqn','pval','ci','boot','period','fee','be','outlier','split','runs'].forEach(function(k){
+    var body=document.getElementById('edg-meth-'+k);
+    var chevron=document.getElementById('edg-meth-chev-'+k);
+    if(body)body.style.display=open?'block':'none';
+    if(chevron)chevron.style.transform=open?'rotate(180deg)':'';
+  });
 }
 function resetEdgFilters(){
   ['edg-session-filter','edg-pair-filter','edg-direction-filter','edg-error-filter'].forEach(function(id){var el=document.getElementById(id);if(el)el.selectedIndex=0;});
