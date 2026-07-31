@@ -18741,9 +18741,48 @@ function cmIsConnected(){
 // overwrite the correct local state with the server's stale copy,
 // effectively "undoing" whatever change was just made (e.g. resurrecting
 // a deleted/cleared alert).
+//
+// BUGFIX: the worker's cron can fire an alert (send Telegram, set
+// fired:true in KV) while this tab is open but hasn't re-pulled yet.
+// If we then blindly overwrite '/alerts' with our stale local copy
+// (fired:false), the cloud's fired flag gets reverted — so the next
+// cron pass sees an "active" alert again and fires (and messages) it
+// a second time the next time price touches the target. To prevent
+// this, pull the cloud's current fired-states first and merge them
+// into the local copy before pushing, so a fired alert can never be
+// un-fired by our own push.
 function cmPushAlerts(){
   if(!cmHasUrl()) return Promise.resolve();
-  return cmFetch('/alerts', 'POST', _paAlerts || []).catch(function(err){
+  return cmFetch('/alerts', 'GET').then(function(cloudAlerts){
+    var cloudFiredMap = {};
+    if(Array.isArray(cloudAlerts)){
+      cloudAlerts.forEach(function(ca){ if(ca.fired) cloudFiredMap[ca.id] = ca; });
+    }
+    var mergedCount = 0;
+    var merged = (_paAlerts || []).map(function(a){
+      if(!a.fired && cloudFiredMap[a.id]){
+        mergedCount++;
+        return Object.assign({}, a, {
+          fired: true,
+          firedAt: cloudFiredMap[a.id].firedAt,
+          firedPrice: cloudFiredMap[a.id].firedPrice,
+          firedByCloud: true,
+          tgMessageId: cloudFiredMap[a.id].tgMessageId || a.tgMessageId || null
+        });
+      }
+      return a;
+    });
+    if(mergedCount > 0){
+      _paAlerts = merged;
+      paSaveLocalOnly();
+      paRender();
+    }
+    return cmFetch('/alerts', 'POST', merged);
+  }).catch(function(){
+    // Cloud GET failed (offline / worker unreachable) — fall back to a
+    // plain push rather than blocking the save entirely.
+    return cmFetch('/alerts', 'POST', _paAlerts || []);
+  }).catch(function(err){
     console.warn('CloudMonitor push failed:', err.message);
     toast('⚠️ Saved locally but failed to sync to CloudMonitor (' + err.message + ') — the change may revert on next reload until you retry', 'err');
   });
@@ -18790,7 +18829,7 @@ function cmSaveAndPush(){
   }
   cmUpdateBadge('warn', 'Connecting & syncing…');
   cmFetch('/config', 'POST', cmBuildConfig())
-  .then(function(){ return cmFetch('/alerts', 'POST', _paAlerts || []); })
+  .then(function(){ return cmPushAlerts(); }) // merges cloud fired-states instead of blindly overwriting
   .then(function(){ return cmLoadAlerts(); })
   .then(function(){
     toast('Connected to CloudMonitor · ' + (_paAlerts||[]).length + ' alert(s) in sync', 'ok');
