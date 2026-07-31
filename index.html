@@ -568,6 +568,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .sess-badge{display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-left:5px}
 .sess-badge-active{background:rgba(52,201,122,.12);color:var(--green);border:1px solid rgba(52,201,122,.25)}
 .sess-badge-archived{background:rgba(107,115,138,.1);color:var(--text3);border:1px solid var(--border)}
+.sess-badge-reviewed{background:rgba(52,201,122,.12);color:var(--green);border:1px solid rgba(52,201,122,.25)}
+.sess-badge-partial{background:rgba(232,160,48,.12);color:var(--amber);border:1px solid rgba(232,160,48,.25)}
+.sess-badge-unreviewed{background:rgba(107,115,138,.08);color:var(--text3);border:1px solid var(--border)}
 /* ── Strategy items: rows in the Strategy manager (Settings) ── */
 .strategy-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:5px;background:var(--bg3)}
 .strat-card{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg3);transition:border-color .12s,background .12s}
@@ -622,10 +625,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .star-toggle-btn:hover{color:var(--amber);transform:scale(1.1)}
 .star-toggle-btn.starred{color:var(--amber)}
 .star-toggle-btn svg{width:15px;height:15px}
-.pin-toggle-btn{background:none;border:none;cursor:pointer;padding:4px;display:inline-flex;align-items:center;justify-content:center;color:var(--text3);transition:color .12s,transform .12s;font-family:inherit}
-.pin-toggle-btn:hover{color:var(--accent);transform:scale(1.1)}
-.pin-toggle-btn.pinned{color:var(--accent)}
-.pin-toggle-btn svg{width:15px;height:15px}
+.reviewed-toggle-btn{background:none;border:1.5px solid transparent;cursor:pointer;padding:4px;display:inline-flex;align-items:center;justify-content:center;color:var(--text3);transition:all .12s;font-family:inherit;border-radius:50%}
+.reviewed-toggle-btn:hover{color:var(--green);transform:scale(1.1)}
+.reviewed-toggle-btn.reviewed{color:var(--green);border-color:var(--green)}
+.reviewed-toggle-btn.reviewed:hover{opacity:.85;transform:scale(1.1)}
+.reviewed-toggle-btn svg{width:15px;height:15px}
 .edit-banner{background:rgba(77,127,255,.06);border:1px solid rgba(77,127,255,.2);border-radius:var(--radius);padding:8px 12px;margin-bottom:14px;font-size:12px;color:var(--accent);display:none;align-items:center;justify-content:space-between}
 .edit-banner.visible{display:flex}
 .section-label{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
@@ -2678,9 +2682,6 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <button id="hist-starred-toggle" onclick="event.stopPropagation();toggleHistStarredOnly()" title="Show only starred trades" style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(232,160,48,.35);background:rgba(232,160,48,.08);color:var(--amber);font-family:inherit;letter-spacing:.04em;transition:all .12s">
               ★ <span id="hist-starred-label">Starred OFF</span>
             </button>
-            <button id="hist-pinned-jump" onclick="event.stopPropagation();jumpToPinnedTrade()" title="Jump back to your pinned trade" style="display:none;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(77,127,255,.35);background:rgba(77,127,255,.08);color:var(--accent);font-family:inherit;letter-spacing:.04em;transition:all .12s">
-              📌 <span id="hist-pinned-label">Pinned</span>
-            </button>
             <select id="hist-page-size-select" onchange="event.stopPropagation();histSetPageSize(this.value)" onclick="event.stopPropagation()" title="Trades per page" style="font-size:10px;padding:3px 22px 3px 4px;border-radius:4px;background-color:var(--bg3);border:1px solid var(--border2);color:var(--text2);width:56px">
               <option value="10">10</option>
               <option value="25">25</option>
@@ -4500,8 +4501,8 @@ document.addEventListener('DOMContentLoaded',function(){
       <div style="display:flex;gap:7px;align-items:center">
         <button class="btn btn-ghost btn-sm btn-icon" id="dm-prev-btn" title="Previous trade" onclick="dmNav(-1)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
         <button class="btn btn-ghost btn-sm btn-icon" id="dm-next-btn" title="Next trade" onclick="dmNav(1)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
-        <button class="pin-toggle-btn" id="dm-pin-btn" title="Pin trade" style="border:1px solid var(--border);border-radius:6px;padding:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.76V6h1a2 2 0 000-4H8a2 2 0 000 4h1v4.76a2 2 0 01-1.11 1.79l-1.78.9A2 2 0 005 15.24V17z"/></svg></button>
         <button class="star-toggle-btn" id="dm-star-btn" title="Star trade" style="border:1px solid var(--border);border-radius:6px;padding:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+        <button class="reviewed-toggle-btn" id="dm-reviewed-btn" title="Mark reviewed" style="border:1px solid var(--border);border-radius:6px;padding:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
         <button class="btn btn-ghost btn-sm" id="dm-edit-btn">Edit</button>
         <button class="btn btn-ghost btn-sm btn-icon" onclick="document.getElementById('detail-overlay').classList.remove('open')">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -6715,6 +6716,29 @@ async function deleteSession(id){
   toast('Session and its trades deleted','ok');
   await ghAutoSync();
 }
+// ── Session review status: derived purely from each trade's `reviewed` flag, never
+// stored on the session itself, so it can't drift out of sync the way a cached field could.
+// Trades are ordered chronologically (entry time, falling back to num) — "resume" means the
+// first unreviewed trade in that order.
+function getSessionReviewStatus(sessionId,trades){
+  var sTrades=trades.filter(function(t){return t.sessionId===sessionId;});
+  sTrades.sort(function(a,b){return new Date(a.entryTime||a.savedAt||0)-new Date(b.entryTime||b.savedAt||0)||(a.num||0)-(b.num||0);});
+  var total=sTrades.length;
+  var reviewedCount=sTrades.filter(function(t){return !!t.reviewed;}).length;
+  var status=total===0?'empty':(reviewedCount===0?'none':(reviewedCount===total?'full':'partial'));
+  var resumeTrade=sTrades.find(function(t){return !t.reviewed;})||null;
+  return{status:status,reviewedCount:reviewedCount,total:total,resumeTrade:resumeTrade};
+}
+async function markSessionReviewed(sessionId,value){
+  var trades=await dbGetAll('trades');
+  var sTrades=trades.filter(function(t){return t.sessionId===sessionId;});
+  for(var i=0;i<sTrades.length;i++){
+    if(!!sTrades[i].reviewed!==value){sTrades[i].reviewed=value;await dbPut('trades',sTrades[i]);}
+  }
+  renderSessionsList();
+  renderHistory();
+  ghAutoSync();
+}
 async function renderSessionsList(){
   var sessions=await dbGetAll('sessions');
   var trades=await dbGetAll('trades');
@@ -6732,8 +6756,24 @@ async function renderSessionsList(){
     var active=isSessionActive(s);
     var activeBadge=active&&!s.archived?'<span class="sess-badge sess-badge-active">● Active</span>':'';
     var archivedBadge=s.archived?'<span class="sess-badge sess-badge-archived">Archived</span>':'';
-    return'<div class="session-item'+(s.archived?' archived':'')+'" style="cursor:pointer" onclick="editSessionById(\''+s.id+'\')"><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+escHtml(s.name)+activeBadge+archivedBadge+'</div><div class="session-meta">'+escHtml(dateStr)+' · '+count+' trades'+equityStr+(s.notes?' · '+escHtml(s.notes.slice(0,50)):'')+'</div>'+'</div>'
+    var rev=getSessionReviewStatus(s.id,trades);
+    var reviewBadge='';
+    var resumeHint='';
+    var reviewBtn='';
+    if(rev.status==='full'){
+      reviewBadge='<span class="sess-badge sess-badge-reviewed">✓ Reviewed</span>';
+      reviewBtn='<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();markSessionReviewed(\''+s.id+'\',false)" title="Reset review status">Unmark</button>';
+    }else if(rev.status==='partial'){
+      reviewBadge='<span class="sess-badge sess-badge-partial">'+rev.reviewedCount+'/'+rev.total+' reviewed</span>';
+      resumeHint=rev.resumeTrade?' · Resume at <a href="#" style="color:var(--accent)" onclick="event.stopPropagation();openDetail(\''+rev.resumeTrade.id+'\')">#'+(rev.resumeTrade.num||'')+'</a>':'';
+      reviewBtn='<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();markSessionReviewed(\''+s.id+'\',true)" title="Mark every trade in this session as reviewed">Mark reviewed</button>';
+    }else if(rev.status==='none'){
+      reviewBadge='<span class="sess-badge sess-badge-unreviewed">Not reviewed</span>';
+      reviewBtn='<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();markSessionReviewed(\''+s.id+'\',true)" title="Mark every trade in this session as reviewed">Mark reviewed</button>';
+    }
+    return'<div class="session-item'+(s.archived?' archived':'')+'" style="cursor:pointer" onclick="editSessionById(\''+s.id+'\')"><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+escHtml(s.name)+activeBadge+archivedBadge+reviewBadge+'</div><div class="session-meta">'+escHtml(dateStr)+' · '+count+' trades'+equityStr+resumeHint+(s.notes?' · '+escHtml(s.notes.slice(0,50)):'')+'</div>'+'</div>'
       +'<div style="display:flex;gap:6px">'
+      +reviewBtn
       +'<button class="btn btn-ghost btn-sm" style="color:var(--purple)" onclick="event.stopPropagation();openRetroView(\''+s.id+'\')" title="View/add retrospective">Retro</button>'
       +'<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editSessionById(\''+s.id+'\')">Edit</button>'
       +'<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteSession(\''+s.id+'\')">Delete</button></div></div>';
@@ -8080,11 +8120,11 @@ async function saveTrade(){
   var imageIds=JSON.parse(JSON.stringify(_emptyIds));
   var oldSessionId=null; // track original session when editing, to rebalance it if the trade is moved
   var _oldLoggedAt=null;
-  var _oldPinned=false;
   var _oldStarred=false;
+  var _oldReviewed=false;
   if(editingId){
     var old=await dbGet('trades',editingId);
-    if(old){imageIds=JSON.parse(JSON.stringify(old.imageIds||_emptyIds));oldSessionId=old.sessionId||null;_oldLoggedAt=old.loggedAt||null;num=old.num||num;_oldPinned=!!old.pinned;_oldStarred=!!old.starred;}
+    if(old){imageIds=JSON.parse(JSON.stringify(old.imageIds||_emptyIds));oldSessionId=old.sessionId||null;_oldLoggedAt=old.loggedAt||null;num=old.num||num;_oldStarred=!!old.starred;_oldReviewed=!!old.reviewed;}
     if(pendingImages._deleted){
       for(var z2 in imageIds)imageIds[z2]=(imageIds[z2]||[]).filter(function(id){return!pendingImages._deleted.includes(id)});
       for(var did of pendingImages._deleted)await dbDelete('images',did);
@@ -8139,8 +8179,8 @@ async function saveTrade(){
     partialTPs:partialTPsSaved,
     partialDesc:partialDesc,
     htfTf:tfState.htf,mtfTf:tfState.mtf,ltfTf:tfState.ltf,
-    pinned:_oldPinned,
     starred:_oldStarred,
+    reviewed:_oldReviewed,
     loggedAt:editingId?(_oldLoggedAt||new Date().toISOString()):new Date().toISOString()
   };
   await dbPut('trades',trade);
@@ -8846,9 +8886,10 @@ async function _renderHistoryImpl(){
   var rows=pageTrades.map(function(t){
     var cells=visibleCols.map(function(col){try{return col.render(t);}catch(e){return'<td>—</td>';}}).join('');
     var isStarred=!!t.starred;
-    var isPinned=!!t.pinned;
+    var isReviewed=!!t.reviewed;
     var starCell='<td style="white-space:nowrap;padding-right:0">'
       +'<button class="star-toggle-btn'+(isStarred?' starred':'')+'" title="'+(isStarred?'Unstar trade':'Star trade')+'" onclick="event.stopPropagation();toggleStarTrade(\''+t.id+'\')"><svg viewBox="0 0 24 24" fill="'+(isStarred?'currentColor':'none')+'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>'
+      +'<button class="reviewed-toggle-btn'+(isReviewed?' reviewed':'')+'" title="'+(isReviewed?'Mark unreviewed':'Mark reviewed')+'" onclick="event.stopPropagation();toggleReviewedTrade(\''+t.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>'
       +'</td>';
     var actions='<td style="white-space:nowrap">'
       +'<button class="btn btn-sm btn-icon" title="View" onclick="event.stopPropagation();openDetail(\''+t.id+'\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>'
@@ -8856,8 +8897,8 @@ async function _renderHistoryImpl(){
       +' <button class="btn btn-danger btn-sm btn-icon" title="Delete" onclick="event.stopPropagation();deleteTrade(\''+t.id+'\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>'
       +'</td>';
     var isPending=!t.exitPrice;
-    var rowStyle=isPending?' style="background:rgba(232,160,48,.12)'+(isPinned?';box-shadow:inset 4px 0 0 var(--accent)"':'"'):(isPinned?' style="box-shadow:inset 4px 0 0 var(--accent)"':'');
-    return'<tr'+rowStyle+(isPinned?' title="📌 Pinned trade"':'')+' onclick="openDetail(\''+t.id+'\')">'+starCell+cells+actions+'</tr>';
+    var rowStyle=isPending?' style="background:rgba(232,160,48,.12)"':'';
+    return'<tr'+rowStyle+' onclick="openDetail(\''+t.id+'\')">'+starCell+cells+actions+'</tr>';
   }).join('');
   wrap.innerHTML='<table class="data"><thead><tr>'+headers+'</tr></thead><tbody>'+rows+'</tbody></table>';
   if(pager){
@@ -8875,7 +8916,6 @@ async function _renderHistoryImpl(){
   }
   // Ordered id list — used by the detail modal's prev/next navigation buttons
   window._histTradeOrder=filtered.map(function(t){return t.id;});
-  updateHistPinnedIndicator();
   // Async: fill fees & net P/L cells using current asset fee settings
   // Use a render-generation token so a stale async fill doesn't overwrite a newer render
   if(!window._histRenderGen) window._histRenderGen = 0;
@@ -8965,7 +9005,7 @@ function _dmUpdateNavButtons(){
   nextBtn.style.cursor=nextBtn.disabled?'default':'pointer';
 }
 // Builds and opens the trade detail modal for a single trade: header badges
-// (win/loss/pending, skipped, direction, strategy, rating), star/pin toggles,
+// (win/loss/pending, skipped, direction, strategy, rating), star/reviewed toggles,
 // the full read-only field breakdown (left panel), and — if the trade has any
 // screenshots — a resizable right panel with grouped thumbnails plus the
 // click-to-focus zoom/pan viewer. Also feeds _dmImgList/_dmImgLabels so the
@@ -9014,17 +9054,19 @@ async function openDetail(id,opts){
     renderHistory();
     ghAutoSync();
   };
-  var dmPinBtn=document.getElementById('dm-pin-btn');
-  var _dmSyncPinBtn=function(pinned){
-    dmPinBtn.classList.toggle('pinned',!!pinned);
-    dmPinBtn.querySelector('svg').setAttribute('fill',pinned?'currentColor':'none');
-    dmPinBtn.title=pinned?'Unpin trade':'Pin trade (only one at a time)';
+  var dmReviewedBtn=document.getElementById('dm-reviewed-btn');
+  var _dmSyncReviewedBtn=function(reviewed){
+    dmReviewedBtn.classList.toggle('reviewed',!!reviewed);
+    dmReviewedBtn.title=reviewed?'Mark unreviewed':'Mark reviewed';
   };
-  _dmSyncPinBtn(trade.pinned);
-  dmPinBtn.onclick=async function(){
-    var nowPinned=await togglePinTrade(id);
-    trade.pinned=nowPinned;
-    _dmSyncPinBtn(nowPinned);
+  _dmSyncReviewedBtn(trade.reviewed);
+  dmReviewedBtn.onclick=async function(){
+    trade.reviewed=!trade.reviewed;
+    await dbPut('trades',trade);
+    _dmSyncReviewedBtn(trade.reviewed);
+    renderHistory();
+    renderSessionsList();
+    ghAutoSync();
   };
   var plStr=(trade.plDollar>=0?'+':'')+trade.plDollar.toFixed(2);
   var plColor=win?'var(--green)':'var(--red)';
@@ -11489,45 +11531,15 @@ async function toggleStarTrade(id){
   renderHistory();
   ghAutoSync();
 }
-// ── Pin: only one trade can be pinned at a time, used as a "resume where I left off" marker ──
-async function togglePinTrade(id){
+// ── Reviewed: per-trade flag used to derive each session's review status (none/partial/full) ──
+async function toggleReviewedTrade(id){
   var trade=await dbGet('trades',id);
-  if(!trade)return false;
-  var newState=!trade.pinned;
-  if(newState){
-    // Enforce single pin — unpin any other trade currently pinned
-    var all=await dbGetAllCached('trades');
-    var others=all.filter(function(t){return t.id!==id&&t.pinned;});
-    for(var i=0;i<others.length;i++){
-      var o=await dbGet('trades',others[i].id);
-      if(o){o.pinned=false;await dbPut('trades',o);}
-    }
-  }
-  trade.pinned=newState;
+  if(!trade)return;
+  trade.reviewed=!trade.reviewed;
   await dbPut('trades',trade);
   renderHistory();
+  renderSessionsList();
   ghAutoSync();
-  return newState;
-}
-async function updateHistPinnedIndicator(){
-  var all=await dbGetAllCached('trades');
-  var pinned=all.find(function(t){return t.pinned;});
-  var btn=document.getElementById('hist-pinned-jump');
-  var lbl=document.getElementById('hist-pinned-label');
-  if(!btn)return;
-  if(pinned){
-    btn.style.display='inline-flex';
-    if(lbl)lbl.textContent='#'+(pinned.num||'')+' '+(pinned.pair||'');
-  }else{
-    btn.style.display='none';
-  }
-}
-function jumpToPinnedTrade(){
-  dbGetAllCached('trades').then(function(all){
-    var pinned=all.find(function(t){return t.pinned;});
-    if(pinned)openDetail(pinned.id);
-    else toast('No trade pinned','err');
-  });
 }
 function toggleMcDemoMode(){
   _dashDemoMode=!_dashDemoMode;
