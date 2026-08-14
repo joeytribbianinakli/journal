@@ -17,7 +17,7 @@
   --text:#d8dbe8; --text2:#aab0c8; --text3:#7a8298;
   --accent:#4d7fff; --accent2:#3a6ef0;
   --blue:#4d7fff;
-  --green:#34c97a; --red:#e85555; --amber:#e8a030; --purple:#9b7ff0;
+  --green:#34c97a; --red:#e85555; --amber:#e8a030; --purple:#9b7ff0; --pending:#eab308;
   --radius:6px; --radius-lg:10px; --radius-xl:14px;
   --sidebar-w:216px;
 }
@@ -130,6 +130,7 @@ table.data tbody tr:hover td{background:var(--bg3);color:var(--text)}
 .badge-red{background:rgba(232,85,85,.1);color:var(--red)}
 .badge-blue{background:rgba(77,127,255,.1);color:var(--accent)}
 .badge-amber{background:rgba(232,160,48,.1);color:var(--amber)}
+.badge-pending{background:rgba(234,179,8,.12);color:var(--pending)}
 .badge-purple{background:rgba(155,127,240,.1);color:var(--purple)}
 .badge-gray{background:rgba(107,115,138,.1);color:var(--text2)}
 /* ── Calendar view: month/week/year grids, heatmap intensity classes, streak bar, day detail panel (page-calendar) ── */
@@ -1633,7 +1634,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <span class="meth-term">Fee drag / Net expectancy</span><span class="meth-teaser">All stats above are net of your estimated real trading costs, not raw price-move R.</span>
             <svg id="edg-meth-chev-fee" class="meth-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div class="meth-body" id="edg-meth-fee" style="display:none">The verdict and all stats above are computed on R-multiples <b>net of estimated trading costs</b> (spread, commission, overnight/swap), using your current per-asset-type fee settings (Manage Assets &amp; Pairs) applied to each trade's qty/entry price/duration. This matters because the raw R-multiple logged per trade is pure price-move vs. stop-distance and never includes costs — a gross edge can be statistically real and still be flat or a net loser once real costs are counted, especially for small-target or high-frequency setups. Two caveats: it uses your <i>currently</i> configured fees applied retroactively, so it won't reflect a broker or fee change partway through your history; and trades missing asset type, quantity, or risk-dollar data are left at gross R (treated as zero-fee) since no cost can be estimated for them — check the "Fee drag" card's coverage count if this matters to you.</div>
+          <div class="meth-body" id="edg-meth-fee" style="display:none">The verdict and all stats above are computed on R-multiples <b>net of estimated trading costs</b> (spread, commission, overnight/swap, margin interest, short-borrow fee, SEC/FINRA regulatory fees), using your current per-asset-type fee settings (Manage Assets &amp; Pairs) applied to each trade's qty/entry price/duration/direction. This matters because the raw R-multiple logged per trade is pure price-move vs. stop-distance and never includes costs — a gross edge can be statistically real and still be flat or a net loser once real costs are counted, especially for small-target or high-frequency setups. Two caveats: it uses your <i>currently</i> configured fees applied retroactively, so it won't reflect a broker or fee change partway through your history; and trades missing asset type, quantity, or risk-dollar data are left at gross R (treated as zero-fee) since no cost can be estimated for them — check the "Fee drag" card's coverage count if this matters to you.</div>
         </div>
         <div class="meth-item">
           <div class="meth-header" onclick="toggleCollapsible('edg-meth-be','edg-meth-chev-be')">
@@ -1738,7 +1739,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       </div>
       <!-- Streak bar — context-aware to selected view -->
       <div id="cal-streak-wrap" style="margin-bottom:14px">
-        <div class="cal-streak-bar" id="cal-streak-bar"></div>
+        <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+          <div class="cal-streak-bar" id="cal-streak-bar" style="flex:1 1 auto;min-width:0"></div>
+          <div id="cal-streak-summary" style="display:flex;gap:16px;font-size:12px;font-weight:700;font-family:DM Mono,monospace;white-space:nowrap;padding-top:4px;flex-shrink:0"></div>
+        </div>
         <div id="cal-streak-legend" style="display:flex;gap:10px;margin-top:5px;font-size:9px;color:var(--text3)">
           <span style="display:flex;align-items:center;gap:3px"><span style="width:10px;height:10px;min-width:10px;min-height:10px;border-radius:2px;background:rgba(52,201,122,.5);display:inline-flex;flex-shrink:0"></span>Profitable</span>
           <span style="display:flex;align-items:center;gap:3px"><span style="width:10px;height:10px;min-width:10px;min-height:10px;border-radius:2px;background:rgba(232,85,85,.45);display:inline-flex;flex-shrink:0"></span>Loss</span>
@@ -7755,11 +7759,11 @@ function recalc(){
     else{sessDisp.value='';sessDisp.style.color='';}
   }
   // Async fee update (debounced to avoid rapid IDB reads)
-  recalcFeesAsync(entry, qty, durMin);
+  recalcFeesAsync(entry, qty, durMin, type);
 }
 // Debounced async fee updater — reads asset fees from IDB then updates fee strip
 var _recalcFeesTimer = null;
-function recalcFeesAsync(entry, qty, durMin){
+function recalcFeesAsync(entry, qty, durMin, direction){
   clearTimeout(_recalcFeesTimer);
   _recalcFeesTimer = setTimeout(function(){
     var assetTypeName = (document.getElementById('f-asset-type')||{}).value || '';
@@ -7772,7 +7776,7 @@ function recalcFeesAsync(entry, qty, durMin){
     _getAssetFeesForType(assetTypeName).then(function(fees){
       if(!fees){ var sec=document.getElementById('c-fees-section'); if(sec)sec.style.display='none'; _lastCalcFees=null; return; }
       var pairVal = (document.getElementById('f-pair')||{}).value || '';
-      var feeResult = calcTradeFees(fees, qty, entry, durMin, pairVal);
+      var feeResult = calcTradeFees(fees, qty, entry, durMin, pairVal, direction);
       _lastCalcFees = feeResult;
       _renderFeeStrip(feeResult, qty > 0 ? entry : 0);
     });
@@ -8520,7 +8524,7 @@ var ALL_HISTORY_COLS=[
   {key:'ltf',       label:'LTF',       sortVal:function(t){return t.ltf||'';},                    render:function(t){return'<td style="font-size:11px;color:var(--text2)">'+escHtml(t.ltf||'—')+'</td>';}},
   {key:'targetRR',  label:'Target RR', sortVal:function(t){return parseFloat(t.targetRR)||0;},    render:function(t){return'<td class="mono">'+(t.targetRR?t.targetRR+'R':'—')+'</td>';}},
   {key:'loggedAt',  label:'Logged at', sortVal:function(t){return t.loggedAt||t.savedAt||'';},    render:function(t){var d=t.loggedAt||t.savedAt;if(!d)return'<td>—</td>';var dt=new Date(d);return'<td style="color:var(--text3);font-size:11px;white-space:nowrap" title="'+escHtml(d)+'">'+dt.toLocaleDateString()+' '+dt.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})+'</td>';}},
-  {key:'fees',      label:'Fees (est.)',sortVal:function(t){return 0;}, render:function(t){return'<td class="mono hist-fee-cell" data-trade-id="'+escHtml(t.id||'')+'" data-asset="'+escHtml(t.assetType||'')+'" data-entry="'+escHtml(String(t.entryPrice||''))+'" data-qty="'+escHtml(String(t.qty||''))+'" data-dur="'+escHtml(String(t.durationMin||0))+'" data-pair="'+escHtml(t.pair||'')+'"><span style="color:var(--text3);font-size:10px">…</span></td>';}},
+  {key:'fees',      label:'Fees (est.)',sortVal:function(t){return 0;}, render:function(t){return'<td class="mono hist-fee-cell" data-trade-id="'+escHtml(t.id||'')+'" data-asset="'+escHtml(t.assetType||'')+'" data-entry="'+escHtml(String(t.entryPrice||''))+'" data-qty="'+escHtml(String(t.qty||''))+'" data-dur="'+escHtml(String(t.durationMin||0))+'" data-pair="'+escHtml(t.pair||'')+'" data-dir="'+escHtml(t.type||'')+'"><span style="color:var(--text3);font-size:10px">…</span></td>';}},
   {key:'netPL',     label:'Net P/L ($)',sortVal:function(t){return parseFloat(t.plDollar)||0;}, render:function(t){return'<td class="mono hist-netpl-cell" data-trade-id="'+escHtml(t.id||'')+'" data-pl="'+escHtml(String(t.plDollar||0))+'"><span style="color:var(--text3);font-size:10px">…</span></td>';}},
 ];
 // ── Sort state ──────────────────────────────────────
@@ -8931,12 +8935,13 @@ async function _renderHistoryImpl(){
       var qty   = parseFloat(cell.dataset.qty)||0;
       var dur   = parseFloat(cell.dataset.dur)||0;
       var pair  = cell.dataset.pair||'';
+      var dir   = cell.dataset.dir||'';
       var tid   = cell.dataset.tradeId;
       if(!asset||!entry||!qty){cell.innerHTML='<span style="color:var(--text3)">—</span>';continue;}
       if(!feeMap[asset]) feeMap[asset] = _getAssetFeesForType(asset);
       var assetFees = await feeMap[asset];
       if(window._histRenderGen !== myGen) return; // abort after await
-      var feeResult = assetFees ? calcTradeFees(assetFees, qty, entry, dur, pair) : null;
+      var feeResult = assetFees ? calcTradeFees(assetFees, qty, entry, dur, pair, dir) : null;
       var feeTotal  = (feeResult && feeResult.total > 0) ? feeResult.total : 0;
       cell.innerHTML = feeTotal > 0
         ? '<span style="color:var(--amber)">-$'+feeTotal.toFixed(4)+'</span>'
@@ -10360,7 +10365,7 @@ function _renderEdgeVerdict(stats,totalFiltered,grossStats,feeInfo){
   if(feeInfo&&feeInfo.adjustedCount>0){
     var grossM=grossStats&&grossStats.mean!=null?grossStats.mean:null;
     var netM=stats.mean;
-    feeNote='<div class="edge-verdict-desc" style="margin-top:6px;opacity:.85">Verdict is <b>net of estimated trading costs</b> (spread/commission/overnight, from your current asset fee settings) on '+feeInfo.adjustedCount+' of '+feeInfo.totalCount+' trades — averaging <b>-'+feeInfo.avgFeeR.toFixed(3)+'R/trade</b> in fees. Gross (pre-fee) expectancy was '+(grossM!=null?_edgeSigned(grossM)+'R':'—')+' vs. net '+(netM!=null?_edgeSigned(netM)+'R':'—')+'.</div>';
+    feeNote='<div class="edge-verdict-desc" style="margin-top:6px;opacity:.85">Verdict is <b>net of estimated trading costs</b> (spread/commission/overnight/margin/borrow/regulatory, from your current asset fee settings) on '+feeInfo.adjustedCount+' of '+feeInfo.totalCount+' trades — averaging <b>-'+feeInfo.avgFeeR.toFixed(3)+'R/trade</b> in fees. Gross (pre-fee) expectancy was '+(grossM!=null?_edgeSigned(grossM)+'R':'—')+' vs. net '+(netM!=null?_edgeSigned(netM)+'R':'—')+'.</div>';
   } else if(feeInfo&&feeInfo.totalCount>0){
     feeNote='<div class="edge-verdict-desc" style="margin-top:6px;opacity:.85">No fee data could be estimated for these trades (no fee config or missing qty/entry data) — this verdict is on <b>gross</b> R, unadjusted for costs.</div>';
   }
@@ -12013,37 +12018,67 @@ async function runMonteCarlo(){
   toast('Simulation complete: '+runs+' runs','ok');
 }
 // ── Default fee templates per asset class ──────────────────────────────────
-// feeType: 'spread' | 'commission' | 'overnight' | 'exchange'
+// feeType: 'spread' | 'commission' | 'overnight' | 'exchange' | 'financing' | 'borrowFee' | 'regulatory'
 // Fees are stored on each asset type object under the `fees` key.
-// spread: pips/points per unit (applied on entry + exit)
-// commission: $ per unit (round-trip, so applied once)
-// overnight: $ per unit per night (applied based on duration)
-// exchange: $ flat per trade
+// spread:     pips/points/% per unit (applied on entry + exit)
+// commission: $ per unit or % notional (round-trip, so applied once)
+// overnight:  $ per unit per night (FX/CFD swap/rollover — this already IS the cost of holding
+//             a leveraged FX/CFD position overnight, i.e. forex's version of a margin financing fee)
+// exchange:   $ flat per trade (exchange/clearing fee)
+// financing:  annualized %/year margin-interest rate, charged only on LONG positions held ≥1
+//             night on borrowed (margin) capital. Real-world equivalent: broker margin loan rate.
+// borrowFee:  annualized %/year stock-loan rate, charged only on SHORT positions held ≥1 night —
+//             the cost to borrow the shares you sold short. Real-world: "hard-to-borrow" fee.
+// regulatory: SEC Section 31 fee + FINRA Trading Activity Fee (US equities only), computed from
+//             the real statutory formula (SEC $20.60/$1M notional + FINRA $0.000195/share, capped
+//             $9.79/trade) — the fee's "value" is a multiplier on that formula, default 1.
 var DEFAULT_FEES_BY_CLASS = {
-  'Forex Major':   { spread:{ enabled:true, value:1.2, unit:'pips' }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:true, value:0.00003, unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' } },
-  'Forex Minor':   { spread:{ enabled:true, value:2.0, unit:'pips' }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:true, value:0.00004, unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' } },
-  'Forex Exotic':  { spread:{ enabled:true, value:5.0, unit:'pips' }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:true, value:0.0001,  unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' } },
-  'Commodity':     { spread:{ enabled:true, value:0.3, unit:'pips' }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:true, value:0.0005,  unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' } },
-  'Index':         { spread:{ enabled:true, value:1.0, unit:'pts'  }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:true, value:0.002,   unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' } },
-  'Stocks':        { spread:{ enabled:false, value:0,  unit:'pips' }, commission:{ enabled:true,  value:0.005, unit:'$/unit' }, overnight:{ enabled:false, value:0, unit:'$/unit/night' }, exchange:{ enabled:true, value:0, unit:'$/trade' } },
-  'Crypto':        { spread:{ enabled:true, value:0.1, unit:'%'   }, commission:{ enabled:true, value:0.001, unit:'% notional' }, overnight:{ enabled:false, value:0, unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' } },
-  'Futures':       { spread:{ enabled:false, value:0,  unit:'pts'  }, commission:{ enabled:true, value:0.85, unit:'$/contract' }, overnight:{ enabled:false, value:0, unit:'$/unit/night' }, exchange:{ enabled:true, value:0.02, unit:'$/trade' } },
-  'default':       { spread:{ enabled:true, value:1.0, unit:'pips' }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:false, value:0, unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' } }
+  'Forex Major':   { spread:{ enabled:true, value:1.2, unit:'pips' }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:true, value:0.00003, unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' }, financing:{ enabled:false, value:9, unit:'%/yr, long' }, borrowFee:{ enabled:false, value:0, unit:'%/yr, short (n/a for FX)' }, regulatory:{ enabled:false, value:1, unit:'× SEC+TAF (n/a for FX)' } },
+  'Forex Minor':   { spread:{ enabled:true, value:2.0, unit:'pips' }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:true, value:0.00004, unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' }, financing:{ enabled:false, value:9, unit:'%/yr, long' }, borrowFee:{ enabled:false, value:0, unit:'%/yr, short (n/a for FX)' }, regulatory:{ enabled:false, value:1, unit:'× SEC+TAF (n/a for FX)' } },
+  'Forex Exotic':  { spread:{ enabled:true, value:5.0, unit:'pips' }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:true, value:0.0001,  unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' }, financing:{ enabled:false, value:9, unit:'%/yr, long' }, borrowFee:{ enabled:false, value:0, unit:'%/yr, short (n/a for FX)' }, regulatory:{ enabled:false, value:1, unit:'× SEC+TAF (n/a for FX)' } },
+  'Commodity':     { spread:{ enabled:true, value:0.3, unit:'pips' }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:true, value:0.0005,  unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' }, financing:{ enabled:false, value:9, unit:'%/yr, long' }, borrowFee:{ enabled:false, value:1, unit:'%/yr, short' }, regulatory:{ enabled:false, value:1, unit:'× SEC+TAF (n/a for CFDs)' } },
+  'Index':         { spread:{ enabled:true, value:1.0, unit:'pts'  }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:true, value:0.002,   unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' }, financing:{ enabled:false, value:9, unit:'%/yr, long' }, borrowFee:{ enabled:false, value:1, unit:'%/yr, short' }, regulatory:{ enabled:false, value:1, unit:'× SEC+TAF (n/a for CFDs)' } },
+  'Stocks':        { spread:{ enabled:false, value:0,  unit:'pips' }, commission:{ enabled:true,  value:0.005, unit:'$/unit' }, overnight:{ enabled:false, value:0, unit:'$/unit/night' }, exchange:{ enabled:true, value:0, unit:'$/trade' }, financing:{ enabled:false, value:9, unit:'%/yr, long (margin loan)' }, borrowFee:{ enabled:false, value:1, unit:'%/yr, short (stock loan)' }, regulatory:{ enabled:true, value:1, unit:'× SEC+TAF formula' } },
+  'Crypto':        { spread:{ enabled:true, value:0.1, unit:'%'   }, commission:{ enabled:true, value:0.001, unit:'% notional' }, overnight:{ enabled:false, value:0, unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' }, financing:{ enabled:false, value:15, unit:'%/yr, long (perp funding)' }, borrowFee:{ enabled:false, value:15, unit:'%/yr, short (perp funding)' }, regulatory:{ enabled:false, value:1, unit:'× SEC+TAF (n/a)' } },
+  'Futures':       { spread:{ enabled:false, value:0,  unit:'pts'  }, commission:{ enabled:true, value:0.85, unit:'$/contract' }, overnight:{ enabled:false, value:0, unit:'$/unit/night' }, exchange:{ enabled:true, value:0.02, unit:'$/trade' }, financing:{ enabled:false, value:0, unit:'%/yr (n/a)' }, borrowFee:{ enabled:false, value:0, unit:'%/yr (n/a)' }, regulatory:{ enabled:false, value:1, unit:'× SEC+TAF (n/a)' } },
+  'default':       { spread:{ enabled:true, value:1.0, unit:'pips' }, commission:{ enabled:false, value:0, unit:'$/unit' }, overnight:{ enabled:false, value:0, unit:'$/unit/night' }, exchange:{ enabled:false, value:0, unit:'$/trade' }, financing:{ enabled:false, value:9, unit:'%/yr, long' }, borrowFee:{ enabled:false, value:1, unit:'%/yr, short' }, regulatory:{ enabled:false, value:1, unit:'× SEC+TAF (US equities)' } }
 };
-// Guess a sensible default fee template for a new/legacy asset type from its name (keyword match against DEFAULT_FEES_BY_CLASS)
-function _getDefaultFees(typeName){
+// Classify an asset type name into one of DEFAULT_FEES_BY_CLASS's buckets by keyword match.
+// Shared by _getDefaultFees() (what the default VALUES are) and the fee editor (which fee ROWS
+// are even applicable to show for this class — see FEE_ROWS_BY_CLASS below).
+function _getAssetClass(typeName){
   var n=(typeName||'').toLowerCase();
-  if(n.includes('forex') && (n.includes('major')||n.includes('eur')||n.includes('gbp')||n.includes('usd'))) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Forex Major']));
-  if(n.includes('forex') && n.includes('minor')) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Forex Minor']));
-  if(n.includes('forex') && n.includes('exotic')) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Forex Exotic']));
-  if(n.includes('forex')) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Forex Major']));
-  if(n.includes('gold')||n.includes('silver')||n.includes('commodi')||n.includes('metal')||n.includes('oil')) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Commodity']));
-  if(n.includes('index')||n.includes('indic')) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Index']));
-  if(n.includes('stock')||n.includes('etf')||n.includes('share')||n.includes('equity')) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Stocks']));
-  if(n.includes('crypto')) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Crypto']));
-  if(n.includes('future')||n.includes('contract')) return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Futures']));
-  return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['default']));
+  if(n.includes('forex') && (n.includes('major')||n.includes('eur')||n.includes('gbp')||n.includes('usd'))) return 'Forex Major';
+  if(n.includes('forex') && n.includes('minor')) return 'Forex Minor';
+  if(n.includes('forex') && n.includes('exotic')) return 'Forex Exotic';
+  if(n.includes('forex')) return 'Forex Major';
+  if(n.includes('gold')||n.includes('silver')||n.includes('commodi')||n.includes('metal')||n.includes('oil')) return 'Commodity';
+  if(n.includes('index')||n.includes('indic')) return 'Index';
+  if(n.includes('stock')||n.includes('etf')||n.includes('share')||n.includes('equity')) return 'Stocks';
+  if(n.includes('crypto')) return 'Crypto';
+  if(n.includes('future')||n.includes('contract')) return 'Futures';
+  return 'default';
 }
+// Guess a sensible default fee template for a new/legacy asset type from its name
+function _getDefaultFees(typeName){
+  var cls = _getAssetClass(typeName);
+  return JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS[cls] || DEFAULT_FEES_BY_CLASS['default']));
+}
+// Which fee rows are even REAL for a given asset class — not just "off by default", but rows
+// that represent a charge that doesn't exist in the real world for that instrument, so showing
+// them would be clutter/confusing rather than a genuine option. Margin interest and short-borrow
+// fee are separate charges for Stocks/Crypto (margin loan vs. shares-lent), but for FX/CFD/
+// Futures that cost is already folded into Overnight/Swap (or, for futures, priced into the
+// contract) — there's no second real-world line item to configure. Regulatory (SEC+FINRA) only
+// exists for US equities. Classes not listed here just get the universal 4 (spread/commission/
+// overnight/exchange); 'default' (unrecognized asset types) gets everything since we don't know
+// what it is.
+var FEE_ROWS_BY_CLASS = {
+  'Stocks': ['spread','commission','overnight','exchange','financing','borrowFee','regulatory'],
+  'Crypto': ['spread','commission','overnight','exchange','financing','borrowFee'],
+  'default': ['spread','commission','overnight','exchange','financing','borrowFee','regulatory']
+};
+var BASE_FEE_ROWS = ['spread','commission','overnight','exchange'];
 var DEFAULT_ASSET_TYPES=[
   {name:'Forex Major',pairs:['AUD/USD','EUR/USD','GBP/USD','NZD/USD','USD/CAD','USD/CHF','USD/JPY'], fees:JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Forex Major']))},
   {name:'Commodity',pairs:['OIL/USD','XAG/USD','XAU/USD'], fees:JSON.parse(JSON.stringify(DEFAULT_FEES_BY_CLASS['Commodity']))},
@@ -12058,6 +12093,16 @@ async function getAssets(){
   // Ensure all loaded asset types have a fees object (migrate old data without fees)
   var dirty = false;
   assets.forEach(function(at){ if(!at.fees){ at.fees = _getDefaultFees(at.name); dirty = true; } });
+  // Backfill any fee component keys added in later app versions (e.g. margin interest, short-
+  // borrow fee, regulatory fee) onto asset types that already had a fees object from before
+  // those existed — merges in the class default for the missing key only, leaving every fee the
+  // user already configured (spread, commission, overnight, exchange, ...) completely untouched.
+  assets.forEach(function(at){
+    var classDefaults = _getDefaultFees(at.name);
+    Object.keys(classDefaults).forEach(function(k){
+      if(!at.fees[k]){ at.fees[k] = classDefaults[k]; dirty = true; }
+    });
+  });
   // Keep each asset type's pairs alphabetically sorted (ascending) — this is the single
   // source every pair dropdown/list in the app reads from, so sorting here propagates
   // everywhere (Assets & Pairs modal, Log Trade pair select, calculator, price alert
@@ -12074,10 +12119,13 @@ async function getAssets(){
 // Persist the full asset-types array and invalidate the fees cache so subsequent fee lookups pick up the change
 async function saveAssetsData(data){ _invalidateAssetFeesCache(); await setSetting('assets',data); }
 // ── Fee calculation engine ─────────────────────────────────────────────────
-// Returns { total, spread, commission, overnight, exchange, breakdown }
-// qty = units (not lots), entry/exit = prices, durationMin = minutes held
-function calcTradeFees(assetFees, qty, entry, durationMin, pair){
-  var result = { total:0, spread:0, commission:0, overnight:0, exchange:0, breakdown:[] };
+// Returns { total, spread, commission, overnight, exchange, financing, borrowFee, regulatory, breakdown }
+// qty = units (not lots), entry/exit = prices, durationMin = minutes held,
+// direction = 'Long' | 'Short' (gates financing vs. borrowFee — pass trade.type). If omitted,
+// financing is assumed (Long default, matching the rest of the app's Long-default behavior) and
+// borrowFee is skipped, so older callers that don't pass a direction keep working unchanged.
+function calcTradeFees(assetFees, qty, entry, durationMin, pair, direction){
+  var result = { total:0, spread:0, commission:0, overnight:0, exchange:0, financing:0, borrowFee:0, regulatory:0, breakdown:[] };
   if(!assetFees || !qty || !entry) return result;
   var fees = assetFees;
   // Detect pip size from entry price
@@ -12118,7 +12166,37 @@ function calcTradeFees(assetFees, qty, entry, durationMin, pair){
     result.exchange = parseFloat(fees.exchange.value.toFixed(4));
     if(result.exchange > 0) result.breakdown.push({ label:'Exchange', value:result.exchange });
   }
-  result.total = parseFloat((result.spread+result.commission+result.overnight+result.exchange).toFixed(4));
+  // 5. Margin financing — annualized interest on a margin-financed LONG position, accrued per
+  // night held. Real-world equivalent of a broker's margin loan rate (Reg T interest).
+  if(fees.financing && fees.financing.enabled && fees.financing.value > 0 && durationMin > 0 && direction !== 'Short'){
+    var finNights = durationMin / (60*24);
+    var financingVal = ((fees.financing.value/100) * entry * qty * (finNights/365)) / conv;
+    result.financing = parseFloat(financingVal.toFixed(4));
+    if(result.financing > 0) result.breakdown.push({ label:'Margin financing ('+finNights.toFixed(1)+'n)', value:result.financing });
+  }
+  // 6. Short-borrow / stock-loan fee — annualized cost to borrow shares for a SHORT position,
+  // accrued per night held. Real-world: brokers pass through the stock-loan rate; "easy to
+  // borrow" names are cheap, "hard to borrow" names can run far higher than the default.
+  if(fees.borrowFee && fees.borrowFee.enabled && fees.borrowFee.value > 0 && durationMin > 0 && direction === 'Short'){
+    var borrowNights = durationMin / (60*24);
+    var borrowVal = ((fees.borrowFee.value/100) * entry * qty * (borrowNights/365)) / conv;
+    result.borrowFee = parseFloat(borrowVal.toFixed(4));
+    if(result.borrowFee > 0) result.breakdown.push({ label:'Short borrow ('+borrowNights.toFixed(1)+'n)', value:result.borrowFee });
+  }
+  // 7. Regulatory (US equities) — SEC Section 31 fee ($20.60 per $1,000,000 of notional) plus the
+  // FINRA Trading Activity Fee ($0.000195/share, capped at $9.79/trade). Both are technically
+  // sell-side-only in reality, but since every round-trip trade has exactly one sell leg (the
+  // exit for a long, or the entry for a short), applying the formula once per trade is accurate.
+  // "value" is a multiplier on the statutory formula (1 = full rate; 0 effectively disables it).
+  if(fees.regulatory && fees.regulatory.enabled && fees.regulatory.value > 0){
+    var regMult = fees.regulatory.value;
+    var secFee = 0.0000206 * entry * qty;
+    var tafFee = Math.min(0.000195 * qty, 9.79);
+    var regulatoryVal = (regMult * (secFee + tafFee)) / conv;
+    result.regulatory = parseFloat(regulatoryVal.toFixed(4));
+    if(result.regulatory > 0) result.breakdown.push({ label:'Regulatory (SEC+TAF)', value:result.regulatory });
+  }
+  result.total = parseFloat((result.spread+result.commission+result.overnight+result.exchange+result.financing+result.borrowFee+result.regulatory).toFixed(4));
   return result;
 }
 // Cache: map of assetType name -> fees object. Refreshed when assets saved.
@@ -12138,7 +12216,7 @@ async function computeTradeFeesAsync(trade){
   if(!trade || !trade.assetType || !trade.entryPrice || !trade.qty) return null;
   var fees = await _getAssetFeesForType(trade.assetType);
   if(!fees) return null;
-  return calcTradeFees(fees, parseFloat(trade.qty), parseFloat(trade.entryPrice), trade.durationMin || 0, trade.pair);
+  return calcTradeFees(fees, parseFloat(trade.qty), parseFloat(trade.entryPrice), trade.durationMin || 0, trade.pair, trade.type);
 }
 // Compute net equity for a session by summing (grossPL - fees) across its trades.
 // Falls back to sess.currentEquity if no fees are configured for any trade.
@@ -12247,12 +12325,22 @@ function renderAssetFeesPanel(assets){
   panel.style.display = '';
   if(nameEl) nameEl.textContent = at.name;
   var fees = at.fees;
-  var FEE_DEFS = [
+  var FEE_DEFS_ALL = [
     { key:'spread',     label:'Spread',     icon:'≈', hint:'Cost to enter/exit (round-trip). Unit: pips, pts, or % of notional.' },
     { key:'commission', label:'Commission',  icon:'$', hint:'Broker commission per unit (round-trip) or % of notional.' },
-    { key:'overnight',  label:'Overnight/Swap', icon:'🌙', hint:'Holding cost per unit per night (applied based on trade duration).' },
-    { key:'exchange',   label:'Exchange fee', icon:'⚡', hint:'Flat fee per trade (e.g. exchange clearing fee).' }
+    { key:'overnight',  label:'Overnight/Swap', icon:'🌙', hint:'FX/CFD holding cost per unit per night (applied based on trade duration). This already covers the "margin financing" cost of a leveraged FX/CFD position — see Margin interest below for stocks/other cash-settled instruments instead.' },
+    { key:'exchange',   label:'Exchange fee', icon:'⚡', hint:'Flat fee per trade (e.g. exchange clearing fee).' },
+    { key:'financing',  label:'Margin interest', icon:'🏦', hint:'Annualized broker margin-loan rate, charged per night ONLY on Long trades (borrowing cash to buy). Retail brokers currently run roughly 6-13%/yr depending on broker and balance — this does not apply to cash-account trades that don\'t use margin.' },
+    { key:'borrowFee',  label:'Short borrow fee', icon:'📉', hint:'Annualized stock-loan rate, charged per night ONLY on Short trades (borrowing shares to sell). Default assumes an easy-to-borrow name (~1%/yr) — hard-to-borrow names can run 10-100%+/yr, so raise this for squeeze-prone or low-float shorts.' },
+    { key:'regulatory', label:'Regulatory (SEC/FINRA)', icon:'🏛️', hint:'US equities only. Computed from the real statutory formula: SEC Section 31 fee ($20.60 per $1,000,000 notional) + FINRA Trading Activity Fee ($0.000195/share, capped $9.79/trade). The value here is a multiplier on that formula (1 = full rate) — not a raw dollar amount.' }
   ];
+  // Only show fee rows that represent a real, separate charge for this asset class — see
+  // FEE_ROWS_BY_CLASS comment above for why FX/CFD/Futures don't get Margin interest, Short
+  // borrow, or Regulatory rows (already folded into Overnight/Swap, or not applicable).
+  var assetClass = _getAssetClass(at.name);
+  var visibleKeys = FEE_ROWS_BY_CLASS[assetClass] || BASE_FEE_ROWS;
+  var FEE_DEFS = FEE_DEFS_ALL.filter(function(fd){ return visibleKeys.indexOf(fd.key) !== -1; });
+  var hiddenCount = FEE_DEFS_ALL.length - FEE_DEFS.length;
   rowsEl.innerHTML = FEE_DEFS.map(function(fd){
     var f = fees[fd.key] || { enabled:false, value:0, unit:'' };
     return '<div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">'
@@ -12263,9 +12351,12 @@ function renderAssetFeesPanel(assets){
       + '<div style="position:relative" title="'+escHtml(fd.hint)+'">'
       +   '<input type="number" id="fee-val-'+fd.key+'" value="'+parseFloat(f.value||0)+'" step="any" min="0" style="width:100%;font-size:11px;padding-right:2px;font-family:DM Mono,monospace" '+(f.enabled?'':'disabled')+' oninput="updateDraftFee(\''+fd.key+'\')">'
       + '</div>'
-      + '<span style="font-size:9px;color:var(--text3);white-space:nowrap;min-width:80px">'+escHtml(f.unit||'')+'</span>'
+      + '<span style="font-size:9px;color:var(--text3);white-space:normal;min-width:70px;max-width:110px;line-height:1.3;text-align:right">'+escHtml(f.unit||'')+'</span>'
       + '</div>';
   }).join('');
+  if(hiddenCount > 0){
+    rowsEl.innerHTML += '<div style="font-size:9px;color:var(--text3);padding:6px 2px 0;line-height:1.4;font-style:italic">Margin interest / short-borrow / regulatory fees aren\'t separate real-world charges for '+escHtml(at.name)+' — already folded into Overnight/Swap above, or not applicable to this instrument.</div>';
+  }
 }
 function updateDraftFee(feeKey){
   if(_assetsDraft === null) return;
@@ -14817,6 +14908,7 @@ function calRenderStreakBar(trades){
   var todayKey=calDateKey(new Date());
   var html='';
   var labelHint='';
+  var periodKeys=[]; // date-keys belonging to the currently displayed period (week/month only)
   // Helper: classify a list of day-keys by net P/L — green if positive, red if negative
   function classifyDays(keys){
     var pl=0,cnt=0;
@@ -14836,6 +14928,7 @@ function calRenderStreakBar(trades){
     for(var i=0;i<7;i++){
       var d=new Date(weekStart);d.setDate(d.getDate()+i);
       var key=calDateKey(d);
+      periodKeys.push(key);
       var cls=classifyDays([key]);
       var isToday=key===todayKey?' s-today':'';
       html+='<div class="cal-streak-day '+cls+isToday+'" title="'+key+'" onclick="calClickStreakDay(\''+key+'\')">'+
@@ -14861,6 +14954,7 @@ function calRenderStreakBar(trades){
         if(wd.getMonth()===m)keys.push(calDateKey(wd));
       }
       var weekEnd=new Date(cur);weekEnd.setDate(weekEnd.getDate()+6);
+      periodKeys=periodKeys.concat(keys);
       var cls2=classifyDays(keys);
       // Mark current week
       var isCurrentWk=(calDateKey(new Date())>=calDateKey(cur)&&calDateKey(new Date())<=calDateKey(weekEnd))?' s-today':'';
@@ -14890,6 +14984,29 @@ function calRenderStreakBar(trades){
     labelHint='month';
   }
   bar.innerHTML=html;
+  // Won / Lost / Pending tally for the currently displayed period (week & month only —
+  // year view's streak bar is a full-width 12-column grid, no room for a side summary)
+  var summaryEl=document.getElementById('cal-streak-summary');
+  if(summaryEl){
+    if(_calView==='year'){
+      summaryEl.style.display='none';
+      summaryEl.innerHTML='';
+    } else {
+      var tWon=0,tLost=0,tPending=0;
+      periodKeys.forEach(function(k){
+        (byDay[k]||[]).forEach(function(t){
+          if(!t.exitPrice)tPending++;
+          else if(t.winLoss===1)tWon++;
+          else tLost++;
+        });
+      });
+      summaryEl.style.display='flex';
+      summaryEl.innerHTML=
+        '<span style="color:var(--green)">'+tWon+' Won</span>'+
+        '<span style="color:var(--red)">'+tLost+' Lost</span>'+
+        '<span style="color:var(--pending)">'+tPending+' Pending</span>';
+    }
+  }
   // Update legend label suffix
   var legend=document.getElementById('cal-streak-legend');
   if(legend){
@@ -14984,19 +15101,24 @@ function calRenderMonth(){
       var rowsHtml=c.trades.slice(0,3).map(function(t){
         var pl=parseFloat(t.plDollar)||0;
         var win=t.winLoss===1;
+        var isPending=!t.exitPrice;
+        var badgeCls=isPending?'badge-pending':(win?'badge-green':'badge-red');
+        var badgeLbl=isPending?'P':(win?'W':'L');
+        var plColor=isPending?'var(--pending)':(pl>=0?'var(--green)':'var(--red)');
         return'<div class="cal-week-trade-row" onclick="event.stopPropagation();openDetail(\''+t.id+'\')" title="'+escHtml(t.pair||'')+'">'+
-          '<span class="badge '+(win?'badge-green':'badge-red')+'" style="font-size:8px;padding:1px 4px">'+(win?'W':'L')+'</span>'+
+          '<span class="badge '+badgeCls+'" style="font-size:8px;padding:1px 4px">'+badgeLbl+'</span>'+
           '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:52px;color:var(--text2)">'+escHtml(t.pair||'')+'</span>'+
-          '<span class="cal-week-pl" style="color:'+(pl>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(pl)+'</span>'+
+          '<span class="cal-week-pl" style="color:'+plColor+'">'+calPlFmt(pl)+'</span>'+
           '</div>';
       }).join('');
       if(c.trades.length>3)rowsHtml+='<div style="font-size:8px;color:var(--text3);padding-top:2px">+'+(c.trades.length-3)+' more…</div>';
       // P/L footer — identical to week view bottom section
       var footerHtml='';
       if(c.trades.length&&!c.otherMonth){
+        var dayAllPending=c.trades.every(function(t){return !t.exitPrice;});
         footerHtml='<div class="cal-pl-footer">'+
           '<div style="display:flex;align-items:baseline;gap:4px">'+
-            '<div class="cal-pl-footer-val" style="color:'+(dayPl>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(dayPl)+'</div>'+
+            '<div class="cal-pl-footer-val" style="color:'+(dayAllPending?'var(--pending)':(dayPl>=0?'var(--green)':'var(--red)'))+'">'+calPlFmt(dayPl)+'</div>'+
             (dayPlPct!==0?'<div style="font-size:8px;font-weight:600;font-family:DM Mono,monospace;color:'+(dayPlPct>=0?'var(--green)':'var(--red)')+'">'+calPctFmt(dayPlPct)+'</div>':'')+
           '</div>'+
           '<div class="cal-pl-footer-meta">'+
@@ -15147,19 +15269,24 @@ function calRenderWeek(){
     var rowsHtml=dayTrades.slice(0,5).map(function(t){
       var pl=parseFloat(t.plDollar)||0;
       var win=t.winLoss===1;
+      var isPending=!t.exitPrice;
+      var badgeCls=isPending?'badge-pending':(win?'badge-green':'badge-red');
+      var badgeLbl=isPending?'P':(win?'W':'L');
+      var plColor=isPending?'var(--pending)':(pl>=0?'var(--green)':'var(--red)');
       return'<div class="cal-week-trade-row" onclick="event.stopPropagation();openDetail(\''+t.id+'\')" title="'+escHtml(t.pair||'')+'">'+
-        '<span class="badge '+(win?'badge-green':'badge-red')+'" style="font-size:9px;padding:1px 5px">'+(win?'W':'L')+'</span>'+
+        '<span class="badge '+badgeCls+'" style="font-size:9px;padding:1px 5px">'+badgeLbl+'</span>'+
         '<span style="font-size:10px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60px">'+escHtml(t.pair||'')+'</span>'+
-        '<span class="cal-week-pl" style="color:'+(pl>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(pl)+'</span>'+
+        '<span class="cal-week-pl" style="color:'+plColor+'">'+calPlFmt(pl)+'</span>'+
         '</div>';
     }).join('');
     if(dayTrades.length>5)rowsHtml+='<div style="font-size:9px;color:var(--text3);padding-top:3px">+'+(dayTrades.length-5)+' more…</div>';
     // Daily P/L summary (shown at bottom of each day card)
     var dayPlHtml='';
     if(dayTrades.length){
+      var dayAllPending=dayTrades.every(function(t){return !t.exitPrice;});
       dayPlHtml='<div style="margin-top:6px;padding-top:5px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px">'+
         '<div style="display:flex;align-items:baseline;gap:5px">'+
-          '<span style="font-size:10px;font-weight:700;font-family:DM Mono,monospace;color:'+(dayPl>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(dayPl)+'</span>'+
+          '<span style="font-size:10px;font-weight:700;font-family:DM Mono,monospace;color:'+(dayAllPending?'var(--pending)':(dayPl>=0?'var(--green)':'var(--red)'))+'">'+calPlFmt(dayPl)+'</span>'+
           (dayPlPct!==0?'<span style="font-size:9px;font-weight:600;font-family:DM Mono,monospace;color:'+(dayPlPct>=0?'var(--green)':'var(--red)')+'">'+calPctFmt(dayPlPct)+'</span>':'')+
         '</div>'+
         '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
@@ -15419,6 +15546,7 @@ function calShowDayDetail(key){
   var wins=dayTrades.filter(function(t){return t.winLoss===1;}).length;
   var rrT=dayTrades.filter(function(t){return t.actualRR!=null;});
   var avgRR=rrT.length?rrT.reduce(function(a,t){return a+t.actualRR;},0)/rrT.length:null;
+  var dayAllPending=dayTrades.length>0&&dayTrades.every(function(t){return !t.exitPrice;});
   if(!dayTrades.length){
     panel.style.display='block';
     panel.innerHTML='<div class="cal-detail-panel"><div class="cal-detail-title"><span>'+escHtml(label)+'</span></div>'+
@@ -15427,21 +15555,25 @@ function calShowDayDetail(key){
   }
   var summaryHtml='<div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap">'+
     '<div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:700">Trades</div><div style="font-size:18px;font-weight:700;font-family:DM Mono,monospace">'+dayTrades.length+'</div></div>'+
-    '<div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:700">P/L</div><div style="font-size:18px;font-weight:700;font-family:DM Mono,monospace;color:'+(pl>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(pl)+'</div></div>'+
+    '<div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:700">P/L</div><div style="font-size:18px;font-weight:700;font-family:DM Mono,monospace;color:'+(dayAllPending?'var(--pending)':(pl>=0?'var(--green)':'var(--red)'))+'">'+calPlFmt(pl)+'</div></div>'+
     '<div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:700">Win rate</div><div style="font-size:18px;font-weight:700;font-family:DM Mono,monospace">'+(dayTrades.length?(wins/dayTrades.length*100).toFixed(0):0)+'%</div></div>'+
     (avgRR!=null?'<div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:700">Avg RR</div><div style="font-size:18px;font-weight:700;font-family:DM Mono,monospace">'+avgRR.toFixed(2)+'R</div></div>':'')+
     '</div>';
   var tradesHtml='<div class="cal-detail-trades">'+dayTrades.map(function(t){
     var pl2=parseFloat(t.plDollar)||0;
     var win=t.winLoss===1;
+    var isPending=!t.exitPrice;
+    var badgeCls=isPending?'badge-pending':(win?'badge-green':'badge-red');
+    var badgeLbl=isPending?'Pending':(win?'Win':'Loss');
+    var plColor2=isPending?'var(--pending)':(pl2>=0?'var(--green)':'var(--red)');
     var rr=t.actualRR!=null?parseFloat(t.actualRR).toFixed(2)+'R':'—';
     return'<div class="cal-detail-trade" onclick="openDetail(\''+t.id+'\')">'+
-      '<span class="badge '+(win?'badge-green':'badge-red')+'">'+(win?'Win':'Loss')+'</span>'+
+      '<span class="badge '+badgeCls+'">'+badgeLbl+'</span>'+
       '<span style="font-weight:700;color:var(--text);font-family:DM Mono,monospace">#'+escHtml(t.num||'')+'</span>'+
       '<span style="color:var(--text);font-weight:600">'+escHtml(t.pair||'')+'</span>'+
       '<span style="color:var(--text2);font-size:11px">'+escHtml(t.strategy||'—')+'</span>'+
       (t.partialTPs&&t.partialTPs.length?'<span style="font-size:9px;font-weight:700;background:rgba(77,127,255,.12);color:var(--accent);border-radius:3px;padding:1px 5px">'+t.partialTPs.length+' partial'+(t.partialTPs.length>1?'s':'')+'</span>':'')+
-      '<span class="mono" style="color:'+(pl2>=0?'var(--green)':'var(--red)')+'">'+calPlFmt(pl2)+'</span>'+
+      '<span class="mono" style="color:'+plColor2+'">'+calPlFmt(pl2)+'</span>'+
       '<span class="mono" style="color:var(--text3);font-size:11px">'+rr+'</span>'+
       '</div>';
   }).join('')+'</div>';
