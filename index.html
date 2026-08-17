@@ -7668,6 +7668,8 @@ function recalc(){
   var trr=parseFloat(document.getElementById('f-trr').value)||0;
   var typeEl=document.getElementById('f-type-val');
   var type=typeEl?typeEl.value:'Long';
+  var pairEl=document.getElementById('f-pair');
+  var pair=pairEl?pairEl.value:'';
   var riskDollar=acct*(riskpct/100);
   function set(id,val,cls){var el=document.getElementById(id);if(!el)return;el.textContent=val;el.className='ci-val'+(cls?' '+cls:'');}
   set('c-risk','$'+riskDollar.toFixed(2));
@@ -7689,7 +7691,7 @@ function recalc(){
     set('c-posval','$'+posVal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}));
   } else set('c-posval','—');
   // Check if partials override the calculation
-  var partialResult=entry&&qty?computePartialPL(entry,slPrice,qty,type,acct,riskDollar):null;
+  var partialResult=entry&&qty?computePartialPL(entry,slPrice,qty,type,acct,riskDollar,pair):null;
   var pNote=document.getElementById('c-partial-note');
   if(pNote)pNote.style.display=partialResult?'':'none';
   // Actual RR — use partials if available, else standard
@@ -7698,7 +7700,7 @@ function recalc(){
     arr=partialResult.arr;
   } else if(entry&&exit&&qty){
     var exitDiff=type==='Long'?exit-entry:entry-exit;
-    var pl=exitDiff*qty;
+    var pl=toAccountPL(exitDiff*qty,pair,entry);
     if(entry&&slPrice&&slDist>0){
       var exitDist=Math.abs(exit-entry);
       arr=(exitDiff>=0?1:-1)*(exitDist/slDist);
@@ -7732,7 +7734,7 @@ function recalc(){
     var wld=document.getElementById('f-winloss-display');if(wld){wld.value=winLossDisplay;wld.style.color=isWin?'var(--green)':(diff<0?'var(--red)':'var(--amber)');}
     var wlh=document.getElementById('f-winloss');if(wlh)wlh.value=isWin?'1':(diff<0?'0':'0.5');
     if(qty){
-      var pl2=diff*qty;
+      var pl2=toAccountPL(diff*qty,pair,entry);
       var plPct=(pl2/acct)*100;
       var cls2=pl2>=0?'pos':'neg';
       set('c-pl',(pl2>=0?'+':'')+pl2.toFixed(2),cls2);
