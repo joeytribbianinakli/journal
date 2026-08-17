@@ -13970,13 +13970,25 @@ async function ghPushManual(){
 }
 // Push the full tj_data.json to GitHub (create or update via SHA), then also
 // push the companion config file. showToast=false is used by the silent auto-sync path.
-async function ghPush(showToast){
+// Serializes every GitHub push through one queue. Auto-sync calls itself unawaited from many
+// call sites (saveTrade(), etc.), so without this, two near-simultaneous saves each fetch the
+// file's current SHA, the first PUT moves it, and the second PUT is rejected (409) because its
+// SHA is now stale — silently, since auto-sync passes showToast=false. Chaining every push
+// through _ghPushChain guarantees only one is ever in flight, each fetching a fresh SHA
+// immediately before its own PUT.
+var _ghPushChain=Promise.resolve();
+function ghPush(showToast){
+  var run=function(){return _ghPushOnce(showToast);};
+  _ghPushChain=_ghPushChain.then(run,run);
+  return _ghPushChain;
+}
+async function _ghPushOnce(showToast){
   var cfg=ghGetConfig();
   if(!cfg.user||!cfg.repo||!cfg.token){
     if(showToast)toast('GitHub not configured — go to Backup & Restore to set up','err');
     return;
   }
-  try{
+  var doAttempt=async function(){
     var payload=await ghBuildPayload();
     var content=btoa(unescape(encodeURIComponent(JSON.stringify(payload,null,2))));
     var sha=await ghGetFileSHA(cfg);
@@ -13987,19 +13999,33 @@ async function ghPush(showToast){
       headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
       body:JSON.stringify(body)
     });
-    if(resp.ok){
+    return{resp:resp,payload:payload};
+  };
+  try{
+    var result=await doAttempt();
+    // 409 = the file's SHA moved between our GET and our PUT (e.g. another near-simultaneous
+    // auto-sync landed first). Retry once with a freshly-fetched SHA instead of dropping the
+    // update — this is exactly what used to fail silently.
+    if(!result.resp.ok&&result.resp.status===409){
+      result=await doAttempt();
+    }
+    if(result.resp.ok){
       var now=new Date().toISOString();
       localStorage.setItem('tj-gh-last-sync',now);
       ghRefreshStatus();
       // Also push config (checklist, strategies, assets) on every sync
       await ghPushConfigFile(cfg);
-      if(showToast)toast('Synced to GitHub ('+payload.trades.length+' trades, '+payload.images.length+' images)','ok');
+      if(showToast)toast('Synced to GitHub ('+result.payload.trades.length+' trades, '+result.payload.images.length+' images)','ok');
     } else {
-      var err=await resp.json().catch(function(){return{};});
-      if(showToast)toast('GitHub push failed: '+(err.message||('HTTP '+resp.status)),'err');
+      var err=await result.resp.json().catch(function(){return{};});
+      // Auto-sync stays silent on SUCCESS (to avoid a toast after every trade save), but a
+      // FAILED push must never be silent — otherwise a trade update can drop out of the
+      // GitHub backup with zero indication anything went wrong. Only "not configured" above
+      // stays fully silent (nothing to sync to).
+      toast('GitHub sync failed: '+(err.message||('HTTP '+result.resp.status))+(showToast?'':' — trade is saved locally, not yet backed up to GitHub.'),'err');
     }
   }catch(e){
-    if(showToast)toast('GitHub push error: '+e.message,'err');
+    toast('GitHub sync error: '+e.message+(showToast?'':' — trade is saved locally, not yet backed up to GitHub.'),'err');
   }
 }
 // "Pull" button — full true-sync from GitHub: local trades not present remotely are deleted,
