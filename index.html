@@ -348,6 +348,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .cl-fail{background:rgba(232,85,85,.08);color:var(--red)}.cl-pass{background:rgba(52,201,122,.08);color:var(--green)}
 .cl-item-edit{display:flex;align-items:center;gap:6px;padding:3px 0}
 .cl-item-edit input[type=text]{padding:3px 7px;font-size:11px}
+.cl-item-edit input[type=number].cl-weight{width:38px;flex-shrink:0;text-align:center;padding:3px 4px;font-size:11px}
 .cl-item-edit .cl-del{padding:3px 6px;font-size:11px}
 /* ── Analysis sections: Log Trade 'Analysis' tab accordion (narrative, setup, screenshots, issues) ── */
 .analysis-section{border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:8px;overflow:hidden}
@@ -649,7 +650,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .dash-filter-row{display:flex;gap:10px;flex-wrap:wrap}
 .dash-filter-group{display:flex;flex-direction:column;gap:3px;min-width:130px;flex:1}
 .dash-filter-label{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
-.dash-filter-group select{font-size:11px;padding:5px 8px}
+.dash-filter-group select{font-size:11px;padding:5px 28px 5px 8px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
 /* ── History filter panel: collapsible filter trigger row on page-history ── */
 .history-filter-panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:14px;overflow:hidden}
 .history-filter-trigger{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;gap:8px;cursor:pointer;user-select:none;transition:background .1s}
@@ -659,7 +660,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .hist-filter-row{display:flex;gap:10px;flex-wrap:wrap}
 .hist-filter-group{display:flex;flex-direction:column;gap:3px;min-width:110px;flex:1}
 .hist-filter-label{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
-.hist-filter-group select{font-size:11px;padding:5px 8px}
+.hist-filter-group select{font-size:11px;padding:5px 28px 5px 8px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
 .hist-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(77,127,255,.1);color:var(--accent);cursor:pointer}
 .hist-chip:hover{background:rgba(77,127,255,.18)}
 /* ── Filter lock-to-top: optional per-user toggle (pin icon in the filter header) that
@@ -1835,7 +1836,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <div style="display:flex;gap:10px;flex-wrap:wrap">
               <div style="flex:2;min-width:180px">
                 <div class="ai-filter-label" style="margin-bottom:4px">API Key</div>
-                <div style="display:flex;gap:6px"><input type="password" id="ai-nvidia-key" style="flex:1;font-size:11px;padding:5px 8px" placeholder="nvapi-..."><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('ai-nvidia-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+                <div style="display:flex;gap:6px"><input type="password" id="ai-nvidia-key" style="flex:1;font-size:11px;padding:5px 8px" placeholder="nvapi-..."><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('ai-nvidia-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="btn btn-ghost btn-sm" onclick="copyKeyVis('ai-nvidia-key')" title="Copy key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
               </div>
               <div style="flex:2;min-width:200px">
                 <div class="ai-filter-label" style="margin-bottom:4px;display:flex;align-items:center;gap:6px">Model <span id="ai-nvidia-model-status" style="font-size:10px;color:var(--text3)"></span></div>
@@ -1860,7 +1861,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <div style="display:flex;gap:10px;flex-wrap:wrap">
               <div style="flex:2;min-width:180px">
                 <div class="ai-filter-label" style="margin-bottom:4px">API Key</div>
-                <div style="display:flex;gap:6px"><input type="password" id="ai-openrouter-key" style="flex:1;font-size:11px;padding:5px 8px" placeholder="sk-or-v1-..."><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('ai-openrouter-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+                <div style="display:flex;gap:6px"><input type="password" id="ai-openrouter-key" style="flex:1;font-size:11px;padding:5px 8px" placeholder="sk-or-v1-..."><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('ai-openrouter-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="btn btn-ghost btn-sm" onclick="copyKeyVis('ai-openrouter-key')" title="Copy key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
               </div>
               <div style="flex:2;min-width:200px">
                 <div class="ai-filter-label" style="margin-bottom:4px;display:flex;align-items:center;gap:6px">Model (free) <span id="ai-openrouter-model-status" style="font-size:10px;color:var(--text3)"></span></div>
@@ -1885,7 +1886,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <div style="display:flex;gap:10px;flex-wrap:wrap">
               <div style="flex:2;min-width:180px">
                 <div class="ai-filter-label" style="margin-bottom:4px">API Key</div>
-                <div style="display:flex;gap:6px"><input type="password" id="ai-groq-key" style="flex:1;font-size:11px;padding:5px 8px" placeholder="gsk_..."><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('ai-groq-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+                <div style="display:flex;gap:6px"><input type="password" id="ai-groq-key" style="flex:1;font-size:11px;padding:5px 8px" placeholder="gsk_..."><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('ai-groq-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="btn btn-ghost btn-sm" onclick="copyKeyVis('ai-groq-key')" title="Copy key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
               </div>
               <div style="flex:2;min-width:200px">
                 <div class="ai-filter-label" style="margin-bottom:4px;display:flex;align-items:center;gap:6px">Model <span id="ai-groq-model-status" style="font-size:10px;color:var(--text3)"></span></div>
@@ -1910,7 +1911,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <div style="display:flex;gap:10px;flex-wrap:wrap">
               <div style="flex:2;min-width:180px">
                 <div class="ai-filter-label" style="margin-bottom:4px">API Key</div>
-                <div style="display:flex;gap:6px"><input type="password" id="ai-gemini-key" style="flex:1;font-size:11px;padding:5px 8px" placeholder="AIza..."><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('ai-gemini-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+                <div style="display:flex;gap:6px"><input type="password" id="ai-gemini-key" style="flex:1;font-size:11px;padding:5px 8px" placeholder="AIza..."><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('ai-gemini-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="btn btn-ghost btn-sm" onclick="copyKeyVis('ai-gemini-key')" title="Copy key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
               </div>
               <div style="flex:2;min-width:200px">
                 <div class="ai-filter-label" style="margin-bottom:4px;display:flex;align-items:center;gap:6px">Model <span id="ai-gemini-model-status" style="font-size:10px;color:var(--text3)"></span></div>
@@ -1935,7 +1936,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <div style="display:flex;gap:10px;flex-wrap:wrap">
               <div style="flex:2;min-width:180px">
                 <div class="ai-filter-label" style="margin-bottom:4px">API Key</div>
-                <div style="display:flex;gap:6px"><input type="password" id="ai-cerebras-key" style="flex:1;font-size:11px;padding:5px 8px" placeholder="csk-..."><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('ai-cerebras-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+                <div style="display:flex;gap:6px"><input type="password" id="ai-cerebras-key" style="flex:1;font-size:11px;padding:5px 8px" placeholder="csk-..."><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('ai-cerebras-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="btn btn-ghost btn-sm" onclick="copyKeyVis('ai-cerebras-key')" title="Copy key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
               </div>
               <div style="flex:2;min-width:200px">
                 <div class="ai-filter-label" style="margin-bottom:4px;display:flex;align-items:center;gap:6px">Model <span id="ai-cerebras-model-status" style="font-size:10px;color:var(--text3)"></span></div>
@@ -1994,6 +1995,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             <span id="pre-cl-status-text">0 / 0 complete</span>
           </div>
+          <div id="pre-cl-rating-badge" class="cl-status-badge cl-fail" style="margin-bottom:14px;display:none"></div>
           <div id="pre-cl-render-area" class="checklist-cols"></div>
         </div>
         <!-- Action panel -->
@@ -2379,6 +2381,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           Checklist not complete
         </div>
+        <div id="cl-rating-badge" class="cl-status-badge cl-fail" style="margin-bottom:14px;display:none"></div>
         <div class="checklist-cols" id="cl-render-area"></div>
         <div style="display:flex;justify-content:space-between;gap:8px;padding-top:10px;border-top:1px solid var(--border)">
           <button class="btn btn-ghost" onclick="switchTab(0,document.querySelector('.form-tab:nth-child(1)'))">← Back</button>
@@ -2664,6 +2667,25 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         Unsaved changes — will be discarded if you leave this page
       </div>
       <div id="cl-editor-area"></div>
+      <!-- SETUP RATING CRITERIA -->
+      <div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+          <div><div style="font-size:15px;font-weight:600">Setup rating criteria</div><div style="font-size:12px;color:var(--text3);margin-top:2px">Define quality tiers (e.g. A+, A, B+, B) from which checklist items must be checked. Best tier first — a trade gets the first tier it fully qualifies for. Not stored per trade — recomputed live from checklist state, so editing this instantly re-rates every trade.</div><div style="font-size:11px;color:var(--text2);margin-top:6px">Total possible weight: <b id="sr-total-weight-val" style="font-family:'DM Mono',monospace">0</b> <span style="color:var(--text3)">(sum of all checklist item weights — set thresholds against this max)</span></div></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost" onclick="addSrTier()">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>+ Add tier
+            </button>
+            <button class="btn btn-primary" onclick="saveSetupRatingsEditor()">
+              <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save rating criteria
+            </button>
+          </div>
+        </div>
+        <div id="sr-unsaved-banner" style="display:none;background:rgba(232,160,48,.1);border:1px solid rgba(232,160,48,.35);border-radius:var(--radius);padding:7px 12px;margin-bottom:12px;font-size:11px;color:var(--amber);align-items:center;gap:8px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Unsaved changes — will be discarded if you leave this page
+        </div>
+        <div id="sr-editor-area"></div>
+      </div>
     </div>
     <!-- HISTORY -->
     <div class="page" id="page-history">
@@ -2920,6 +2942,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                   <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" oninput="ghSaveConfig()" style="flex:1">
                   <button class="btn btn-ghost btn-sm" onclick="ghToggleTokenVis()" id="gh-token-eye" title="Show/hide token" style="flex-shrink:0;padding:5px 9px">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                  <button class="btn btn-ghost btn-sm" onclick="copyKeyVis('gh-token')" title="Copy token" style="flex-shrink:0;padding:5px 9px">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                   </button>
                 </div>
               </div>
@@ -3810,6 +3835,8 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                 <div class="cov-chain">
                   <span class="cov-name">Binance</span>
                   <span class="cov-sep">-></span>
+                  <span class="cov-name">Twelve Data</span>
+                  <span class="cov-sep">-></span>
                   <span class="cov-name">CoinGecko</span>
                   <span class="cov-sep">-></span>
                   <span class="cov-name">Yahoo</span>
@@ -3820,6 +3847,8 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                 <span class="cov-label">💱 Forex</span>
                 <div class="cov-chain">
                   <span class="cov-name" id="pa-chain-forex-oanda">Oanda</span>
+                  <span class="cov-sep">-></span>
+                  <span class="cov-name">Twelve Data</span>
                   <span class="cov-sep">-></span>
                   <span class="cov-name">Alpha Vantage</span>
                   <span class="cov-sep">-></span>
@@ -3843,6 +3872,8 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                 <div class="cov-chain">
                   <span class="cov-name">Finnhub</span>
                   <span class="cov-sep">-></span>
+                  <span class="cov-name">Twelve Data</span>
+                  <span class="cov-sep">-></span>
                   <span class="cov-name">Alpha Vantage</span>
                   <span class="cov-sep">-></span>
                   <span class="cov-name">Yahoo</span>
@@ -3862,7 +3893,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
               </div><!-- /pa-coverage-body -->
             </div><!-- /pa-coverage-wrap -->
-            <div style="font-size:9px;color:var(--text3);margin-bottom:12px;line-height:1.5;">Providers tried left → right. Skipped if no key or request fails. <strong style="color:var(--amber);">⚠ Alpha Vantage: 25 req/day free</strong> — poll interval auto-adjusts.</div>
+            <div style="font-size:9px;color:var(--text3);margin-bottom:12px;line-height:1.5;">Providers tried left → right. Skipped if no key or request fails. <strong style="color:var(--amber);">⚠ Alpha Vantage: 25 req/day free</strong> · <strong style="color:var(--text2);">Twelve Data: 800 req/day free</strong> — poll interval auto-adjusts.</div>
             <!-- API Keys — single collapsible -->
             <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;" id="pa-routing-wrap">
               <button class="pa-routing-toggle" onclick="paRoutingToggle()" id="pa-routing-toggle-btn" style="font-size:11px;font-weight:600;">
@@ -3933,7 +3964,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                       </a>
                       <span style="font-size:10px;color:var(--text3);">Free — 50 req/min without key</span>
                     </div>
-                    <div style="display:flex;gap:6px;margin-bottom:5px;"><input type="password" id="pa-coingecko-key" placeholder="CG-xxxxxxxx  (leave blank for free tier)" autocomplete="off" spellcheck="false" style="flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:6px 8px;outline:none;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('pa-coingecko-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+                    <div style="display:flex;gap:6px;margin-bottom:5px;"><input type="password" id="pa-coingecko-key" placeholder="CG-xxxxxxxx  (leave blank for free tier)" autocomplete="off" spellcheck="false" style="flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:6px 8px;outline:none;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('pa-coingecko-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="btn btn-ghost btn-sm" onclick="copyKeyVis('pa-coingecko-key')" title="Copy key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
                     <div style="display:flex;gap:5px;margin-bottom:0;">
                       <button class="btn btn-sm" style="flex:1" onclick="paProviderSave('coingecko')">Save</button>
                       <button class="btn btn-sm" id="pa-test-cg-btn" style="flex:1;gap:4px;" onclick="paTestFetch('cg')">
@@ -3962,7 +3993,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                         Get token
                       </a>
                     </div>
-                    <div style="display:flex;gap:6px;margin-bottom:5px;"><input type="password" id="pa-oanda-key" placeholder="Oanda API token" autocomplete="off" spellcheck="false" oninput="paProviderKeyChange('oanda')" style="flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:6px 8px;outline:none;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('pa-oanda-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+                    <div style="display:flex;gap:6px;margin-bottom:5px;"><input type="password" id="pa-oanda-key" placeholder="Oanda API token" autocomplete="off" spellcheck="false" oninput="paProviderKeyChange('oanda')" style="flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:6px 8px;outline:none;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('pa-oanda-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="btn btn-ghost btn-sm" onclick="copyKeyVis('pa-oanda-key')" title="Copy key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
                     <div id="pa-oanda-debug" style="display:none;margin-top:6px;margin-bottom:5px;padding:7px 9px;background:rgba(232,85,85,.07);border:1px solid rgba(232,85,85,.2);border-radius:var(--radius);font-size:10px;font-family:DM Mono,monospace;color:var(--red);white-space:pre-wrap;word-break:break-all;line-height:1.5;"></div>
                     <select id="pa-oanda-env" style="width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:11px;padding:6px 8px;outline:none;appearance:none;-webkit-appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 7px center;padding-right:22px;margin-bottom:5px;">
                       <option value="practice">Practice</option>
@@ -3993,7 +4024,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                       </a>
                       <span style="font-size:10px;color:var(--text3);">60 req/min free</span>
                     </div>
-                    <div style="display:flex;gap:6px;margin-bottom:5px;"><input type="password" id="pa-finnhub-key" placeholder="Finnhub API key" autocomplete="off" spellcheck="false" oninput="paProviderKeyChange('finnhub')" style="flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:6px 8px;outline:none;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('pa-finnhub-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+                    <div style="display:flex;gap:6px;margin-bottom:5px;"><input type="password" id="pa-finnhub-key" placeholder="Finnhub API key" autocomplete="off" spellcheck="false" oninput="paProviderKeyChange('finnhub')" style="flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:6px 8px;outline:none;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('pa-finnhub-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="btn btn-ghost btn-sm" onclick="copyKeyVis('pa-finnhub-key')" title="Copy key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
                     <div style="display:flex;gap:5px;">
                       <button class="btn btn-sm" style="flex:1" onclick="paProviderSave('finnhub')">Save</button>
                       <button class="btn btn-sm" id="pa-test-finnhub-btn" style="flex:1;gap:4px;" onclick="paTestFetch('finnhub')">
@@ -4002,6 +4033,32 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                       </button>
                     </div>
                     <div id="pa-test-finnhub-result" style="display:none;margin-top:6px;padding:6px 9px;border-radius:var(--radius);font-size:10px;font-family:DM Mono,monospace;line-height:1.5;"></div>
+                  </div>
+                </div>
+                <!-- Twelve Data collapsible -->
+                <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+                  <button onclick="paKeyToggle('twelvedata')" style="display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;width:100%;padding:7px 10px;background:var(--bg4);border:none;color:var(--text2);font-size:10px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:left;transition:background .12s;">
+                    <span>🔷 Twelve Data</span>
+                    <span style="font-size:9px;font-weight:500;color:var(--text3);white-space:nowrap;">Optional</span>
+                    <span style="display:flex;align-items:center;gap:5px;"><span id="pa-key-twelvedata-status" style="font-size:9px;color:var(--green);white-space:nowrap;"></span><svg id="pa-key-twelvedata-chev" viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg></span>
+                  </button>
+                  <div id="pa-key-twelvedata-body" style="display:none;padding:10px;background:var(--bg3);border-top:1px solid var(--border);">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+                      <a href="https://twelvedata.com/pricing" target="_blank" rel="noopener" style="font-size:10px;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:3px;" title="Get free Twelve Data API key">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        Get free key
+                      </a>
+                      <span style="font-size:10px;color:var(--text3);">800 req/day free · stocks, forex, crypto</span>
+                    </div>
+                    <div style="display:flex;gap:6px;margin-bottom:5px;"><input type="password" id="pa-twelvedata-key" placeholder="Twelve Data API key" autocomplete="off" spellcheck="false" oninput="paProviderKeyChange('twelvedata')" style="flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:6px 8px;outline:none;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('pa-twelvedata-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="btn btn-ghost btn-sm" onclick="copyKeyVis('pa-twelvedata-key')" title="Copy key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
+                    <div style="display:flex;gap:5px;">
+                      <button class="btn btn-sm" style="flex:1" onclick="paProviderSave('twelvedata')">Save</button>
+                      <button class="btn btn-sm" id="pa-test-twelvedata-btn" style="flex:1;gap:4px;" onclick="paTestFetch('twelvedata')">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+                        Test Fetch
+                      </button>
+                    </div>
+                    <div id="pa-test-twelvedata-result" style="display:none;margin-top:6px;padding:6px 9px;border-radius:var(--radius);font-size:10px;font-family:DM Mono,monospace;line-height:1.5;"></div>
                   </div>
                 </div>
                 <!-- Alpha Vantage collapsible -->
@@ -4019,7 +4076,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                       </a>
                       <span style="font-size:10px;color:var(--amber);">⚠ 25 req/day free</span>
                     </div>
-                    <div style="display:flex;gap:6px;margin-bottom:5px;"><input type="password" id="pa-av-key" placeholder="Alpha Vantage API key" autocomplete="off" spellcheck="false" oninput="paProviderKeyChange('av')" style="flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:6px 8px;outline:none;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('pa-av-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+                    <div style="display:flex;gap:6px;margin-bottom:5px;"><input type="password" id="pa-av-key" placeholder="Alpha Vantage API key" autocomplete="off" spellcheck="false" oninput="paProviderKeyChange('av')" style="flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:6px 8px;outline:none;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('pa-av-key')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="btn btn-ghost btn-sm" onclick="copyKeyVis('pa-av-key')" title="Copy key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
                     <div style="display:flex;gap:5px;">
                       <button class="btn btn-sm" style="flex:1" onclick="paProviderSave('av')">Save</button>
                       <button class="btn btn-sm" id="pa-test-av-btn" style="flex:1;gap:4px;" onclick="paTestFetch('av')">
@@ -4160,7 +4217,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="pa-cloud-field">
               <div class="pa-cloud-label">Worker Secret <span style="font-weight:400;text-transform:none">(optional)</span></div>
-              <div style="display:flex;gap:6px;"><input id="cm-worker-secret" class="pa-cloud-input" type="password" placeholder="Leave blank if not set" style="flex:1;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('cm-worker-secret')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+              <div style="display:flex;gap:6px;"><input id="cm-worker-secret" class="pa-cloud-input" type="password" placeholder="Leave blank if not set" style="flex:1;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('cm-worker-secret')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="btn btn-ghost btn-sm" onclick="copyKeyVis('cm-worker-secret')" title="Copy key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
             </div>
             <hr class="pa-cloud-divider">
             <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">ℹ️ Telegram token &amp; chat ID are read from your Telegram setup above. Discord webhook is read from your Discord setup above.</div>
@@ -4942,11 +4999,33 @@ var activePasteZone=null;
 var biasState={narrative:{W:'neutral',D:'neutral','4h':'neutral','1h':'neutral','15m':'neutral','5m':'neutral','1m':'neutral'}};
 var DEFAULT_STRATEGIES=['S&D - Imbalance (Limit Buy) - JeaFx','S&D - Imbalance (Liquidation candle) - Brad'];
 var DEFAULT_ERROR_TYPES=['Invalid - Manual','Checklist'];
+// Checklist items are normally plain strings. An item may instead be an object
+// {text, optional:true, weight:N} to mark it as an optional item within its section
+// and/or carry an importance weight (used for the proportional setup-rating score) —
+// these don't gate checklist completion (see updateClStatus/preClUpdateStatus) but
+// behave identically to any other item everywhere else (checkable, rateable, editable).
+// weight defaults to 1 when unset, so existing items are untouched until edited.
+// These helpers are the ONLY places that should branch on that shape — every
+// other function should go through them rather than reading item.text/typeof directly.
+function clItemText(it){return typeof it==='string'?it:((it&&it.text)||'');}
+function clItemOptional(it){return typeof it==='object'&&it!==null&&it.optional===true;}
+function clItemWeight(it){var w=(typeof it==='object'&&it!==null)?it.weight:undefined;return typeof w==='number'&&isFinite(w)?w:1;}
+// Builds an item back into its minimal shape: stays a plain string when possible
+// (not optional, default weight), otherwise an object carrying only the flags that
+// differ from default — keeps old/unedited items byte-identical after a save.
+function clMakeItem(text,optional,weight){
+  var w=(typeof weight==='number'&&isFinite(weight))?weight:1;
+  if(!optional&&w===1)return text;
+  var obj={text:text};
+  if(optional)obj.optional=true;
+  if(w!==1)obj.weight=w;
+  return obj;
+}
 var DEFAULT_CHECKLIST=[
   {section:'1. Trade rules',items:['Not a forced trade','Physically / mentally / emotionally sound']},
   {section:'2. Narrative',items:['Bias match — MTF','Consolidation check']},
   {section:'3. Setup',items:['Imbalance check']},
-  {section:'4. Entry',items:['Zone = Bias','Liquidity check (zoom out)','Pullback type check (fast/slow/liquidity)','Buy and sell momentum (speed, size)','Candle pressure check near zones','Strong BoS / MSS','Confirmation (MSS / internal structure shift)','Risk tolerance check and position sizing']},
+  {section:'4. Entry',items:['Zone = Bias','Liquidity check (zoom out)','Pullback type check (fast/slow/liquidity)','Buy and sell momentum (speed, size)','Candle pressure check near zones','Strong BoS / MSS','Confirmation (MSS / internal structure shift)','Risk tolerance check and position sizing',{text:'EMA',optional:true},{text:'Early buyers/sellers',optional:true}]},
   {section:'5. TP check',items:['Technical (swing / zone)','Not greedy','3+ RR']},
   {section:'6. SL check',items:['Technical (candle / zone H/L)','Not greedy']}
 ];
@@ -5020,7 +5099,58 @@ var ERR_NONE_VALUES=['','None','— none —','Valid - Natural'];
 function tradeActiveErrors(t){
   return tradeErrorList(t).filter(function(e){return ERR_NONE_VALUES.indexOf(e)===-1;});
 }
-async function getChecklist(){return await getSetting('checklist',JSON.parse(JSON.stringify(DEFAULT_CHECKLIST)));}
+var _clOptionalSeedChecked=false;
+var _clOptionalJustSeeded=false; // true only if THIS boot's migration actually wrote a change
+async function getChecklist(){
+  // One-time migration, handles two prior states:
+  //  A) a device that already has the old standalone "Optional" section (from an earlier
+  //     version of this feature) — its items are pulled out, the section is dropped, and
+  //     the items are appended to "4. Entry" as optional items instead.
+  //  B) a device that never got that section at all — EMA / Early buyers-sellers are seeded
+  //     directly into "4. Entry" as optional items, matching what a fresh install gets via
+  //     DEFAULT_CHECKLIST.
+  // Gated by an in-memory flag (flips synchronously before any await, so it acts as a mutex
+  // against concurrent calls in the same session) and a persisted 'cl-optional-items-migrated'
+  // setting, so it runs exactly once ever and never re-adds anything the user later deletes.
+  // Every other existing section/item is left completely untouched.
+  if(!_clOptionalSeedChecked){
+    _clOptionalSeedChecked=true;
+    var alreadyMigrated=await getSetting('cl-optional-items-migrated',false);
+    if(!alreadyMigrated){
+      var existing=await getSetting('checklist',null);
+      if(existing){
+        var changed=false;
+        var itemsToPlace=[];
+        var optSecIdx=existing.findIndex(function(s){return s.optional===true;});
+        if(optSecIdx!==-1){
+          itemsToPlace=(existing[optSecIdx].items||[]).map(clItemText);
+          existing.splice(optSecIdx,1);
+          changed=true;
+        }
+        var hasAnyOptionalItem=existing.some(function(s){return(s.items||[]).some(clItemOptional);});
+        if(itemsToPlace.length===0&&!hasAnyOptionalItem){
+          itemsToPlace=['EMA','Early buyers/sellers'];
+        }
+        if(itemsToPlace.length){
+          var target=existing.find(function(s){return s.section==='4. Entry';})||existing[existing.length-1];
+          if(target){
+            var existingTexts=(target.items||[]).map(clItemText);
+            itemsToPlace.forEach(function(text){
+              if(existingTexts.indexOf(text)===-1){target.items.push({text:text,optional:true});}
+            });
+            changed=true;
+          }
+        }
+        if(changed){
+          await setSetting('checklist',existing);
+          _clOptionalJustSeeded=true; // signals boot to push this to GitHub before the auto-pull runs
+        }
+      }
+      await setSetting('cl-optional-items-migrated',true);
+    }
+  }
+  return await getSetting('checklist',JSON.parse(JSON.stringify(DEFAULT_CHECKLIST)));
+}
 // ══ Strategy manager ══════════════════════════════
 // Strategies are just a plain string array in settings ('strategies'), shown as
 // editable cards here and as <option> values in the Log Trade strategy <select>
@@ -5279,6 +5409,26 @@ function clDiscardWorkingCopy(){
   var b=document.getElementById('cl-unsaved-banner');
   if(b)b.style.display='none';
 }
+// Reads whatever's currently sitting in each item's name/weight <input> boxes back
+// into _clWorkingCopy, preserving the optional flag. Shared by both drag-drop
+// handlers below (which need current values before splicing the array) and by
+// saveChecklistEditor. A blank name input leaves that item's stored text untouched
+// (matches prior text-only flush behavior) rather than clearing it.
+function _clFlushItemInputs(){
+  if(!_clWorkingCopy)return;
+  _clWorkingCopy.forEach(function(s,si){
+    s.items.forEach(function(it,ii){
+      var inp=document.getElementById('cli-'+si+'-'+ii);
+      if(!inp)return;
+      var v=inp.value.trim();
+      if(!v)return;
+      var wInp=document.getElementById('cliw-'+si+'-'+ii);
+      var w=wInp?parseFloat(wInp.value):clItemWeight(it);
+      if(isNaN(w))w=clItemWeight(it);
+      s.items[ii]=clMakeItem(v,clItemOptional(it),w);
+    });
+  });
+}
 async function renderChecklistEditor(){
   // Use working copy if one exists, otherwise load from IDB and start a fresh copy
   if(!_clWorkingCopy){_clWorkingCopy=JSON.parse(JSON.stringify(await getChecklist()));}
@@ -5291,6 +5441,7 @@ async function renderChecklistEditor(){
   grid.id='cl-editor-grid';
   cl.forEach(function(sec,idx){grid.appendChild(buildEditorCard(sec,idx,cl.length));});
   el.appendChild(grid);
+  updateSrTotalWeightDisplay();
 }
 function buildEditorCard(sec,idx,total){
   var div=document.createElement('div');
@@ -5311,6 +5462,12 @@ function buildEditorCard(sec,idx,total){
   titleSpan.style.marginBottom='0';
   titleSpan.textContent=sec.section;
   titleRow.appendChild(titleSpan);
+  if(sec.optional){
+    var optBadge=document.createElement('span');
+    optBadge.textContent='Optional';
+    optBadge.style.cssText='font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;background:rgba(155,127,240,.12);color:var(--purple);border:1px solid rgba(155,127,240,.3);border-radius:4px;padding:1px 6px;margin-left:6px';
+    titleRow.appendChild(optBadge);
+  }
   div.appendChild(titleRow);
   div.addEventListener('dragstart',function(e){
     if(clItemDragSrc!==null){e.preventDefault();return;}
@@ -5347,7 +5504,18 @@ function buildEditorCard(sec,idx,total){
   var itemsContainer=document.createElement('div');
   itemsContainer.className='cl-items-container';
   itemsContainer.dataset.secIdx=idx;
-  sec.items.forEach(function(item,j){
+  var displayOrder=[];
+  sec.items.forEach(function(it,j){if(!clItemOptional(it))displayOrder.push(j);});
+  var firstOptionalPos=displayOrder.length;
+  sec.items.forEach(function(it,j){if(clItemOptional(it))displayOrder.push(j);});
+  displayOrder.forEach(function(j,displayPos){
+    var item=sec.items[j];
+    if(displayPos===firstOptionalPos&&firstOptionalPos<displayOrder.length){
+      var divider=document.createElement('div');
+      divider.style.cssText='display:flex;align-items:center;gap:8px;margin:8px 0 6px';
+      divider.innerHTML='<div style="flex:1;height:1px;background:var(--border)"></div><span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3)">Optional</span><div style="flex:1;height:1px;background:var(--border)"></div>';
+      itemsContainer.appendChild(divider);
+    }
     var row=document.createElement('div');
     row.className='cl-item-edit';
     row.dataset.secIdx=idx;
@@ -5411,13 +5579,9 @@ function buildEditorCard(sec,idx,total){
         if(insertBefore&&src.itemIdx===destItemIdx-1)return;
         if(!insertBefore&&src.itemIdx===destItemIdx+1)return;
       }
-      // Flush unsaved text edits into working copy before moving
-      _clWorkingCopy.forEach(function(s,si){
-        s.items.forEach(function(it,ii){
-          var inp=document.getElementById('cli-'+si+'-'+ii);
-          if(inp){var v=inp.value.trim();if(v)s.items[ii]=v;}
-        });
-      });
+      // Flush unsaved text/weight edits into working copy before moving — preserves
+      // each item's optional flag and weight rather than collapsing them away.
+      _clFlushItemInputs();
       var movedText=_clWorkingCopy[src.secIdx].items[src.itemIdx];
       _clWorkingCopy[src.secIdx].items.splice(src.itemIdx,1);
       var adj=insertAfter;
@@ -5427,15 +5591,34 @@ function buildEditorCard(sec,idx,total){
     });
     var inp=document.createElement('input');
     inp.type='text';
-    inp.value=item;
+    inp.value=clItemText(item);
     inp.id='cli-'+idx+'-'+j;
     inp.style.flex='1';
+    var isOpt=clItemOptional(item);
+    var optBtn=document.createElement('button');
+    optBtn.type='button';
+    optBtn.className='btn btn-ghost btn-sm';
+    optBtn.title=isOpt?'Marked optional — click to make required':'Mark as optional';
+    optBtn.style.cssText='font-size:10px;padding:3px 7px;white-space:nowrap;flex-shrink:0'+(isOpt?';color:var(--purple);border-color:rgba(155,127,240,.4)':'');
+    optBtn.textContent=isOpt?'★ Optional':'☆ Optional';
+    optBtn.onclick=function(){toggleClItemOptional(idx,j);};
+    var weightInp=document.createElement('input');
+    weightInp.type='number';
+    weightInp.className='cl-weight';
+    weightInp.step='1';
+    weightInp.min='0';
+    weightInp.title='Weight (importance) — higher = more important, used for the setup rating score';
+    weightInp.value=clItemWeight(item);
+    weightInp.id='cliw-'+idx+'-'+j;
+    weightInp.oninput=updateSrTotalWeightDisplay;
     var delBtn=document.createElement('button');
     delBtn.className='btn btn-danger btn-sm cl-del';
     delBtn.textContent='\u2715';
     delBtn.onclick=function(){removeClItem(idx,j);};
     row.appendChild(itemHandle);
     row.appendChild(inp);
+    row.appendChild(optBtn);
+    row.appendChild(weightInp);
     row.appendChild(delBtn);
     itemsContainer.appendChild(row);
   });
@@ -5459,12 +5642,7 @@ function buildEditorCard(sec,idx,total){
     if(clItemDragSrc===null)return;
     var src=clItemDragSrc;
     clItemDragSrc=null;
-    _clWorkingCopy.forEach(function(s,si){
-      s.items.forEach(function(it,ii){
-        var inp=document.getElementById('cli-'+si+'-'+ii);
-        if(inp){var v=inp.value.trim();if(v)s.items[ii]=v;}
-      });
-    });
+    _clFlushItemInputs();
     var movedText=_clWorkingCopy[src.secIdx].items[src.itemIdx];
     _clWorkingCopy[src.secIdx].items.splice(src.itemIdx,1);
     _clWorkingCopy[idx].items.push(movedText);
@@ -5479,19 +5657,34 @@ function buildEditorCard(sec,idx,total){
   div.appendChild(addBtn);
   return div;
 }
+async function toggleClItemOptional(secIdx,itemIdx){
+  if(!_clWorkingCopy){_clWorkingCopy=JSON.parse(JSON.stringify(await getChecklist()));}
+  var item=_clWorkingCopy[secIdx].items[itemIdx];
+  var text=clItemText(item);
+  _clWorkingCopy[secIdx].items[itemIdx]=clMakeItem(text,!clItemOptional(item),clItemWeight(item));
+  clMarkUnsaved();
+  renderChecklistEditor();
+}
 async function saveChecklistEditor(){
   var oldCl=await getChecklist();
   // Build old text map: "secIdx-itemIdx" -> text (before save)
   var oldTextMap={};
-  oldCl.forEach(function(sec,si){sec.items.forEach(function(item,ii){oldTextMap[si+'-'+ii]=item;});});
-  // Flush current input values into working copy
+  oldCl.forEach(function(sec,si){sec.items.forEach(function(item,ii){oldTextMap[si+'-'+ii]=clItemText(item);});});
+  // Flush current input values into working copy — preserves each item's optional
+  // flag rather than collapsing it back to a plain string.
   var cl=_clWorkingCopy||JSON.parse(JSON.stringify(oldCl));
   cl.forEach(function(sec,idx){
     var updated=[];
     sec.items.forEach(function(item,j){
+      var isOpt=clItemOptional(item);
       var inp=document.getElementById('cli-'+idx+'-'+j);
-      if(inp){var v=inp.value.trim();if(v)updated.push(v);}
-      else if(item.trim())updated.push(item.trim());
+      var v=inp?inp.value.trim():clItemText(item).trim();
+      if(v){
+        var wInp=document.getElementById('cliw-'+idx+'-'+j);
+        var w=wInp?parseFloat(wInp.value):clItemWeight(item);
+        if(isNaN(w))w=clItemWeight(item);
+        updated.push(clMakeItem(v,isOpt,w));
+      }
     });
     sec.items=updated;
   });
@@ -5499,7 +5692,7 @@ async function saveChecklistEditor(){
   await setSetting('checklist',cl);
   // Build set of all text keys in new config (for existence check)
   var newTextSet={};
-  cl.forEach(function(sec){sec.items.forEach(function(item){newTextSet[item]=true;});});
+  cl.forEach(function(sec){sec.items.forEach(function(item){newTextSet[clItemText(item)]=true;});});
   // Build rename map: oldText -> newText for items whose text changed at the same position
   // (pure renames — same slot, different text). Moves are detected by oldText still existing
   // in the new config under a different position, so they need no remapping at all.
@@ -5510,7 +5703,7 @@ async function saveChecklistEditor(){
     // oldText gone from new config entirely — check if same position has new text (rename)
     var parts=pos.split('-');
     var si=parseInt(parts[0]),ii=parseInt(parts[1]);
-    var newAtPos=cl[si]&&cl[si].items[ii]!==undefined?cl[si].items[ii]:null;
+    var newAtPos=cl[si]&&cl[si].items[ii]!==undefined?clItemText(cl[si].items[ii]):null;
     if(newAtPos&&newAtPos!==oldText){
       renameMap[oldText]=newAtPos; // renamed at this position
     }
@@ -5535,7 +5728,13 @@ async function saveChecklistEditor(){
     var changed=JSON.stringify(newState)!==JSON.stringify(t.checklist);
     if(changed){t.checklist=newState;await dbPut('trades',t);synced++;}
   }
+  // Note: score-based tiers (name + minScore) are item-text-agnostic, so unlike the old
+  // allowUnchecked tiers there's nothing here that can be orphaned by a rename/delete —
+  // no rename/drop sync needed. Just keep the in-memory cache current.
+  _setupRatingsCache=await getSetupRatings();
+  await loadClAllItemsCache();
   renderChecklist();
+  if(typeof renderSetupRatingsEditor==='function')renderSetupRatingsEditor();
   clDiscardWorkingCopy(); // clear draft, hide banner
   var msg='Checklist saved';
   if(synced)msg+=' — synced '+synced+' trade'+(synced>1?'s':'');
@@ -5559,14 +5758,21 @@ async function removeClItem(secIdx,itemIdx){
 // tracked as separate, independent DOM trees.
 function _clSectionHtml(sec, idx, icons, idPrefix, checkAllFn, checkAllTitle, itemClass, onChangeFn) {
   var icon = icons[idx % icons.length] || '<circle cx="12" cy="12" r="10"/>';
+  function rowHtml(item){
+    var text=clItemText(item), isOpt=clItemOptional(item);
+    return '<label class="cl-row"><input type="checkbox" class="'+itemClass+'" data-k="'+escHtml(text)+'" data-sec="'+idx+'" data-optional="'+(isOpt?'1':'0')+'" onchange="'+onChangeFn+'()"><span>'+escHtml(text)+'</span></label>';
+  }
+  var required=sec.items.filter(function(it){return !clItemOptional(it);});
+  var optional=sec.items.filter(clItemOptional);
+  var dividerHtml=optional.length?'<div style="display:flex;align-items:center;gap:8px;margin:10px 0 6px"><div style="flex:1;height:1px;background:var(--border)"></div><span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3)">Optional</span><div style="flex:1;height:1px;background:var(--border)"></div></div>':'';
   return '<div class="cl-card" style="margin-bottom:0" id="'+idPrefix+'-block-'+idx+'">'
     + '<div class="cl-card-title" style="display:flex;align-items:center;justify-content:space-between">'
       + '<span style="display:flex;align-items:center;gap:7px"><svg viewBox="0 0 24 24">'+icon+'</svg>'+escHtml(sec.section)+'</span>'
       + '<button class="btn btn-ghost btn-sm" style="font-size:11px;padding:3px 8px" onclick="'+checkAllFn+'('+idx+')" title="'+checkAllTitle+'">✓ All</button>'
     + '</div>'
-    + sec.items.map(function(item,j){
-      return '<label class="cl-row"><input type="checkbox" class="'+itemClass+'" data-k="'+escHtml(item)+'" data-sec="'+idx+'" onchange="'+onChangeFn+'()"><span>'+escHtml(item)+'</span></label>';
-    }).join('')
+    + required.map(rowHtml).join('')
+    + dividerHtml
+    + optional.map(rowHtml).join('')
     + '</div>';
 }
 // Render checklist in log-trade tab
@@ -5593,18 +5799,298 @@ function checkAllInBlock(secIdx){
 }
 function updateClStatus(){
   var all=document.querySelectorAll('.cl');
-  var checked=[].filter.call(all,function(c){return c.checked});
+  // "Optional" section items don't gate checklist completion — a trade can be marked
+  // complete with them unchecked. They still count for the live setup-rating badge
+  // below, since that's a separately configurable system (per-tier allowUnchecked).
+  var required=[].filter.call(all,function(c){return c.dataset.optional!=='1';});
+  var checked=[].filter.call(required,function(c){return c.checked});
   var el=document.getElementById('cl-status');if(!el)return;
-  if(checked.length===all.length&&all.length>0){
+  if(checked.length===required.length&&required.length>0){
     el.className='cl-status-badge cl-pass';
     el.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Checklist complete ✓';
   }else{
     el.className='cl-status-badge cl-fail';
-    el.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> '+checked.length+'/'+all.length+' complete';
+    el.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> '+checked.length+'/'+required.length+' complete';
+  }
+  // Live setup rating — recomputed straight from the checkboxes on screen (not a
+  // cache) so it always reflects the exact current item set as the user checks them.
+  var ratingBadge=document.getElementById('cl-rating-badge');
+  if(ratingBadge){
+    var tiersConfigured=_setupRatingsCache&&_setupRatingsCache.length;
+    if(!all.length||!tiersConfigured){
+      ratingBadge.style.display='none';
+    }else{
+      var state={};[].forEach.call(all,function(c){state[c.dataset.k]=c.checked?'yes':'no';});
+      // Score against the real item objects (incl. weight), not bare data-k text keys —
+      // computeSetupScoreInfo needs the {text,optional,weight} shape to weight correctly.
+      var scoreInfo=computeSetupScoreInfo(state,_clAllItemsCache);
+      ratingBadge.style.display='inline-flex';
+      if(scoreInfo.name){
+        ratingBadge.className='cl-status-badge';
+        var srRgb=hexToRgbTriple(scoreInfo.color);
+        ratingBadge.style.background='rgba('+srRgb.join(',')+',.14)';
+        ratingBadge.style.color=scoreInfo.color;
+        ratingBadge.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg> Setup rating: '+formatSetupScoreLabel(scoreInfo);
+      }else{
+        ratingBadge.className='cl-status-badge cl-fail';
+        ratingBadge.style.background='';
+        ratingBadge.style.color='';
+        ratingBadge.innerHTML='No setup rating met';
+      }
+    }
   }
 }
 function getChecklist_state(){var cl={};document.querySelectorAll('.cl').forEach(function(c){cl[c.dataset.k]=c.checked?'yes':'no'});return cl;}
 function setChecklist_state(cl){document.querySelectorAll('.cl').forEach(function(c){var v=cl&&cl[c.dataset.k];c.checked=v==='yes'||v===true||v===1});updateClStatus();}
+// ══ Setup rating criteria ══════════════════════════
+// Lets the user define named quality tiers (e.g. A+, A, B+, B) as a name + minimum
+// score. computeSetupRating() below scores a trade as the sum of checked items'
+// weights and matches it against these minScore thresholds.
+// Tiers are evaluated top → bottom (best → worst) in computeSetupRating(), and a
+// trade is awarded the first tier whose minScore is met or exceeded, so list
+// order matters: the strictest/best tier belongs first.
+//
+// Deliberately NOT stored per-trade — only the checklist state itself (t.checklist)
+// is stored, same as always. The rating is recomputed from that checklist state
+// every time it's displayed, so editing criteria here instantly re-rates every
+// past trade with zero migration and no risk of stale/orphaned ratings, and this
+// stays cheap since checklist state is already sitting in memory with the trade.
+var DEFAULT_SETUP_RATINGS=[
+  {name:'A+',minScore:0,color:'#9b7ff0'},
+  {name:'A', minScore:0,color:'#4d7fff'},
+  {name:'B+',minScore:0,color:'#34c97a'},
+  {name:'B', minScore:0,color:'#e8a030'}
+];
+// Palette offered/cycled for new tiers and as a fallback for any tier saved before the
+// color picker existed (see srTierColor()) — kept distinct enough to tell tiers apart
+// at a glance without forcing the user to pick a color before their tiers render sanely.
+var SR_DEFAULT_PALETTE=['#9b7ff0','#4d7fff','#34c97a','#e8a030','#e85555','#ec4899','#06b6d4','#84cc16'];
+// Returns the hex color for a tier at index idx — the tier's own saved color if it has
+// one, else a palette color chosen by position so older/uncolored tiers still render
+// distinctly instead of all collapsing to the same fallback.
+function srTierColor(tier,idx){return(tier&&tier.color)||SR_DEFAULT_PALETTE[idx%SR_DEFAULT_PALETTE.length];}
+// '#rrggbb' (or shorthand '#rgb') → [r,g,b]. Falls back to the first palette color for
+// anything unparseable so a bad/blank swatch never breaks a badge's inline style.
+function hexToRgbTriple(hex){
+  hex=(hex||'').replace('#','');
+  if(hex.length===3)hex=hex.split('').map(function(c){return c+c;}).join('');
+  var num=parseInt(hex,16);
+  if(isNaN(num)||hex.length!==6)return[155,127,240];
+  return[(num>>16)&255,(num>>8)&255,num&255];
+}
+// Inline style string for a setup-rating badge tinted to a tier's color — same soft
+// tinted-background-with-solid-text look as the built-in .badge-* classes (e.g.
+// .badge-purple), just computed from an arbitrary user-picked hex instead of a fixed var.
+function srBadgeStyle(color){
+  var rgb=hexToRgbTriple(color);
+  return'background:rgba('+rgb.join(',')+',.14);color:'+color;
+}
+var _srFormatMigrationChecked=false;
+async function getSetupRatings(){
+  // One-time migration: tiers saved by the old per-item "allowUnchecked" checkbox system
+  // are structurally incompatible with the new {name, minScore} shape (there's no sane
+  // way to convert "which items are excused" into "minimum weighted score"), so any
+  // old-format tiers found on a device are cleared back to the defaults exactly once.
+  // Gated the same way as the checklist "Optional" migration above: an in-memory flag
+  // (mutex within this session) plus a persisted 'sr-format-migrated' setting so it
+  // never re-runs and never clobbers tiers the user has already rebuilt in the new format.
+  if(!_srFormatMigrationChecked){
+    _srFormatMigrationChecked=true;
+    var alreadyMigrated=await getSetting('sr-format-migrated',false);
+    if(!alreadyMigrated){
+      var existing=await getSetting('setupRatings',null);
+      var isOldFormat=Array.isArray(existing)&&existing.some(function(t){return t&&Object.prototype.hasOwnProperty.call(t,'allowUnchecked');});
+      if(isOldFormat){
+        await setSetting('setupRatings',JSON.parse(JSON.stringify(DEFAULT_SETUP_RATINGS)));
+        toast('Setup rating tiers were reset — old format is incompatible with the new score-based tiers. Rebuild them in Checklist settings.','ok');
+      }
+      await setSetting('sr-format-migrated',true);
+    }
+  }
+  return await getSetting('setupRatings',JSON.parse(JSON.stringify(DEFAULT_SETUP_RATINGS)));
+}
+// Synchronous in-memory caches, loaded at boot (see openDB().then(...)) and refreshed
+// after any save/import/pull that could change them. History-table sortVal/render
+// callbacks and the live Log Trade badge run synchronously per row, so they read
+// these caches directly instead of awaiting getSetupRatings()/getChecklist() each time.
+var _setupRatingsCache=null;
+var _clAllItemsCache=null;
+async function loadSetupRatingsCache(){_setupRatingsCache=await getSetupRatings();return _setupRatingsCache;}
+async function loadClAllItemsCache(){
+  var cl=await getChecklist();
+  var items=[];
+  // Push raw items (not clItemText(it)) so weight survives — computeSetupRating()
+  // needs the full {text,optional,weight} shape to score by weight, not just text.
+  cl.forEach(function(sec){sec.items.forEach(function(it){items.push(it);});});
+  _clAllItemsCache=items;
+  return items;
+}
+// Given a checklist state object ({itemText:'yes'/'no', ...} — the same shape as
+// t.checklist / getChecklist_state()) and the full list of current checklist items
+// (each in raw stored shape — plain string, or {text,optional,weight} object; always
+// read via clItemText()/clItemWeight() rather than assuming a shape), returns the
+// best-matching tier name, or null if no tier's threshold is met (including when
+// there are no checklist items or no tiers configured at all).
+// Score = sum of clItemWeight() over every item whose clItemText() is checked
+// ('yes') in checklistState. Items not present in `items` (e.g. stale/renamed keys
+// still sitting in an old trade's saved checklist state) simply don't contribute —
+// only the current checklist's items are scored, same as before.
+function computeSetupRating(checklistState,items){
+  return computeSetupScoreInfo(checklistState,items).name;
+}
+// Same scoring as computeSetupRating(), but also returns the achieved score and the
+// total possible score (sum of every current item's weight) so callers can show the
+// "A+ · 47/50" style breakdown alongside the tier name. name is null when no tier's
+// threshold is met (including when there are no checklist items or no tiers configured).
+function computeSetupScoreInfo(checklistState,items){
+  var tiers=_setupRatingsCache||DEFAULT_SETUP_RATINGS;
+  items=items||_clAllItemsCache||[];
+  var maxScore=0;
+  for(var k=0;k<items.length;k++){maxScore+=clItemWeight(items[k]);}
+  var info={name:null,score:0,maxScore:maxScore,color:null};
+  if(!checklistState||!tiers||!tiers.length||!items.length)return info;
+  var score=0;
+  for(var j=0;j<items.length;j++){
+    var it=items[j];
+    if(checklistState[clItemText(it)]==='yes')score+=clItemWeight(it);
+  }
+  info.score=score;
+  for(var i=0;i<tiers.length;i++){
+    var tier=tiers[i];
+    var minScore=(typeof tier.minScore==='number'&&isFinite(tier.minScore))?tier.minScore:0;
+    if(score>=minScore){info.name=tier.name;info.color=srTierColor(tier,i);break;}
+  }
+  return info;
+}
+// Formats "A+ · 47/50" for a computeSetupScoreInfo() result. Returns '' if no tier was met.
+function formatSetupScoreLabel(info){
+  if(!info||!info.name)return'';
+  return escHtml(info.name)+' · '+info.score+'/'+info.maxScore;
+}
+// ── Setup rating editor (lives on the Checklist editor page, below the checklist
+// itself, since tiers are defined directly against the current checklist items) ──
+// Same in-memory-draft pattern as the checklist editor above: _srWorkingCopy holds
+// an uncommitted clone, mutated by every add/remove/move/toggle and re-rendered from,
+// with saveSetupRatingsEditor() the only place that commits it to settings.
+var _srWorkingCopy=null;
+// Sums checklist item weights for the "Total possible weight" readout above the tier
+// list. Reads live from the Checklist editor's rendered <input class=cl-weight> boxes
+// when that editor is on screen, so it reflects unsaved weight edits immediately;
+// falls back to the saved checklist (via getChecklist) if that editor hasn't rendered.
+function computeChecklistTotalWeight(){
+  var inputs=document.querySelectorAll('#cl-editor-area input.cl-weight');
+  if(inputs.length){
+    var total=0;
+    inputs.forEach(function(i){var v=parseFloat(i.value);if(!isNaN(v))total+=v;});
+    return total;
+  }
+  return null; // checklist editor not rendered yet — caller falls back to storage
+}
+async function updateSrTotalWeightDisplay(){
+  var el=document.getElementById('sr-total-weight-val');
+  if(!el)return;
+  var total=computeChecklistTotalWeight();
+  if(total===null){
+    var cl=await getChecklist();
+    total=0;
+    cl.forEach(function(sec){sec.items.forEach(function(it){total+=clItemWeight(it);});});
+  }
+  el.textContent=total;
+}
+function srMarkUnsaved(){var b=document.getElementById('sr-unsaved-banner');if(b)b.style.display='flex';}
+function srDiscardWorkingCopy(){_srWorkingCopy=null;var b=document.getElementById('sr-unsaved-banner');if(b)b.style.display='none';}
+async function renderSetupRatingsEditor(){
+  if(!_srWorkingCopy){_srWorkingCopy=JSON.parse(JSON.stringify(await getSetupRatings()));}
+  else{srMarkUnsaved();}
+  var el=document.getElementById('sr-editor-area');
+  if(!el)return;
+  if(!_srWorkingCopy.length){
+    el.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px;border:1px dashed var(--border);border-radius:var(--radius)">No rating tiers yet. Click "+ Add tier" above to create one (e.g. A+, A, B+, B).</div>';
+    updateSrTotalWeightDisplay();
+    return;
+  }
+  var html='';
+  _srWorkingCopy.forEach(function(tier,ti){
+    var minScore=(typeof tier.minScore==='number'&&isFinite(tier.minScore))?tier.minScore:0;
+    var color=srTierColor(tier,ti);
+    html+='<div class="cl-card" style="margin-bottom:12px">'
+      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+      +'<input type="color" id="sr-color-'+ti+'" value="'+color+'" title="Tier color" oninput="srMarkUnsaved();updateSrPreview('+ti+')" style="width:32px;height:32px;padding:2px;border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer;flex-shrink:0">'
+      +'<input type="text" id="sr-name-'+ti+'" value="'+escHtml(tier.name)+'" placeholder="Tier name (e.g. A+)" oninput="srMarkUnsaved();updateSrPreview('+ti+')" style="font-weight:700;font-size:13px;width:110px;flex-shrink:0">'
+      +'<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);flex-shrink:0">Min score'
+      +'<input type="number" id="sr-minscore-'+ti+'" value="'+minScore+'" step="1" oninput="srMarkUnsaved()" style="width:60px;text-align:center;padding:3px 4px;font-size:11px">'
+      +'</label>'
+      +'<span id="sr-preview-'+ti+'" class="badge" style="'+srBadgeStyle(color)+'">'+escHtml(tier.name||'Tier')+'</span>'
+      +'<span style="flex:1"></span>'
+      +'<button class="btn btn-ghost btn-sm" title="Move up"'+(ti===0?' disabled':'')+' onclick="moveSrTier('+ti+',-1)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg></button>'
+      +'<button class="btn btn-ghost btn-sm" title="Move down"'+(ti===_srWorkingCopy.length-1?' disabled':'')+' onclick="moveSrTier('+ti+',1)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></button>'
+      +'<button class="btn btn-danger btn-sm" title="Delete tier" onclick="removeSrTier('+ti+')">✕</button>'
+      +'</div>'
+      +'</div>';
+  });
+  el.innerHTML=html;
+  updateSrTotalWeightDisplay();
+}
+// Live-updates a single tier's preview badge (name text + color) as the user types/picks,
+// without a full re-render — keeps focus in the input the user is actively editing.
+function updateSrPreview(ti){
+  var preview=document.getElementById('sr-preview-'+ti);
+  var nameInp=document.getElementById('sr-name-'+ti);
+  var colorInp=document.getElementById('sr-color-'+ti);
+  if(!preview)return;
+  var name=(nameInp&&nameInp.value.trim())||'Tier';
+  var color=(colorInp&&colorInp.value)||SR_DEFAULT_PALETTE[ti%SR_DEFAULT_PALETTE.length];
+  preview.textContent=name;
+  preview.style.cssText='background:'+'rgba('+hexToRgbTriple(color).join(',')+',.14);color:'+color;
+}
+function _srFlushNames(){
+  if(!_srWorkingCopy)return;
+  _srWorkingCopy.forEach(function(tier,ti){
+    var inp=document.getElementById('sr-name-'+ti);
+    if(inp){var v=inp.value.trim();if(v)tier.name=v;}
+    var msInp=document.getElementById('sr-minscore-'+ti);
+    if(msInp){var ms=parseFloat(msInp.value);tier.minScore=isNaN(ms)?0:ms;}
+    var colorInp=document.getElementById('sr-color-'+ti);
+    if(colorInp&&colorInp.value)tier.color=colorInp.value;
+  });
+}
+function moveSrTier(idx,dir){
+  if(!_srWorkingCopy)return;
+  _srFlushNames();
+  var dest=idx+dir;
+  if(dest<0||dest>=_srWorkingCopy.length)return;
+  var tmp=_srWorkingCopy[idx];_srWorkingCopy[idx]=_srWorkingCopy[dest];_srWorkingCopy[dest]=tmp;
+  srMarkUnsaved();
+  renderSetupRatingsEditor();
+}
+function removeSrTier(idx){
+  if(!_srWorkingCopy)return;
+  _srFlushNames();
+  _srWorkingCopy.splice(idx,1);
+  srMarkUnsaved();
+  renderSetupRatingsEditor();
+}
+async function addSrTier(){
+  if(!_srWorkingCopy){_srWorkingCopy=JSON.parse(JSON.stringify(await getSetupRatings()));}
+  _srFlushNames();
+  var color=SR_DEFAULT_PALETTE[_srWorkingCopy.length%SR_DEFAULT_PALETTE.length];
+  _srWorkingCopy.push({name:'New tier',minScore:0,color:color});
+  srMarkUnsaved();
+  renderSetupRatingsEditor();
+}
+async function saveSetupRatingsEditor(){
+  if(!_srWorkingCopy){_srWorkingCopy=JSON.parse(JSON.stringify(await getSetupRatings()));}
+  _srFlushNames();
+  var ratings=_srWorkingCopy.filter(function(t){return t.name&&t.name.trim();}); // drop any left blank
+  _srWorkingCopy=null;
+  await setSetting('setupRatings',ratings);
+  _setupRatingsCache=ratings;
+  srDiscardWorkingCopy();
+  renderSetupRatingsEditor();
+  if(typeof updateClStatus==='function')updateClStatus(); // refresh live badge if Log Trade checklist is on screen
+  toast('Setup rating criteria saved','ok');
+  ghAutoSyncConfig();
+}
 // ══ Pair → Asset type ═════════════════════════════
 // Each <option> in the pair <select> carries a data-asset attribute (set when the pair
 // list is built from settings — see the asset modal / addPair above this block's
@@ -6126,7 +6612,7 @@ async function generateDemoTrades(sessionId,sessionStartDate,sessionEndDate,star
       section.items.forEach(function(item){
         // Win: 85-100% checked; Loss: 60-85% checked (missed something)
         var checked=isWin?(Math.random()<0.9):(Math.random()<0.7);
-        items.push({text:item,checked:checked});
+        items.push({text:clItemText(item),checked:checked});
       });
     });
     return items;
@@ -6976,7 +7462,7 @@ function nav(id,btn){
     var calcBanner=document.getElementById('calc-flow-banner');
     if(calcBanner)calcBanner.style.display='none';
   }
-  if(_currentPage==='checklist-editor'&&id!=='checklist-editor'){clDiscardWorkingCopy();}
+  if(_currentPage==='checklist-editor'&&id!=='checklist-editor'){clDiscardWorkingCopy();srDiscardWorkingCopy();}
   _currentPage=id;
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active')});
@@ -6997,7 +7483,7 @@ function nav(id,btn){
   }
   if(id==='history'){populateSessionSelects().then(function(){populateFilters();restoreHistFilterPrefs();renderHistory();});}
   if(id==='sessions')renderSessionsList();
-  if(id==='checklist-editor'){renderChecklistEditor();}
+  if(id==='checklist-editor'){renderChecklistEditor();renderSetupRatingsEditor();}
   if(id==='pre-checklist'){preClRender();}
   if(id==='montecarlo'){resetMonteCarloResults();initMonteCarlo();}
   if(id==='calculator'){if(!_flowActive){calcReset();}calcSyncAssets();}
@@ -8520,6 +9006,7 @@ var ALL_HISTORY_COLS=[
   {key:'strategy',  label:'Strategy',  sortVal:function(t){return t.strategy||'';},               render:function(t){return'<td style="font-size:11px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(t.strategy||'—')+'</td>';}},
   {key:'durationMin',label:'Duration', sortVal:function(t){return t.durationMin||0;},             render:function(t){if(!t.durationMin)return'<td>—</td>';var total=t.durationMin,days=Math.floor(total/1440),h=Math.floor((total%1440)/60),m=total%60;if(days>0){var label=days+'d'+(h>0?' '+h+'h':'');return'<td><span style="display:inline-flex;align-items:center;gap:4px;background:rgba(155,127,240,.12);border:1px solid rgba(155,127,240,.25);color:var(--purple);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;font-family:DM Mono,monospace;white-space:nowrap">⏱ '+label+'</span></td>';}return'<td style="font-size:12px;color:var(--text2)">'+(h>0?h+'h ':'')+m+'m</td>';}},
   {key:'rating',    label:'Rating',    sortVal:function(t){return(t.rating||'').length;},         render:function(t){return'<td><span class="stars">'+(t.rating||'')+'</span></td>';}},
+  {key:'setupRating',label:'Setup rating',sortVal:function(t){var r=computeSetupRating(t.checklist,_clAllItemsCache);if(!r)return-1;var tiers=_setupRatingsCache||DEFAULT_SETUP_RATINGS;var idx=tiers.findIndex(function(x){return x.name===r;});return idx===-1?-1:tiers.length-idx;},render:function(t){var info=computeSetupScoreInfo(t.checklist,_clAllItemsCache);return'<td>'+(info.name?'<span class="badge" style="'+srBadgeStyle(info.color)+'">'+escHtml(info.name)+'</span>':'<span style="color:var(--text3)">—</span>')+'</td>';}},
   {key:'error',     label:'Error type',sortVal:function(t){return tradeErrorList(t).join(', ');},                  render:function(t){var el=tradeErrorList(t);return'<td style="font-size:11px;color:var(--text2)">'+(el.length?escHtml(el.join(', ')):'—')+'</td>';}},
   {key:'model',     label:'Model',     sortVal:function(t){return t.model||'';},                  render:function(t){return'<td style="font-size:11px;color:var(--text2)">'+escHtml(t.model||'—')+'</td>';}},
   {key:'method',    label:'Method',    sortVal:function(t){return t.method||'';},                 render:function(t){return'<td style="font-size:11px;color:var(--text2)">'+escHtml(t.method||'—')+'</td>';}},
@@ -8558,7 +9045,7 @@ function histSetPageSize(val){
   renderHistory();
 }
 // Default visible columns for history table (used when no saved config exists)
-var DEFAULT_HIST_COL_KEYS=['num','sessionName','pair','assetType','type','result','plDollar','plPct','actualRR','entryTime','marketSession','entryPrice','exitPrice','stopLoss','qty','riskpct','strategy','durationMin','rating','error','loggedAt','fees','netPL'];
+var DEFAULT_HIST_COL_KEYS=['num','sessionName','pair','assetType','type','result','plDollar','plPct','actualRR','entryTime','marketSession','entryPrice','exitPrice','stopLoss','qty','riskpct','strategy','durationMin','rating','setupRating','error','loggedAt','fees','netPL'];
 var _histColConfigCache=null;
 async function getHistColConfig(){
   if(_histColConfigCache)return _histColConfigCache;
@@ -9030,11 +9517,19 @@ async function openDetail(id,opts){
   var dmArrColor=(trade.actualRR==null)?'var(--text2)':(trade.actualRR>0?'var(--green)':(trade.actualRR<0?'var(--red)':'var(--text2)'));
   var dmArrText=(trade.actualRR!=null)?(trade.actualRR>0?'+':'')+trade.actualRR.toFixed(2)+'R':'—';
   var dmArrHtml='<span class="badge badge-gray mono" style="color:'+dmArrColor+'" title="Actual RR">'+dmArrText+'</span>';
+  // Setup rating badge — computed fresh against the checklist template already fetched
+  // above (_clTemplateForDetail) rather than the boot-time cache, so it can't go stale
+  // if the checklist was edited since the last cache refresh.
+  // Keep raw items (not .map(clItemText)) so weight survives into computeSetupRating.
+  var _dmClItems=_clTemplateForDetail.reduce(function(a,s){return a.concat(s.items);},[]);
+  var dmSetupScoreInfo=computeSetupScoreInfo(trade.checklist,_dmClItems);
+  var dmSetupRatingHtml=dmSetupScoreInfo.name?'<span class="badge" style="display:inline-flex;align-items:center;'+srBadgeStyle(dmSetupScoreInfo.color)+'" title="Setup rating"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="margin-right:3px;vertical-align:-1px"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>'+escHtml(dmSetupScoreInfo.name)+'</span>':'';
   document.getElementById('dm-badges').innerHTML=
     (trade.skipped?'<span class="skipped-badge">⊘ Skipped</span>':'')+
     (pendingTrade?'<span class="badge badge-amber">Pending</span>':'<span class="badge '+(win?'badge-green':'badge-red')+'">'+(win?'Win':'Loss')+'</span>')+
     '<span class="badge '+(trade.type==='Long'?'badge-green':'badge-red')+'">'+trade.type+'</span>'+
     dmArrHtml+
+    dmSetupRatingHtml+
     (trade.strategy?'<span class="badge badge-gray">'+escHtml(trade.strategy)+'</span>':'')+
     '<span class="stars">'+trade.rating+'</span>';
   document.getElementById('dm-edit-btn').onclick=function(){editTrade(id)};
@@ -9137,15 +9632,15 @@ async function openDetail(id,opts){
     var clTemplate=_clTemplateForDetail||DEFAULT_CHECKLIST;
     var sections=[];
     clTemplate.forEach(function(sec){
-      var unmet=sec.items.filter(function(item){var v=cl[item];return v!=='yes'&&v!==true&&v!==1;});
+      var unmet=sec.items.filter(function(item){var v=cl[clItemText(item)];return v!=='yes'&&v!==true&&v!==1;}).map(clItemText);
       if(unmet.length)sections.push({header:sec.section,items:unmet});
     });
     // Build a lookup: "sectionIndex-itemIndex" -> item label text
     var keyToLabel={};
     clTemplate.forEach(function(sec,si){
-      sec.items.forEach(function(item,ii){keyToLabel[si+'-'+ii]=item;});
+      sec.items.forEach(function(item,ii){keyToLabel[si+'-'+ii]=clItemText(item);});
     });
-    var templateItems=clTemplate.reduce(function(a,s){return a.concat(s.items);},[]);
+    var templateItems=clTemplate.reduce(function(a,s){return a.concat(s.items.map(clItemText));},[]);
     var legacyUnmet=Object.keys(cl).filter(function(k){var v=cl[k];return !templateItems.includes(k)&&v!=='yes'&&v!==true&&v!==1&&v!==null&&v!==undefined;});
     // Resolve numeric keys (e.g. "0-2") to their label; skip unresolvable keys
     var legacyLabels=legacyUnmet.map(function(k){return keyToLabel[k]||null;}).filter(Boolean);
@@ -9175,6 +9670,7 @@ async function openDetail(id,opts){
     +'<div class="detail-item"><div class="di-label">Actual RR</div><div class="di-val mono">'+(trade.actualRR!=null?trade.actualRR.toFixed(2)+'R':'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Risk</div><div class="di-val mono">$'+trade.riskDollar+' / '+trade.riskpct+'%</div></div>'
     +'<div class="detail-item"><div class="di-label">Qty (units)</div><div class="di-val mono">'+(trade.qty||'—')+'</div></div>'
+    +'<div class="detail-item"><div class="di-label">Position size</div><div class="di-val mono">'+(function(){var q=parseFloat(trade.qty),e=parseFloat(trade.entryPrice);return(q&&e)?'$'+calcFmt(q*e,2):'—';})()+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Acct balance</div><div class="di-val mono">'+(trade.acct?'$'+parseFloat(trade.acct).toLocaleString():'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Duration</div><div class="di-val">'+(function(){if(!trade.durationMin)return'—';var tot=trade.durationMin,d=Math.floor(tot/1440),h=Math.floor((tot%1440)/60),m=tot%60;if(d>0)return'<span style="color:var(--purple);font-weight:700">'+d+'d'+(h>0?' '+h+'h':'')+(m>0?' '+m+'m':'')+'</span>';return(h>0?h+'h ':'')+m+'m';})()+'</div></div>'
     +'<div class="detail-item"><div class="di-label">LTF entry</div><div class="di-val">'+(trade.ltf||'—')+'</div></div>'
@@ -11785,6 +12281,8 @@ openDB().then(async function(){
   await populateSessionSelects();
   await populateFilters();
   restoreHistFilterPrefs();
+  await loadSetupRatingsCache();
+  await loadClAllItemsCache();
   await renderChecklist();
   generateTradeNum().then(function(n){var el=document.getElementById('f-num');if(el)el.value=n;});
   renderDashboard();updateSidebarStats();
@@ -11798,6 +12296,14 @@ openDB().then(async function(){
   recalc();
   // Auto-pull on page load if GitHub is configured — keeps multi-device in sync without snapshot
   var _cfg=ghGetConfig();
+  // If a local one-time migration (e.g. seeding the checklist's "Optional" section) just wrote
+  // a change this boot, push it to GitHub FIRST and wait for it to land — otherwise the auto-pull
+  // right below would immediately overwrite it with the stale pre-migration cloud copy, silently
+  // erasing the change the user just saw rendered. ghPushConfigFile is called directly (not via
+  // the normal debounced ghAutoSyncConfig) specifically so it can be awaited here.
+  if(_clOptionalJustSeeded&&_cfg.user&&_cfg.repo&&_cfg.token){
+    try{await ghPushConfigFile(_cfg);}catch(e){console.warn('Post-migration config push failed:',e.message);}
+  }
   if(_cfg.user&&_cfg.repo&&_cfg.token)ghAutoPullOnSetup();
 });
 // ══ Monte Carlo helpers ═══════════════════════════
@@ -13084,8 +13590,11 @@ function preClCheckAll(secIdx) {
 // Recompute checklist completion % and update the progress ring, score, status badge, and warning/all-good banners
 function preClUpdateStatus() {
   var all = document.querySelectorAll('.pre-cl-item');
-  var checked = [].filter.call(all, function(c){return c.checked;});
-  var total = all.length;
+  // "Optional" section items don't gate completion here either — same treatment as
+  // the Log Trade tab's updateClStatus(). The rating badge below still uses `all`.
+  var required = [].filter.call(all, function(c){return c.dataset.optional!=='1';});
+  var checked = [].filter.call(required, function(c){return c.checked;});
+  var total = required.length;
   var n = checked.length;
   var pct = total > 0 ? Math.round((n/total)*100) : 0;
   var circ = 138.2; // 2*π*22
@@ -13120,6 +13629,33 @@ function preClUpdateStatus() {
   var good = document.getElementById('pre-cl-all-good');
   if(warn) warn.style.display = (total > 0 && n < total) ? 'block' : 'none';
   if(good) good.style.display = (total > 0 && n === total) ? 'block' : 'none';
+  // Live setup rating — same computeSetupRating() used on the Log Trade checklist tab,
+  // just fed from .pre-cl-item checkboxes instead of .cl ones (item text keys are identical).
+  var ratingBadge = document.getElementById('pre-cl-rating-badge');
+  if(ratingBadge){
+    var tiersConfigured = _setupRatingsCache && _setupRatingsCache.length;
+    if(!all.length || !tiersConfigured){
+      ratingBadge.style.display = 'none';
+    } else {
+      var state = preClGetState();
+      // Score against the real item objects (incl. weight), not bare data-k text keys —
+      // computeSetupScoreInfo needs the {text,optional,weight} shape to weight correctly.
+      var scoreInfo = computeSetupScoreInfo(state, _clAllItemsCache);
+      ratingBadge.style.display = 'inline-flex';
+      if(scoreInfo.name){
+        ratingBadge.className = 'cl-status-badge';
+        var srRgb = hexToRgbTriple(scoreInfo.color);
+        ratingBadge.style.background = 'rgba('+srRgb.join(',')+',.14)';
+        ratingBadge.style.color = scoreInfo.color;
+        ratingBadge.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg> Setup rating: '+formatSetupScoreLabel(scoreInfo);
+      } else {
+        ratingBadge.className = 'cl-status-badge cl-fail';
+        ratingBadge.style.background = '';
+        ratingBadge.style.color = '';
+        ratingBadge.innerHTML = 'No setup rating met';
+      }
+    }
+  }
 }
 // Snapshot the current checked/unchecked state of every checklist item, keyed by item data-k
 function preClGetState() {
@@ -13562,6 +14098,7 @@ var GH_BKP_ALERTS_FILE='bkp/alerts_backup.json'; // single alerts backup (manual
 // ── Config file helpers (checklist, strategies, assets & pairs) ──
 async function ghBuildConfigPayload(){
   var checklist=await getChecklist();
+  var setupRatings=await getSetupRatings();
   var strategies=await getStrategies();
   var errorTypes=await getErrorTypes();
   var assets=await getAssets();
@@ -13586,7 +14123,7 @@ async function ghBuildConfigPayload(){
   var cloudinaryConfig=cloudinaryGetConfig();
   return{
     version:2,
-    checklist,strategies,errorTypes,assets,histCols,
+    checklist,setupRatings,strategies,errorTypes,assets,histCols,
     theme,calView,mcDefaults,calcCapital,demoDefaults,
     aiConfig,cloudinaryConfig
   };
@@ -13634,6 +14171,7 @@ async function ghPushConfigFile(cfg){
 }
 async function ghApplyConfigData(data){
   if(data.checklist)await setSetting('checklist',data.checklist);
+  if(data.setupRatings){await setSetting('setupRatings',data.setupRatings);_setupRatingsCache=data.setupRatings;}
   if(data.strategies)await setSetting('strategies',data.strategies);
   if(data.errorTypes)await setSetting('errorTypes',data.errorTypes);
   if(data.assets){await setSetting('assets',data.assets);_invalidateAssetFeesCache();}
@@ -13884,6 +14422,29 @@ function toggleKeyVis(inputId){
   var inp=document.getElementById(inputId);
   if(!inp)return;
   inp.type=inp.type==='password'?'text':'password';
+}
+function copyKeyVis(inputId){
+  var inp=document.getElementById(inputId);
+  if(!inp||!inp.value){toast('Nothing to copy','err');return;}
+  var text=inp.value;
+  function fallbackCopy(){
+    // navigator.clipboard requires a secure context (https/localhost) — this file is often
+    // opened directly (file://) or as a PWA, where that API can be unavailable or throw, so
+    // fall back to the older select+execCommand approach, which works in more contexts.
+    var wasType=inp.type;
+    inp.type='text';
+    inp.focus();inp.select();inp.setSelectionRange(0,99999);
+    var ok=false;
+    try{ok=document.execCommand('copy');}catch(e){}
+    inp.type=wasType;
+    if(ok)toast('Copied to clipboard','ok');
+    else toast('Copy failed — select and copy manually','err');
+  }
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){toast('Copied to clipboard','ok');}).catch(fallbackCopy);
+  }else{
+    fallbackCopy();
+  }
 }
 // Refresh the GitHub status dot/label + "last sync" caption in the Backup & Restore page
 function ghRefreshStatus(){
@@ -16640,8 +17201,8 @@ _calDate=new Date();
 //       from each free-tier provider's rate limit (see
 //       PA_PROVIDER_MIN_POLL_MS) so nothing gets throttled or banned.
 // Price providers — one fetch function per provider (paFetchYahoo,
-//   paFetchCoinGecko, paFetchFinnhub, paFetchAlphaVantage, paFetchOanda),
-//   routed through a per-asset-type fallback chain (PA_ASSET_PROVIDER_MAP
+//   paFetchCoinGecko, paFetchFinnhub, paFetchTwelveData, paFetchAlphaVantage,
+//   paFetchOanda), routed through a per-asset-type fallback chain (PA_ASSET_PROVIDER_MAP
 //   → paGetProviderChain → paFetchOnePrice), so a failing/unkeyed provider
 //   silently falls back to the next one in line.
 // Firing — paCheckAlerts detects a hit on each price tick and hands off
@@ -16665,13 +17226,16 @@ var _paPollMs = 120000;      // poll interval (ms) — recomputed on monitoring 
 // av        : free tier = 25 req/DAY → interval computed dynamically based on symbol count
 //             formula: ceil(24h / 25 / n_symbols), floored at 30 min, capped at 4 hours
 // oanda     : practice/live accounts allow 100 req/s → 15 s is fine
+// twelvedata: free tier = 800 req/DAY (and 8 req/min) → interval computed dynamically,
+//             same shape as av's formula, floored at 1 min, capped at 2 hours
 var PA_PROVIDER_MIN_POLL_MS = {
   binance:    15  * 1000,        // 15 s
   coingecko:  60  * 1000,        // 60 s — conservative for free tier
   yahoo:      60  * 1000,        // 60 s base (scaled up per symbol count)
   finnhub:    15  * 1000,        // 15 s — free tier: 60 calls/min
   av:         30  * 60 * 1000,   // 30 min base (dynamically scaled by paComputePollMs)
-  oanda:      15  * 1000         // 15 s — practice/live: 100 req/s
+  oanda:      15  * 1000,        // 15 s — practice/live: 100 req/s
+  twelvedata: 2   * 60 * 1000    // 2 min base (dynamically scaled by paComputePollMs)
 };
 var PA_KEY_ALERTS       = 'tj-price-alerts';
 // ── Cloud sync model ─────────────────────────────────────────────
@@ -16691,6 +17255,7 @@ var PA_KEY_AV_KEY       = 'tj-pa-av-key';
 var PA_KEY_OANDA_KEY    = 'tj-pa-oanda-key';
 var PA_KEY_OANDA_ENV    = 'tj-pa-oanda-env';  // 'practice' | 'live'
 var PA_KEY_FINNHUB_KEY  = 'tj-pa-finnhub-key';
+var PA_KEY_TWELVEDATA_KEY = 'tj-pa-twelvedata-key';
 var PA_KEY_COINGECKO_KEY= 'tj-pa-coingecko-key'; // optional — works free without key too
 var PA_KEY_TEMPLATE = 'tj-pa-tg-template';
 var PA_KEY_PLACEHOLDERS = 'tj-pa-placeholders';
@@ -16699,14 +17264,15 @@ var PA_DEFAULT_TEMPLATE = '\u{1F514} <b>Price Alert Triggered!</b>\n\n<b>{symbol
 // These four values are read on every poll tick (once per symbol per interval).
 // Caching them avoids synchronous localStorage I/O in the hot path.
 // Call paLoadConfig() once at init and after any settings save.
-var _paConfig = { provider: 'yahoo', avKey: '', oandaKey: '', oandaEnv: 'practice', finnhubKey: '', coingeckoKey: '' };
+var _paConfig = { provider: 'yahoo', avKey: '', oandaKey: '', oandaEnv: 'practice', finnhubKey: '', twelvedataKey: '', coingeckoKey: '' };
 function paLoadConfig(){
-  _paConfig.provider     = localStorage.getItem(PA_KEY_PROVIDER)      || 'yahoo';
-  _paConfig.avKey        = localStorage.getItem(PA_KEY_AV_KEY)        || '';
-  _paConfig.oandaKey     = localStorage.getItem(PA_KEY_OANDA_KEY)     || '';
-  _paConfig.oandaEnv     = localStorage.getItem(PA_KEY_OANDA_ENV)     || 'practice';
-  _paConfig.finnhubKey   = localStorage.getItem(PA_KEY_FINNHUB_KEY)   || '';
-  _paConfig.coingeckoKey = localStorage.getItem(PA_KEY_COINGECKO_KEY) || '';
+  _paConfig.provider      = localStorage.getItem(PA_KEY_PROVIDER)      || 'yahoo';
+  _paConfig.avKey         = localStorage.getItem(PA_KEY_AV_KEY)        || '';
+  _paConfig.oandaKey      = localStorage.getItem(PA_KEY_OANDA_KEY)     || '';
+  _paConfig.oandaEnv      = localStorage.getItem(PA_KEY_OANDA_ENV)     || 'practice';
+  _paConfig.finnhubKey    = localStorage.getItem(PA_KEY_FINNHUB_KEY)   || '';
+  _paConfig.twelvedataKey = localStorage.getItem(PA_KEY_TWELVEDATA_KEY)|| '';
+  _paConfig.coingeckoKey  = localStorage.getItem(PA_KEY_COINGECKO_KEY) || '';
 }
 var PA_DEFAULT_PLACEHOLDERS = {
   dirAbove:   '\u{1F4C8} rose above',
@@ -16958,6 +17524,11 @@ function paProviderSave(p){
     if(!key3){ toast('Enter your Finnhub API key','err'); return; }
     localStorage.setItem(PA_KEY_FINNHUB_KEY, key3);
     toast('Finnhub key saved','ok');
+  } else if(p === 'twelvedata'){
+    var key5 = (document.getElementById('pa-twelvedata-key').value || '').trim();
+    if(!key5){ toast('Enter your Twelve Data API key','err'); return; }
+    localStorage.setItem(PA_KEY_TWELVEDATA_KEY, key5);
+    toast('Twelve Data key saved','ok');
   } else if(p === 'coingecko'){
     var key4 = (document.getElementById('pa-coingecko-key').value || '').trim();
     // CoinGecko key is optional — save even if empty (allows clearing)
@@ -16970,20 +17541,23 @@ function paProviderSave(p){
   var cgStatus = document.getElementById('pa-key-cg-status');
   var oaStatus = document.getElementById('pa-key-oanda-status');
   var fhStatus = document.getElementById('pa-key-finnhub-status');
+  var tdStatus = document.getElementById('pa-key-twelvedata-status');
   var avStatus = document.getElementById('pa-key-av-status');
-  var cgKey2 = localStorage.getItem(PA_KEY_COINGECKO_KEY) || '';
-  var oaKey2 = localStorage.getItem(PA_KEY_OANDA_KEY)     || '';
-  var fhKey2 = localStorage.getItem(PA_KEY_FINNHUB_KEY)   || '';
-  var avKey2 = localStorage.getItem(PA_KEY_AV_KEY)        || '';
+  var cgKey2 = localStorage.getItem(PA_KEY_COINGECKO_KEY)  || '';
+  var oaKey2 = localStorage.getItem(PA_KEY_OANDA_KEY)      || '';
+  var fhKey2 = localStorage.getItem(PA_KEY_FINNHUB_KEY)    || '';
+  var tdKey2 = localStorage.getItem(PA_KEY_TWELVEDATA_KEY) || '';
+  var avKey2 = localStorage.getItem(PA_KEY_AV_KEY)         || '';
   if(cgStatus) cgStatus.textContent = cgKey2 ? '✓ saved' : '';
   if(oaStatus) oaStatus.textContent = oaKey2 ? '✓ saved' : '';
   if(fhStatus) fhStatus.textContent = fhKey2 ? '✓ saved' : '';
+  if(tdStatus) tdStatus.textContent = tdKey2 ? '✓ saved' : '';
   if(avStatus) avStatus.textContent = avKey2 ? '✓ saved' : '';
   // Refresh key count
   var countEl2 = document.getElementById('pa-keys-configured-count');
   if(countEl2){
     var avKey3 = localStorage.getItem(PA_KEY_AV_KEY) || '';
-    var n2 = (oaKey2?1:0) + (fhKey2?1:0) + (avKey3?1:0);
+    var n2 = (oaKey2?1:0) + (fhKey2?1:0) + (tdKey2?1:0) + (avKey3?1:0);
     countEl2.textContent = n2 > 0 ? '(' + n2 + ' saved)' : '(none saved)';
   }
   ghAutoSyncAlerts();
@@ -16995,6 +17569,7 @@ var PA_TEST_SYMBOLS = {
   coingecko:  { sym: 'BTC',      label: 'BTC' },
   oanda:      { sym: 'EURUSD',   label: 'EUR/USD' },
   finnhub:    { sym: 'AAPL',     label: 'AAPL' },
+  twelvedata: { sym: 'AAPL',     label: 'AAPL' },
   av:         { sym: 'AAPL',     label: 'AAPL' },
   yahoo:      { sym: 'AAPL',     label: 'AAPL' }
 };
@@ -17084,6 +17659,18 @@ function paTestFetch(provider){
     .catch(function(e){ showErr(e.message || 'Network error'); });
     return;
   }
+  if(realProvider === 'twelvedata'){
+    var tdKey = localStorage.getItem(PA_KEY_TWELVEDATA_KEY) || (document.getElementById('pa-twelvedata-key') ? document.getElementById('pa-twelvedata-key').value.trim() : '');
+    if(!tdKey){ showErr('Enter and save your Twelve Data API key first'); return; }
+    fetch('https://api.twelvedata.com/price?symbol=AAPL&apikey=' + encodeURIComponent(tdKey))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var p = d && d.price ? fmt(parseFloat(d.price)) : null;
+      p ? showOk('$' + p) : showErr(d && d.message ? d.message : 'No price returned — check key');
+    })
+    .catch(function(e){ showErr(e.message || 'Network error'); });
+    return;
+  }
   if(realProvider === 'av'){
     var avKey = localStorage.getItem(PA_KEY_AV_KEY) || (document.getElementById('pa-av-key') ? document.getElementById('pa-av-key').value.trim() : '');
     if(!avKey){ showErr('Enter and save your Alpha Vantage API key first'); return; }
@@ -17132,9 +17719,10 @@ function paRoutingToggle(){
   // Update configured key count in header
   if(countEl){
     var n = 0;
-    if(localStorage.getItem(PA_KEY_OANDA_KEY))   n++;
-    if(localStorage.getItem(PA_KEY_FINNHUB_KEY)) n++;
-    if(localStorage.getItem(PA_KEY_AV_KEY))      n++;
+    if(localStorage.getItem(PA_KEY_OANDA_KEY))      n++;
+    if(localStorage.getItem(PA_KEY_FINNHUB_KEY))    n++;
+    if(localStorage.getItem(PA_KEY_TWELVEDATA_KEY)) n++;
+    if(localStorage.getItem(PA_KEY_AV_KEY))         n++;
     countEl.textContent = n > 0 ? '(' + n + ' saved)' : '(none saved)';
   }
 }
@@ -17173,6 +17761,7 @@ function paRoutingTableRefresh(){
     var avKey      = _paConfig.avKey;
     var oandaKey   = _paConfig.oandaKey;
     var finnhubKey = _paConfig.finnhubKey;
+    var twelvedataKey = _paConfig.twelvedataKey;
     html += '<div class="pa-routing-row">';
     html += '<span class="pa-routing-label">' + r.label + '</span>';
     html += '<span class="pa-routing-chain">';
@@ -17180,7 +17769,7 @@ function paRoutingTableRefresh(){
       if(i > 0) html += '<span class="pa-routing-arrow">›</span>';
       var label = PA_PROVIDER_LABELS[p] || p;
       // Determine if this provider has no key (would be skipped)
-      var noKey = (p === 'av' && !avKey) || (p === 'oanda' && !oandaKey) || (p === 'finnhub' && !finnhubKey);
+      var noKey = (p === 'av' && !avKey) || (p === 'oanda' && !oandaKey) || (p === 'finnhub' && !finnhubKey) || (p === 'twelvedata' && !twelvedataKey);
       var cls = 'pa-routing-step';
       var prefix = '';
       if(activeProv){
@@ -17233,30 +17822,35 @@ function paProviderUIInit(){
   var oandaKey    = localStorage.getItem(PA_KEY_OANDA_KEY)     || '';
   var oandaEnv    = localStorage.getItem(PA_KEY_OANDA_ENV)     || 'practice';
   var finnhubKey  = localStorage.getItem(PA_KEY_FINNHUB_KEY)   || '';
+  var twelvedataKey = localStorage.getItem(PA_KEY_TWELVEDATA_KEY) || '';
   var cgKey       = localStorage.getItem(PA_KEY_COINGECKO_KEY) || '';
   var avEl    = document.getElementById('pa-av-key');
   var okEl    = document.getElementById('pa-oanda-key');
   var oeEl    = document.getElementById('pa-oanda-env');
   var fhEl    = document.getElementById('pa-finnhub-key');
+  var tdEl    = document.getElementById('pa-twelvedata-key');
   var cgEl    = document.getElementById('pa-coingecko-key');
   if(avEl)  avEl.value  = avKey;
   if(okEl)  okEl.value  = oandaKey;
   if(oeEl)  oeEl.value  = oandaEnv;
   if(fhEl)  fhEl.value  = finnhubKey;
+  if(tdEl)  tdEl.value  = twelvedataKey;
   if(cgEl)  cgEl.value  = cgKey;
   // Update key status badges in the collapsible headers
   var cgStatus = document.getElementById('pa-key-cg-status');
   var oaStatus = document.getElementById('pa-key-oanda-status');
   var fhStatus = document.getElementById('pa-key-finnhub-status');
+  var tdStatus = document.getElementById('pa-key-twelvedata-status');
   var avStatus = document.getElementById('pa-key-av-status');
   if(cgStatus) cgStatus.textContent = cgKey ? '✓ saved' : '';
   if(oaStatus) oaStatus.textContent = oandaKey ? '✓ saved' : '';
   if(fhStatus) fhStatus.textContent = finnhubKey ? '✓ saved' : '';
+  if(tdStatus) tdStatus.textContent = twelvedataKey ? '✓ saved' : '';
   if(avStatus) avStatus.textContent = avKey ? '✓ saved' : '';
   // Update key count badge in API Keys collapsible header
   var countEl = document.getElementById('pa-keys-configured-count');
   if(countEl){
-    var n = (oandaKey?1:0) + (finnhubKey?1:0) + (avKey?1:0);
+    var n = (oandaKey?1:0) + (finnhubKey?1:0) + (twelvedataKey?1:0) + (avKey?1:0);
     countEl.textContent = n > 0 ? '(' + n + ' saved)' : '(none saved)';
   }
   paProviderBadgeRefresh();
@@ -17880,6 +18474,7 @@ function paGetProviderUsageSummary(){
   var avKey     = _paConfig.avKey;
   var oandaKey  = _paConfig.oandaKey;
   var finnhubKey= _paConfig.finnhubKey;
+  var twelvedataKey = _paConfig.twelvedataKey;
   var counts = {};
   symbols.forEach(function(sym){
     var assetType = paDetectAssetType(sym.toUpperCase());
@@ -17887,9 +18482,10 @@ function paGetProviderUsageSummary(){
     var resolved  = 'yahoo'; // default last-resort
     for(var i = 0; i < chain.length; i++){
       var p = chain[i];
-      if(p === 'av'      && !avKey)      continue;
-      if(p === 'oanda'   && !oandaKey)   continue;
-      if(p === 'finnhub' && !finnhubKey) continue;
+      if(p === 'av'         && !avKey)         continue;
+      if(p === 'oanda'      && !oandaKey)      continue;
+      if(p === 'finnhub'    && !finnhubKey)    continue;
+      if(p === 'twelvedata' && !twelvedataKey) continue;
       resolved = p;
       break;
     }
@@ -17912,6 +18508,18 @@ function paComputePollMs(){
       ms = Math.ceil(avDayMs / avQuota * avPerPoll);
       ms = Math.max(ms, 30 * 60 * 1000);     // floor: 30 min
       ms = Math.min(ms, 4 * 60 * 60 * 1000);// cap:   4 hours
+    }
+    // Twelve Data: 800 req/day free tier → same shape as AV's formula, but
+    // with a much larger daily quota so the floor/cap are far less aggressive.
+    // (The 8 req/min cap is always looser than the daily-quota-derived interval,
+    // so it doesn't need its own branch.)
+    if(p === 'twelvedata'){
+      var tdDayMs   = 24 * 60 * 60 * 1000;  // 24 hours in ms
+      var tdQuota   = 800;                    // free-tier daily quota
+      var tdPerPoll = n;                      // one req per symbol per poll
+      ms = Math.ceil(tdDayMs / tdQuota * tdPerPoll);
+      ms = Math.max(ms, 60 * 1000);          // floor: 1 min
+      ms = Math.min(ms, 2 * 60 * 60 * 1000);// cap:   2 hours
     }
     // Yahoo proxy: scale conservatively with symbol count (undocumented limit)
     // Base 60 s; add 15 s per additional symbol beyond 1, max 5 min
@@ -18052,23 +18660,26 @@ function paDetectAssetType(sym){
 }
 // ── 1b: Per-asset-type provider preference map ────────────────
 // Defines the provider chain per asset class (main → fallback → last resort).
-// Crypto:    Binance → CoinGecko → Yahoo
-// Forex:     Oanda   → Alpha Vantage → Yahoo
+// Crypto:    Binance → Twelve Data → CoinGecko → Oanda → Yahoo
+// Forex:     Oanda   → Twelve Data → Alpha Vantage → Yahoo
 // Commodity: Oanda   → Alpha Vantage → Yahoo
-// Stock:     Finnhub → Alpha Vantage → Yahoo
+// Stock:     Finnhub → Twelve Data → Alpha Vantage → Yahoo
 // Index:     Finnhub → Alpha Vantage → Yahoo
 //
-// 'binance'   = Binance REST (crypto only, free, no key)
-// 'coingecko' = CoinGecko REST (crypto, free, optional key)
-// 'oanda'     = Oanda v20 (forex + CFD indices/commodities, key required)
-// 'finnhub'   = Finnhub (stocks/indices, free tier key required)
-// 'av'        = Alpha Vantage (stocks, forex, crypto, key required)
-// 'yahoo'     = Yahoo Finance via allorigins proxy (free, no key, broad coverage)
+// 'binance'    = Binance REST (crypto only, free, no key)
+// 'coingecko'  = CoinGecko REST (crypto, free, optional key)
+// 'oanda'      = Oanda v20 (forex + CFD indices/commodities, key required)
+// 'finnhub'    = Finnhub (stocks/indices, free tier key required)
+// 'twelvedata' = Twelve Data (stocks, forex, crypto — free tier key required;
+//                free tier does NOT cover commodities or indices, so it's
+//                only in the crypto/forex/stock chains)
+// 'av'         = Alpha Vantage (stocks, forex, crypto, key required)
+// 'yahoo'      = Yahoo Finance via allorigins proxy (free, no key, broad coverage)
 var PA_ASSET_PROVIDER_MAP = {
-  crypto:    ['binance', 'coingecko', 'oanda', 'yahoo'],
-  forex:     ['oanda', 'av', 'yahoo'],
+  crypto:    ['binance', 'twelvedata', 'coingecko', 'oanda', 'yahoo'],
+  forex:     ['oanda', 'twelvedata', 'av', 'yahoo'],
   commodity: ['oanda', 'av', 'yahoo'],
-  stock:     ['finnhub', 'av', 'yahoo'],
+  stock:     ['finnhub', 'twelvedata', 'av', 'yahoo'],
   index:     ['finnhub', 'av', 'yahoo']
 };
 // Returns the ordered provider chain for a given asset type.
@@ -18085,11 +18696,13 @@ function paResolveProvider(assetType){
   var avKey      = localStorage.getItem(PA_KEY_AV_KEY)      || '';
   var oandaKey   = localStorage.getItem(PA_KEY_OANDA_KEY)   || '';
   var finnhubKey = localStorage.getItem(PA_KEY_FINNHUB_KEY) || '';
+  var twelvedataKey = localStorage.getItem(PA_KEY_TWELVEDATA_KEY) || '';
   for(var i = 0; i < chain.length; i++){
     var p = chain[i];
-    if(p === 'av'      && !avKey)      continue;
-    if(p === 'oanda'   && !oandaKey)   continue;
-    if(p === 'finnhub' && !finnhubKey) continue;
+    if(p === 'av'         && !avKey)         continue;
+    if(p === 'oanda'      && !oandaKey)      continue;
+    if(p === 'finnhub'    && !finnhubKey)    continue;
+    if(p === 'twelvedata' && !twelvedataKey) continue;
     return p;
   }
   return 'yahoo';
@@ -18114,6 +18727,7 @@ var PA_PROVIDER_LABELS = {
   coingecko:  'CoinGecko',
   oanda:      'Oanda',
   finnhub:    'Finnhub',
+  twelvedata: 'Twelve Data',
   av:         'Alpha Vantage',
   yahoo:      'Yahoo Finance'
 };
@@ -18183,6 +18797,15 @@ function paFetchOnePrice(sym, cb){
       if(!finnhubKey){ tryNext(rest); return; } // skip — no key configured
       if(originalFirst === null) originalFirst = provider;
       paFetchFinnhub(sym, finnhubKey, function(price){
+        if(price !== null){ succeed(price); } else { tryNext(rest); }
+      });
+      return;
+    }
+    if(provider === 'twelvedata'){
+      var twelvedataKey = _paConfig.twelvedataKey;
+      if(!twelvedataKey){ tryNext(rest); return; } // skip — no key configured
+      if(originalFirst === null) originalFirst = provider;
+      paFetchTwelveData(sym, twelvedataKey, function(price){
         if(price !== null){ succeed(price); } else { tryNext(rest); }
       });
       return;
@@ -18314,6 +18937,41 @@ function paFetchFinnhub(sym, apiKey, cb){
       // Finnhub returns { c: current, h: high, l: low, o: open, pc: prev close }
       var price = content.c;
       cb((price && price !== 0) ? parseFloat(price) : null);
+    } catch(e){ cb(null); }
+  })
+  .catch(function(){ cb(null); });
+}
+// ── Twelve Data (stocks, forex, crypto — free tier, key required) ─────
+// Free tier: 800 req/day, 8 req/min. Covers US equities, forex, and crypto
+// on the Basic (free) plan — NOT commodities or indices (paid-only there),
+// which is why this only ever appears in the crypto/forex/stock chains.
+function paFetchTwelveData(sym, apiKey, cb){
+  var upper = sym.toUpperCase();
+  var knownCrypto = ['BTC','ETH','BNB','SOL','XRP','ADA','DOGE','AVAX','DOT','MATIC','LTC','LINK','UNI','ATOM','TRX','TON','SHIB'];
+  var ticker;
+  if(/^[A-Z]+_[A-Z]+$/.test(upper)){
+    ticker = upper.replace('_', '/');                              // already BASE_QUOTE (Oanda-style) → BASE/QUOTE
+  } else if(/USDT$/.test(upper)){
+    ticker = upper.slice(0, -4) + '/USD';                           // BTCUSDT → BTC/USD
+  } else if(/USD$/.test(upper) && knownCrypto.indexOf(upper.slice(0,-3)) !== -1){
+    ticker = upper.slice(0, -3) + '/USD';                           // known crypto USD pair → BASE/USD
+  } else if(/USD$/.test(upper) && upper.length > 6){
+    ticker = upper.slice(0, -3) + '/USD';                           // longer crypto USD pair not in list
+  } else if(/^[A-Z]{6}$/.test(upper)){
+    ticker = upper.slice(0,3) + '/' + upper.slice(3,6);             // EURUSD → EUR/USD
+  } else {
+    ticker = upper;                                                 // stocks pass through
+  }
+  var url = 'https://api.twelvedata.com/price?symbol=' + encodeURIComponent(ticker) + '&apikey=' + encodeURIComponent(apiKey);
+  var proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+  fetch(proxy)
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    try{
+      var content = JSON.parse(d.contents);
+      if(content.status === 'error' || content.code){ cb(null); return; }
+      var price = content.price;
+      cb(price ? parseFloat(price) : null);
     } catch(e){ cb(null); }
   })
   .catch(function(){ cb(null); });
@@ -18857,6 +19515,7 @@ function cmBuildConfig(){
     oandaKey:        localStorage.getItem('tj-pa-oanda-key')     || '',
     oandaEnv:        localStorage.getItem('tj-pa-oanda-env')     || 'practice',
     finnhubKey:      localStorage.getItem('tj-pa-finnhub-key')   || '',
+    twelvedataKey:   localStorage.getItem('tj-pa-twelvedata-key')|| '',
     coingeckoKey:    localStorage.getItem('tj-pa-coingecko-key') || '',
     msgTemplate:     localStorage.getItem('tj-pa-tg-template')   || PA_DEFAULT_TEMPLATE,
     msgDirAbove:     ph.dirAbove  || '📈 rose above',
@@ -18873,8 +19532,8 @@ function cmBuildConfig(){
     commodities:     commodities,
     indices:         indices,
     providerChain:   Object.assign({}, typeof PA_ASSET_PROVIDER_MAP !== 'undefined' ? PA_ASSET_PROVIDER_MAP : {
-      crypto: ['binance','coingecko','oanda','yahoo'], forex: ['oanda','av','yahoo'],
-      commodity: ['oanda','av','yahoo'], stock: ['finnhub','av','yahoo'], index: ['finnhub','av','yahoo']
+      crypto: ['binance','twelvedata','coingecko','oanda','yahoo'], forex: ['oanda','twelvedata','av','yahoo'],
+      commodity: ['oanda','av','yahoo'], stock: ['finnhub','twelvedata','av','yahoo'], index: ['finnhub','av','yahoo']
     }),
     // Auto-delete: server-side cleanup runs even when the app/browser is closed
     deleteHours:     parseInt(localStorage.getItem('tj-pa-delete-days') || '0', 10),
@@ -19196,7 +19855,7 @@ function cfDownloadPatch(){
             </div>
             <div class="pa-cloud-field">
               <div class="pa-cloud-label">Worker Secret <span style="font-weight:400;text-transform:none">(optional)</span></div>
-              <div style="display:flex;gap:6px;"><input id="cm-worker-secret" class="pa-cloud-input" type="password" placeholder="Leave blank if not set" style="flex:1;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('cm-worker-secret')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+              <div style="display:flex;gap:6px;"><input id="cm-worker-secret" class="pa-cloud-input" type="password" placeholder="Leave blank if not set" style="flex:1;"><button class="btn btn-ghost btn-sm" onclick="toggleKeyVis('cm-worker-secret')" title="Show/hide key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="btn btn-ghost btn-sm" onclick="copyKeyVis('cm-worker-secret')" title="Copy key" style="flex-shrink:0;padding:5px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
             </div>
             <hr class="pa-cloud-divider">
             <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">ℹ️ Telegram token &amp; chat ID are read from your Telegram setup above. Discord webhook is read from your Discord setup above.</div>
@@ -19295,6 +19954,7 @@ function cmBuildConfig(){
     oandaKey:        localStorage.getItem('tj-pa-oanda-key')     || '',
     oandaEnv:        localStorage.getItem('tj-pa-oanda-env')     || 'practice',
     finnhubKey:      localStorage.getItem('tj-pa-finnhub-key')   || '',
+    twelvedataKey:   localStorage.getItem('tj-pa-twelvedata-key')|| '',
     coingeckoKey:    localStorage.getItem('tj-pa-coingecko-key') || '',
     msgTemplate:     localStorage.getItem('tj-pa-tg-template')   || PA_DEFAULT_TEMPLATE,
     msgDirAbove:     ph.dirAbove  || '📈 rose above',
@@ -19311,8 +19971,8 @@ function cmBuildConfig(){
     commodities:     commodities,
     indices:         indices,
     providerChain:   Object.assign({}, typeof PA_ASSET_PROVIDER_MAP !== 'undefined' ? PA_ASSET_PROVIDER_MAP : {
-      crypto: ['binance','coingecko','oanda','yahoo'], forex: ['oanda','av','yahoo'],
-      commodity: ['oanda','av','yahoo'], stock: ['finnhub','av','yahoo'], index: ['finnhub','av','yahoo']
+      crypto: ['binance','twelvedata','coingecko','oanda','yahoo'], forex: ['oanda','twelvedata','av','yahoo'],
+      commodity: ['oanda','av','yahoo'], stock: ['finnhub','twelvedata','av','yahoo'], index: ['finnhub','av','yahoo']
     }),
     // Auto-delete: server-side cleanup runs even when the app/browser is closed
     deleteHours:     parseInt(localStorage.getItem('tj-pa-delete-days') || '0', 10),
@@ -19576,7 +20236,7 @@ function cfDownloadWorker(){
  *   discordWebhook                  — from the Discord setup panel
  *   discordFooter, discordTitlePrefix, discordColorAbove, discordColorBelow — Discord embed options
  *   msgTemplate, msgDirAbove, msgDirBelow, notePrefix, datetimeFmt          — shared message template
- *   avKey, oandaKey, oandaEnv, finnhubKey, coingeckoKey                     — data provider keys
+ *   avKey, oandaKey, oandaEnv, finnhubKey, coingeckoKey, twelvedataKey      — data provider keys
  *   knownCrypto, commodities, indices, providerChain                        — asset classification
  *   deleteHours                                                             — auto-delete fired Telegram
  *                                                                              alert messages after N hours
@@ -19686,6 +20346,9 @@ async function handleRequest(request) {
     if (cfg2.finnhubKey) {
       try { results.finnhub = await fetchFinnhub(sym, cfg2.finnhubKey); } catch(e) { results.finnhub = 'ERR: ' + e.message; }
     } else { results.finnhub = 'no key'; }
+    if (cfg2.twelvedataKey) {
+      try { results.twelvedata = await fetchTwelveData(sym, cfg2.twelvedataKey); } catch(e) { results.twelvedata = 'ERR: ' + e.message; }
+    } else { results.twelvedata = 'no key'; }
     try { results.fetchPriceWithMeta = await fetchPriceWithMeta(sym, cfg2); } catch(e) { results.fetchPriceWithMeta = 'ERR: ' + e.message; }
     return jsonRes(results, 200, origin);
   }
@@ -19789,11 +20452,14 @@ var DEFAULT_COMMODITIES  = ['XAUUSD','XAGUSD','GOLD','SILVER','OIL','CRUDE','WTI
 var DEFAULT_INDICES      = ['US30','US500','SP500','SPX','NAS100','NASDAQ','DAX','UK100','GDAXI','YM=F','ES=F','NQ=F'];
 
 // Default provider chains — overrideable via cfg.providerChain sent from the page.
+// Twelve Data's free tier covers US equities, forex, and crypto (not
+// commodities or indices — those are paid-only there), so it's inserted
+// 2nd only into the crypto/forex/stock chains.
 var DEFAULT_PROVIDER_CHAIN = {
-  crypto:    ['binance','coingecko','oanda','yahoo'],
-  forex:     ['oanda','av','yahoo'],
+  crypto:    ['binance','twelvedata','coingecko','oanda','yahoo'],
+  forex:     ['oanda','twelvedata','av','yahoo'],
   commodity: ['oanda','av','yahoo'],
-  stock:     ['finnhub','av','yahoo'],
+  stock:     ['finnhub','twelvedata','av','yahoo'],
   index:     ['finnhub','av','yahoo']
 };
 
@@ -19819,14 +20485,16 @@ async function fetchPriceWithMeta(sym, cfg) {
     if (p === 'av' && !cfg.avKey) continue;
     if (p === 'oanda' && !cfg.oandaKey) continue;
     if (p === 'finnhub' && !cfg.finnhubKey) continue;
+    if (p === 'twelvedata' && !cfg.twelvedataKey) continue;
     try {
       var price = null;
-      if (p === 'binance')   price = await fetchBinance(sym);
-      if (p === 'coingecko') price = await fetchCoinGecko(sym, cfg.coingeckoKey);
-      if (p === 'yahoo')     price = await fetchYahoo(sym);
-      if (p === 'av')        price = await fetchAlphaVantage(sym, cfg.avKey);
-      if (p === 'oanda')     price = await fetchOanda(sym, cfg.oandaKey, cfg.oandaEnv || 'practice');
-      if (p === 'finnhub')   price = await fetchFinnhub(sym, cfg.finnhubKey);
+      if (p === 'binance')    price = await fetchBinance(sym);
+      if (p === 'coingecko')  price = await fetchCoinGecko(sym, cfg.coingeckoKey);
+      if (p === 'yahoo')      price = await fetchYahoo(sym);
+      if (p === 'av')         price = await fetchAlphaVantage(sym, cfg.avKey);
+      if (p === 'oanda')      price = await fetchOanda(sym, cfg.oandaKey, cfg.oandaEnv || 'practice');
+      if (p === 'finnhub')    price = await fetchFinnhub(sym, cfg.finnhubKey);
+      if (p === 'twelvedata') price = await fetchTwelveData(sym, cfg.twelvedataKey);
       if (price !== null && !isNaN(price)) return { price: price, provider: p };
     } catch(e) {}
   }
@@ -20070,6 +20738,31 @@ async function fetchFinnhub(sym, apiKey) {
   return (d.c && d.c !== 0) ? parseFloat(d.c) : null;
 }
 
+// Twelve Data: fully algorithmic. Free tier covers US equities, forex, and
+// crypto (NOT commodities or indices — those require a paid plan there),
+// so this is only ever reached via chains that include it (crypto/forex/stock).
+// Forex/crypto need BASE/QUOTE slash format; stocks pass straight through.
+async function fetchTwelveData(sym, apiKey) {
+  var u = sym.toUpperCase();
+  var ticker;
+  if (/^[A-Z]+_[A-Z]+$/.test(u)) {
+    ticker = u.replace('_', '/');                                       // already BASE_QUOTE (Oanda-style) → BASE/QUOTE
+  } else if (/USDT$/.test(u)) {
+    ticker = u.slice(0, -4) + '/USD';                                   // BTCUSDT → BTC/USD
+  } else if (/USD$/.test(u) && DEFAULT_KNOWN_CRYPTO.indexOf(u.slice(0, -3)) !== -1) {
+    ticker = u.slice(0, -3) + '/USD';                                   // known crypto USD pair → BASE/USD
+  } else if (/USD$/.test(u) && u.length > 6) {
+    ticker = u.slice(0, -3) + '/USD';                                   // longer crypto USD pair not in default list
+  } else if (/^[A-Z]{6}$/.test(u)) {
+    ticker = u.slice(0, 3) + '/' + u.slice(3, 6);                       // EURUSD → EUR/USD
+  } else {
+    ticker = u;                                                         // stocks pass through
+  }
+  var d = await (await fetch('https://api.twelvedata.com/price?symbol=' + encodeURIComponent(ticker) + '&apikey=' + encodeURIComponent(apiKey))).json();
+  if (d.status === 'error' || d.code) return null;
+  return d.price ? parseFloat(d.price) : null;
+}
+
 function fmtPrice(p) {
   if (p === null || p === undefined) return '—';
   var s = parseFloat(p).toString(), parts = s.split('.');
@@ -20086,7 +20779,7 @@ function fmtDatetime(fmt) {
 }
 
 // Human-readable labels for provider codes — kept in sync with the page's PA_PROVIDER_LABELS.
-var PROVIDER_LABELS = { binance:'Binance', coingecko:'CoinGecko', yahoo:'Yahoo Finance', av:'Alpha Vantage', oanda:'Oanda', finnhub:'Finnhub' };
+var PROVIDER_LABELS = { binance:'Binance', coingecko:'CoinGecko', yahoo:'Yahoo Finance', av:'Alpha Vantage', oanda:'Oanda', finnhub:'Finnhub', twelvedata:'Twelve Data' };
 function providerLabel(p) { return PROVIDER_LABELS[p] || p || '—'; }
 
 function buildMessage(a, price, cfg, provider) {
