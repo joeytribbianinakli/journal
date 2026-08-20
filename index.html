@@ -683,6 +683,24 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
    its own via the existing toggleTrd*()/toggleCollapsible() functions. ── */
 .analytics-group-label{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.06em;text-transform:uppercase;margin:34px 2px 4px;padding-top:20px;border-top:1px solid var(--border)}
 .analytics-group-label.first{margin-top:8px;padding-top:0;border-top:none}
+/* ── Trade Analytics: category tab bar. Each group of collapsible sections (the six
+   "analytics-group-label" clusters) now lives in its own .trd-tab-panel; only the
+   active one is shown, so the page reads as "pick a category" instead of "scroll past
+   15 accordions". Sections inside the active panel default open (see .trd-acc-body
+   below) since the tab itself is already the decluttering step. trdSwitchTab() in JS
+   toggles panels+buttons and re-sizes any Chart.js instances that were drawn while
+   hidden (they size to 0×0 until resized). ── */
+.trd-tabnav{display:flex;flex-wrap:wrap;gap:6px;margin:2px 2px 22px}
+.trd-tabnav-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap}
+.trd-tabnav-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;opacity:.65;flex-shrink:0}
+.trd-tabnav-btn:hover{background:var(--bg3);color:var(--text);border-color:var(--border2)}
+.trd-tabnav-btn.active{background:rgba(77,127,255,.14);border-color:var(--accent);color:var(--accent)}
+.trd-tabnav-btn.active svg{opacity:1;stroke:var(--accent)}
+.trd-tabnav-count{font-size:9.5px;font-weight:700;color:var(--text3);background:var(--bg3);border-radius:8px;padding:1px 6px}
+.trd-tabnav-btn.active .trd-tabnav-count{background:rgba(77,127,255,.18);color:var(--accent)}
+.trd-tab-panel{display:none}
+.trd-tab-panel.active{display:block}
+.trd-tab-toolbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:-6px 2px 10px}
 /* ── Dashboard filter panel: collapsible global filter used on the dashboard ── */
 .dash-filter-bar{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:16px;overflow:hidden}
 .dash-filter-header{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;cursor:pointer;transition:background .1s;user-select:none}
@@ -1300,7 +1318,39 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           </div>
         </div>
       </div>
+      <div class="trd-tabnav" id="trd-tabnav">
+        <button class="trd-tabnav-btn active" data-tab="quality" onclick="trdSwitchTab('quality',this)">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Quality &amp; Ratings
+        </button>
+        <button class="trd-tabnav-btn" data-tab="volume" onclick="trdSwitchTab('volume',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/><path d="M8 2v4"/><path d="M16 2v4"/></svg>
+          Volume &amp; Outcome
+        </button>
+        <button class="trd-tabnav-btn" data-tab="risk" onclick="trdSwitchTab('risk',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Risk &amp; Trade Management
+        </button>
+        <button class="trd-tabnav-btn" data-tab="behavioral" onclick="trdSwitchTab('behavioral',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Behavioral Patterns
+        </button>
+        <button class="trd-tabnav-btn" data-tab="timing" onclick="trdSwitchTab('timing',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Timing &amp; Session Patterns
+        </button>
+        <button class="trd-tabnav-btn" data-tab="composition" onclick="trdSwitchTab('composition',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Trade Composition
+        </button>
+      </div>
+      <div class="trd-tab-panel active" data-tab="quality">
       <div class="analytics-group-label first">Quality &amp; Ratings</div>
+      <div class="trd-tab-toolbar">
+        <button class="meth-toolbar-btn" onclick="trdSetTabAccordions(this.closest('.trd-tab-panel'),true)">Expand all</button>
+        <span class="meth-toolbar-sep">·</span>
+        <button class="meth-toolbar-btn" onclick="trdSetTabAccordions(this.closest('.trd-tab-panel'),false)">Collapse all</button>
+      </div>
       <div class="stats-grid" id="dash-quality-stats"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
         <div class="card"><div class="card-header"><span class="card-title">User rating distribution</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-rating-dist"></canvas></div></div></div>
@@ -1337,9 +1387,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdItemBreakdown()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/><line x1="7" y1="16" x2="10.5" y2="16"/></svg>
         <span style="font-size:14px;font-weight:700;color:var(--text)">Checklist Item Breakdown by Setup Rating</span>
-        <svg id="trd-itembd-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg id="trd-itembd-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s;transform:rotate(180deg)"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div id="trd-itembd-body" style="display:none">
+      <div id="trd-itembd-body" class="trd-acc-body" style="display:block">
         <div style="font-size:11px;color:var(--text3);padding:0 2px 12px">Which checklist items get skipped most — and whether skipping them actually costs you. Pick a setup rating to see what's dragging trades into it; "All rated trades" pools everything with a checklist logged.</div>
         <div class="stats-grid" id="dash-itembd-stats"></div>
         <div class="card" style="margin-bottom:22px">
@@ -1367,14 +1417,21 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="table-wrap" id="dash-itembd-blockers"></div>
         </div>
       </div>
-      <div class="analytics-group-label">Volume &amp; Outcome</div>
-      <!-- Trade volume over time (monthly / yearly) — collapsible, collapsed by default -->
+      </div>
+      <div class="trd-tab-panel" data-tab="volume">
+      <div class="analytics-group-label first">Volume &amp; Outcome</div>
+      <div class="trd-tab-toolbar">
+        <button class="meth-toolbar-btn" onclick="trdSetTabAccordions(this.closest('.trd-tab-panel'),true)">Expand all</button>
+        <span class="meth-toolbar-sep">·</span>
+        <button class="meth-toolbar-btn" onclick="trdSetTabAccordions(this.closest('.trd-tab-panel'),false)">Collapse all</button>
+      </div>
+      <!-- Trade volume over time (monthly / yearly) — collapsible, open by default (tab already scopes this to just 2 sections) -->
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdVolume()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/><path d="M8 2v4"/><path d="M16 2v4"/></svg>
         <span style="font-size:14px;font-weight:700;color:var(--text)">Trade Volume Over Time</span>
-        <svg id="trd-volume-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg id="trd-volume-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s;transform:rotate(180deg)"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div id="trd-volume-body" style="display:none">
+      <div id="trd-volume-body" class="trd-acc-body" style="display:block">
         <div class="stats-grid" id="dash-volume-stats"></div>
         <div class="card" style="margin-bottom:22px">
           <div class="card-header">
@@ -1391,9 +1448,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdOutcome()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
         <span style="font-size:14px;font-weight:700;color:var(--text)">Exit &amp; Outcome Breakdown</span>
-        <svg id="trd-outcome-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg id="trd-outcome-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s;transform:rotate(180deg)"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div id="trd-outcome-body" style="display:none">
+      <div id="trd-outcome-body" class="trd-acc-body" style="display:block">
         <div class="stats-grid" id="dash-outcome-result-stats"></div>
         <div class="stats-grid" id="dash-outcome-exit-stats"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
@@ -1401,14 +1458,21 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="card"><div class="card-header"><span class="card-title">Exit type breakdown</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-outcome-exit"></canvas></div></div></div>
         </div>
       </div>
-      <div class="analytics-group-label">Risk &amp; Trade Management</div>
-      <!-- R-multiple distribution & payoff ratio — collapsible, collapsed by default -->
+      </div>
+      <div class="trd-tab-panel" data-tab="risk">
+      <div class="analytics-group-label first">Risk &amp; Trade Management</div>
+      <div class="trd-tab-toolbar">
+        <button class="meth-toolbar-btn" onclick="trdSetTabAccordions(this.closest('.trd-tab-panel'),true)">Expand all</button>
+        <span class="meth-toolbar-sep">·</span>
+        <button class="meth-toolbar-btn" onclick="trdSetTabAccordions(this.closest('.trd-tab-panel'),false)">Collapse all</button>
+      </div>
+      <!-- R-multiple distribution & payoff ratio — collapsible, open by default -->
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdRMulti()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         <span style="font-size:14px;font-weight:700;color:var(--text)">R-Multiple Distribution &amp; Payoff Ratio</span>
-        <svg id="trd-rmulti-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg id="trd-rmulti-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s;transform:rotate(180deg)"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div id="trd-rmulti-body" style="display:none">
+      <div id="trd-rmulti-body" class="trd-acc-body" style="display:block">
         <div class="stats-grid" id="dash-rmulti-stats"></div>
         <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:22px">
           <div class="card"><div class="card-header"><span class="card-title">R-multiple distribution</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-rmulti-dist"></canvas></div></div></div>
@@ -1419,9 +1483,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdTargetEff()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
         <span style="font-size:14px;font-weight:700;color:var(--text)">Target vs Actual R (Trade Management)</span>
-        <svg id="trd-targeteff-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg id="trd-targeteff-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s;transform:rotate(180deg)"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div id="trd-targeteff-body" style="display:none">
+      <div id="trd-targeteff-body" class="trd-acc-body" style="display:block">
         <div class="stats-grid" id="dash-targeteff-stats"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
           <div class="card"><div class="card-header"><span class="card-title">Outcome vs plan</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-targeteff-count"></canvas></div></div></div>
@@ -1432,9 +1496,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdRisk()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
         <span style="font-size:14px;font-weight:700;color:var(--text)">Performance by Risk Size</span>
-        <svg id="trd-risk-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg id="trd-risk-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s;transform:rotate(180deg)"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div id="trd-risk-body" style="display:none">
+      <div id="trd-risk-body" class="trd-acc-body" style="display:block">
         <div class="stats-grid" id="dash-risk-stats"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
           <div class="card"><div class="card-header"><span class="card-title">Win rate by risk size</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-risk-wr"></canvas></div></div></div>
@@ -1445,9 +1509,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdStreak()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
         <span style="font-size:14px;font-weight:700;color:var(--text)">Win/Loss Streaks</span>
-        <svg id="trd-streak-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg id="trd-streak-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s;transform:rotate(180deg)"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div id="trd-streak-body" style="display:none">
+      <div id="trd-streak-body" class="trd-acc-body" style="display:block">
         <div class="stats-grid" id="dash-streak-stats"></div>
         <div class="card" style="margin-bottom:14px">
           <div class="card-header"><span class="card-title">Recent win/loss sequence</span></div>
@@ -1466,14 +1530,21 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="card-body"><div class="chart-wrap" style="height:180px"><canvas id="chart-streak-dist"></canvas></div></div>
         </div>
       </div>
-      <div class="analytics-group-label">Behavioral Patterns</div>
-      <!-- Checklist adherence analysis — collapsible, collapsed by default -->
+      </div>
+      <div class="trd-tab-panel" data-tab="behavioral">
+      <div class="analytics-group-label first">Behavioral Patterns</div>
+      <div class="trd-tab-toolbar">
+        <button class="meth-toolbar-btn" onclick="trdSetTabAccordions(this.closest('.trd-tab-panel'),true)">Expand all</button>
+        <span class="meth-toolbar-sep">·</span>
+        <button class="meth-toolbar-btn" onclick="trdSetTabAccordions(this.closest('.trd-tab-panel'),false)">Collapse all</button>
+      </div>
+      <!-- Checklist adherence analysis — collapsible, open by default -->
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdChecklist()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
         <span style="font-size:14px;font-weight:700;color:var(--text)">Checklist Adherence vs. Performance</span>
-        <svg id="trd-checklist-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg id="trd-checklist-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s;transform:rotate(180deg)"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div id="trd-checklist-body" style="display:none">
+      <div id="trd-checklist-body" class="trd-acc-body" style="display:block">
         <div class="stats-grid" id="dash-checklist-stats"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
           <div class="card"><div class="card-header"><span class="card-title">Win rate by checklist adherence</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-checklist-wr"></canvas></div></div></div>
@@ -1484,23 +1555,30 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdDirection()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
         <span style="font-size:14px;font-weight:700;color:var(--text)">Long vs Short Performance</span>
-        <svg id="trd-direction-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg id="trd-direction-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s;transform:rotate(180deg)"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div id="trd-direction-body" style="display:none">
+      <div id="trd-direction-body" class="trd-acc-body" style="display:block">
         <div class="stats-grid" id="dash-direction-stats"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
           <div class="card"><div class="card-header"><span class="card-title">Win rate: Long vs Short</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-direction-wr"></canvas></div></div></div>
           <div class="card"><div class="card-header"><span class="card-title">Avg P/L: Long vs Short</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-direction-pl"></canvas></div></div></div>
         </div>
       </div>
-      <div class="analytics-group-label">Timing &amp; Session Patterns</div>
-      <!-- Entry-time analysis — collapsible, collapsed by default -->
+      </div>
+      <div class="trd-tab-panel" data-tab="timing">
+      <div class="analytics-group-label first">Timing &amp; Session Patterns</div>
+      <div class="trd-tab-toolbar">
+        <button class="meth-toolbar-btn" onclick="trdSetTabAccordions(this.closest('.trd-tab-panel'),true)">Expand all</button>
+        <span class="meth-toolbar-sep">·</span>
+        <button class="meth-toolbar-btn" onclick="trdSetTabAccordions(this.closest('.trd-tab-panel'),false)">Collapse all</button>
+      </div>
+      <!-- Entry-time analysis — collapsible, open by default -->
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdTime()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span style="font-size:14px;font-weight:700;color:var(--text)">Performance by Entry Time</span>
-        <svg id="trd-time-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg id="trd-time-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s;transform:rotate(180deg)"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div id="trd-time-body" style="display:none">
+      <div id="trd-time-body" class="trd-acc-body" style="display:block">
         <div class="stats-grid" id="dash-time-stats"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
           <div class="card"><div class="card-header"><span class="card-title">Win rate by entry time (4h blocks, local time)</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-time-wr"></canvas></div></div></div>
@@ -1512,9 +1590,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdMarketSession()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
         <span style="font-size:14px;font-weight:700;color:var(--text)">Performance by Market Session</span>
-        <svg id="trd-marketsession-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg id="trd-marketsession-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s;transform:rotate(180deg)"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div id="trd-marketsession-body" style="display:none">
+      <div id="trd-marketsession-body" class="trd-acc-body" style="display:block">
         <div class="stats-grid" id="dash-marketsession-stats"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
           <div class="card"><div class="card-header"><span class="card-title">Win rate by market session</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-marketsession-wr"></canvas></div></div></div>
@@ -1529,9 +1607,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdLtf()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
         <span style="font-size:14px;font-weight:700;color:var(--text)">Performance by LTF Entry</span>
-        <svg id="trd-ltf-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg id="trd-ltf-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s;transform:rotate(180deg)"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div id="trd-ltf-body" style="display:none">
+      <div id="trd-ltf-body" class="trd-acc-body" style="display:block">
         <div class="stats-grid" id="dash-ltf-stats"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
           <div class="card"><div class="card-header"><span class="card-title">Win rate by LTF entry</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-ltf-wr"></canvas></div></div></div>
@@ -1546,9 +1624,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdHold()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
         <span style="font-size:14px;font-weight:700;color:var(--text)">Performance by Hold Time</span>
-        <svg id="trd-hold-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg id="trd-hold-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s;transform:rotate(180deg)"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div id="trd-hold-body" style="display:none">
+      <div id="trd-hold-body" class="trd-acc-body" style="display:block">
         <div class="stats-grid" id="dash-hold-stats"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
           <div class="card"><div class="card-header"><span class="card-title">Win rate by hold time</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-hold-wr"></canvas></div></div></div>
@@ -1559,23 +1637,30 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdDow()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         <span style="font-size:14px;font-weight:700;color:var(--text)">Performance by Day of Week</span>
-        <svg id="trd-dow-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg id="trd-dow-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s;transform:rotate(180deg)"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div id="trd-dow-body" style="display:none">
+      <div id="trd-dow-body" class="trd-acc-body" style="display:block">
         <div class="stats-grid" id="dash-dow-stats"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
           <div class="card"><div class="card-header"><span class="card-title">Win rate by day of week</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-dow-wr"></canvas></div></div></div>
           <div class="card"><div class="card-header"><span class="card-title">Avg P/L by day of week</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-dow-pl"></canvas></div></div></div>
         </div>
       </div>
-      <div class="analytics-group-label">Trade Composition</div>
-      <!-- Asset type analysis — collapsible, collapsed by default -->
+      </div>
+      <div class="trd-tab-panel" data-tab="composition">
+      <div class="analytics-group-label first">Trade Composition</div>
+      <div class="trd-tab-toolbar">
+        <button class="meth-toolbar-btn" onclick="trdSetTabAccordions(this.closest('.trd-tab-panel'),true)">Expand all</button>
+        <span class="meth-toolbar-sep">·</span>
+        <button class="meth-toolbar-btn" onclick="trdSetTabAccordions(this.closest('.trd-tab-panel'),false)">Collapse all</button>
+      </div>
+      <!-- Asset type analysis — collapsible, open by default -->
       <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdAssetType()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
         <span style="font-size:14px;font-weight:700;color:var(--text)">Performance by Asset Type</span>
-        <svg id="trd-assettype-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+        <svg id="trd-assettype-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s;transform:rotate(180deg)"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
-      <div id="trd-assettype-body" style="display:none">
+      <div id="trd-assettype-body" class="trd-acc-body" style="display:block">
         <div class="stats-grid" id="dash-assettype-stats"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
           <div class="card"><div class="card-header"><span class="card-title">Win rate by asset type</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-assettype-wr"></canvas></div></div></div>
@@ -1585,6 +1670,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="card-header"><span class="card-title">Asset type breakdown</span></div>
           <div class="table-wrap" id="dash-assettype-table"></div>
         </div>
+      </div>
       </div>
     </div>
     <!-- EDGE ANALYZER -->
@@ -10432,16 +10518,16 @@ async function _renderDashboardImpl(){
   if(_cvCumpl)charts.cumpl=safeChart(_cvCumpl.getContext('2d'),{type:'line',data:{labels:cumPctLabels,datasets:[{label:'Cum. P/L %',data:cumPctData,borderColor:chartColors().accent,backgroundColor:chartColors().accentBg,borderWidth:2,pointRadius:cumPctData.length<30?3:0,fill:true,tension:0.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:8,color:chartColors().tick,font:{size:10}},grid:{color:chartColors().grid}},y:{ticks:{callback:function(v){return v.toFixed(1)+'%'},color:chartColors().tick,font:{size:10}},grid:{color:chartColors().grid}}}}});
   if(charts.wl)charts.wl.destroy();
   var _cvWl=document.getElementById('chart-winloss');
-  if(_cvWl)charts.wl=safeChart(_cvWl.getContext('2d'),{type:'doughnut',data:{labels:['Wins','Losses'],datasets:[{data:[wins.length,n-wins.length],backgroundColor:[chartColors().green,chartColors().red],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:chartColors().legend,font:{size:11},padding:10,boxWidth:9}}}}});
+  if(_cvWl)charts.wl=safeChart(_cvWl.getContext('2d'),{type:'doughnut',data:{labels:['Wins','Losses'],datasets:[{data:[wins.length,n-wins.length],backgroundColor:[chartColors(true).green,chartColors(true).red],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:chartColors().legend,font:{size:11},padding:10,boxWidth:9}}}}});
   var sM={};trades.forEach(function(t){var s=(t.strategy||'?').split('(')[0].trim();if(!sM[s])sM[s]={w:0,l:0};if(t.winLoss)sM[s].w++;else sM[s].l++;});
   var sk=Object.keys(sM);
   if(charts.strat)charts.strat.destroy();
   var _cvStrat=document.getElementById('chart-strategy');
-  if(_cvStrat)charts.strat=safeChart(_cvStrat.getContext('2d'),{type:'bar',data:{labels:sk.map(function(k){return k.length>16?k.slice(0,16)+'…':k}),datasets:[{label:'Wins',data:sk.map(function(k){return sM[k].w}),backgroundColor:chartColors().green},{label:'Losses',data:sk.map(function(k){return sM[k].l}),backgroundColor:chartColors().red}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:chartColors().legend,font:{size:10},padding:7,boxWidth:9}}},scales:{x:{stacked:true,ticks:{color:chartColors().tick,font:{size:10}},grid:{display:false}},y:{stacked:true,ticks:{color:chartColors().tick,font:{size:10},stepSize:1},grid:{color:chartColors().grid}}}}});
+  if(_cvStrat)charts.strat=safeChart(_cvStrat.getContext('2d'),{type:'bar',data:{labels:sk.map(function(k){return k.length>16?k.slice(0,16)+'…':k}),datasets:[{label:'Wins',data:sk.map(function(k){return sM[k].w}),backgroundColor:chartColors(true).green},{label:'Losses',data:sk.map(function(k){return sM[k].l}),backgroundColor:chartColors(true).red}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:chartColors().legend,font:{size:10},padding:7,boxWidth:9}}},scales:{x:{stacked:true,ticks:{color:chartColors().tick,font:{size:10}},grid:{display:false}},y:{stacked:true,ticks:{color:chartColors().tick,font:{size:10},stepSize:1},grid:{color:chartColors().grid}}}}});
   var pM={};trades.forEach(function(t){pM[t.pair]=(pM[t.pair]||0)+1});var pk=Object.keys(pM).sort(function(a,b){return pM[b]-pM[a]}).slice(0,6);
   if(charts.pair)charts.pair.destroy();
   var _cvPair=document.getElementById('chart-pair');
-  if(_cvPair)charts.pair=safeChart(_cvPair.getContext('2d'),{type:'doughnut',data:{labels:pk,datasets:[{data:pk.map(function(k){return pM[k]}),backgroundColor:chartColors().palette,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:chartColors().legend,font:{size:11},padding:9,boxWidth:9}}}}});
+  if(_cvPair)charts.pair=safeChart(_cvPair.getContext('2d'),{type:'doughnut',data:{labels:pk,datasets:[{data:pk.map(function(k){return pM[k]}),backgroundColor:chartColors(true).palette,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:chartColors().legend,font:{size:11},padding:9,boxWidth:9}}}}});
   // Equity curve chart (uses eqLabels/eqData computed above)
   var eqMin=eqData.length?eqData.reduce(function(a,b){return a<b?a:b;}):0;
   var eqMax=eqData.length?eqData.reduce(function(a,b){return a>b?a:b;}):0;
@@ -11321,7 +11407,7 @@ function _renderEdgeRollingExpectancy(stats){
   }
 }
 function _renderEdgeDistribution(stats){
-  var c=chartColors();
+  var c=chartColors(true);
   var binLabels=['≤ -2R','-2R to -1R','-1R to 0R','0R to 1R','1R to 2R','2R to 3R','3R+'];
   function binIndex(r){
     if(r<=-2)return 0;if(r<=-1)return 1;if(r<0)return 2;if(r<1)return 3;if(r<2)return 4;if(r<3)return 5;return 6;
@@ -12394,6 +12480,48 @@ function toggleCollapsible(bodyId,chevronId){
   body.style.display=open?'none':'block';
   if(chevron)chevron.style.transform=open?'':'rotate(180deg)';
 }
+// ── Trade Analytics category tabs ──────────────────────────────────
+// Swaps which .trd-tab-panel is visible so only one topic's worth of collapsible
+// sections shows at a time (see .trd-tabnav / .trd-tab-panel CSS). Sections inside
+// a panel default open — the tab switch itself is the decluttering step, so there's
+// no need to also click through each accordion. Any Chart.js instance gets resized
+// after a switch since canvases drawn while their panel was hidden size to 0×0.
+var TRD_TAB_KEY='tj-trd-tab';
+function trdResizeAllCharts(){
+  Object.keys(charts).forEach(function(k){
+    try{ if(charts[k]) charts[k].resize(); }catch(e){}
+  });
+}
+function trdSwitchTab(tab,btnEl){
+  document.querySelectorAll('.trd-tab-panel').forEach(function(p){
+    p.classList.toggle('active',p.getAttribute('data-tab')===tab);
+  });
+  document.querySelectorAll('.trd-tabnav-btn').forEach(function(b){
+    b.classList.toggle('active',b===btnEl);
+  });
+  try{ localStorage.setItem(TRD_TAB_KEY,tab); }catch(e){}
+  setTimeout(trdResizeAllCharts,0);
+}
+function trdRestoreTab(){
+  var saved=null;
+  try{ saved=localStorage.getItem(TRD_TAB_KEY); }catch(e){}
+  if(!saved)return;
+  var btn=document.querySelector('.trd-tabnav-btn[data-tab="'+saved+'"]');
+  if(btn)trdSwitchTab(saved,btn);
+}
+// Expand/collapse every accordion section within one tab panel at once
+// (toolbar shown on tabs with 2+ sections — Volume & Outcome, Risk & Trade
+// Management, Behavioral Patterns, Timing & Session Patterns).
+function trdSetTabAccordions(panelEl,open){
+  if(!panelEl)return;
+  panelEl.querySelectorAll('.trd-acc-body').forEach(function(body){
+    body.style.display=open?'block':'none';
+    var chev=document.getElementById(body.id.replace('-body','-chevron'));
+    if(chev)chev.style.transform=open?'rotate(180deg)':'';
+  });
+  setTimeout(trdResizeAllCharts,0);
+}
+document.addEventListener('DOMContentLoaded',trdRestoreTab);
 // Charts drawn while their container is display:none get sized 0×0 by Chart.js —
 // resize() them right after the section opens so they render properly the first time.
 function toggleTrdVolume(){
