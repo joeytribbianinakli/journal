@@ -128,12 +128,39 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .chart-wrap{position:relative;width:100%;height:200px}
 /* ── Table: shared history/trade table styles ── */
 .table-wrap{overflow-x:auto}
+.table-scroll-top{overflow-x:auto;overflow-y:hidden;height:14px;display:none}
+.table-scroll-top>div{height:1px}
+/* Horizontal scrollbars (top mirror + native bottom) stay invisible until the user
+   hovers that strip — keeps the UI clean while still reachable without scrolling down. */
+.table-wrap,.table-scroll-top{scrollbar-width:thin;scrollbar-color:transparent transparent}
+.table-wrap:hover,.table-scroll-top:hover{scrollbar-color:var(--border2) transparent}
+.table-wrap::-webkit-scrollbar,.table-scroll-top::-webkit-scrollbar{height:8px}
+.table-wrap::-webkit-scrollbar-track,.table-scroll-top::-webkit-scrollbar-track{background:transparent}
+.table-wrap::-webkit-scrollbar-thumb,.table-scroll-top::-webkit-scrollbar-thumb{background:transparent;border-radius:4px}
+.table-wrap:hover::-webkit-scrollbar-thumb,.table-scroll-top:hover::-webkit-scrollbar-thumb{background:var(--border2)}
 table.data{width:100%;border-collapse:collapse;font-size:12px}
 table.data th{padding:8px 12px;text-align:left;font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
 table.data td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle}
 table.data tr:last-child td{border-bottom:none}
 table.data tbody tr{cursor:pointer;transition:background .1s}
 table.data tbody tr:hover td{background:var(--bg3);color:var(--text)}
+/* ── Info tooltip: small "i" icon usable next to any header, column, or label to explain
+   a non-obvious metric on hover (or focus, for keyboard/touch). Ancestor .card/.stat-card
+   elements use overflow:hidden, so the popover is anchored to open DOWNWARD (into the
+   card's own body, not past its edges) and .th-info.right flips it to grow leftward for
+   icons that sit near a table's right edge — both keep the popover inside the clipping box. ── */
+.th-info{position:relative;display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:var(--bg4);color:var(--text3);font-size:9px;font-weight:800;font-style:italic;font-family:Georgia,'Times New Roman',serif;line-height:1;text-transform:none;letter-spacing:normal;cursor:help;margin-left:5px;vertical-align:middle;user-select:none;flex-shrink:0}
+.th-info:hover,.th-info:focus{background:var(--accent);color:#fff;outline:none}
+.th-info .th-info-tip{position:absolute;top:calc(100% + 8px);left:0;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);font-size:11px;font-weight:400;font-style:normal;text-transform:none;letter-spacing:normal;line-height:1.45;padding:9px 11px;border-radius:8px;width:210px;box-shadow:0 8px 20px rgba(0,0,0,.4);opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .12s ease,transform .12s ease;pointer-events:none;z-index:60;white-space:normal}
+.th-info .th-info-tip::before{content:'';position:absolute;bottom:100%;left:10px;border:5px solid transparent;border-bottom-color:var(--bg3)}
+.th-info.right .th-info-tip{left:auto;right:0}
+.th-info.right .th-info-tip::before{left:auto;right:10px}
+.th-info:hover .th-info-tip,.th-info:focus .th-info-tip{opacity:1;visibility:visible;transform:translateY(0)}
+.th-info .th-info-tip b{color:var(--text);font-weight:700}
+/* Manual column-resize handle — a thin drag strip on the right edge of a header cell.
+   Sits inside th (position:relative, set inline) and is invisible until hovered. */
+.col-resize-handle{position:absolute;top:0;right:0;bottom:0;width:7px;cursor:col-resize;z-index:2}
+.col-resize-handle:hover,.col-resize-handle.is-resizing{background:rgba(77,127,255,.35)}
 .mono{font-family:DM Mono,monospace;font-size:11px}
 .col-mgr-row{display:flex;align-items:center;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);cursor:default;transition:background .1s}
 .col-mgr-row:hover{background:var(--bg4)}
@@ -1304,6 +1331,41 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         <div class="chart-wrap" style="height:220px;padding:0 16px 16px"><canvas id="chart-error-evo"></canvas></div>
         <div style="padding:0 16px 4px;font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase">By trade count</div>
         <div class="chart-wrap" style="height:220px;padding:0 16px 16px"><canvas id="chart-error-evo-count"></canvas></div>
+      </div>
+      <!-- Checklist item breakdown by setup rating — which specific items get skipped most,
+           and whether skipping them actually costs performance — collapsible, collapsed by default -->
+      <div style="display:flex;align-items:center;gap:8px;margin:26px 2px 14px;cursor:pointer;user-select:none" onclick="toggleTrdItemBreakdown()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/><line x1="7" y1="16" x2="10.5" y2="16"/></svg>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">Checklist Item Breakdown by Setup Rating</span>
+        <svg id="trd-itembd-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="trd-itembd-body" style="display:none">
+        <div style="font-size:11px;color:var(--text3);padding:0 2px 12px">Which checklist items get skipped most — and whether skipping them actually costs you. Pick a setup rating to see what's dragging trades into it; "All rated trades" pools everything with a checklist logged.</div>
+        <div class="stats-grid" id="dash-itembd-stats"></div>
+        <div class="card" style="margin-bottom:22px">
+          <div class="card-header">
+            <span class="card-title">Most missed checklist items</span>
+            <select id="trd-itembd-rating-filter" style="width:auto;min-width:150px;font-size:11px;padding:5px 28px 5px 8px" onchange="renderChecklistItemBreakdown()"><option value="">All rated trades</option></select>
+          </div>
+          <div class="chart-wrap" id="trd-itembd-chart-wrap" style="height:260px;padding:4px 16px 16px"><canvas id="chart-itembd-miss"></canvas></div>
+        </div>
+        <div class="card" style="margin-bottom:22px">
+          <div class="card-header">
+            <span class="card-title" style="display:inline-flex;align-items:center">Checklist items by weight<span class="th-info" tabindex="0">i<span class="th-info-tip">Weight is the point value each item is worth toward your setup-rating score, set per item in the Checklist editor. A trade&#39;s score is the sum of the weights of every item checked on it, and that score is what the tiers (A+, A, B+...) are thresholded against — so a heavier item swings the rating more than a lighter one.</span></span></span>
+          </div>
+          <div style="font-size:11px;color:var(--text3);padding:8px 16px 10px">Sorted by weight, heaviest first — not affected by the rating filter above, since weight is a fixed property of the item, not something computed per trade. The heaviest few items usually decide most of your score, so this is where to look if you want to know what actually moves your rating.</div>
+          <div class="chart-wrap" id="trd-itembd-weight-wrap" style="height:260px;padding:4px 16px 16px"><canvas id="chart-itembd-weight"></canvas></div>
+        </div>
+        <div class="card" style="margin-bottom:22px">
+          <div class="card-header"><span class="card-title">Item-by-item breakdown</span></div>
+          <div style="font-size:11px;color:var(--text3);padding:8px 16px 10px">Sorted by miss rate, worst first. "WR impact" compares win rate on trades where the item was checked vs. where it wasn't — a wide gap means this item is actually predictive, not just a box to tick.</div>
+          <div class="table-wrap" id="dash-itembd-table"></div>
+        </div>
+        <div class="card" style="margin-bottom:22px">
+          <div class="card-header"><span class="card-title">Rating-blocking items</span></div>
+          <div style="font-size:11px;color:var(--text3);padding:8px 16px 10px">Across every trade that fell short of a higher tier, these are the single unchecked items whose weight alone would have closed the gap. Ignores the dropdown above — it's about every under-rated trade. Fix these first for the fastest lift in your average setup rating.</div>
+          <div class="table-wrap" id="dash-itembd-blockers"></div>
+        </div>
       </div>
       <div class="analytics-group-label">Volume &amp; Outcome</div>
       <!-- Trade volume over time (monthly / yearly) — collapsible, collapsed by default -->
@@ -2818,7 +2880,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           </div>
         </div>
       </div>
-      <div class="card"><div class="table-wrap" id="history-table-wrap"></div><div id="history-pagination"></div></div>
+      <div class="card"><div class="table-scroll-top" id="history-table-scroll-top"><div id="history-table-scroll-top-inner"></div></div><div class="table-wrap" id="history-table-wrap"></div><div id="history-pagination"></div></div>
     </div>
     <!-- MONTE CARLO -->
     <div class="page" id="page-montecarlo">
@@ -5451,6 +5513,23 @@ async function populateErrorFilterSelect(){
 var clDragSrcIdx=null;          // block-level drag: source block index
 var clItemDragSrc=null;         // item-level drag: {secIdx, itemIdx}
 var _clWorkingCopy=null;        // in-memory draft; null = no unsaved changes
+// Tags every item in a freshly-loaded working copy with the text it had at load time
+// (item._origText) and normalizes items to full objects for the duration of editing.
+// This tag is the single source of truth for rename-tracking: it's carried by object
+// identity through every add/remove/reorder/drag done in this editing session, so
+// saveChecklistEditor() can diff item._origText vs. its live text directly instead of
+// inferring renames from before/after array *position* (which breaks the moment a
+// sibling item is added, removed, or dragged in the same session — see saveChecklistEditor).
+// Items added mid-session via addClItem() deliberately get NO _origText: they're new,
+// not a rename of anything, so they must never be picked up as a rename source/target.
+function _clTagOrigins(cl){
+  cl.forEach(function(sec){
+    sec.items=sec.items.map(function(it){
+      return{text:clItemText(it),optional:clItemOptional(it),weight:clItemWeight(it),_origText:clItemText(it)};
+    });
+  });
+  return cl;
+}
 function clMarkUnsaved(){
   var b=document.getElementById('cl-unsaved-banner');
   if(b)b.style.display='flex';
@@ -5476,13 +5555,18 @@ function _clFlushItemInputs(){
       var wInp=document.getElementById('cliw-'+si+'-'+ii);
       var w=wInp?parseFloat(wInp.value):clItemWeight(it);
       if(isNaN(w))w=clItemWeight(it);
-      s.items[ii]=clMakeItem(v,clItemOptional(it),w);
+      // Mutate in place (rather than replacing with a fresh clMakeItem() object) so
+      // item._origText — the rename-tracking tag — survives the flush. Working-copy
+      // items are always full objects for the duration of editing (see _clTagOrigins);
+      // they're only collapsed back to clMakeItem()'s minimal shape at save time.
+      if(typeof it==='object'&&it!==null){it.text=v;it.weight=w;}
+      else{s.items[ii]={text:v,optional:false,weight:w};}
     });
   });
 }
 async function renderChecklistEditor(){
   // Use working copy if one exists, otherwise load from IDB and start a fresh copy
-  if(!_clWorkingCopy){_clWorkingCopy=JSON.parse(JSON.stringify(await getChecklist()));}
+  if(!_clWorkingCopy){_clWorkingCopy=_clTagOrigins(JSON.parse(JSON.stringify(await getChecklist())));}
   else{clMarkUnsaved();} // working copy already existed = unsaved changes present
   var cl=_clWorkingCopy;
   var el=document.getElementById('cl-editor-area');
@@ -5546,6 +5630,7 @@ function buildEditorCard(sec,idx,total){
     e.preventDefault();
     div.classList.remove('cl-drag-over');
     if(clDragSrcIdx===null||clDragSrcIdx===idx)return;
+    _clFlushItemInputs(); // preserve any typed-but-uncommitted item text before re-rendering
     var moved=_clWorkingCopy.splice(clDragSrcIdx,1)[0];
     _clWorkingCopy.splice(idx,0,moved);
     clDragSrcIdx=null;
@@ -5709,59 +5794,52 @@ function buildEditorCard(sec,idx,total){
   return div;
 }
 async function toggleClItemOptional(secIdx,itemIdx){
-  if(!_clWorkingCopy){_clWorkingCopy=JSON.parse(JSON.stringify(await getChecklist()));}
+  if(!_clWorkingCopy){_clWorkingCopy=_clTagOrigins(JSON.parse(JSON.stringify(await getChecklist())));}
+  _clFlushItemInputs(); // commit any typed-but-uncommitted item text/weight before re-rendering
   var item=_clWorkingCopy[secIdx].items[itemIdx];
-  var text=clItemText(item);
-  _clWorkingCopy[secIdx].items[itemIdx]=clMakeItem(text,!clItemOptional(item),clItemWeight(item));
+  item.optional=!clItemOptional(item); // mutate in place — preserves item._origText
   clMarkUnsaved();
   renderChecklistEditor();
 }
 async function saveChecklistEditor(){
-  var oldCl=await getChecklist();
-  // Build old text map: "secIdx-itemIdx" -> text (before save)
-  var oldTextMap={};
-  oldCl.forEach(function(sec,si){sec.items.forEach(function(item,ii){oldTextMap[si+'-'+ii]=clItemText(item);});});
   // Flush current input values into working copy — preserves each item's optional
-  // flag rather than collapsing it back to a plain string.
-  var cl=_clWorkingCopy||JSON.parse(JSON.stringify(oldCl));
-  cl.forEach(function(sec,idx){
+  // flag (and its _origText rename-tracking tag) rather than collapsing it back to
+  // a plain string.
+  var cl=_clWorkingCopy||_clTagOrigins(JSON.parse(JSON.stringify(await getChecklist())));
+  _clFlushItemInputs();
+  // Build the rename map directly from each item's own tracked origin (item._origText,
+  // set once when the item entered this editing session — see _clTagOrigins) vs. its
+  // live text right now. This is accurate no matter what else happened in the same
+  // session (adds, deletes, drag-reorders), because the tag travels with the item by
+  // object identity rather than being re-derived from array position at save time.
+  // (The previous implementation compared before/after array position, which produced
+  // false-positive renames — and silently corrupted other items' trade history — as
+  // soon as a sibling item was added/removed/reordered in the same save. E.g. section
+  // [A,B,C] → drag C to front → rename it → [C2,A,B]: position-based matching saw slot
+  // 2 change from "C" to "B" and wrongly concluded "C was renamed to B", clobbering B's
+  // real checklist data with C's old value across every trade.)
+  // Items added this session via addClItem() carry no _origText, so they're only ever
+  // a rename *target* via this loop below, never mistaken for a rename source.
+  var renameMap={};
+  cl.forEach(function(sec){
     var updated=[];
-    sec.items.forEach(function(item,j){
-      var isOpt=clItemOptional(item);
-      var inp=document.getElementById('cli-'+idx+'-'+j);
-      var v=inp?inp.value.trim():clItemText(item).trim();
-      if(v){
-        var wInp=document.getElementById('cliw-'+idx+'-'+j);
-        var w=wInp?parseFloat(wInp.value):clItemWeight(item);
-        if(isNaN(w))w=clItemWeight(item);
-        updated.push(clMakeItem(v,isOpt,w));
-      }
+    sec.items.forEach(function(item){
+      var v=clItemText(item).trim();
+      if(!v)return; // blanked out = drop this item (same as delete)
+      var origText=item&&item._origText;
+      if(origText&&origText!==v)renameMap[origText]=v;
+      updated.push(clMakeItem(v,clItemOptional(item),clItemWeight(item)));
     });
-    sec.items=updated;
+    sec.items=updated; // mutate in place — preserves .section/.optional and any other section props
   });
   _clWorkingCopy=null; // clear draft before writing to IDB
   await setSetting('checklist',cl);
   // Build set of all text keys in new config (for existence check)
   var newTextSet={};
   cl.forEach(function(sec){sec.items.forEach(function(item){newTextSet[clItemText(item)]=true;});});
-  // Build rename map: oldText -> newText for items whose text changed at the same position
-  // (pure renames — same slot, different text). Moves are detected by oldText still existing
-  // in the new config under a different position, so they need no remapping at all.
-  var renameMap={};
-  Object.keys(oldTextMap).forEach(function(pos){
-    var oldText=oldTextMap[pos];
-    if(newTextSet[oldText])return; // text still exists somewhere — not a rename, skip
-    // oldText gone from new config entirely — check if same position has new text (rename)
-    var parts=pos.split('-');
-    var si=parseInt(parts[0]),ii=parseInt(parts[1]);
-    var newAtPos=cl[si]&&cl[si].items[ii]!==undefined?clItemText(cl[si].items[ii]):null;
-    if(newAtPos&&newAtPos!==oldText){
-      renameMap[oldText]=newAtPos; // renamed at this position
-    }
-  });
   // Sync all trades:
   // - keys whose text still exists in new config: keep as-is (covers moves, unchanged items)
-  // - keys whose text was renamed (same position, text changed): remap to new text
+  // - keys whose text was renamed (per the item-identity-tracked renameMap above): remap to new text
   // - keys whose text is gone entirely and not a rename: drop
   var trades=await dbGetAll('trades');
   var synced=0;
@@ -5793,13 +5871,19 @@ async function saveChecklistEditor(){
   ghAutoSyncConfig();
 }
 async function addClItem(secIdx){
-  if(!_clWorkingCopy){_clWorkingCopy=JSON.parse(JSON.stringify(await getChecklist()));}
-  _clWorkingCopy[secIdx].items.push('New item');
+  if(!_clWorkingCopy){_clWorkingCopy=_clTagOrigins(JSON.parse(JSON.stringify(await getChecklist())));}
+  _clFlushItemInputs(); // commit any typed-but-uncommitted item text/weight before re-rendering
+  // No _origText on purpose: this item is new, not a rename of anything, so it must
+  // never be picked up as a rename source/target in saveChecklistEditor().
+  _clWorkingCopy[secIdx].items.push({text:'New item',optional:false,weight:1});
+  clMarkUnsaved();
   renderChecklistEditor();
 }
 async function removeClItem(secIdx,itemIdx){
-  if(!_clWorkingCopy){_clWorkingCopy=JSON.parse(JSON.stringify(await getChecklist()));}
+  if(!_clWorkingCopy){_clWorkingCopy=_clTagOrigins(JSON.parse(JSON.stringify(await getChecklist())));}
+  _clFlushItemInputs(); // commit any typed-but-uncommitted item text/weight before re-rendering
   _clWorkingCopy[secIdx].items.splice(itemIdx,1);
+  clMarkUnsaved();
   renderChecklistEditor();
 }
 // Shared checklist-section card renderer, used by both the Log Trade checklist
@@ -5893,6 +5977,20 @@ function updateClStatus(){
 }
 function getChecklist_state(){var cl={};document.querySelectorAll('.cl').forEach(function(c){cl[c.dataset.k]=c.checked?'yes':'no'});return cl;}
 function setChecklist_state(cl){document.querySelectorAll('.cl').forEach(function(c){var v=cl&&cl[c.dataset.k];c.checked=v==='yes'||v===true||v===1});updateClStatus();}
+// A trade's checklist state (t.checklist) is stored as an object {itemText:'yes'/'no', ...}
+// — the exact shape getChecklist_state()/setChecklist_state() above read and write — NOT an
+// array of {text,checked} items. Any code that needs a trade's checklist completion count
+// (adherence %, "CL: x/y" summaries, etc.) should go through this helper rather than reading
+// t.checklist.length / .filter(c=>c.checked) directly: on the real object shape, .length is
+// undefined, so that pattern silently treats every real trade as having no checklist at all.
+// Returns null when the trade has no checklist logged.
+function clAdherenceOf(t){
+  if(!t||!t.checklist)return null;
+  var keys=Object.keys(t.checklist);
+  if(!keys.length)return null;
+  var checked=keys.filter(function(k){var v=t.checklist[k];return v==='yes'||v===true||v===1;}).length;
+  return{total:keys.length,checked:checked,pct:checked/keys.length*100};
+}
 // ══ Setup rating criteria ══════════════════════════
 // Lets the user define named quality tiers (e.g. A+, A, B+, B) as a name + minimum
 // score. computeSetupRating() below scores a trade as the sum of checked items'
@@ -5966,14 +6064,21 @@ async function getSetupRatings(){
 // these caches directly instead of awaiting getSetupRatings()/getChecklist() each time.
 var _setupRatingsCache=null;
 var _clAllItemsCache=null;
+// itemText -> section name, rebuilt alongside _clAllItemsCache every time that cache is
+// loaded. Kept separate because _clAllItemsCache deliberately flattens sections away (see
+// its own comment below) — this sidecar map lets the Checklist Item Breakdown analytics
+// (below) label each item with where it lives without re-fetching/re-flattening itself.
+var _clSectionByText=null;
 async function loadSetupRatingsCache(){_setupRatingsCache=await getSetupRatings();return _setupRatingsCache;}
 async function loadClAllItemsCache(){
   var cl=await getChecklist();
   var items=[];
+  var sectionByText={};
   // Push raw items (not clItemText(it)) so weight survives — computeSetupRating()
   // needs the full {text,optional,weight} shape to score by weight, not just text.
-  cl.forEach(function(sec){sec.items.forEach(function(it){items.push(it);});});
+  cl.forEach(function(sec){sec.items.forEach(function(it){items.push(it);sectionByText[clItemText(it)]=sec.section;});});
   _clAllItemsCache=items;
+  _clSectionByText=sectionByText;
   return items;
 }
 // Given a checklist state object ({itemText:'yes'/'no', ...} — the same shape as
@@ -6656,17 +6761,20 @@ async function generateDemoTrades(sessionId,sessionStartDate,sessionEndDate,star
   // Helper: build a realistic checklist state from the user's checklist template
   // Winning trades check most items; losing trades miss 1-2
   function makeDemoChecklist(isWin){
-    // Returns array format [{text, checked}] to match real trade checklist structure
-    // so AI Analyzer checklist adherence scores work correctly on demo sessions.
-    var items=[];
+    // Object format {itemText:'yes'/'no', ...} — matches the real shape saveTrade() stores
+    // via getChecklist_state() (see t.checklist elsewhere), and what computeSetupScoreInfo()
+    // needs to score the weighted setup rating. This used to return an array of
+    // {text,checked} instead, which broke the weighted setup rating for every demo trade
+    // (checklistState[text] is always undefined on an array).
+    var state={};
     checklistTemplate.forEach(function(section){
       section.items.forEach(function(item){
         // Win: 85-100% checked; Loss: 60-85% checked (missed something)
         var checked=isWin?(Math.random()<0.9):(Math.random()<0.7);
-        items.push({text:clItemText(item),checked:checked});
+        state[clItemText(item)]=checked?'yes':'no';
       });
     });
-    return items;
+    return state;
   }
   var ASSET_PRICE_MAP={
     'Forex Major':{pairs:['EUR/USD','GBP/USD','USD/JPY','USD/CHF','AUD/USD','USD/CAD','NZD/USD'],priceRange:[0.65,155],pipSize:0.0001,qtyRange:[0.01,2.0],decimals:5},
@@ -9091,7 +9199,7 @@ var ALL_HISTORY_COLS=[
   {key:'strategy',  label:'Strategy',  sortVal:function(t){return t.strategy||'';},               render:function(t){return'<td style="font-size:11px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(t.strategy||'—')+'</td>';}},
   {key:'durationMin',label:'Duration', sortVal:function(t){return t.durationMin||0;},             render:function(t){if(!t.durationMin)return'<td>—</td>';var total=t.durationMin,days=Math.floor(total/1440),h=Math.floor((total%1440)/60),m=total%60;if(days>0){var label=days+'d'+(h>0?' '+h+'h':'');return'<td><span style="display:inline-flex;align-items:center;gap:4px;background:rgba(155,127,240,.12);border:1px solid rgba(155,127,240,.25);color:var(--purple);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;font-family:DM Mono,monospace;white-space:nowrap">⏱ '+label+'</span></td>';}return'<td style="font-size:12px;color:var(--text2)">'+(h>0?h+'h ':'')+m+'m</td>';}},
   {key:'rating',    label:'User rating',    sortVal:function(t){return(t.rating||'').length;},         render:function(t){return'<td><span class="stars">'+(t.rating||'')+'</span></td>';}},
-  {key:'setupRating',label:'Setup rating',sortVal:function(t){var r=computeSetupRating(t.checklist,_clAllItemsCache);if(!r)return-1;var tiers=_setupRatingsCache||DEFAULT_SETUP_RATINGS;var idx=tiers.findIndex(function(x){return x.name===r;});return idx===-1?-1:tiers.length-idx;},render:function(t){var info=computeSetupScoreInfo(t.checklist,_clAllItemsCache);return'<td>'+(info.name?'<span class="badge" style="'+srBadgeStyle(info.color)+'">'+escHtml(info.name)+'</span>':'<span style="color:var(--text3)">—</span>')+'</td>';}},
+  {key:'setupRating',label:'Setup rating',sortVal:function(t){var r=computeSetupRating(t.checklist,_clAllItemsCache);if(!r)return-1;var tiers=_setupRatingsCache||DEFAULT_SETUP_RATINGS;var idx=tiers.findIndex(function(x){return x.name===r;});return idx===-1?-1:tiers.length-idx;},render:function(t){var info=computeSetupScoreInfo(t.checklist,_clAllItemsCache);return'<td style="white-space:nowrap">'+(info.name?'<span class="badge" style="'+srBadgeStyle(info.color)+';max-width:110px;overflow:hidden;text-overflow:ellipsis" title="'+escHtml(info.name)+'">'+escHtml(info.name)+'</span>':'<span style="color:var(--text3)">—</span>')+'</td>';}},
   {key:'error',     label:'Error type',sortVal:function(t){return tradeErrorList(t).join(', ');},                  render:function(t){var el=tradeErrorList(t);return'<td style="font-size:11px;color:var(--text2)">'+(el.length?escHtml(el.join(', ')):'—')+'</td>';}},
   {key:'model',     label:'Model',     sortVal:function(t){return t.model||'';},                  render:function(t){return'<td style="font-size:11px;color:var(--text2)">'+escHtml(t.model||'—')+'</td>';}},
   {key:'method',    label:'Method',    sortVal:function(t){return t.method||'';},                 render:function(t){return'<td style="font-size:11px;color:var(--text2)">'+escHtml(t.method||'—')+'</td>';}},
@@ -9099,7 +9207,7 @@ var ALL_HISTORY_COLS=[
   {key:'targetRR',  label:'Target RR', sortVal:function(t){return parseFloat(t.targetRR)||0;},    render:function(t){return'<td class="mono">'+(t.targetRR?t.targetRR+'R':'—')+'</td>';}},
   {key:'loggedAt',  label:'Logged at', sortVal:function(t){return t.loggedAt||t.savedAt||'';},    render:function(t){var d=t.loggedAt||t.savedAt;if(!d)return'<td>—</td>';var dt=new Date(d);return'<td style="color:var(--text3);font-size:11px;white-space:nowrap" title="'+escHtml(d)+'">'+dt.toLocaleDateString()+' '+dt.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})+'</td>';}},
   {key:'fees',      label:'Fees (est.)',sortVal:function(t){return 0;}, render:function(t){return'<td class="mono hist-fee-cell" data-trade-id="'+escHtml(t.id||'')+'" data-asset="'+escHtml(t.assetType||'')+'" data-entry="'+escHtml(String(t.entryPrice||''))+'" data-qty="'+escHtml(String(t.qty||''))+'" data-dur="'+escHtml(String(t.durationMin||0))+'" data-pair="'+escHtml(t.pair||'')+'" data-dir="'+escHtml(t.type||'')+'"><span style="color:var(--text3);font-size:10px">…</span></td>';}},
-  {key:'netPL',     label:'Net P/L ($)',sortVal:function(t){return parseFloat(t.plDollar)||0;}, render:function(t){return'<td class="mono hist-netpl-cell" data-trade-id="'+escHtml(t.id||'')+'" data-pl="'+escHtml(String(t.plDollar||0))+'"><span style="color:var(--text3);font-size:10px">…</span></td>';}},
+  {key:'netPL',     label:'Net P/L',sortVal:function(t){return parseFloat(t.plDollar)||0;}, render:function(t){var isPartial=(t.partialTPs&&t.partialTPs.length)?'1':'0';return'<td class="mono hist-netpl-cell" data-trade-id="'+escHtml(t.id||'')+'" data-pl="'+escHtml(String(t.plDollar||0))+'" data-acct="'+escHtml(String(t.acct||0))+'" data-partial="'+isPartial+'"><span style="color:var(--text3);font-size:10px">…</span></td>';}},
 ];
 // ── Sort state ──────────────────────────────────────
 var _histSort={key:'loggedAt',dir:-1}; // default: session desc + loggedAt desc
@@ -9312,7 +9420,7 @@ function guardedRender(name, fn) {
 function renderHistory()       { guardedRender('renderHistory',       _renderHistoryImpl); }
 var _debouncedRenderHistory = debounce(renderHistory, 250);
 // Chart theme colors — reads live CSS vars so they update with theme changes
-function chartColors(){
+function chartColors(soft){
   var s=getComputedStyle(document.documentElement);
   var accent=s.getPropertyValue('--accent').trim()||'#4d7fff';
   var green=s.getPropertyValue('--green').trim()||'#34c97a';
@@ -9321,6 +9429,21 @@ function chartColors(){
   var amber=s.getPropertyValue('--amber').trim()||'#e8a030';
   // helper to hex→rgba
   function ra(hex,a){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return'rgba('+r+','+g+','+b+','+a+')';}
+  // helper to blend a hex color toward white — used for soft-mode chart fills so bars/
+  // doughnuts read as gentle pastels instead of poster-saturated hues. Text, borders and
+  // badges elsewhere keep the full-strength color, since this only ever runs on values
+  // handed to a chart's backgroundColor.
+  function lighten(hex,amt){
+    try{
+      var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+      r=Math.round(r+(255-r)*amt);g=Math.round(g+(255-g)*amt);b=Math.round(b+(255-b)*amt);
+      return'#'+[r,g,b].map(function(v){return v.toString(16).padStart(2,'0');}).join('');
+    }catch(e){return hex;}
+  }
+  if(soft){
+    accent=lighten(accent,.35);green=lighten(green,.4);red=lighten(red,.4);
+    purple=lighten(purple,.35);amber=lighten(amber,.32);
+  }
   return {
     grid: s.getPropertyValue('--border').trim()||'rgba(255,255,255,.06)',
     tick: s.getPropertyValue('--text3').trim()||'#7a8298',
@@ -9329,7 +9452,7 @@ function chartColors(){
     green:green,   greenBg:ra(green,.06),
     red:red,       redBg:ra(red,.06),
     purple:purple, amber:amber,
-    palette:[accent,green,purple,amber,red,'#64d4fc']
+    palette: soft ? [accent,green,purple,amber,red,lighten('#64d4fc',.35)] : [accent,green,purple,amber,red,'#64d4fc']
   };
 }
 // ── Chart.js availability guard ─────────────────────────────────────────
@@ -9414,7 +9537,7 @@ async function _renderHistoryImpl(){
   var pager=document.getElementById('history-pagination');
   var sizeSel=document.getElementById('hist-page-size-select');
   if(sizeSel)sizeSel.value=(HIST_PAGE_SIZE===Infinity)?'all':String(HIST_PAGE_SIZE);
-  if(!filtered.length){wrap.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><p>No trades match your filters</p></div>';if(pager)pager.innerHTML='';return;}
+  if(!filtered.length){wrap.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><p>No trades match your filters</p></div>';if(pager)pager.innerHTML='';syncHistTopScrollbar();return;}
   // Reset to page 1 only when the filter/sort inputs actually changed — NOT when
   // histGoToPage() re-renders for pagination, and NOT when a trade edit/add/delete
   // triggers a re-render with the same filters (so the user stays on their page).
@@ -9447,11 +9570,13 @@ async function _renderHistoryImpl(){
   var cfg=await getHistColConfig();
   var visibleCols=cfg.filter(function(c){return c.visible;}).map(function(c){return ALL_HISTORY_COLS.find(function(col){return col.key===c.key;});}).filter(Boolean);
   if(!visibleCols.length)visibleCols=DEFAULT_HIST_COL_KEYS.map(function(k){return ALL_HISTORY_COLS.find(function(c){return c.key===k;});}).filter(Boolean);
+  window._histVisibleColKeys=visibleCols.map(function(c){return c.key;}); // used by rebuildHistColWidthStyle to map key -> nth-child position
   var headers='<th style="width:1%"></th>'+visibleCols.map(function(c){
     var isActive=_histSort.key===c.key;
     var arrow=isActive?(_histSort.dir===-1?' ↓':' ↑'):'';
-    var style='cursor:pointer;user-select:none;white-space:nowrap;'+(isActive?'color:var(--accent)':'');
-    return'<th style="'+style+'" onclick="histSortBy(\''+c.key+'\')">'+c.label+'<span style="font-size:9px;opacity:.7">'+arrow+'</span></th>';
+    var style='cursor:pointer;user-select:none;white-space:nowrap;position:relative;'+(isActive?'color:var(--accent)':'');
+    return'<th style="'+style+'" onclick="histSortBy(\''+c.key+'\')">'+c.label+'<span style="font-size:9px;opacity:.7">'+arrow+'</span>'
+      +'<span class="col-resize-handle" title="Drag to resize · double-click to auto-fit" onclick="event.stopPropagation()" onmousedown="startColResize(event,\''+c.key+'\')" ondblclick="resetHistColWidth(event,\''+c.key+'\')"></span></th>';
   }).join('')+'<th></th>';
   // Paginate the RENDERED rows only. filtered (full list) is still used below for
   // window._histTradeOrder so the detail modal's prev/next buttons keep working across
@@ -9479,6 +9604,8 @@ async function _renderHistoryImpl(){
     return'<tr'+rowStyle+' onclick="openDetail(\''+t.id+'\')">'+starCell+cells+actions+'</tr>';
   }).join('');
   wrap.innerHTML='<table class="data"><thead><tr>'+headers+'</tr></thead><tbody>'+rows+'</tbody></table>';
+  rebuildHistColWidthStyle();
+  syncHistTopScrollbar();
   if(pager){
     var rangeStart=pageStart+1,rangeEnd=Math.min(pageStart+HIST_PAGE_SIZE,filtered.length);
     var navHtml=(totalPages>1)
@@ -9525,17 +9652,119 @@ async function _renderHistoryImpl(){
       for(var j=0;j<netCells.length;j++){
         var nc = netCells[j];
         var grossPL = parseFloat(nc.dataset.pl)||0;
+        var acctBal = parseFloat(nc.dataset.acct)||0;
+        var ptag = nc.dataset.partial==='1' ? '<span style="font-size:8px;font-weight:700;vertical-align:middle;background:rgba(77,127,255,.12);color:var(--accent);border-radius:3px;padding:1px 4px;margin-left:4px">P</span>' : '';
         if(feeTotal === 0){
           // No fees configured — show gross P/L directly
-          if(grossPL === 0){ nc.innerHTML='<span style="color:var(--text3)">—</span>'; continue; }
-          nc.innerHTML='<span style="color:'+(grossPL>=0?'var(--green)':'var(--red)')+'">'+( grossPL>=0?'+':'')+grossPL.toFixed(2)+'</span>';
+          if(grossPL === 0){ nc.innerHTML='<span style="color:var(--text3)">—</span>'+ptag; continue; }
+          var pctStr0 = acctBal ? '<span style="color:'+(grossPL>=0?'var(--green)':'var(--red)')+';font-size:11px;margin-left:3px">('+(grossPL>=0?'+':'')+((grossPL/acctBal)*100).toFixed(2)+'%)</span>' : '';
+          nc.innerHTML='<span style="color:'+(grossPL>=0?'var(--green)':'var(--red)')+'">'+( grossPL>=0?'+':'')+grossPL.toFixed(2)+'</span>'+pctStr0+ptag;
           continue;
         }
         var netPL = parseFloat((grossPL - feeTotal).toFixed(2));
-        nc.innerHTML='<span style="color:'+(netPL>=0?'var(--green)':'var(--red)')+'">'+( netPL>=0?'+':'')+netPL.toFixed(2)+'</span>';
+        var pctStr = acctBal ? '<span style="color:'+(netPL>=0?'var(--green)':'var(--red)')+';font-size:11px;margin-left:3px">('+(netPL>=0?'+':'')+((netPL/acctBal)*100).toFixed(2)+'%)</span>' : '';
+        nc.innerHTML='<span style="color:'+(netPL>=0?'var(--green)':'var(--red)')+'">'+( netPL>=0?'+':'')+netPL.toFixed(2)+'</span>'+pctStr+ptag;
       }
     }
+    syncHistTopScrollbar(); // fee/net-P/L text can change column widths — recheck overflow
   })();
+}
+// ── History table: mirrored top scrollbar ───────────────────────────
+// The History table can grow wider than the viewport (many optional columns), and
+// without this, the only way to scroll horizontally is the native scrollbar glued to
+// the bottom of the table — often a long way below the fold. This adds a second,
+// always-reachable scrollbar just above the header row that stays in sync with it.
+function syncHistTopScrollbar(){
+  var wrap=document.getElementById('history-table-wrap');
+  var top=document.getElementById('history-table-scroll-top');
+  var inner=document.getElementById('history-table-scroll-top-inner');
+  if(!wrap||!top||!inner)return;
+  if(!wrap._histScrollWired){
+    wrap._histScrollWired=true;
+    var syncing=false;
+    wrap.addEventListener('scroll',function(){if(syncing)return;syncing=true;top.scrollLeft=wrap.scrollLeft;syncing=false;});
+    top.addEventListener('scroll',function(){if(syncing)return;syncing=true;wrap.scrollLeft=top.scrollLeft;syncing=false;});
+    window.addEventListener('resize',function(){syncHistTopScrollbar();});
+  }
+  var table=wrap.querySelector('table');
+  if(!table){top.style.display='none';return;}
+  inner.style.width=wrap.scrollWidth+'px';
+  top.style.display=(wrap.scrollWidth>wrap.clientWidth+1)?'block':'none';
+  top.scrollLeft=wrap.scrollLeft;
+}
+// ── History table: manual column resizing ───────────────────────────
+// Widths are keyed by column `key` (stable across reorders/hide-show) and persisted
+// in localStorage so they survive reloads. A column with no stored width just falls
+// back to its normal auto-sized behavior — nothing changes until the user drags one.
+var _histColWidths=(function(){
+  try{return JSON.parse(localStorage.getItem('tj-hist-col-widths')||'{}')||{};}catch(e){return{};}
+})();
+var _histColResizeState=null;
+// Maps each currently-visible column key to its 1-based nth-child position in a row
+// (position 1 is the leading star/reviewed toggle cell, so data columns start at 2).
+function _histColPositionMap(){
+  var map={};
+  (window._histVisibleColKeys||[]).forEach(function(k,i){map[k]=i+2;});
+  return map;
+}
+// Rebuilds the <style> block that pins resized columns to their stored width. Pass an
+// override map (key -> px) to preview a width live during drag without touching the
+// persisted _histColWidths until the drag ends.
+function rebuildHistColWidthStyle(widths){
+  widths=widths||_histColWidths;
+  var map=_histColPositionMap();
+  var css='';
+  Object.keys(widths).forEach(function(k){
+    var pos=map[k];
+    if(!pos)return; // column isn't currently visible — leave its saved width unused
+    var w=widths[k];
+    css+='#history-table-wrap table th:nth-child('+pos+'),#history-table-wrap table td:nth-child('+pos+'){width:'+w+'px;max-width:'+w+'px;min-width:'+w+'px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}';
+  });
+  var styleEl=document.getElementById('hist-col-width-style');
+  if(!styleEl){styleEl=document.createElement('style');styleEl.id='hist-col-width-style';document.head.appendChild(styleEl);}
+  styleEl.textContent=css;
+}
+function startColResize(e,key){
+  e.preventDefault();e.stopPropagation();
+  var th=e.target.closest('th');
+  if(!th)return;
+  var startWidth=th.getBoundingClientRect().width;
+  _histColResizeState={key:key,startX:e.clientX,startWidth:startWidth,liveWidth:startWidth};
+  e.target.classList.add('is-resizing');
+  document.addEventListener('mousemove',_histColResizeMove);
+  document.addEventListener('mouseup',_histColResizeEnd);
+  document.body.style.cursor='col-resize';
+  document.body.style.userSelect='none';
+}
+function _histColResizeMove(e){
+  if(!_histColResizeState)return;
+  var delta=e.clientX-_histColResizeState.startX;
+  _histColResizeState.liveWidth=Math.max(50,Math.round(_histColResizeState.startWidth+delta));
+  var merged={};for(var k in _histColWidths)merged[k]=_histColWidths[k];
+  merged[_histColResizeState.key]=_histColResizeState.liveWidth;
+  rebuildHistColWidthStyle(merged);
+}
+function _histColResizeEnd(){
+  if(!_histColResizeState)return;
+  _histColWidths[_histColResizeState.key]=_histColResizeState.liveWidth;
+  try{localStorage.setItem('tj-hist-col-widths',JSON.stringify(_histColWidths));}catch(e){}
+  var handle=document.querySelector('.col-resize-handle.is-resizing');
+  if(handle)handle.classList.remove('is-resizing');
+  _histColResizeState=null;
+  document.removeEventListener('mousemove',_histColResizeMove);
+  document.removeEventListener('mouseup',_histColResizeEnd);
+  document.body.style.cursor='';
+  document.body.style.userSelect='';
+  rebuildHistColWidthStyle();
+  syncHistTopScrollbar();
+}
+// Double-click a resize handle to drop that column's stored width and let it auto-size again.
+function resetHistColWidth(e,key){
+  e.preventDefault();e.stopPropagation();
+  delete _histColWidths[key];
+  try{localStorage.setItem('tj-hist-col-widths',JSON.stringify(_histColWidths));}catch(err){}
+  rebuildHistColWidthStyle();
+  syncHistTopScrollbar();
 }
 // Rebuilds the pair/strategy/asset-type <select> options for both the History
 // filter bar and the Dashboard filter bar from the distinct values actually
@@ -10251,7 +10480,7 @@ function totalPLof(arr){return arr.reduce(function(a,t){return a+(t.plDollar||0)
 // how self-assessed trade quality and specific mistakes relate to actual outcomes.
 function _renderQualityAnalytics(trades){
   trades=trades||[];
-  var c=chartColors();
+  var c=chartColors(true);
   // ── Bucket trades by star rating (rating string length = star count, 1-5) ──
   var ratingBuckets={1:[],2:[],3:[],4:[],5:[]};
   trades.forEach(function(t){
@@ -10336,7 +10565,7 @@ function _renderQualityAnalytics(trades){
   // Clean is always green, so error-type colors are drawn from a palette that
   // deliberately excludes green — otherwise an error type can render in the same
   // color as "Clean" and become impossible to tell apart.
-  var errTypePalette=[c.red,c.amber,c.purple,c.accent,'#64d4fc','#ff8a5c','#c968e0'];
+  var errTypePalette=[c.red,c.amber,c.purple,c.accent,'#9ae3fd','#ffb395','#dc9deb'];
   var errLabels=errKeys.concat(['Clean']);
   var errData=errKeys.map(function(k){return errorBuckets[k].length;}).concat([cleanTrades.length]);
   var errColors=errKeys.map(function(k,i){return errTypePalette[i%errTypePalette.length];}).concat([c.green]);
@@ -10435,8 +10664,13 @@ function _renderQualityAnalytics(trades){
       '<td class="mono">'+costCell+'</td>'+
       '</tr>';
   }).join('');
+  var errHeaders='<th>Category</th><th>Trades</th><th>Win rate</th>'+
+    '<th>'+thInfo('Solo WR (n)','Win rate ONLY on trades where this was the single tagged error, with no other mistake tagged alongside it. "n" is the trade count that stat is based on — small n means take it with a grain of salt. Compare this to the plain "Win rate" column (which counts a trade toward every error tag it carries, so those can add up to more than your total trades) to see whether a mistake is bad on its own or only bad in combination with something else.')+'</th>'+
+    '<th>'+thInfo('Avg RR','Average realized R-multiple on trades in this bucket — how many multiples of your initial risk (1R) you made or lost, on average, per trade.')+'</th>'+
+    '<th>Total P/L</th>'+
+    '<th>'+thInfo('Edge lost (R)','(Your clean-trade average R minus this bucket average R) × how many times it happened — the total R this specific mistake has cost you versus your clean-trade baseline. This is what a plain average cannot show: a mild mistake that happens often can cost more overall than a severe one that happens rarely. Rows are sorted by this, worst leak first.',true)+'</th>';
   var tblEl=document.getElementById('dash-error-table');
-  if(tblEl)tblEl.innerHTML=!trades.length?'<div class="empty-state"><p>No trades yet</p></div>':'<table class="data"><thead><tr><th>Category</th><th>Trades</th><th>Win rate</th><th>Solo WR (n)</th><th>Avg RR</th><th>Total P/L</th><th>Edge lost (R)</th></tr></thead><tbody>'+tblHtml+'</tbody></table>';
+  if(tblEl)tblEl.innerHTML=!trades.length?'<div class="empty-state"><p>No trades yet</p></div>':'<table class="data"><thead><tr>'+errHeaders+'</tr></thead><tbody>'+tblHtml+'</tbody></table>';
   _renderErrorEvo(trades);
 }
 // ── Issue evolution over time (line charts: % and count, monthly/yearly) ──
@@ -10486,8 +10720,8 @@ function legendLeaveCursor(e,legendItem,legend){legend.chart.canvas.style.cursor
 function _renderErrorEvo(trades){
   trades=trades||[];
   _errorEvoTrades=trades;
-  var c=chartColors();
-  var errTypePalette=[c.red,c.amber,c.purple,c.accent,'#64d4fc','#ff8a5c','#c968e0','#e0c440','#5cd6a0'];
+  var c=chartColors(true);
+  var errTypePalette=[c.red,c.amber,c.purple,c.accent,'#9ae3fd','#ffb395','#dc9deb','#ebd983','#95e4c1'];
   var dated=trades.filter(function(t){return !!t.entryTime;});
   var occCounts={};
   dated.forEach(function(t){
@@ -10578,6 +10812,7 @@ async function _renderTradeAnalyticsImpl(){
   _renderRiskSizeAnalytics(trades);
   _renderStreakAnalytics(trades);
   _renderChecklistAnalytics(trades);
+  _renderChecklistItemBreakdown(trades);
   _renderDirectionAnalytics(trades);
   _renderTimeAnalytics(trades);
   _renderMarketSessionAnalytics(trades);
@@ -11103,7 +11338,7 @@ function _renderEdgeDistribution(stats){
 // the same stat-card / chart / table shape as the other analytics sections.
 function _renderCategoryAnalytics(trades,field,emptyLabel,statsElId,wrChartId,plChartId,tableElId,wrChartKey,plChartKey,label){
   trades=trades||[];
-  var c=chartColors();
+  var c=chartColors(true);
   var buckets={};
   trades.forEach(function(t){
     var k=t[field];
@@ -11169,7 +11404,7 @@ function setTrdVolumeView(view,btnEl){
 function _renderVolumeAnalytics(trades){
   trades=trades||[];
   _trdVolumeTrades=trades;
-  var c=chartColors();
+  var c=chartColors(true);
   var dated=trades.filter(function(t){return !!t.entryTime;});
   // ── Bucket by month (YYYY-MM) and by year (YYYY) ──
   var byMonth={},byYear={};
@@ -11214,7 +11449,7 @@ function _renderVolumeAnalytics(trades){
 // ── Exit & outcome breakdown (win / loss / breakeven, TP / SL / TSL / partial / manual) ──
 function _renderOutcomeAnalytics(trades){
   trades=trades||[];
-  var c=chartColors();
+  var c=chartColors(true);
   var closed=trades.filter(function(t){return t.winLoss!=null;});
   // ── Result split: win / loss / breakeven (winLoss: 1=win, 0=loss, 0.5=breakeven) ──
   var wins=closed.filter(function(t){return t.winLoss===1;});
@@ -11265,7 +11500,7 @@ function _renderOutcomeAnalytics(trades){
 // quality (e.g. cutting winners short, letting losers run) becomes visible.
 function _renderRMultipleAnalytics(trades){
   trades=trades||[];
-  var c=chartColors();
+  var c=chartColors(true);
   var rrTrades=trades.filter(function(t){return t.actualRR!=null;});
   var winRs=rrTrades.filter(function(t){return t.actualRR>0;}).map(function(t){return t.actualRR;});
   var lossRs=rrTrades.filter(function(t){return t.actualRR<0;}).map(function(t){return t.actualRR;});
@@ -11304,7 +11539,7 @@ function _renderRMultipleAnalytics(trades){
 // rather than the target, so they're bucketed separately as a baseline.
 function _renderTargetEfficiencyAnalytics(trades){
   trades=trades||[];
-  var c=chartColors();
+  var c=chartColors(true);
   var withTarget=trades.filter(function(t){return t.targetRR!=null&&t.targetRR>0&&t.actualRR!=null;});
   var wins=withTarget.filter(function(t){return t.actualRR>0;});
   var losses=withTarget.filter(function(t){return t.actualRR<=0;});
@@ -11345,7 +11580,7 @@ function _renderTargetEfficiencyAnalytics(trades){
 // sizing — a pattern a single blended win rate can't show.
 function _renderRiskSizeAnalytics(trades){
   trades=trades||[];
-  var c=chartColors();
+  var c=chartColors(true);
   var riskLabels=['<0.5%','0.5–1%','1–2%','2%+'];
   var buckets=[[],[],[],[]];
   function bucketIndex(pct){
@@ -11386,7 +11621,7 @@ function _renderRiskSizeAnalytics(trades){
 // without extending either counter.
 function _renderStreakAnalytics(trades){
   trades=trades||[];
-  var c=chartColors();
+  var c=chartColors(true);
   var seq=trades.filter(function(t){return t.winLoss===1||t.winLoss===0||t.winLoss===0.5;})
     .slice()
     .sort(function(a,b){return new Date(a.entryTime||a.savedAt)-new Date(b.entryTime||b.savedAt);});
@@ -11493,7 +11728,7 @@ function _renderDrawdownAnalytics(trades,allSess){
 // single-session AI analyzer's text output — never bucketed or visualized.
 function _renderChecklistAnalytics(trades){
   trades=trades||[];
-  var c=chartColors();
+  var c=chartColors(true);
   var clLabels=['<50%','50–79%','80–99%','100%'];
   var buckets=[[],[],[],[]];
   var scores=[];
@@ -11501,12 +11736,10 @@ function _renderChecklistAnalytics(trades){
     if(pct<50)return 0;if(pct<80)return 1;if(pct<100)return 2;return 3;
   }
   trades.forEach(function(t){
-    if(!t.checklist||!t.checklist.length)return;
-    var total=t.checklist.length;
-    var checked=t.checklist.filter(function(ci){return ci.checked;}).length;
-    var pct=total>0?(checked/total*100):100;
-    scores.push(pct);
-    buckets[bucketIndex(pct)].push(t);
+    var adh=clAdherenceOf(t);
+    if(!adh)return;
+    scores.push(adh.pct);
+    buckets[bucketIndex(adh.pct)].push(t);
   });
   var clCount=buckets.reduce(function(a,b){return a+b.length;},0);
   var avgAdherence=scores.length?scores.reduce(function(a,v){return a+v;},0)/scores.length:null;
@@ -11532,10 +11765,250 @@ function _renderChecklistAnalytics(trades){
   var _cvCP=document.getElementById('chart-checklist-pl');
   if(_cvCP)charts.checklistPL=safeChart(_cvCP.getContext('2d'),{type:'bar',data:{labels:clLabels,datasets:[{label:'Avg P/L ($)',data:plData,backgroundColor:plData.map(function(v){return v>=0?c.green:c.red;}),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return'$'+v;}},grid:{color:c.grid}}}}});
 }
+// ══ Checklist Item Breakdown by Setup Rating ═══════════════════════
+// _renderChecklistAnalytics (above) only looks at overall adherence % — this drills into
+// WHICH specific checklist items are behind that %, split out per setup-rating tier a trade
+// landed in, so "you're mostly getting B's" turns into "you're mostly getting B's because you
+// keep skipping the Confirmation check". Three views, in order of increasing sophistication:
+//  1. Miss rate per item within a chosen rating bucket (or all rated trades) — answers the
+//     literal "which checklist item is most missed at rating X" question, worst → best.
+//  2. Per-item win-rate/P&L split (checked vs. missed) — separates items that are merely
+//     often-skipped from items that actually move outcomes, since those aren't the same set.
+//  3. "Rating-blocking items" — independent of the dropdown, scans every trade that landed
+//     below the top tier and finds which single unchecked item's weight alone would have
+//     closed the gap to the next tier up. This is the closest thing to "fix this one thing
+//     next" the checklist data can produce.
+// Cached filtered trade set from the last full Trade Analytics render, so the rating-bucket
+// dropdown can re-render this widget alone without re-running the page's full filter pass.
+var _ibTrades=[];
+// Local red↔amber↔green blend + label-wrap helpers, namespaced (ib = item breakdown) and
+// kept separate from the near-identical ones inside _renderQualityAnalytics — those are
+// function-scoped to that function and not reachable from here, so duplicating this small
+// amount of logic is safer than reaching into another renderer's internals.
+function ibMixHex(a,b,t){
+  try{
+    if(!/^#/.test(a)||!/^#/.test(b))return t<0.5?a:b;
+    var ar=parseInt(a.slice(1,3),16),ag=parseInt(a.slice(3,5),16),ab=parseInt(a.slice(5,7),16);
+    var br=parseInt(b.slice(1,3),16),bg=parseInt(b.slice(3,5),16),bb=parseInt(b.slice(5,7),16);
+    if([ar,ag,ab,br,bg,bb].some(function(v){return isNaN(v);}))return t<0.5?a:b;
+    return 'rgb('+Math.round(ar+(br-ar)*t)+','+Math.round(ag+(bg-ag)*t)+','+Math.round(ab+(bb-ab)*t)+')';
+  }catch(e){return a;}
+}
+// Miss-rate gradient: LOW miss rate is good (green), HIGH miss rate is bad (red) — inverse
+// of the win-rate gradient used elsewhere, since here a high number is the bad outcome.
+function ibMissColor(pct){
+  var c=chartColors(true);
+  var t=Math.max(0,Math.min(100,pct))/100;
+  return t<=0.5?ibMixHex(c.green,c.amber,t/0.5):ibMixHex(c.amber,c.red,(t-0.5)/0.5);
+}
+function ibWrapLabel(s,maxLen){
+  maxLen=maxLen||18;
+  var words=String(s).split(' ');
+  if(words.length===1)return s;
+  var lines=[],cur='';
+  words.forEach(function(w){
+    if(cur&&(cur+' '+w).length>maxLen){lines.push(cur);cur=w;}
+    else cur=cur?cur+' '+w:w;
+  });
+  if(cur)lines.push(cur);
+  return lines;
+}
+function _renderChecklistItemBreakdown(trades){
+  _ibTrades=trades||[];
+  renderChecklistItemBreakdown();
+}
+function renderChecklistItemBreakdown(){
+  var trades=_ibTrades||[];
+  var items=_clAllItemsCache||[];
+  var tiers=_setupRatingsCache||DEFAULT_SETUP_RATINGS;
+  var sections=_clSectionByText||{};
+  // Rebuild the rating dropdown from the current tiers every render (tiers are user-editable),
+  // preserving the user's current selection when it's still a valid option.
+  var sel=document.getElementById('trd-itembd-rating-filter');
+  if(sel){
+    var prevVal=sel.value;
+    var opts='<option value="">All rated trades</option>'+
+      tiers.map(function(t){return '<option value="'+escHtml(t.name)+'">'+escHtml(t.name)+'</option>';}).join('')+
+      '<option value="__unrated__">Unrated</option>';
+    if(sel.innerHTML!==opts)sel.innerHTML=opts;
+    if(Array.prototype.some.call(sel.options,function(o){return o.value===prevVal;}))sel.value=prevVal;
+  }
+  var bucketSel=sel?sel.value:'';
+  // Only trades with a checklist actually logged carry any signal here.
+  var withCl=trades.filter(function(t){return t.checklist&&Object.keys(t.checklist).length;});
+  var scored=withCl.map(function(t){return{t:t,info:computeSetupScoreInfo(t.checklist,items)};});
+  var bucketTrades,bucketLabel;
+  if(!bucketSel){bucketTrades=scored;bucketLabel='all rated trades';}
+  else if(bucketSel==='__unrated__'){bucketTrades=scored.filter(function(s){return!s.info.name;});bucketLabel='Unrated trades';}
+  else{bucketTrades=scored.filter(function(s){return s.info.name===bucketSel;});bucketLabel=bucketSel+' trades';}
+  // ── Per-item stats within the selected bucket: how often is it missed, and does
+  // checking it actually correlate with a different outcome? ──
+  var itemStats=items.map(function(it){
+    var text=clItemText(it);
+    var checkedArr=[],missedArr=[];
+    bucketTrades.forEach(function(s){
+      var v=s.t.checklist[text];
+      var isChecked=v==='yes'||v===true||v===1;
+      (isChecked?checkedArr:missedArr).push(s.t);
+    });
+    var total=checkedArr.length+missedArr.length;
+    return{text:text,section:sections[text]||'',weight:clItemWeight(it),optional:clItemOptional(it),
+      total:total,missed:missedArr.length,missRate:total?missedArr.length/total*100:null,
+      checkedArr:checkedArr,missedArr:missedArr};
+  });
+  var byMissDesc=itemStats.slice().sort(function(a,b){
+    if(a.missRate==null&&b.missRate==null)return 0;
+    if(a.missRate==null)return 1;if(b.missRate==null)return -1;
+    return b.missRate-a.missRate;
+  });
+  // ── Stat cards ──
+  var top=byMissDesc.length&&byMissDesc[0].missRate!=null?byMissDesc[0]:null;
+  var avgMissedPerTrade=bucketTrades.length?bucketTrades.reduce(function(a,s){
+    var missed=items.filter(function(it){var v=s.t.checklist[clItemText(it)];return!(v==='yes'||v===true||v===1);}).length;
+    return a+missed;
+  },0)/bucketTrades.length:null;
+  var byImpact=itemStats.filter(function(s){return s.checkedArr.length>=3&&s.missedArr.length>=3;}).map(function(s){
+    var wrC=winRate(s.checkedArr),wrM=winRate(s.missedArr);
+    return{text:s.text,delta:(wrC!=null&&wrM!=null)?wrC-wrM:null,wrC:wrC,wrM:wrM};
+  }).filter(function(s){return s.delta!=null;}).sort(function(a,b){return Math.abs(b.delta)-Math.abs(a.delta);});
+  var topImpact=byImpact.length?byImpact[0]:null;
+  var statsEl=document.getElementById('dash-itembd-stats');
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="stat-card"><div class="stat-label">Trades in bucket</div><div class="stat-value">'+bucketTrades.length+'</div><div class="stat-sub">'+escHtml(bucketLabel)+'</div></div>'+
+      '<div class="stat-card '+(top?'red':'')+'"><div class="stat-label">Most missed item</div><div class="stat-value" style="font-size:13px;line-height:1.3">'+(top?escHtml(top.text):'—')+'</div><div class="stat-sub">'+(top?top.missRate.toFixed(0)+'% of trades · '+top.missed+' of '+top.total:'no checklist data')+'</div></div>'+
+      '<div class="stat-card amber"><div class="stat-label">Avg items missed / trade</div><div class="stat-value">'+(avgMissedPerTrade!=null?avgMissedPerTrade.toFixed(1):'—')+'</div><div class="stat-sub">out of '+items.length+' current items</div></div>'+
+      '<div class="stat-card '+(topImpact?'purple':'')+'"><div class="stat-label">Most predictive item</div><div class="stat-value" style="font-size:13px;line-height:1.3">'+(topImpact?escHtml(topImpact.text):'—')+'</div><div class="stat-sub">'+(topImpact?topImpact.wrC.toFixed(0)+'% WR checked vs '+topImpact.wrM.toFixed(0)+'% missed':'need 3+ trades on each side')+'</div></div>';
+  }
+  // ── Chart: horizontal bar of miss rate per item, worst (most missed) first — matches the
+  // "highest missed to lowest missed" breakdown asked for, read top-to-bottom. ──
+  var c=chartColors(true);
+  var chartItems=byMissDesc.filter(function(s){return s.missRate!=null;});
+  var chartLabels=chartItems.map(function(s){return ibWrapLabel(s.text,26);});
+  var chartData=chartItems.map(function(s){return parseFloat(s.missRate.toFixed(1));});
+  var chartBg=chartItems.map(function(s){return ibMissColor(s.missRate);});
+  if(charts.itembdMiss)charts.itembdMiss.destroy();
+  var wrapEl=document.getElementById('trd-itembd-chart-wrap');
+  // Chart.js lays out a horizontal-bar category axis in equal-height bands (total height /
+  // item count) and will silently DROP a tick's label — not the bar, just the label — if its
+  // band is too short to fit that label's wrapped line count, even though the container is
+  // tall enough on average. That's why a single long item (e.g. a 2-line-wrapped label) could
+  // vanish from the axis while every shorter one nearby rendered fine, and the tooltip (which
+  // reads straight from the labels array, unaffected by that layout skip) still showed it —
+  // exactly the "text missing, tooltip fine" symptom. Fix: size every band off the TALLEST
+  // wrapped label, not a flat per-item guess, and disable autoSkip as a hard backstop so no
+  // tick is ever hidden for space reasons, however dense the list gets.
+  var maxLines=chartLabels.reduce(function(m,l){return Math.max(m,Array.isArray(l)?l.length:1);},1);
+  var perItemH=Math.max(22,maxLines*13+6);
+  if(wrapEl)wrapEl.style.height=Math.max(220,chartItems.length*perItemH+50)+'px';
+  var _cvIB=document.getElementById('chart-itembd-miss');
+  if(_cvIB)charts.itembdMiss=safeChart(_cvIB.getContext('2d'),{type:'bar',data:{labels:chartLabels,datasets:[{label:'Miss rate %',data:chartData,backgroundColor:chartBg,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var s=chartItems[ctx.dataIndex];return s.missed+' of '+s.total+' trades missed this ('+ctx.parsed.x+'%)';}}}},scales:{x:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},suggestedMax:100},y:{ticks:{color:c.tick,font:{size:10},autoSkip:false},grid:{display:false}}}}});
+  // ── Chart: horizontal bar of weight per item, heaviest first — companion to the miss-rate
+  // chart above, but answers "which items carry the most of the score" rather than "which get
+  // skipped most". Deliberately NOT scoped to the rating-bucket dropdown: weight is a fixed
+  // property of the item (set once in the Checklist editor), not something computed from
+  // trades, so it reads the same regardless of which bucket is selected. itemStats already
+  // carries weight/section/optional for every current item (computed above, bucket-independent
+  // aside from the missed/total fields we simply ignore here), so we re-sort that same array
+  // rather than recompute from `items` again.
+  // Axis is scaled to the checklist's TOTAL weight, not to the tallest single item — scaling to
+  // the tallest item (as the miss-rate chart does, since that one is naturally capped at 100%)
+  // means any item tied for heaviest fills the axis edge-to-edge, so several same-weight items
+  // in a row all render as identical maxed-out bars with no visual distinction. Scaling to the
+  // total instead makes each bar's length literally equal to its share of the full possible
+  // score, which is both more informative and avoids a wall of full-width bars when weights
+  // are the same or close together. Exact numbers are also drawn at the end of each bar (not
+  // just in the tooltip), since equal-length bars still need a readable value to compare. ──
+  var byWeightDesc=itemStats.slice().sort(function(a,b){return b.weight-a.weight;});
+  var totalWeight=itemStats.reduce(function(a,s){return a+s.weight;},0);
+  var weightLabels=byWeightDesc.map(function(s){return ibWrapLabel(s.text,26);});
+  var weightData=byWeightDesc.map(function(s){return s.weight;});
+  var weightBg=byWeightDesc.map(function(s){return s.optional?'rgba(155,127,240,.22)':'rgba(155,127,240,.45)';});
+  if(charts.itembdWeight)charts.itembdWeight.destroy();
+  var weightWrapEl=document.getElementById('trd-itembd-weight-wrap');
+  var maxWLines=weightLabels.reduce(function(m,l){return Math.max(m,Array.isArray(l)?l.length:1);},1);
+  var perWItemH=Math.max(22,maxWLines*13+6);
+  if(weightWrapEl)weightWrapEl.style.height=Math.max(220,byWeightDesc.length*perWItemH+50)+'px';
+  var _cvIBW=document.getElementById('chart-itembd-weight');
+  var weightAxisMax=Math.max(totalWeight,(Math.max.apply(null,weightData.concat([1])))*1.08,1);
+  if(_cvIBW)charts.itembdWeight=safeChart(_cvIBW.getContext('2d'),{type:'bar',data:{labels:weightLabels,datasets:[{label:'Weight',data:weightData,backgroundColor:weightBg,borderRadius:4,maxBarThickness:26}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var s=byWeightDesc[ctx.dataIndex];var share=totalWeight?(s.weight/totalWeight*100):0;return 'Weight '+s.weight+' of '+totalWeight+' total ('+share.toFixed(0)+'%)'+(s.optional?' · optional item':'');}}}},scales:{x:{ticks:{color:c.tick,font:{size:10}},grid:{color:c.grid},suggestedMax:weightAxisMax},y:{ticks:{color:c.tick,font:{size:10},autoSkip:false},grid:{display:false}}}},
+    plugins:[{id:'ibWeightValueLabels',afterDatasetsDraw:function(chart){
+      var ctx=chart.ctx,meta=chart.getDatasetMeta(0);
+      ctx.save();ctx.font='600 10px "DM Sans",sans-serif';ctx.fillStyle=c.tick;ctx.textBaseline='middle';ctx.textAlign='left';
+      meta.data.forEach(function(bar,i){if(!bar)return;ctx.fillText(String(weightData[i]),bar.x+6,bar.y);});
+      ctx.restore();
+    }}]});
+  // ── Table: full item-by-item breakdown, same worst-first order ──
+  var tblHtml=byMissDesc.map(function(s){
+    var wrC=winRate(s.checkedArr),wrM=winRate(s.missedArr);
+    var delta=(wrC!=null&&wrM!=null)?wrC-wrM:null;
+    var plC=avgPLof(s.checkedArr),plM=avgPLof(s.missedArr);
+    return '<tr>'+
+      '<td style="font-weight:600;color:var(--text)">'+escHtml(s.text)+(s.optional?' <span style="color:var(--text3);font-size:10px">(optional)</span>':'')+'</td>'+
+      '<td style="color:var(--text3);font-size:11px;white-space:nowrap">'+escHtml(s.section)+'</td>'+
+      '<td class="mono">'+s.weight+'</td>'+
+      '<td class="mono">'+s.missed+' / '+s.total+'</td>'+
+      '<td class="mono" style="color:'+(s.missRate!=null?(s.missRate>=50?'var(--red)':'var(--text2)'):'var(--text3)')+'">'+(s.missRate!=null?s.missRate.toFixed(0)+'%':'—')+'</td>'+
+      '<td class="mono">'+(wrC!=null?wrC.toFixed(0)+'%':'—')+'</td>'+
+      '<td class="mono">'+(wrM!=null?wrM.toFixed(0)+'%':'—')+'</td>'+
+      '<td class="mono" style="color:'+(delta!=null?(delta>0?'var(--green)':(delta<0?'var(--red)':'var(--text2)')):'var(--text3)')+'">'+(delta!=null?(delta>0?'+':'')+delta.toFixed(0)+'pp':'—')+'</td>'+
+      '<td class="mono" style="color:'+(plC!=null?(plC>=0?'var(--green)':'var(--red)'):'var(--text3)')+'">'+(plC!=null?(plC>=0?'+$':'-$')+Math.abs(plC).toFixed(0):'—')+'</td>'+
+      '<td class="mono" style="color:'+(plM!=null?(plM>=0?'var(--green)':'var(--red)'):'var(--text3)')+'">'+(plM!=null?(plM>=0?'+$':'-$')+Math.abs(plM).toFixed(0):'—')+'</td>'+
+      '</tr>';
+  }).join('');
+  var tblEl=document.getElementById('dash-itembd-table');
+  var ibdHeaders='<th>Item</th><th>Section</th>'+
+    '<th>'+thInfo('Weight','Points this item is worth toward the setup-rating score, set in the Checklist editor. A heavier item swings the score, and which tier a trade lands in, more than a lighter one.')+'</th>'+
+    '<th>'+thInfo('Missed','How many trades in this bucket left this item unchecked, out of the total trades with a checklist logged (shown as missed / total).')+'</th>'+
+    '<th>'+thInfo('Miss rate','Missed divided by total, as a percent. 100% means always skipped in this bucket; 0% means always checked.')+'</th>'+
+    '<th>'+thInfo('WR checked','Win rate on just the trades where this item was checked off.')+'</th>'+
+    '<th>'+thInfo('WR missed','Win rate on just the trades where this item was left unchecked.')+'</th>'+
+    '<th>'+thInfo('WR impact','WR checked minus WR missed, in percentage points (pp) — plain subtraction of two percentages, not a percent change. Example: 60% vs 45% is a 15pp gap, not a "25% drop." A wide gap in either direction suggests this item genuinely predicts outcomes rather than being a box people tick out of habit. Only shown once at least 3 trades exist on both sides.',true)+'</th>'+
+    '<th>'+thInfo('Avg P/L checked','Average dollar profit or loss on trades where this item was checked.',true)+'</th>'+
+    '<th>'+thInfo('Avg P/L missed','Average dollar profit or loss on trades where this item was left unchecked.',true)+'</th>';
+  if(tblEl)tblEl.innerHTML=!byMissDesc.length?'<div class="empty-state"><p>No checklist items configured</p></div>':(!bucketTrades.length?'<div class="empty-state"><p>No checklisted trades in this bucket</p></div>':'<table class="data"><thead><tr>'+ibdHeaders+'</tr></thead><tbody>'+tblHtml+'</tbody></table>');
+  // ── Rating-blocking items: independent of the dropdown above. For every trade that landed
+  // below the top tier, find the next-better tier and the score gap to it, then flag any
+  // unchecked item whose weight alone covers that gap — i.e. checking just that one item
+  // would have promoted the trade. Tallied across all rated+unrated trades, worst first. ──
+  var blockerCounts={};
+  if(tiers.length){
+    scored.forEach(function(s){
+      var curIdx=s.info.name?tiers.findIndex(function(tr){return tr.name===s.info.name;}):-1;
+      if(curIdx===0)return; // already at the best tier — nothing to promote to
+      var nextIdx=curIdx===-1?tiers.length-1:curIdx-1;
+      var nextTier=tiers[nextIdx];
+      if(!nextTier)return;
+      var minScore=(typeof nextTier.minScore==='number'&&isFinite(nextTier.minScore))?nextTier.minScore:0;
+      var gap=minScore-s.info.score;
+      if(gap<=0)return;
+      items.forEach(function(it){
+        var text=clItemText(it);
+        var v=s.t.checklist[text];
+        var isChecked=v==='yes'||v===true||v===1;
+        if(isChecked||clItemWeight(it)<gap)return;
+        if(!blockerCounts[text])blockerCounts[text]={count:0,byTier:{}};
+        blockerCounts[text].count++;
+        blockerCounts[text].byTier[nextTier.name]=(blockerCounts[text].byTier[nextTier.name]||0)+1;
+      });
+    });
+  }
+  var blockerKeys=Object.keys(blockerCounts).sort(function(a,b){return blockerCounts[b].count-blockerCounts[a].count;});
+  var blockerHtml=blockerKeys.slice(0,10).map(function(k){
+    var b=blockerCounts[k];
+    var tierBreak=Object.keys(b.byTier).sort(function(x,y){return b.byTier[y]-b.byTier[x];}).map(function(tn){return escHtml(tn)+' ×'+b.byTier[tn];}).join(', ');
+    return '<tr><td style="font-weight:600;color:var(--text)">'+escHtml(k)+'</td><td class="mono">'+b.count+'</td><td style="color:var(--text3);font-size:11px">'+tierBreak+'</td></tr>';
+  }).join('');
+  var blockerHeaders='<th>Item</th>'+
+    '<th>'+thInfo('Times it alone would\'ve promoted a trade','Across every trade that landed below its next-better setup-rating tier, this counts how many times checking just this one unchecked item — with nothing else about the trade changed — would have added enough weight to cross the score threshold for that tier. A high count means this single item is quietly capping your ratings on its own; checking it more often is the fastest way to lift your average tier.',true)+'</th>'+
+    '<th>'+thInfo('Tier(s) missed','Which tier (or tiers) this item would have promoted a trade into, with how many times each. More than one tier can show up here because the same item can be the deciding point for different trades sitting just below different thresholds.',true)+'</th>';
+  var blockerEl=document.getElementById('dash-itembd-blockers');
+  if(blockerEl)blockerEl.innerHTML=!blockerKeys.length?'<div class="empty-state"><p>No single-item promotions found — either every trade is already top-rated, or every gap needs more than one item closed.</p></div>':'<table class="data"><thead><tr>'+blockerHeaders+'</tr></thead><tbody>'+blockerHtml+'</tbody></table>';
+}
 // ── Long vs Short breakdown ──────────────────────────
 function _renderDirectionAnalytics(trades){
   trades=trades||[];
-  var c=chartColors();
+  var c=chartColors(true);
   var longs=trades.filter(function(t){return t.type==='Long';});
   var shorts=trades.filter(function(t){return t.type==='Short';});
   var lWR=winRate(longs),sWR=winRate(shorts);
@@ -11560,7 +12033,7 @@ function _renderDirectionAnalytics(trades){
 // ── Entry-time-of-day breakdown (4-hour local-time blocks) ──────────
 function _renderTimeAnalytics(trades){
   trades=trades||[];
-  var c=chartColors();
+  var c=chartColors(true);
   var blockLabels=['12–4am','4–8am','8am–12pm','12–4pm','4–8pm','8pm–12am'];
   var buckets=[[],[],[],[],[],[]];
   trades.forEach(function(t){
@@ -11599,7 +12072,7 @@ function _renderTimeAnalytics(trades){
 // trade volume, so the chart reads left-to-right as the day progresses.
 function _renderMarketSessionAnalytics(trades){
   trades=trades||[];
-  var c=chartColors();
+  var c=chartColors(true);
   var buckets={};
   trades.forEach(function(t){
     var ms=getMarketSession(t.entryTime,t.assetType);
@@ -11653,7 +12126,7 @@ function _renderMarketSessionAnalytics(trades){
 // trades actually perform better, instead of a single averaged number.
 function _renderHoldTimeAnalytics(trades){
   trades=trades||[];
-  var c=chartColors();
+  var c=chartColors(true);
   var holdLabels=['<15m','15–60m','1–4h','4–24h','1d+'];
   var buckets=[[],[],[],[],[]];
   function bucketIndex(min){
@@ -11688,7 +12161,7 @@ function _renderHoldTimeAnalytics(trades){
 // ── Day-of-week breakdown (Sun–Sat, derived from entryTime) ──────────
 function _renderDowAnalytics(trades){
   trades=trades||[];
-  var c=chartColors();
+  var c=chartColors(true);
   var dowLabels=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   var buckets=[[],[],[],[],[],[],[]];
   trades.forEach(function(t){
@@ -11791,6 +12264,12 @@ function recomputeTradeFields(t){
 // Single point of truth: call this instead of repeating the chain everywhere.
 async function refreshUI(){
   loadSavedTheme();
+  // Reload the setup-rating caches first — an import/pull/restore may have just changed
+  // the checklist or setup-rating tiers directly in IndexedDB (bypassing saveChecklistEditor/
+  // saveSetupRatingsEditor, which are the only other places that refresh these), and
+  // renderHistory()/renderDashboard() below score every trade's setup rating straight from
+  // these in-memory caches (see computeSetupScoreInfo), not from a fresh read.
+  await Promise.all([loadSetupRatingsCache(),loadClAllItemsCache()]);
   await Promise.all([renderDashboard(),updateSidebarStats(),populateSessionSelects(),renderHistory(),populatePairSelect(),populateStrategySelect(),populateErrorTypeSelect()]);
 }
 // Restores a full JSON backup (as produced by exportBackup() above, or a GitHub cloud
@@ -11857,6 +12336,16 @@ function toast(msg,type){
   setTimeout(function(){el.classList.remove('show');setTimeout(function(){el.remove()},300)},3500);
 }
 function escHtml(s){if(!s)return'';return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];})}
+// Small "i" info icon with a hover/focus popover, for annotating a table header or card
+// title with a plain-English explanation of a non-obvious metric (e.g. "WR impact", a
+// percentage-point delta, or a derived count). `tip` is trusted static copy written by us
+// (not escaped), so plain text or a light <b> is fine — never pass user-entered text here.
+// Pass alignRight:true for headers near a table's right edge so the popover grows left
+// instead of getting clipped by the card's overflow:hidden.
+function thInfo(label,tip,alignRight){
+  return '<span style="display:inline-flex;align-items:center;white-space:nowrap">'+escHtml(label)+
+    '<span class="th-info'+(alignRight?' right':'')+'" tabindex="0">i<span class="th-info-tip">'+tip+'</span></span></span>';
+}
 // ══ Dashboard filter helpers ═══════════════════════
 // toggleDashFilters()/toggleTrdFilters() below are page-specific copies of the same
 // show/hide-a-filter-row pattern that toggleCollapsible() (a few lines down) generalizes.
@@ -11959,6 +12448,13 @@ function toggleTrdChecklist(){
   if(!wasOpen){
     if(charts.checklistWR)charts.checklistWR.resize();
     if(charts.checklistPL)charts.checklistPL.resize();
+  }
+}
+function toggleTrdItemBreakdown(){
+  var wasOpen=(document.getElementById('trd-itembd-body')||{}).style.display==='block';
+  toggleCollapsible('trd-itembd-body','trd-itembd-chevron');
+  if(!wasOpen){
+    if(charts.itembdMiss)charts.itembdMiss.resize();
   }
 }
 function toggleTrdDirection(){
@@ -14283,7 +14779,12 @@ async function ghPushConfigFile(cfg){
   }catch(e){console.warn('Config file push error:',e.message);}
 }
 async function ghApplyConfigData(data){
-  if(data.checklist)await setSetting('checklist',data.checklist);
+  // Keep the in-memory setup-rating caches (_clAllItemsCache/_setupRatingsCache) in sync
+  // with whatever gets written here — every setup-rating badge/column/chart in the app
+  // reads these caches directly rather than re-fetching from IndexedDB, so leaving
+  // _clAllItemsCache stale after a config pull/restore silently mis-scores every trade
+  // (wrong items/weights) until the next full page load or Checklist-editor save.
+  if(data.checklist){await setSetting('checklist',data.checklist);await loadClAllItemsCache();}
   if(data.setupRatings){await setSetting('setupRatings',data.setupRatings);_setupRatingsCache=data.setupRatings;}
   if(data.strategies)await setSetting('strategies',data.strategies);
   if(data.errorTypes)await setSetting('errorTypes',data.errorTypes);
@@ -14352,8 +14853,26 @@ async function ghPushAlertsFile(cfg){
         // Note: Discord webhook URL is intentionally excluded (credential — stays local only)
       }
     };
+    // Compare new payload vs existing file — skip push if only exportedAt differs.
+    // Mirrors the same no-op guard ghPushConfigFile() already uses for tj_config.json;
+    // this file just never got it, which is why every alert-settings Save/Reset click
+    // produced a commit even when nothing but the timestamp actually changed.
+    var sha=null;
+    try{
+      var existingResp=await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/'+GH_ALERTS_FILE,{
+        headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json'}
+      });
+      if(existingResp.ok){
+        var existingFile=await existingResp.json();
+        sha=existingFile.sha||null;
+        var existingText=decodeURIComponent(escape(atob(existingFile.content.replace(/\n/g,''))));
+        var existingData=JSON.parse(existingText);
+        var newCopy=Object.assign({},payload);delete newCopy.exportedAt;
+        var oldCopy=Object.assign({},existingData);delete oldCopy.exportedAt;
+        if(JSON.stringify(newCopy)===JSON.stringify(oldCopy))return; // no real change — skip push
+      }
+    }catch(e){ sha=await ghGetFileSHAByPath(cfg,GH_ALERTS_FILE); }
     var content=btoa(unescape(encodeURIComponent(JSON.stringify(payload,null,2))));
-    var sha=await ghGetFileSHAByPath(cfg,GH_ALERTS_FILE);
     var body={message:'TJ alerts — '+new Date().toISOString().slice(0,16).replace('T',' '),content:content};
     if(sha)body.sha=sha;
     await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/'+GH_ALERTS_FILE,{
@@ -16721,12 +17240,8 @@ function aiComputeMetrics(trades,sessions){
   var rrTrades=taken.filter(function(t){return t.actualRR!=null;});
   var avgRR=rrTrades.length?rrTrades.reduce(function(a,t){return a+parseFloat(t.actualRR);},0)/rrTrades.length:null;
   // Checklist adherence
-  var clTrades=taken.filter(function(t){return t.checklist&&t.checklist.length;});
-  var clScores=clTrades.map(function(t){
-    var total=t.checklist.length;
-    var checked=t.checklist.filter(function(c){return c.checked;}).length;
-    return total>0?checked/total:1;
-  });
+  var clTrades=taken.filter(function(t){return clAdherenceOf(t)!==null;});
+  var clScores=clTrades.map(function(t){return clAdherenceOf(t).pct/100;});
   var avgCL=clScores.length?clScores.reduce(function(a,v){return a+v;},0)/clScores.length:null;
   // Risk consistency (stdev of riskpct)
   var riskPcts=taken.filter(function(t){return t.riskpct;}).map(function(t){return parseFloat(t.riskpct);});
@@ -16898,9 +17413,9 @@ function aiBuilderPrompt(m,sessionInfo,depth){
       if(t.strategy)row+=' | Strategy: '+t.strategy;
       if(tradeActiveErrors(t).length)row+=' | Error: '+tradeActiveErrors(t).join(', ');
       if(t.rating)row+=' | User rating: '+t.rating;
-      if(t.checklist&&t.checklist.length){
-        var checked=t.checklist.filter(function(c){return c.checked;}).length;
-        row+=' | CL: '+checked+'/'+t.checklist.length;
+      var _adh=clAdherenceOf(t);
+      if(_adh){
+        row+=' | CL: '+_adh.checked+'/'+_adh.total;
       }
       lines.push(row);
       if(t.setupNotes&&t.setupNotes.trim()&&!t.setupNotes.trim().startsWith('1. Trading within'))lines.push('  Setup: '+t.setupNotes.trim().slice(0,200));
