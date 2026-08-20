@@ -40,6 +40,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .nav-item.active svg{opacity:1;stroke:var(--accent)}
 .nav-section-label{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.09em;text-transform:uppercase;padding:18px 10px 6px;opacity:.7}
 .nav-section-label:first-child{padding-top:6px}
+/* ── Sidebar nav: collapsible accordion sections so a long menu doesn't have to be shown
+   all the way at once — click a section header (or search) to jump straight to a page ── */
+.nav-section{margin-bottom:2px}
+.nav-section-header{display:flex;align-items:center;gap:7px;width:100%;padding:14px 10px 6px;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left}
+.nav-section:first-child .nav-section-header{padding-top:6px}
+.nav-section-header:hover .nav-section-title{color:var(--text2);opacity:1}
+.nav-section-header:hover .nav-section-chevron{stroke:var(--text2)}
+.nav-section-chevron{width:9px;height:9px;stroke:var(--text3);fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;transition:transform .18s ease,stroke .12s;transform:rotate(90deg)}
+.nav-section.collapsed .nav-section-chevron{transform:rotate(0deg)}
+.nav-section-title{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.09em;text-transform:uppercase;opacity:.7;flex:1}
+.nav-section-count{font-size:9px;font-weight:700;color:var(--text3);background:var(--bg3);border-radius:8px;padding:1px 6px;opacity:0;transition:opacity .12s}
+.nav-section.collapsed .nav-section-count{opacity:.85}
+.nav-section-collapse{display:grid;grid-template-rows:1fr;transition:grid-template-rows .2s ease}
+.nav-section.collapsed .nav-section-collapse{grid-template-rows:0fr}
+.nav-section-body{overflow:hidden;min-height:0}
 .main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:11px 22px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:50;flex-shrink:0}
 .topbar-title{font-size:14px;font-weight:600;letter-spacing:-.01em}
@@ -972,63 +987,95 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <div><div class="logo-text">JournUp</div><div class="logo-sub">Trading Journal</div></div>
     </div>
   </div>
-  <nav class="sidebar-nav">
-    <div class="nav-section-label">Overview</div>
-    <button class="nav-item active" onclick="nav('dashboard',this)">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard
-    </button>
-    <button class="nav-item" onclick="nav('trade-analytics',this)">
-      <svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>Trade Analytics
-    </button>
-    <button class="nav-item" onclick="nav('edge',this)">
-      <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Edge Analyzer
-    </button>
-    <button class="nav-item" onclick="nav('calendar',this)">
-      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendar
-    </button>
-    <div class="nav-section-label">Trades</div>
-    <button class="nav-item" id="nav-pre-checklist" onclick="openPreChecklist()">
-      <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Full trade flow
-    </button>
-    <button class="nav-item" onclick="nav('calculator',this)">
-      <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>Calculator
-    </button>
-    <button class="nav-item" onclick="nav('log',this)">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Log trade
-    </button>
-    <button class="nav-item" onclick="nav('history',this)">
-      <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>History
-    </button>
-    <div class="nav-section-label">Manage</div>
-    <button class="nav-item" onclick="nav('sessions',this)">
-      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Sessions
-    </button>
-    <button class="nav-item" onclick="nav('checklist-editor',this)">
-      <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Checklist
-    </button>
-    <button class="nav-item" onclick="openStrategyManager()">
-      <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Strategies
-    </button>
-    <button class="nav-item" onclick="openAssetManager()">
-      <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Assets &amp; pairs
-    </button>
-    <div class="nav-section-label">Tools</div>
-    <button class="nav-item" id="nav-fxstreet" onclick="_flowActive=false;nav('fxstreet',this)">
-      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Economic calendar
-    </button>
-    <button class="nav-item" onclick="nav('ai-analyzer',this)">
-      <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M21.17 8H12V2.83"/><circle cx="12" cy="12" r="2"/></svg>AI Analyzer
-    </button>
-    <button class="nav-item" onclick="nav('price-alerts',this)" id="nav-price-alerts">
-      <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/><circle cx="18" cy="5" r="3" fill="var(--red)" stroke="none" id="nav-alerts-badge" style="display:none"/></svg>Price Alerts
-      <span id="nav-alerts-count" style="display:none;margin-left:auto;font-size:9px;font-weight:700;background:var(--red);color:#fff;border-radius:10px;padding:1px 5px;line-height:1.5"></span>
-    </button>
-    <button class="nav-item" onclick="nav('montecarlo',this)">
-      <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Monte Carlo
-    </button>
-    <button class="nav-item" onclick="nav('backup',this)">
-      <svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Backup &amp; restore
-    </button>
+  <nav class="sidebar-nav" id="sidebar-nav">
+    <div class="nav-section" data-section="overview">
+      <button type="button" class="nav-section-header" onclick="toggleNavSection('overview')">
+        <svg class="nav-section-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        <span class="nav-section-title">Overview</span>
+        <span class="nav-section-count">4</span>
+      </button>
+      <div class="nav-section-collapse"><div class="nav-section-body">
+        <button class="nav-item active" onclick="nav('dashboard',this)">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard
+        </button>
+        <button class="nav-item" onclick="nav('trade-analytics',this)">
+          <svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>Trade Analytics
+        </button>
+        <button class="nav-item" onclick="nav('edge',this)">
+          <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Edge Analyzer
+        </button>
+        <button class="nav-item" onclick="nav('calendar',this)">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendar
+        </button>
+      </div></div>
+    </div>
+    <div class="nav-section" data-section="trades">
+      <button type="button" class="nav-section-header" onclick="toggleNavSection('trades')">
+        <svg class="nav-section-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        <span class="nav-section-title">Trades</span>
+        <span class="nav-section-count">4</span>
+      </button>
+      <div class="nav-section-collapse"><div class="nav-section-body">
+        <button class="nav-item" id="nav-pre-checklist" onclick="openPreChecklist()">
+          <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Full trade flow
+        </button>
+        <button class="nav-item" onclick="nav('calculator',this)">
+          <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>Calculator
+        </button>
+        <button class="nav-item" onclick="nav('log',this)">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Log trade
+        </button>
+        <button class="nav-item" onclick="nav('history',this)">
+          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>History
+        </button>
+      </div></div>
+    </div>
+    <div class="nav-section" data-section="manage">
+      <button type="button" class="nav-section-header" onclick="toggleNavSection('manage')">
+        <svg class="nav-section-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        <span class="nav-section-title">Manage</span>
+        <span class="nav-section-count">4</span>
+      </button>
+      <div class="nav-section-collapse"><div class="nav-section-body">
+        <button class="nav-item" onclick="nav('sessions',this)">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Sessions
+        </button>
+        <button class="nav-item" onclick="nav('checklist-editor',this)">
+          <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Checklist
+        </button>
+        <button class="nav-item" onclick="openStrategyManager()">
+          <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Strategies
+        </button>
+        <button class="nav-item" onclick="openAssetManager()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Assets &amp; pairs
+        </button>
+      </div></div>
+    </div>
+    <div class="nav-section" data-section="tools">
+      <button type="button" class="nav-section-header" onclick="toggleNavSection('tools')">
+        <svg class="nav-section-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        <span class="nav-section-title">Tools</span>
+        <span class="nav-section-count">5</span>
+      </button>
+      <div class="nav-section-collapse"><div class="nav-section-body">
+        <button class="nav-item" id="nav-fxstreet" onclick="_flowActive=false;nav('fxstreet',this)">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Economic calendar
+        </button>
+        <button class="nav-item" onclick="nav('ai-analyzer',this)">
+          <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M21.17 8H12V2.83"/><circle cx="12" cy="12" r="2"/></svg>AI Analyzer
+        </button>
+        <button class="nav-item" onclick="nav('price-alerts',this)" id="nav-price-alerts">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/><circle cx="18" cy="5" r="3" fill="var(--red)" stroke="none" id="nav-alerts-badge" style="display:none"/></svg>Price Alerts
+          <span id="nav-alerts-count" style="display:none;margin-left:auto;font-size:9px;font-weight:700;background:var(--red);color:#fff;border-radius:10px;padding:1px 5px;line-height:1.5"></span>
+        </button>
+        <button class="nav-item" onclick="nav('montecarlo',this)">
+          <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Monte Carlo
+        </button>
+        <button class="nav-item" onclick="nav('backup',this)">
+          <svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Backup &amp; restore
+        </button>
+      </div></div>
+    </div>
   </nav>
   <div style="padding:13px;border-top:1px solid var(--border)">
     <div id="sidebar-stats" style="font-size:11px;color:var(--text3);line-height:1.8"></div>
@@ -1229,11 +1276,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <div class="analytics-group-label first">Quality &amp; Ratings</div>
       <div class="stats-grid" id="dash-quality-stats"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
-        <div class="card"><div class="card-header"><span class="card-title">Rating distribution</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-rating-dist"></canvas></div></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">User rating distribution</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-rating-dist"></canvas></div></div></div>
         <div class="card"><div class="card-header"><span class="card-title">Error type frequency</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-error-dist"></canvas></div></div></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
-        <div class="card"><div class="card-header"><span class="card-title">Win rate by rating</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-rating-perf"></canvas></div></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Win rate by user rating</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-rating-perf"></canvas></div></div></div>
         <div class="card"><div class="card-header"><span class="card-title">Avg P/L by error type</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-error-pl"></canvas></div></div></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
@@ -2170,7 +2217,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <!-- Row 3: Rating | Error type -->
           <div class="frow-inline" style="margin-top:10px">
             <div class="frow" style="min-width:110px">
-              <label class="flabel">Rating <span style="color:var(--red);margin-left:2px">*</span></label>
+              <label class="flabel">User rating <span style="color:var(--red);margin-left:2px">*</span></label>
               <select id="f-rating"><option value="">— select —</option><option>⭐</option><option>⭐⭐</option><option>⭐⭐⭐</option><option>⭐⭐⭐⭐</option><option>⭐⭐⭐⭐⭐</option></select>
             </div>
             <div class="frow" style="flex:1;min-width:220px">
@@ -7497,6 +7544,40 @@ function nav(id,btn){
   if(id==='trade-analytics'){populateSessionSelects().then(function(){populateTrdFilters().then(function(){renderTradeAnalytics();});});}
   if(id==='edge'){populateSessionSelects().then(function(){populateEdgFilters().then(function(){renderEdgeAnalyzer();});});}
 }
+// ── Sidebar nav: collapsible sections + quick search ──────────────────────
+// Sections default to Overview/Trades expanded (day-to-day pages) and Manage/Tools
+// collapsed (setup/utility pages), but any toggle the user makes is remembered per
+// section in localStorage — same purely-local pattern used for theme/filter prefs.
+var NAV_SECTIONS=['overview','trades','manage','tools'];
+var NAV_COLLAPSE_KEY='tj-nav-collapsed';
+var NAV_DEFAULT_COLLAPSED={overview:false,trades:true,manage:true,tools:true};
+function getNavCollapseState(){
+  try{var saved=JSON.parse(localStorage.getItem(NAV_COLLAPSE_KEY)||'null');if(saved)return saved;}catch(e){}
+  return Object.assign({},NAV_DEFAULT_COLLAPSED);
+}
+function setNavCollapseState(state){try{localStorage.setItem(NAV_COLLAPSE_KEY,JSON.stringify(state));}catch(e){}}
+function toggleNavSection(name,force){
+  var state=getNavCollapseState();
+  var collapsed=(typeof force==='boolean')?force:!state[name];
+  state[name]=collapsed;
+  setNavCollapseState(state);
+  var el=document.querySelector('.nav-section[data-section="'+name+'"]');
+  if(el)el.classList.toggle('collapsed',collapsed);
+}
+function initNavSections(){
+  var state=getNavCollapseState();
+  NAV_SECTIONS.forEach(function(name){
+    var el=document.querySelector('.nav-section[data-section="'+name+'"]');
+    if(el)el.classList.toggle('collapsed',!!state[name]);
+  });
+  // Whatever page is active on load, make sure its section is visibly expanded
+  var activeItem=document.querySelector('.nav-item.active');
+  var sec=activeItem&&activeItem.closest('.nav-section');
+  if(sec&&sec.classList.contains('collapsed')){
+    sec.classList.remove('collapsed');
+    var n=sec.getAttribute('data-section');state[n]=false;setNavCollapseState(state);
+  }
+}
 function startNewTrade(){
   // Always kick off the full guided flow (Calendar → Checklist → Calculator → Log trade)
   // rather than jumping straight to the bare log form — same entry point as the
@@ -8497,7 +8578,7 @@ async function saveTrade(){
   var methodVal=document.getElementById('f-method-val').value;
   if(!methodVal){toast('Entry method is required','err');switchTab(0,null);return;}
   var ratingVal=document.getElementById('f-rating').value;
-  if(!ratingVal){toast('Rating is required','err');switchTab(0,null);return;}
+  if(!ratingVal){toast('User rating is required','err');switchTab(0,null);return;}
   var errorVal=document.getElementById('f-error-val').value;
   var trrVal=document.getElementById('f-trr').value;
   if(!trrVal){toast('Target RR is required','err');switchTab(0,null);return;}
@@ -9009,7 +9090,7 @@ var ALL_HISTORY_COLS=[
   {key:'riskDollar',label:'Risk $',    sortVal:function(t){return parseFloat(t.riskDollar)||0;},  render:function(t){return'<td class="mono">'+(t.riskDollar?'$'+parseFloat(t.riskDollar).toFixed(2):'—')+'</td>';}},
   {key:'strategy',  label:'Strategy',  sortVal:function(t){return t.strategy||'';},               render:function(t){return'<td style="font-size:11px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(t.strategy||'—')+'</td>';}},
   {key:'durationMin',label:'Duration', sortVal:function(t){return t.durationMin||0;},             render:function(t){if(!t.durationMin)return'<td>—</td>';var total=t.durationMin,days=Math.floor(total/1440),h=Math.floor((total%1440)/60),m=total%60;if(days>0){var label=days+'d'+(h>0?' '+h+'h':'');return'<td><span style="display:inline-flex;align-items:center;gap:4px;background:rgba(155,127,240,.12);border:1px solid rgba(155,127,240,.25);color:var(--purple);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;font-family:DM Mono,monospace;white-space:nowrap">⏱ '+label+'</span></td>';}return'<td style="font-size:12px;color:var(--text2)">'+(h>0?h+'h ':'')+m+'m</td>';}},
-  {key:'rating',    label:'Rating',    sortVal:function(t){return(t.rating||'').length;},         render:function(t){return'<td><span class="stars">'+(t.rating||'')+'</span></td>';}},
+  {key:'rating',    label:'User rating',    sortVal:function(t){return(t.rating||'').length;},         render:function(t){return'<td><span class="stars">'+(t.rating||'')+'</span></td>';}},
   {key:'setupRating',label:'Setup rating',sortVal:function(t){var r=computeSetupRating(t.checklist,_clAllItemsCache);if(!r)return-1;var tiers=_setupRatingsCache||DEFAULT_SETUP_RATINGS;var idx=tiers.findIndex(function(x){return x.name===r;});return idx===-1?-1:tiers.length-idx;},render:function(t){var info=computeSetupScoreInfo(t.checklist,_clAllItemsCache);return'<td>'+(info.name?'<span class="badge" style="'+srBadgeStyle(info.color)+'">'+escHtml(info.name)+'</span>':'<span style="color:var(--text3)">—</span>')+'</td>';}},
   {key:'error',     label:'Error type',sortVal:function(t){return tradeErrorList(t).join(', ');},                  render:function(t){var el=tradeErrorList(t);return'<td style="font-size:11px;color:var(--text2)">'+(el.length?escHtml(el.join(', ')):'—')+'</td>';}},
   {key:'model',     label:'Model',     sortVal:function(t){return t.model||'';},                  render:function(t){return'<td style="font-size:11px;color:var(--text2)">'+escHtml(t.model||'—')+'</td>';}},
@@ -9704,7 +9785,7 @@ async function openDetail(id,opts){
       '<div class="detail-item" style="grid-column:1/-1"><div class="di-label">Partial TPs — how taken</div><div class="di-val js-pre">'+escHtml(trade.partialDesc)+'</div></div>'
     :'')
     +'<div class="detail-item"><div class="di-label">Mistake/error</div><div class="di-val">'+(tradeErrorList(trade).join(', ')||'—')+'</div></div>'
-    +'<div class="detail-item"><div class="di-label">Rating</div><div class="di-val">'+(trade.rating||'—')+'</div></div>'
+    +'<div class="detail-item"><div class="di-label">User rating</div><div class="di-val">'+(trade.rating||'—')+'</div></div>'
     +'</div>'
     +biasHtml
     +checklistUnmetHtml
@@ -12305,6 +12386,7 @@ if(!window._tjAutoNumberListenerRegistered){
 // to the render calls it feeds into.
 openDB().then(async function(){
   loadSavedTheme();
+  initNavSections();
   restoreSessionTypeFilterPrefs();
   await populatePairSelect();
   await populateStrategySelect();
@@ -16815,7 +16897,7 @@ function aiBuilderPrompt(m,sessionInfo,depth){
       if(t.actualRR!=null)row+=' | RR: '+parseFloat(t.actualRR).toFixed(2)+'R';
       if(t.strategy)row+=' | Strategy: '+t.strategy;
       if(tradeActiveErrors(t).length)row+=' | Error: '+tradeActiveErrors(t).join(', ');
-      if(t.rating)row+=' | Rating: '+t.rating;
+      if(t.rating)row+=' | User rating: '+t.rating;
       if(t.checklist&&t.checklist.length){
         var checked=t.checklist.filter(function(c){return c.checked;}).length;
         row+=' | CL: '+checked+'/'+t.checklist.length;
