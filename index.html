@@ -17423,6 +17423,7 @@ function paTplReset(){
   if(inp){ inp.value = PA_DEFAULT_TEMPLATE; paTplPreview(); }
   localStorage.setItem(PA_KEY_TEMPLATE, PA_DEFAULT_TEMPLATE);
   ghAutoSyncAlerts();
+  cmAutoSyncConfig();
   toast('Template reset to default','ok');
 }
 function paTplSave(){
@@ -17432,6 +17433,7 @@ function paTplSave(){
   if(!val){ toast('Template cannot be empty','err'); return; }
   localStorage.setItem(PA_KEY_TEMPLATE, val);
   ghAutoSyncAlerts();
+  cmAutoSyncConfig();
   toast('Message template saved','ok');
 }
 function paLoadPlaceholderUI(){
@@ -17455,6 +17457,7 @@ function paSavePlaceholderValues(){
   };
   paSetPlaceholders(ph);
   ghAutoSyncAlerts();
+  cmAutoSyncConfig();
   paTplPreview();
   toast('Placeholder values saved','ok');
 }
@@ -17462,6 +17465,7 @@ function paResetPlaceholderValues(){
   paSetPlaceholders(Object.assign({}, PA_DEFAULT_PLACEHOLDERS));
   paLoadPlaceholderUI();
   ghAutoSyncAlerts();
+  cmAutoSyncConfig();
   toast('Placeholder values reset to defaults','ok');
 }
 // ── Helpers ───────────────────────────────────────────────────
@@ -17532,6 +17536,7 @@ function paDeleteDaysSave(){
   if(!sel) return;
   localStorage.setItem('tj-pa-delete-days', sel.value);
   ghAutoSyncAlerts();
+  cmAutoSyncConfig();
   toast(sel.value === '0' ? 'Auto-delete disabled' : 'Alert messages will be deleted after ' + sel.value + ' hour(s)', 'ok');
 }
 function paProviderKeyChange(p){
@@ -17592,6 +17597,7 @@ function paProviderSave(p){
     countEl2.textContent = n2 > 0 ? '(' + n2 + ' saved)' : '(none saved)';
   }
   ghAutoSyncAlerts();
+  cmAutoSyncConfig();
 }
 // ── Provider Test Fetch ───────────────────────────────────────
 // Runs a real live fetch for each provider and shows the result inline.
@@ -17921,6 +17927,7 @@ function paTgSave(){
   localStorage.setItem(PA_KEY_CHATID, chatId);
   paRefreshTgUI();
   ghAutoSyncAlerts();
+  cmAutoSyncConfig();
   paTgSendMessage('✅ JournUp Price Alerts connected!\n\nYou will receive alerts here when your price targets are hit.', function(ok){
     if(ok){ toast('Connected! Test message sent to Telegram','ok'); }
     else  { toast('Saved, but test message failed — check your token/chat ID','err'); }
@@ -19376,6 +19383,7 @@ function paDiscordSave(){
   paDiscordShowConnected(url);
   // Note: webhook URL is NOT pushed to GitHub (it's a credential — treat like an API key)
   ghAutoSyncAlerts(); // still sync alerts array + non-sensitive config
+  cmAutoSyncConfig();
   // Send test embed
   paDiscordSendTest(url, true);
 }
@@ -19425,6 +19433,7 @@ function paDiscordEmbedSave(){
   localStorage.setItem('tj-pa-discord-color-above',  colorAbove);
   localStorage.setItem('tj-pa-discord-color-below',  colorBelow);
   ghAutoSyncAlerts();
+  cmAutoSyncConfig();
   toast('Discord embed settings saved', 'ok');
 }
 // Restore embed appearance fields to their defaults
@@ -19442,6 +19451,7 @@ function paDiscordEmbedReset(){
   if(elCA) elCA.value = '#34c97a';
   if(elCB) elCB.value = '#e85555';
   ghAutoSyncAlerts();
+  cmAutoSyncConfig();
   toast('Discord embed settings reset', 'ok');
 }
 // Init Discord panel on load
@@ -19583,6 +19593,24 @@ function cmHasUrl(){
 }
 function cmIsConnected(){
   return _cmConnected;
+}
+// Silently push current settings (Telegram, Discord, provider keys, message
+// template, placeholders, delete-window) to CloudMonitor's /config endpoint
+// whenever one of those is saved elsewhere on this page — so the "Save and
+// Sync" button in the Cloud Monitor panel below is no longer a required
+// manual step after every settings change. No-op if no Worker URL has been
+// saved yet (nothing to sync to). This only refreshes /config — it does not
+// touch the alert list (that's cmPushAlerts, called from paSave()).
+function cmAutoSyncConfig(){
+  if(!cmHasUrl()) return; // Cloud Monitor not set up — nothing to do
+  cmFetch('/config', 'POST', cmBuildConfig())
+  .then(function(){
+    cmUpdateBadge('ok', 'Connected · settings synced');
+  })
+  .catch(function(err){
+    console.warn('CloudMonitor config auto-sync failed:', err.message);
+    toast('⚠️ Saved locally, but auto-sync to CloudMonitor failed (' + err.message + ')', 'err');
+  });
 }
 // Push the full local alert list up to CloudMonitor. Called by paSave()
 // after every add/edit/delete. No-op when no URL saved. Failures are
@@ -19797,22 +19825,14 @@ function cmFetchPrices(){
     }
   }).catch(function(err){ console.warn('cmFetchPrices failed:', err.message); });
 }
-// ── Auto-push config to worker when provider API keys change ─────────────────
-// Wraps paProviderSave so any key save silently re-pushes the full config to KV.
-(function(){
-  var _origProviderSave = typeof paProviderSave === 'function' ? paProviderSave : null;
-  if(!_origProviderSave) return;
-  paProviderSave = function(p){
-    _origProviderSave.apply(this, arguments);
-    if(!localStorage.getItem(CM_KEY_URL)) return; // no worker configured
-    // Small delay so localStorage is written before we read it in cmBuildConfig
-    setTimeout(function(){
-      cmFetch('/config', 'POST', cmBuildConfig())
-      .then(function(){ toast('☁ API key synced to cloud worker', 'ok'); })
-      .catch(function(err){ toast('☁ Key saved locally but cloud sync failed: ' + err.message, 'err'); });
-    }, 50);
-  };
-})();
+// NOTE: paProviderSave's cloud auto-sync now lives inline in paProviderSave
+// itself (a direct cmAutoSyncConfig() call at the end of the function,
+// alongside the other Price Alerts "save" functions — Telegram, Discord,
+// template, placeholders, delete-window). There used to be a separate
+// wrapper IIFE here that re-pushed config after paProviderSave only; it's
+// removed to avoid double-pushing /config on every provider key save now
+// that every save function calls cmAutoSyncConfig() directly. See
+// cmAutoSyncConfig() above for the shared implementation.
 // Generates a copy/paste HTML patch (CSS + markup + JS, as one string) for
 // adding Cloud Monitor + Discord to a vanilla/standalone copy of this app.
 // IMPORTANT: the JS embedded below is a manually-kept-in-sync snapshot of
@@ -20222,21 +20242,35 @@ function cmFetchPrices(){
     }
   }).catch(function(err){ console.warn('cmFetchPrices failed:', err.message); });
 }
-// ── Auto-push config to worker when provider API keys change ─────────────────
-// Wraps paProviderSave so any key save silently re-pushes the full config to KV.
+// ── Auto-push config to worker whenever an alert-related setting is saved ────
+// Wraps every Price Alerts "save" function whose value feeds cmBuildConfig()
+// -- Telegram, Discord, Discord embed styling, provider API keys, message
+// template, placeholder values, auto-delete window -- so saving ANY of them
+// silently re-pushes the full config to the worker. This means "Save & Push
+// to Cloud" above is only needed for the first-time connect; after that,
+// every settings save on this page keeps the cloud copy current on its own.
+// No-op (per function) until a Worker URL is saved.
 (function(){
-  var _origProviderSave = typeof paProviderSave === 'function' ? paProviderSave : null;
-  if(!_origProviderSave) return;
-  paProviderSave = function(p){
-    _origProviderSave.apply(this, arguments);
-    if(!localStorage.getItem(CM_KEY_URL)) return; // no worker configured
-    // Small delay so localStorage is written before we read it in cmBuildConfig
-    setTimeout(function(){
-      cmFetch('/config', 'POST', cmBuildConfig())
-      .then(function(){ toast('☁ API key synced to cloud worker', 'ok'); })
-      .catch(function(err){ toast('☁ Key saved locally but cloud sync failed: ' + err.message, 'err'); });
-    }, 50);
-  };
+  var CM_AUTOSYNC_FNS = [
+    'paProviderSave', 'paTgSave', 'paDiscordSave', 'paDiscordEmbedSave',
+    'paDiscordEmbedReset', 'paTplSave', 'paTplReset',
+    'paSavePlaceholderValues', 'paResetPlaceholderValues', 'paDeleteDaysSave'
+  ];
+  CM_AUTOSYNC_FNS.forEach(function(fnName){
+    var orig = (typeof window[fnName] === 'function') ? window[fnName] : null;
+    if(!orig) return; // that save function doesn't exist in this copy — skip it
+    window[fnName] = function(){
+      var ret = orig.apply(this, arguments);
+      if(!localStorage.getItem(CM_KEY_URL)) return ret; // no worker configured
+      // Small delay so localStorage is written before we read it in cmBuildConfig
+      setTimeout(function(){
+        cmFetch('/config', 'POST', cmBuildConfig())
+        .then(function(){ cmUpdateBadge('ok', 'Connected · settings synced'); })
+        .catch(function(err){ toast('☁ Saved locally but cloud sync failed: ' + err.message, 'err'); });
+      }, 50);
+      return ret;
+    };
+  });
 })();
 \x3c/script>
 `;
