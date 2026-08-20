@@ -1236,6 +1236,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         <div class="card"><div class="card-header"><span class="card-title">Win rate by rating</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-rating-perf"></canvas></div></div></div>
         <div class="card"><div class="card-header"><span class="card-title">Avg P/L by error type</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-error-pl"></canvas></div></div></div>
       </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
+        <div class="card"><div class="card-header"><span class="card-title">Setup rating distribution</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-setuprating-dist"></canvas></div></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Win rate by setup rating</span></div><div class="card-body"><div class="chart-wrap" style="height:160px"><canvas id="chart-setuprating-perf"></canvas></div></div></div>
+      </div>
       <div class="card" style="margin-bottom:22px">
         <div class="card-header"><span class="card-title">Error type impact</span></div>
         <div style="font-size:11px;color:var(--text3);padding:8px 16px 10px">Sorted by "Edge lost" — total R this mistake has cost you vs. your clean-trade baseline, worst first. "Win rate"/"Avg RR" count a trade toward every tag it carries (so they can add up to more than your total trades); "Solo WR (n)" isolates trades where this was the <em>only</em> tagged error, to check whether the mistake is bad on its own or only in combination — watch the n, small samples aren't conclusive.</div>
@@ -10264,6 +10268,33 @@ function _renderQualityAnalytics(trades){
   if(charts.ratingPerf)charts.ratingPerf.destroy();
   var _cvRP=document.getElementById('chart-rating-perf');
   if(_cvRP)charts.ratingPerf=safeChart(_cvRP.getContext('2d'),{type:'bar',data:{labels:ratingLabels,datasets:[{label:'Win rate %',data:wrByRating,backgroundColor:wrColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var n=ctx.dataIndex+1;return ctx.parsed.y+'% win rate ('+ratingBuckets[n].length+' trades)';}}}},scales:{x:{ticks:{color:c.tick,font:{size:11}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},suggestedMax:100}}}});
+  // ── Setup rating distribution / win rate (bar) — tiers come from Setup rating
+  // criteria (Checklist settings), best → worst, colored per-tier same as their
+  // badges elsewhere in the app. A trade whose checklist state doesn't clear any
+  // tier's threshold (or has no checklist logged at all) falls into a trailing
+  // "Unrated" bucket rather than being silently dropped from the chart. ──
+  var srTiers=_setupRatingsCache||DEFAULT_SETUP_RATINGS;
+  var srItems=_clAllItemsCache||[];
+  var setupRatingBuckets={};
+  srTiers.forEach(function(t){setupRatingBuckets[t.name]=[];});
+  var srUnrated=[];
+  trades.forEach(function(t){
+    var info=computeSetupScoreInfo(t.checklist,srItems);
+    if(info.name&&setupRatingBuckets[info.name])setupRatingBuckets[info.name].push(t);
+    else srUnrated.push(t);
+  });
+  var srLabels=srTiers.map(function(t){return t.name;}).concat(['Unrated']);
+  var srBuckets=srTiers.map(function(t){return setupRatingBuckets[t.name];}).concat([srUnrated]);
+  var srColors=srTiers.map(function(t,i){return srTierColor(t,i);}).concat([c.tick]);
+  var srCounts=srBuckets.map(function(arr){return arr.length;});
+  if(charts.setupRatingDist)charts.setupRatingDist.destroy();
+  var _cvSRD=document.getElementById('chart-setuprating-dist');
+  if(_cvSRD)charts.setupRatingDist=safeChart(_cvSRD.getContext('2d'),{type:'bar',data:{labels:srLabels,datasets:[{label:'Trades',data:srCounts,backgroundColor:srColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:11}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},stepSize:1,precision:0},grid:{color:c.grid}}}}});
+  var srWR=srBuckets.map(function(arr){var wr=winRate(arr);return wr!=null?parseFloat(wr.toFixed(1)):0;});
+  var srWRColors=srBuckets.map(function(arr){return wrGradientColor(winRate(arr));});
+  if(charts.setupRatingPerf)charts.setupRatingPerf.destroy();
+  var _cvSRP=document.getElementById('chart-setuprating-perf');
+  if(_cvSRP)charts.setupRatingPerf=safeChart(_cvSRP.getContext('2d'),{type:'bar',data:{labels:srLabels,datasets:[{label:'Win rate %',data:srWR,backgroundColor:srWRColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y+'% win rate ('+srBuckets[ctx.dataIndex].length+' trades)';}}}},scales:{x:{ticks:{color:c.tick,font:{size:11}},grid:{display:false}},y:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},suggestedMax:100}}}});
   // ── Avg P/L by error type (bar, Clean shown first as baseline) ──
   var errPLLabels=['Clean'].concat(errKeys);
   var errPLArrs=[cleanTrades].concat(errKeys.map(function(k){return errorBuckets[k];}));
