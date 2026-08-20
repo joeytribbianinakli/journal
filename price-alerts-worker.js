@@ -73,8 +73,23 @@ async function handleRequest(request) {
   if (path === '/alerts' && method === 'POST') {
     var body = await request.json().catch(function() { return null; });
     if (!Array.isArray(body)) return jsonRes({ error: 'Expected array' }, 400, origin);
-    await JOURNUP_KV.put('alerts', JSON.stringify(body));
-    return jsonRes({ ok: true, count: body.length }, 200, origin);
+    // Guard against a race with paCheckAll(): if the cron fires an alert
+    // (sets fired:true in KV) between when a browser tab last pulled the
+    // alert list and when it pushes its own copy back, that push would
+    // otherwise carry a stale fired:false and silently un-fire the alert —
+    // causing it to fire (and message) again on a later cron pass. So here,
+    // any alert already fired in KV stays fired, no matter what the
+    // incoming payload says. Fired state can only ever be set by
+    // paCheckAll(); a client push can never revert it.
+    var existingRaw = await JOURNUP_KV.get('alerts');
+    var existing = existingRaw ? JSON.parse(existingRaw) : [];
+    var firedMap = {};
+    existing.forEach(function(a) { if (a.fired) firedMap[a.id] = a; });
+    var merged = body.map(function(a) {
+      return (!a.fired && firedMap[a.id]) ? Object.assign({}, a, firedMap[a.id]) : a;
+    });
+    await JOURNUP_KV.put('alerts', JSON.stringify(merged));
+    return jsonRes({ ok: true, count: merged.length }, 200, origin);
   }
   if (path === '/alerts' && method === 'GET') {
     var raw = await JOURNUP_KV.get('alerts');
