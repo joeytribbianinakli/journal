@@ -8,7 +8,7 @@
  *   discordWebhook                  — from the Discord setup panel
  *   discordFooter, discordTitlePrefix, discordColorAbove, discordColorBelow — Discord embed options
  *   msgTemplate, msgDirAbove, msgDirBelow, notePrefix, datetimeFmt          — shared message template
- *   avKey, oandaKey, oandaEnv, finnhubKey, coingeckoKey                     — data provider keys
+ *   avKey, oandaKey, oandaEnv, finnhubKey, coingeckoKey, twelvedataKey      — data provider keys
  *   knownCrypto, commodities, indices, providerChain                        — asset classification
  *   deleteHours                                                             — auto-delete fired Telegram
  *                                                                              alert messages after N hours
@@ -118,6 +118,9 @@ async function handleRequest(request) {
     if (cfg2.finnhubKey) {
       try { results.finnhub = await fetchFinnhub(sym, cfg2.finnhubKey); } catch(e) { results.finnhub = 'ERR: ' + e.message; }
     } else { results.finnhub = 'no key'; }
+    if (cfg2.twelvedataKey) {
+      try { results.twelvedata = await fetchTwelveData(sym, cfg2.twelvedataKey); } catch(e) { results.twelvedata = 'ERR: ' + e.message; }
+    } else { results.twelvedata = 'no key'; }
     try { results.fetchPriceWithMeta = await fetchPriceWithMeta(sym, cfg2); } catch(e) { results.fetchPriceWithMeta = 'ERR: ' + e.message; }
     return jsonRes(results, 200, origin);
   }
@@ -221,11 +224,14 @@ var DEFAULT_COMMODITIES  = ['XAUUSD','XAGUSD','GOLD','SILVER','OIL','CRUDE','WTI
 var DEFAULT_INDICES      = ['US30','US500','SP500','SPX','NAS100','NASDAQ','DAX','UK100','GDAXI','YM=F','ES=F','NQ=F'];
 
 // Default provider chains — overrideable via cfg.providerChain sent from the page.
+// Twelve Data's free tier covers US equities, forex, and crypto (not
+// commodities or indices — those are paid-only there), so it's inserted
+// 2nd only into the crypto/forex/stock chains.
 var DEFAULT_PROVIDER_CHAIN = {
-  crypto:    ['binance','coingecko','oanda','yahoo'],
-  forex:     ['oanda','av','yahoo'],
+  crypto:    ['binance','twelvedata','coingecko','oanda','yahoo'],
+  forex:     ['oanda','twelvedata','av','yahoo'],
   commodity: ['oanda','av','yahoo'],
-  stock:     ['finnhub','av','yahoo'],
+  stock:     ['finnhub','twelvedata','av','yahoo'],
   index:     ['finnhub','av','yahoo']
 };
 
@@ -251,14 +257,16 @@ async function fetchPriceWithMeta(sym, cfg) {
     if (p === 'av' && !cfg.avKey) continue;
     if (p === 'oanda' && !cfg.oandaKey) continue;
     if (p === 'finnhub' && !cfg.finnhubKey) continue;
+    if (p === 'twelvedata' && !cfg.twelvedataKey) continue;
     try {
       var price = null;
-      if (p === 'binance')   price = await fetchBinance(sym);
-      if (p === 'coingecko') price = await fetchCoinGecko(sym, cfg.coingeckoKey);
-      if (p === 'yahoo')     price = await fetchYahoo(sym);
-      if (p === 'av')        price = await fetchAlphaVantage(sym, cfg.avKey);
-      if (p === 'oanda')     price = await fetchOanda(sym, cfg.oandaKey, cfg.oandaEnv || 'practice');
-      if (p === 'finnhub')   price = await fetchFinnhub(sym, cfg.finnhubKey);
+      if (p === 'binance')    price = await fetchBinance(sym);
+      if (p === 'coingecko')  price = await fetchCoinGecko(sym, cfg.coingeckoKey);
+      if (p === 'yahoo')      price = await fetchYahoo(sym);
+      if (p === 'av')         price = await fetchAlphaVantage(sym, cfg.avKey);
+      if (p === 'oanda')      price = await fetchOanda(sym, cfg.oandaKey, cfg.oandaEnv || 'practice');
+      if (p === 'finnhub')    price = await fetchFinnhub(sym, cfg.finnhubKey);
+      if (p === 'twelvedata') price = await fetchTwelveData(sym, cfg.twelvedataKey);
       if (price !== null && !isNaN(price)) return { price: price, provider: p };
     } catch(e) {}
   }
@@ -502,6 +510,31 @@ async function fetchFinnhub(sym, apiKey) {
   return (d.c && d.c !== 0) ? parseFloat(d.c) : null;
 }
 
+// Twelve Data: fully algorithmic. Free tier covers US equities, forex, and
+// crypto (NOT commodities or indices — those require a paid plan there),
+// so this is only ever reached via chains that include it (crypto/forex/stock).
+// Forex/crypto need BASE/QUOTE slash format; stocks pass straight through.
+async function fetchTwelveData(sym, apiKey) {
+  var u = sym.toUpperCase();
+  var ticker;
+  if (/^[A-Z]+_[A-Z]+$/.test(u)) {
+    ticker = u.replace('_', '/');                                       // already BASE_QUOTE (Oanda-style) → BASE/QUOTE
+  } else if (/USDT$/.test(u)) {
+    ticker = u.slice(0, -4) + '/USD';                                   // BTCUSDT → BTC/USD
+  } else if (/USD$/.test(u) && DEFAULT_KNOWN_CRYPTO.indexOf(u.slice(0, -3)) !== -1) {
+    ticker = u.slice(0, -3) + '/USD';                                   // known crypto USD pair → BASE/USD
+  } else if (/USD$/.test(u) && u.length > 6) {
+    ticker = u.slice(0, -3) + '/USD';                                   // longer crypto USD pair not in default list
+  } else if (/^[A-Z]{6}$/.test(u)) {
+    ticker = u.slice(0, 3) + '/' + u.slice(3, 6);                       // EURUSD → EUR/USD
+  } else {
+    ticker = u;                                                         // stocks pass through
+  }
+  var d = await (await fetch('https://api.twelvedata.com/price?symbol=' + encodeURIComponent(ticker) + '&apikey=' + encodeURIComponent(apiKey))).json();
+  if (d.status === 'error' || d.code) return null;
+  return d.price ? parseFloat(d.price) : null;
+}
+
 function fmtPrice(p) {
   if (p === null || p === undefined) return '—';
   var s = parseFloat(p).toString(), parts = s.split('.');
@@ -518,7 +551,7 @@ function fmtDatetime(fmt) {
 }
 
 // Human-readable labels for provider codes — kept in sync with the page's PA_PROVIDER_LABELS.
-var PROVIDER_LABELS = { binance:'Binance', coingecko:'CoinGecko', yahoo:'Yahoo Finance', av:'Alpha Vantage', oanda:'Oanda', finnhub:'Finnhub' };
+var PROVIDER_LABELS = { binance:'Binance', coingecko:'CoinGecko', yahoo:'Yahoo Finance', av:'Alpha Vantage', oanda:'Oanda', finnhub:'Finnhub', twelvedata:'Twelve Data' };
 function providerLabel(p) { return PROVIDER_LABELS[p] || p || '—'; }
 
 function buildMessage(a, price, cfg, provider) {
