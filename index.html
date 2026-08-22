@@ -12933,11 +12933,10 @@ if(!window._tjKeydownListenerRegistered){
     }
   }
   if(e.key!=='Escape')return;
-  // Close in priority order: lightbox → screenshots focus view → other modals.
-  // The trade detail modal itself is intentionally NOT closed by Escape — only via
-  // its close button / clicking outside — so Escape can't accidentally lose your place.
+  // Close in priority order: lightbox → screenshots focus view → trade detail modal → other modals.
   if(document.getElementById('lightbox').classList.contains('open')){closeLightbox();return;}
   if(_dmFocusOpen){dmFocusBack();return;}
+  if(document.getElementById('detail-overlay').classList.contains('open')){closeDetail();return;}
   if(document.getElementById('retro-view-overlay').classList.contains('open')){closeRetroView();return;}
   var modalIds=['theme-modal','col-manager-modal','session-modal','strategy-modal','asset-modal'];
   for(var i=0;i<modalIds.length;i++){
