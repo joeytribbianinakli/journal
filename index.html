@@ -2434,14 +2434,14 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <div class="frow">
               <label class="flabel">Entry time <span style="color:var(--red);margin-left:2px">*</span></label>
               <div class="dt-wrap">
-                <input type="date" id="f-etime-date" oninput="clampDateYear(this);recalc()">
+                <input type="date" id="f-etime-date" min="1000-01-01" max="9999-12-31" oninput="clampDateYear(this);recalc()">
                 <input type="text" id="f-etime-time" placeholder="e.g. 1430" maxlength="4" style="max-width:90px" oninput="onTimeInput(this)" onblur="onTimeBlur(this)" onfocus="onTimeFocus(this)" autocomplete="off">
               </div>
             </div>
             <div class="frow">
               <label class="flabel">Exit time <span style="color:var(--red);margin-left:2px">*</span></label>
               <div class="dt-wrap">
-                <input type="date" id="f-xtime-date" oninput="clampDateYear(this);recalc()">
+                <input type="date" id="f-xtime-date" min="1000-01-01" max="9999-12-31" oninput="clampDateYear(this);recalc()">
                 <input type="text" id="f-xtime-time" placeholder="e.g. 1645" maxlength="4" style="max-width:90px" oninput="onTimeInput(this)" onblur="onTimeBlur(this)" onfocus="onTimeFocus(this)" autocomplete="off">
               </div>
             </div>
@@ -4538,7 +4538,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <div style="display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:5px 10px">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              <input type="date" id="fxs-date-input" style="background:transparent;border:none;outline:none;color:var(--text);font-family:DM Mono,monospace;font-size:12px;font-weight:600;cursor:pointer;color-scheme:dark" onchange="fxsUpdateLinks()">
+              <input type="date" id="fxs-date-input" min="1000-01-01" max="9999-12-31" style="background:transparent;border:none;outline:none;color:var(--text);font-family:DM Mono,monospace;font-size:12px;font-weight:600;cursor:pointer;color-scheme:dark" onchange="fxsUpdateLinks()">
             </div>
             <button class="btn btn-ghost btn-sm" onclick="fxsSetToday()">Today</button>
             <button class="btn btn-ghost btn-sm" id="fxs-use-cal-btn" onclick="fxsUseCalDate()" style="display:none" title="Use date selected in your Journal Calendar">
@@ -4783,8 +4783,8 @@ document.addEventListener('DOMContentLoaded',function(){
           </div>
           <div class="frow" style="margin-bottom:12px"><label class="flabel">Session name <span style="color:var(--text3);font-weight:400">(auto-generated)</span></label><input type="text" id="sm-name" placeholder="Auto-filled from type &amp; dates — edit to override"><div style="font-size:10px;color:var(--text3);margin-top:5px;line-height:1.4">Automatically built from the session number, type, and date range — updates as you change the type or dates above, e.g. <span class="mono" style="font-size:10px">[3] [Live] Jul 16 - Present [2026]</span></div></div>
           <div class="frow-inline" style="margin-bottom:12px">
-            <div class="frow"><label class="flabel">Start date</label><input type="date" id="sm-start" onchange="refreshSessionAutoDateRange()"></div>
-            <div class="frow"><label class="flabel">End date</label><input type="date" id="sm-end" onchange="refreshSessionAutoDateRange()"></div>
+            <div class="frow"><label class="flabel">Start date</label><input type="date" id="sm-start" min="1000-01-01" max="9999-12-31" onchange="refreshSessionAutoDateRange()"></div>
+            <div class="frow"><label class="flabel">End date</label><input type="date" id="sm-end" min="1000-01-01" max="9999-12-31" onchange="refreshSessionAutoDateRange()"></div>
           </div>
           <div class="frow" style="margin-bottom:16px">
             <label class="flabel">Starting equity ($) <span style="color:var(--text3);font-weight:400">— auto-updates after each trade</span></label>
