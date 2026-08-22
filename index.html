@@ -6000,7 +6000,9 @@ async function renderChecklist(){
   updateClStatus();
 }
 function checkAllInBlock(secIdx){
-  var boxes=document.querySelectorAll('.cl[data-sec="'+secIdx+'"]');
+  // Only touch required items — optional items are left as-is so "✓ All" can't
+  // silently check boxes that don't gate checklist completion anyway.
+  var boxes=document.querySelectorAll('.cl[data-sec="'+secIdx+'"][data-optional="0"]');
   var allChecked=[].every.call(boxes,function(b){return b.checked});
   boxes.forEach(function(b){b.checked=!allChecked;});
   updateClStatus();
@@ -14305,7 +14307,9 @@ async function preClRender() {
 }
 // Toggle every checkbox in one checklist section together (check-all / uncheck-all)
 function preClCheckAll(secIdx) {
-  var boxes = document.querySelectorAll('.pre-cl-item[data-sec="'+secIdx+'"]');
+  // Only touch required items — optional items are left as-is so "✓ All" can't
+  // silently check boxes that don't gate checklist completion anyway.
+  var boxes = document.querySelectorAll('.pre-cl-item[data-sec="'+secIdx+'"][data-optional="0"]');
   var allChecked = [].every.call(boxes, function(b){return b.checked;});
   boxes.forEach(function(b){b.checked = !allChecked;});
   preClUpdateStatus();
