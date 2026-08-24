@@ -1167,7 +1167,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="dash-filter-row">
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session type</div>
-              <select id="dash-sessiontype-filter" onchange="saveSessionTypeFilterPref('dash-sessiontype-filter');populateSessionSelects().then(function(){renderDashboard();updateFilterSessionSummary('dash-session-filter','dash-filter-summary','dash-skipped-filter')})">
+              <select id="dash-sessiontype-filter" onchange="syncGlobalFilter('dash-sessiontype-filter');saveSessionTypeFilterPref('dash-sessiontype-filter');populateSessionSelects().then(function(){renderDashboard();updateFilterSessionSummary('dash-session-filter','dash-filter-summary','dash-skipped-filter')})">
                 <option value="">All types</option>
                 <option value="live">Live</option>
                 <option value="paperlive">Paper Live</option>
@@ -1177,23 +1177,23 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session</div>
-              <select id="dash-session-filter" onchange="renderDashboard();updateFilterSessionSummary('dash-session-filter','dash-filter-summary','dash-skipped-filter')"><option value="">All sessions</option></select>
+              <select id="dash-session-filter" onchange="syncGlobalFilter('dash-session-filter');renderDashboard();updateFilterSessionSummary('dash-session-filter','dash-filter-summary','dash-skipped-filter')"><option value="">All sessions</option></select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Asset type</div>
-              <select id="dash-asset-type-filter" onchange="renderDashboard()"><option value="">All asset types</option></select>
+              <select id="dash-asset-type-filter" onchange="syncGlobalFilter('dash-asset-type-filter');renderDashboard()"><option value="">All asset types</option></select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Asset / Pair</div>
-              <select id="dash-pair-filter" onchange="renderDashboard()"><option value="">All pairs</option></select>
+              <select id="dash-pair-filter" onchange="syncGlobalFilter('dash-pair-filter');renderDashboard()"><option value="">All pairs</option></select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Strategy</div>
-              <select id="dash-strategy-filter" onchange="renderDashboard()"><option value="">All strategies</option></select>
+              <select id="dash-strategy-filter" onchange="syncGlobalFilter('dash-strategy-filter');renderDashboard()"><option value="">All strategies</option></select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Trade type</div>
-              <select id="dash-skipped-filter" onchange="renderDashboard();updateFilterSessionSummary('dash-session-filter','dash-filter-summary','dash-skipped-filter')">
+              <select id="dash-skipped-filter" onchange="syncGlobalFilter('dash-skipped-filter');renderDashboard();updateFilterSessionSummary('dash-session-filter','dash-filter-summary','dash-skipped-filter')">
                 <option value="taken">Taken trades</option>
                 <option value="skipped">Skipped trades</option>
               </select>
@@ -1259,7 +1259,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="dash-filter-row">
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session type</div>
-              <select id="trd-sessiontype-filter" onchange="saveSessionTypeFilterPref('trd-sessiontype-filter');populateSessionSelects().then(function(){renderTradeAnalytics();updateFilterSessionSummary('trd-session-filter','trd-filter-summary','trd-skipped-filter')})">
+              <select id="trd-sessiontype-filter" onchange="syncGlobalFilter('trd-sessiontype-filter');saveSessionTypeFilterPref('trd-sessiontype-filter');populateSessionSelects().then(function(){renderTradeAnalytics();updateFilterSessionSummary('trd-session-filter','trd-filter-summary','trd-skipped-filter')})">
                 <option value="">All types</option>
                 <option value="live">Live</option>
                 <option value="paperlive">Paper Live</option>
@@ -1269,15 +1269,15 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session</div>
-              <select id="trd-session-filter" onchange="renderTradeAnalytics();updateFilterSessionSummary('trd-session-filter','trd-filter-summary','trd-skipped-filter')"><option value="">All sessions</option></select>
+              <select id="trd-session-filter" onchange="syncGlobalFilter('trd-session-filter');renderTradeAnalytics();updateFilterSessionSummary('trd-session-filter','trd-filter-summary','trd-skipped-filter')"><option value="">All sessions</option></select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Asset / Pair</div>
-              <select id="trd-pair-filter" onchange="renderTradeAnalytics()"><option value="">All pairs</option></select>
+              <select id="trd-pair-filter" onchange="syncGlobalFilter('trd-pair-filter');renderTradeAnalytics()"><option value="">All pairs</option></select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Direction</div>
-              <select id="trd-direction-filter" onchange="renderTradeAnalytics()">
+              <select id="trd-direction-filter" onchange="syncGlobalFilter('trd-direction-filter');renderTradeAnalytics()">
                 <option value="">All</option>
                 <option value="Long">Long only</option>
                 <option value="Short">Short only</option>
@@ -1285,14 +1285,14 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Trade type</div>
-              <select id="trd-skipped-filter" onchange="renderTradeAnalytics();updateFilterSessionSummary('trd-session-filter','trd-filter-summary','trd-skipped-filter')">
+              <select id="trd-skipped-filter" onchange="syncGlobalFilter('trd-skipped-filter');renderTradeAnalytics();updateFilterSessionSummary('trd-session-filter','trd-filter-summary','trd-skipped-filter')">
                 <option value="taken">Taken trades</option>
                 <option value="skipped">Skipped trades</option>
               </select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Error type</div>
-              <select id="trd-error-filter" onchange="renderTradeAnalytics()">
+              <select id="trd-error-filter" onchange="syncGlobalFilter('trd-error-filter');renderTradeAnalytics()">
                 <option value="">All trades</option>
                 <option value="__clean__">Clean (no error)</option>
                 <option>Invalid - Manual</option>
@@ -1680,7 +1680,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="dash-filter-row">
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session type</div>
-              <select id="edg-sessiontype-filter" onchange="saveSessionTypeFilterPref('edg-sessiontype-filter');populateSessionSelects().then(function(){renderEdgeAnalyzer();updateFilterSessionSummary('edg-session-filter','edg-filter-summary','edg-skipped-filter')})">
+              <select id="edg-sessiontype-filter" onchange="syncGlobalFilter('edg-sessiontype-filter');saveSessionTypeFilterPref('edg-sessiontype-filter');populateSessionSelects().then(function(){renderEdgeAnalyzer();updateFilterSessionSummary('edg-session-filter','edg-filter-summary','edg-skipped-filter')})">
                 <option value="">All types</option>
                 <option value="live">Live</option>
                 <option value="paperlive">Paper Live</option>
@@ -1690,15 +1690,15 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session</div>
-              <select id="edg-session-filter" onchange="renderEdgeAnalyzer();updateFilterSessionSummary('edg-session-filter','edg-filter-summary','edg-skipped-filter')"><option value="">All sessions</option></select>
+              <select id="edg-session-filter" onchange="syncGlobalFilter('edg-session-filter');renderEdgeAnalyzer();updateFilterSessionSummary('edg-session-filter','edg-filter-summary','edg-skipped-filter')"><option value="">All sessions</option></select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Asset / Pair</div>
-              <select id="edg-pair-filter" onchange="renderEdgeAnalyzer()"><option value="">All pairs</option></select>
+              <select id="edg-pair-filter" onchange="syncGlobalFilter('edg-pair-filter');renderEdgeAnalyzer()"><option value="">All pairs</option></select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Direction</div>
-              <select id="edg-direction-filter" onchange="renderEdgeAnalyzer()">
+              <select id="edg-direction-filter" onchange="syncGlobalFilter('edg-direction-filter');renderEdgeAnalyzer()">
                 <option value="">All</option>
                 <option value="Long">Long only</option>
                 <option value="Short">Short only</option>
@@ -1706,14 +1706,14 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Trade type</div>
-              <select id="edg-skipped-filter" onchange="renderEdgeAnalyzer();updateFilterSessionSummary('edg-session-filter','edg-filter-summary','edg-skipped-filter')">
+              <select id="edg-skipped-filter" onchange="syncGlobalFilter('edg-skipped-filter');renderEdgeAnalyzer();updateFilterSessionSummary('edg-session-filter','edg-filter-summary','edg-skipped-filter')">
                 <option value="taken">Taken trades</option>
                 <option value="skipped">Skipped trades</option>
               </select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Error type</div>
-              <select id="edg-error-filter" onchange="renderEdgeAnalyzer()">
+              <select id="edg-error-filter" onchange="syncGlobalFilter('edg-error-filter');renderEdgeAnalyzer()">
                 <option value="">All trades</option>
                 <option value="__clean__">Clean (no error)</option>
                 <option>Invalid - Manual</option>
@@ -1902,7 +1902,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="dash-filter-row">
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session type</div>
-              <select id="cal-sessiontype-filter" onchange="saveSessionTypeFilterPref('cal-sessiontype-filter');calPopulateSessionFilter().then(function(){calJumpToMostRecent().then(function(){renderCalendar();updateFilterSessionSummary('cal-session-filter','cal-filter-summary','cal-skipped-filter')})})">
+              <select id="cal-sessiontype-filter" onchange="syncGlobalFilter('cal-sessiontype-filter');saveSessionTypeFilterPref('cal-sessiontype-filter');calPopulateSessionFilter().then(function(){calJumpToMostRecent().then(function(){renderCalendar();updateFilterSessionSummary('cal-session-filter','cal-filter-summary','cal-skipped-filter')})})">
                 <option value="">All types</option>
                 <option value="live">Live</option>
                 <option value="paperlive">Paper Live</option>
@@ -1912,11 +1912,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Session</div>
-              <select id="cal-session-filter" onchange="calJumpToMostRecent().then(function(){renderCalendar();});updateFilterSessionSummary('cal-session-filter','cal-filter-summary','cal-skipped-filter')"><option value="">All sessions</option></select>
+              <select id="cal-session-filter" onchange="syncGlobalFilter('cal-session-filter');calJumpToMostRecent().then(function(){renderCalendar();});updateFilterSessionSummary('cal-session-filter','cal-filter-summary','cal-skipped-filter')"><option value="">All sessions</option></select>
             </div>
             <div class="dash-filter-group">
               <div class="dash-filter-label">Trade type</div>
-              <select id="cal-skipped-filter" onchange="calJumpToMostRecent().then(function(){renderCalendar();});updateFilterSessionSummary('cal-session-filter','cal-filter-summary','cal-skipped-filter')">
+              <select id="cal-skipped-filter" onchange="syncGlobalFilter('cal-skipped-filter');calJumpToMostRecent().then(function(){renderCalendar();});updateFilterSessionSummary('cal-session-filter','cal-filter-summary','cal-skipped-filter')">
                 <option value="taken">Taken trades</option>
                 <option value="skipped">Skipped trades</option>
               </select>
@@ -2911,7 +2911,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="hist-filter-row">
             <div class="hist-filter-group">
               <div class="hist-filter-label">Session type</div>
-              <select id="flt-sessiontype" onchange="saveSessionTypeFilterPref('flt-sessiontype');populateSessionSelects().then(function(){renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary','flt-skipped')})">
+              <select id="flt-sessiontype" onchange="syncGlobalFilter('flt-sessiontype');saveSessionTypeFilterPref('flt-sessiontype');populateSessionSelects().then(function(){renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary','flt-skipped')})">
                 <option value="">All types</option>
                 <option value="live">Live</option>
                 <option value="paperlive">Paper Live</option>
@@ -2921,23 +2921,23 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Session</div>
-              <select id="flt-session" onchange="saveHistFilterPref('flt-session');renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary','flt-skipped')"><option value="">All sessions</option></select>
+              <select id="flt-session" onchange="syncGlobalFilter('flt-session');saveHistFilterPref('flt-session');renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary','flt-skipped')"><option value="">All sessions</option></select>
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Asset type</div>
-              <select id="flt-asset-type" onchange="saveHistFilterPref('flt-asset-type');renderHistory();updateHistChips()"><option value="">All asset types</option></select>
+              <select id="flt-asset-type" onchange="syncGlobalFilter('flt-asset-type');saveHistFilterPref('flt-asset-type');renderHistory();updateHistChips()"><option value="">All asset types</option></select>
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Pair</div>
-              <select id="flt-pair" onchange="saveHistFilterPref('flt-pair');renderHistory();updateHistChips()"><option value="">All pairs</option></select>
+              <select id="flt-pair" onchange="syncGlobalFilter('flt-pair');saveHistFilterPref('flt-pair');renderHistory();updateHistChips()"><option value="">All pairs</option></select>
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Direction</div>
-              <select id="flt-type" onchange="saveHistFilterPref('flt-type');renderHistory();updateHistChips()"><option value="">All directions</option><option value="Long">Long</option><option value="Short">Short</option></select>
+              <select id="flt-type" onchange="syncGlobalFilter('flt-type');saveHistFilterPref('flt-type');renderHistory();updateHistChips()"><option value="">All directions</option><option value="Long">Long</option><option value="Short">Short</option></select>
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Strategy</div>
-              <select id="flt-strategy" onchange="saveHistFilterPref('flt-strategy');renderHistory();updateHistChips()"><option value="">All strategies</option></select>
+              <select id="flt-strategy" onchange="syncGlobalFilter('flt-strategy');saveHistFilterPref('flt-strategy');renderHistory();updateHistChips()"><option value="">All strategies</option></select>
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Result</div>
@@ -2945,7 +2945,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="hist-filter-group">
               <div class="hist-filter-label">Trade type</div>
-              <select id="flt-skipped" onchange="saveHistFilterPref('flt-skipped');renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary','flt-skipped')">
+              <select id="flt-skipped" onchange="syncGlobalFilter('flt-skipped');saveHistFilterPref('flt-skipped');renderHistory();updateHistChips();updateFilterSessionSummary('flt-session','hist-filter-summary','flt-skipped')">
                 <option value="taken">Taken trades</option>
                 <option value="skipped">Skipped trades</option>
               </select>
@@ -6396,6 +6396,69 @@ var SESSION_TYPE_BADGE_CLASS={live:'badge-blue',paperlive:'badge-green',backtest
 function sessionTypeOf(s){return s.type||(s.isDemo?'demo':'live');}
 // Reads a "Session type" filter select's current value; missing element = no type filter.
 function getSessionTypeFilterVal(id){var el=document.getElementById(id);return el?el.value:'';}
+// ══ Global cross-page filters ═══════════════════════════════════════════
+// Lets a filter chosen on one page (Dashboard / Trade Analytics / Edge Analyzer / Calendar /
+// History) carry over automatically to the same filter everywhere else, instead of having to
+// be re-picked on every page. Persisted to localStorage so it also survives reloads.
+// A canonical key is only ever written once the user actually changes that filter through the
+// UI — until then, each page keeps using its own built-in default (Session type defaulting to
+// "Backtest", Trade type defaulting to "Taken", the auto-picked "first active session", etc.),
+// so a filter that's never been touched doesn't get force-blanked everywhere.
+var GLOBAL_FILTER_GROUPS={
+  sessiontype:['dash-sessiontype-filter','trd-sessiontype-filter','edg-sessiontype-filter','cal-sessiontype-filter','flt-sessiontype'],
+  session:['dash-session-filter','trd-session-filter','edg-session-filter','cal-session-filter','flt-session'],
+  assettype:['dash-asset-type-filter','flt-asset-type'],
+  pair:['dash-pair-filter','trd-pair-filter','edg-pair-filter','flt-pair'],
+  strategy:['dash-strategy-filter','flt-strategy'],
+  direction:['trd-direction-filter','edg-direction-filter','flt-type'],
+  tradetype:['dash-skipped-filter','trd-skipped-filter','edg-skipped-filter','cal-skipped-filter','flt-skipped'],
+  error:['trd-error-filter','edg-error-filter']
+};
+var GLOBAL_FILTER_ID_TO_KEY={};
+Object.keys(GLOBAL_FILTER_GROUPS).forEach(function(k){GLOBAL_FILTER_GROUPS[k].forEach(function(id){GLOBAL_FILTER_ID_TO_KEY[id]=k;});});
+var GLOBAL_FILTER_KEY='tj-global-filters';
+function getGlobalFilters(){try{return JSON.parse(localStorage.getItem(GLOBAL_FILTER_KEY)||'{}');}catch(e){return{};}}
+function setGlobalFilterVal(key,val){
+  try{var m=getGlobalFilters();m[key]=val;localStorage.setItem(GLOBAL_FILTER_KEY,JSON.stringify(m));}catch(e){}
+}
+// Applies the stored value for one canonical filter key to every mapped <select> currently in
+// the DOM (optionally skipping one id — the one the user just changed). Skips any select whose
+// option list doesn't (yet) include that value, e.g. Trade Analytics' pair dropdown before it's
+// been populated for the first time — applyGlobalFilters() below picks it up once it is.
+function applyGlobalFilterGroup(key,skipId){
+  var m=getGlobalFilters();
+  if(!(key in m))return;
+  var val=m[key];
+  (GLOBAL_FILTER_GROUPS[key]||[]).forEach(function(id){
+    if(id===skipId)return;
+    var el=document.getElementById(id);if(!el)return;
+    var hasOpt=val===''||Array.prototype.some.call(el.options,function(o){return o.value===val;});
+    if(hasOpt&&el.value!==val)el.value=val;
+  });
+}
+// Applies every stored global filter to every page's matching selects currently in the DOM.
+// Call this after (re)building any filter <select>'s option list so a global choice sticks
+// instead of being overwritten by that page's own default-selection logic.
+function applyGlobalFilters(){Object.keys(GLOBAL_FILTER_GROUPS).forEach(function(key){applyGlobalFilterGroup(key);});}
+// Called from a filter <select>'s onchange (alongside whatever that select already does) to
+// broadcast its new value to the same filter on every other page and remember it for reloads.
+function syncGlobalFilter(sourceId){
+  var key=GLOBAL_FILTER_ID_TO_KEY[sourceId];if(!key)return;
+  var srcEl=document.getElementById(sourceId);if(!srcEl)return;
+  setGlobalFilterVal(key,srcEl.value);
+  applyGlobalFilterGroup(key,sourceId);
+}
+// Forgets the given canonical filter keys entirely (rather than syncing them to "" — a global
+// key that's absent is not re-enforced by applyGlobalFilters()). Used by a page's own "Reset
+// filters" button so the reset actually sticks instead of a still-remembered global value
+// getting reapplied the next time that page's selects are repopulated.
+function clearGlobalFilterKeys(keys){
+  try{
+    var m=getGlobalFilters();
+    keys.forEach(function(k){delete m[k];});
+    localStorage.setItem(GLOBAL_FILTER_KEY,JSON.stringify(m));
+  }catch(e){}
+}
 // Persist a chosen "session type" filter value to localStorage (per page, keyed by element id)
 // so it's remembered as the new default next time the app loads — purely local, never synced
 // to the GitHub backup.
@@ -6436,7 +6499,17 @@ function saveHistFilterPref(id){
 function restoreHistFilterPrefs(){
   try{
     var m=JSON.parse(localStorage.getItem(HIST_FILTER_PREF_KEY)||'{}');
-    HIST_FILTER_IDS.forEach(function(id){if(m[id]===undefined)return;var el=document.getElementById(id);if(el)el.value=m[id];});
+    var gf=getGlobalFilters();
+    HIST_FILTER_IDS.forEach(function(id){
+      if(m[id]===undefined)return;
+      // A filter that's now cross-page synced already got its value from the global store
+      // (applied earlier by populateSessionSelects()/populateFilters()) — don't let this
+      // older, per-page-only memory overwrite it. Filters with no global counterpart (just
+      // "Result" today) still restore exactly as before.
+      var gkey=GLOBAL_FILTER_ID_TO_KEY[id];
+      if(gkey&&(gkey in gf))return;
+      var el=document.getElementById(id);if(el)el.value=m[id];
+    });
   }catch(e){}
 }
 // Set of session ids matching the given "session type" filter's current value, or null when
@@ -7521,6 +7594,11 @@ async function renderSessionsList(){
   }).join('');
 }
 async function populateSessionSelects(restoreSessionId){
+  // Re-assert any globally-synced "Session type" value across every page's session-type
+  // select *before* it's read below to decide which sessions belong in each page's Session
+  // dropdown — otherwise a page that hasn't caught up yet would filter against its own stale
+  // value and end up with a session list that doesn't match the type shown in the dropdown.
+  applyGlobalFilterGroup('sessiontype');
   var sessions=await dbGetAllCached('sessions');
   sessions.sort(function(a,b){return new Date(b.startDate)-new Date(a.startDate)});
   // Non-archived sessions only for trade form / filters
@@ -7659,6 +7737,10 @@ async function populateSessionSelects(restoreSessionId){
   // Calculator backtest session select
   var cbF=document.getElementById('calc-backtest-session');
   if(cbF){var cbv=cbF.value;cbF.innerHTML='<option value="">— select session —</option>'+activeSessions.filter(function(s){return !s.isDemo;}).map(function(s){return'<option value="'+s.id+'">'+escHtml(s.name)+'</option>'}).join('');cbF.value=cbv;}
+  // Re-assert any globally-synced "Session type" / "Session" filter value across every page's
+  // selects now that their option lists have just been rebuilt above.
+  applyGlobalFilterGroup('sessiontype');
+  applyGlobalFilterGroup('session');
   // Keep the collapsed filter headers' session summary text in sync with the selects above.
   updateFilterSessionSummary('dash-session-filter','dash-filter-summary','dash-skipped-filter');
   updateFilterSessionSummary('trd-session-filter','trd-filter-summary','trd-skipped-filter');
@@ -9861,6 +9943,9 @@ async function populateFilters(){
   if(dpf){var dpv=dpf.value;dpf.innerHTML='<option value="">All pairs</option>'+pairs.map(function(p){return'<option value="'+p+'">'+p+'</option>'}).join('');dpf.value=dpv;}
   if(dsf){var dsv=dsf.value;dsf.innerHTML='<option value="">All strategies</option>'+strats.map(function(s){return'<option value="'+s+'">'+s+'</option>'}).join('');dsf.value=dsv;}
   if(datf){var datv=datf.value;datf.innerHTML='<option value="">All asset types</option>'+assetTypes.map(function(a){return'<option value="'+escHtml(a)+'">'+escHtml(a)+'</option>'}).join('');datf.value=datv;}
+  // Re-assert any globally-synced pair/strategy/asset-type filter value now that these
+  // option lists have just been rebuilt above.
+  applyGlobalFilterGroup('pair');applyGlobalFilterGroup('strategy');applyGlobalFilterGroup('assettype');
   updateHistChips();
 }
 // ══ Detail modal ══════════════════════════════════
@@ -12634,6 +12719,9 @@ function resetTrdFilters(){
   ['trd-session-filter','trd-pair-filter','trd-direction-filter','trd-error-filter'].forEach(function(id){var el=document.getElementById(id);if(el)el.selectedIndex=0;});
   var tst=document.getElementById('trd-sessiontype-filter');if(tst){tst.value='backtest';saveSessionTypeFilterPref('trd-sessiontype-filter');}
   var tsk=document.getElementById('trd-skipped-filter');if(tsk)tsk.value='taken';
+  // These filters are also synced across pages — forget the synced values too, or the next
+  // repopulate below would just reapply them and undo this reset.
+  clearGlobalFilterKeys(['sessiontype','session','pair','direction','error','tradetype']);
   _dashDemoMode=false;
   _histDemoMode=false;
   _syncDemoButtons(false);
@@ -12650,6 +12738,7 @@ async function populateTrdFilters(){
   // active session created first) — not touched here to avoid clobbering that default.
   var pf=document.getElementById('trd-pair-filter');
   if(pf){var pv=pf.value;pf.innerHTML='<option value="">All pairs</option>'+pairs.map(function(p){return'<option value="'+escHtml(p)+'">'+escHtml(p)+'</option>'}).join('');pf.value=pv;}
+  applyGlobalFilterGroup('pair');
 }
 function toggleEdgFilters(){
   var body=document.getElementById('edg-filter-body');
@@ -12670,6 +12759,9 @@ function resetEdgFilters(){
   ['edg-session-filter','edg-pair-filter','edg-direction-filter','edg-error-filter'].forEach(function(id){var el=document.getElementById(id);if(el)el.selectedIndex=0;});
   var tst=document.getElementById('edg-sessiontype-filter');if(tst){tst.value='backtest';saveSessionTypeFilterPref('edg-sessiontype-filter');}
   var tsk=document.getElementById('edg-skipped-filter');if(tsk)tsk.value='taken';
+  // These filters are also synced across pages — forget the synced values too, or the next
+  // repopulate below would just reapply them and undo this reset.
+  clearGlobalFilterKeys(['sessiontype','session','pair','direction','error','tradetype']);
   _dashDemoMode=false;
   _histDemoMode=false;
   _syncDemoButtons(false);
@@ -12684,6 +12776,7 @@ async function populateEdgFilters(){
   var pairs=[...new Set(scoped.map(function(t){return t.pair}).filter(Boolean))].sort();
   var pf=document.getElementById('edg-pair-filter');
   if(pf){var pv=pf.value;pf.innerHTML='<option value="">All pairs</option>'+pairs.map(function(p){return'<option value="'+escHtml(p)+'">'+escHtml(p)+'</option>'}).join('');pf.value=pv;}
+  applyGlobalFilterGroup('pair');
 }
 function toggleCalFilters(){
   var body=document.getElementById('cal-filter-body');
@@ -13006,6 +13099,10 @@ openDB().then(async function(){
   await populateSessionSelects();
   await populateFilters();
   restoreHistFilterPrefs();
+  // Session type/session/pair/strategy/asset type were already re-asserted by the calls
+  // above; this final pass covers the remaining synced filters (direction/trade type/error
+  // type), whose option lists are static in the HTML and never go through a populate step.
+  applyGlobalFilters();
   await loadSetupRatingsCache();
   await loadClAllItemsCache();
   await renderChecklist();
@@ -16191,6 +16288,10 @@ async function calJumpToMostRecent(){
 async function calPopulateSessionFilter(){
   var sel=document.getElementById('cal-session-filter');
   if(!sel)return;
+  // Re-assert any globally-synced "Session type" value before reading it below — this
+  // function runs independently of populateSessionSelects() when the Calendar page is
+  // entered directly, so it needs its own sync point too.
+  applyGlobalFilterGroup('sessiontype');
   var sessions=await dbGetAll('sessions');
   var demoOn=!!_dashDemoMode;
   sessions=sessions.filter(function(s){return !s.archived&&(demoOn?!!s.isDemo:!s.isDemo);});
@@ -16209,6 +16310,9 @@ async function calPopulateSessionFilter(){
     var active=sessions.find(function(s){return s.startDate<=today&&(!s.endDate||s.endDate>=today);});
     sel.value=active?active.id:(sessions[0]?sessions[0].id:'');
   }
+  // Re-assert a globally-synced "Session" value now that the option list has just been
+  // rebuilt above — takes priority over the auto-selected default right above.
+  applyGlobalFilterGroup('session');
   updateFilterSessionSummary('cal-session-filter','cal-filter-summary','cal-skipped-filter');
 }
 // ── Main render entry ─────────────────────────────────────
