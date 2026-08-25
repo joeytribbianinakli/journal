@@ -700,6 +700,13 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .reviewed-toggle-btn.reviewed{color:var(--green);border-color:var(--green)}
 .reviewed-toggle-btn.reviewed:hover{opacity:.85;transform:scale(1.1)}
 .reviewed-toggle-btn svg{width:15px;height:15px}
+/* The "mark reviewed" button in the detail-modal header carries an inline
+   border/radius so it lines up square with its sibling icon buttons (star, expand),
+   which otherwise silently wins over the .reviewed class above and left the on/off
+   state showing only a faint icon-colour change. Force the green/gray state through
+   with !important so it reads clearly, same as the circular version on the history page. */
+#dm-reviewed-btn.reviewed{background:rgba(52,201,122,.14)!important;border-color:var(--green)!important;color:var(--green)!important}
+#dm-reviewed-btn:not(.reviewed){background:none!important;border-color:var(--border)!important;color:var(--text3)!important}
 /* Trade Review mode toggle button (in the detail-modal header) — mirrors the
    star/reviewed toggle buttons visually so it fits the same header cluster. */
 .dm-review-btn{background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;color:var(--text2);transition:all .12s;font-family:inherit}
