@@ -519,7 +519,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
      height to hand down via flex:1, so the focus-view stage gets an explicit height
      here instead — otherwise the enlarged image would have nowhere defined to size into. */
   .dm-focus-view{height:auto}
-  .dm-focus-stage{height:52vh;flex:none}
+  .dm-focus-stage-wrap{height:52vh;flex:none}
 }
 /* Screenshots panel — single-image "focus" view. Lets the trader click a thumbnail
    to see it large in the same right-hand panel (trade info on the left stays visible
@@ -538,13 +538,25 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .dm-focus-zoom-pct{font-size:10px;font-weight:700;color:var(--text3);min-width:34px;text-align:center;font-family:'DM Mono',monospace}
 .dm-focus-expand{background:var(--bg3);border:1px solid var(--border);color:var(--text2);width:26px;height:26px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:background .12s,color .12s}
 .dm-focus-expand:hover{background:var(--bg4);color:var(--text)}
-.dm-focus-stage{flex:1;min-height:280px;overflow:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3);display:flex}
+.dm-focus-stage-wrap{position:relative;flex:1;min-height:280px;display:flex}
+.dm-focus-stage{flex:1;min-width:0;overflow:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3);display:flex}
 .dm-focus-stage:not(.zoomed){align-items:center;justify-content:center}
 .dm-focus-stage.zoomed{cursor:grab;align-items:flex-start;justify-content:flex-start}
 .dm-focus-stage.zoomed.grabbing{cursor:grabbing}
 .dm-focus-stage img{max-width:100%;max-height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none}
 .dm-focus-stage.zoomed img{max-width:none;max-height:none}
-.dm-focus-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px}
+/* Side arrows: siblings of the scrollable/zoomable stage (positioned against the
+   outer wrap, not the stage itself) so they stay pinned to the panel edges and never
+   drift when the image is zoomed or panned. A translucent dark pill + white icon keeps
+   them readable over both light and dark chart screenshots; faint by default, fuller
+   on hover so they don't fight for attention while looking at the chart. */
+.dm-focus-side-nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(10,12,18,.62);border:1px solid rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.75;transition:opacity .15s,background .12s,transform .12s;z-index:4}
+.dm-focus-side-nav svg{stroke:currentColor;fill:none}
+.dm-focus-side-nav:hover{opacity:1;background:rgba(10,12,18,.85);transform:translateY(-50%) scale(1.08)}
+.dm-focus-side-nav:disabled{display:none}
+.dm-focus-side-prev{left:10px}
+.dm-focus-side-next{right:10px}
+.dm-focus-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
 .dm-focus-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.04em;text-transform:uppercase}
 .dm-focus-nav{display:flex;align-items:center;gap:6px}
 .dm-focus-nav button{background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:600;font-family:inherit;padding:5px 9px;border-radius:var(--radius);cursor:pointer;transition:background .12s,color .12s}
@@ -553,6 +565,20 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .dm-focus-counter{font-size:10px;font-weight:600;color:var(--text3);font-family:'DM Mono',monospace}
 /* Small affordance so it's clear a thumbnail can be clicked to focus it */
 .detail-panel-right .img-thumb{cursor:zoom-in}
+/* ── Trade Review mode: expands the SAME detail modal (data + screenshots panel,
+   focus view, resizer, prev/next — all untouched) to fill the entire viewport
+   instead of a capped popup. Since the overlay is already position:fixed;inset:0,
+   making it opaque and edge-to-edge is enough to cover the sidebar/topbar — no
+   separate page or duplicated markup needed. Toggled via the expand button in the
+   modal header. Placed after the base detail-modal rules so it wins on source
+   order at equal specificity. */
+.detail-overlay.review-mode{padding:0;align-items:stretch;background:var(--bg)}
+.detail-overlay.review-mode .detail-modal{max-width:none;width:100vw;height:100vh;border-radius:0;display:flex;flex-direction:column}
+.detail-overlay.review-mode .detail-modal-header{flex-shrink:0}
+.detail-overlay.review-mode .detail-modal-body{flex:1;min-height:0;max-height:none;height:auto;padding:0}
+.detail-overlay.review-mode .detail-panels{height:100%}
+.detail-overlay.review-mode .detail-panel-left{padding:28px 32px}
+.detail-overlay.review-mode .detail-panel-right{padding:22px}
 .detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
 .di-label{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
 .di-val{font-size:12px;font-weight:500}
@@ -674,6 +700,12 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .reviewed-toggle-btn.reviewed{color:var(--green);border-color:var(--green)}
 .reviewed-toggle-btn.reviewed:hover{opacity:.85;transform:scale(1.1)}
 .reviewed-toggle-btn svg{width:15px;height:15px}
+/* Trade Review mode toggle button (in the detail-modal header) — mirrors the
+   star/reviewed toggle buttons visually so it fits the same header cluster. */
+.dm-review-btn{background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:6px;display:inline-flex;align-items:center;justify-content:center;color:var(--text2);transition:all .12s;font-family:inherit}
+.dm-review-btn:hover{color:var(--accent);border-color:var(--accent)}
+.dm-review-btn.active{color:var(--accent);border-color:var(--accent);background:rgba(77,127,255,.1)}
+.dm-review-btn svg{width:15px;height:15px}
 .edit-banner{background:rgba(77,127,255,.06);border:1px solid rgba(77,127,255,.2);border-radius:var(--radius);padding:8px 12px;margin-bottom:14px;font-size:12px;color:var(--accent);display:none;align-items:center;justify-content:space-between}
 .edit-banner.visible{display:flex}
 .section-label{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
@@ -4810,6 +4842,7 @@ document.addEventListener('DOMContentLoaded',function(){
       <div style="display:flex;gap:7px;align-items:center">
         <button class="btn btn-ghost btn-sm btn-icon" id="dm-prev-btn" title="Previous trade" onclick="dmNav(-1)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
         <button class="btn btn-ghost btn-sm btn-icon" id="dm-next-btn" title="Next trade" onclick="dmNav(1)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+        <button class="dm-review-btn" id="dm-review-toggle-btn" title="Trade Review (full screen)" onclick="toggleReviewMode()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H3v5"/><path d="M16 3h5v5"/><path d="M3 16v5h5"/><path d="M21 16v5h-5"/></svg></button>
         <button class="star-toggle-btn" id="dm-star-btn" title="Star trade" style="border:1px solid var(--border);border-radius:6px;padding:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
         <button class="reviewed-toggle-btn" id="dm-reviewed-btn" title="Mark reviewed" style="border:1px solid var(--border);border-radius:6px;padding:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
         <button class="btn btn-ghost btn-sm" id="dm-edit-btn">Edit</button>
@@ -10280,8 +10313,8 @@ async function openDetail(id,opts){
   var dmModalEl=document.getElementById('detail-modal');
   if(screenshotsPanelHtml){
     dmModalEl.classList.add('has-images');
-    var _savedPanelW=parseInt(localStorage.getItem('tj-detail-panel-w'),10);
-    if(!_savedPanelW||isNaN(_savedPanelW))_savedPanelW=360;
+    var _savedPanelW=parseInt(localStorage.getItem(_dmReviewPanelWidthKey()),10);
+    if(!_savedPanelW||isNaN(_savedPanelW))_savedPanelW=_dmReviewDefaultPanelW();
     document.getElementById('dm-body').innerHTML=
       '<div class="detail-panels">'
       +'<div class="detail-panel-left">'+leftHtml+'</div>'
@@ -10299,7 +10332,6 @@ async function openDetail(id,opts){
       +'</div>'
       +'<button class="dm-focus-expand" id="dm-focus-expand" title="Open fullscreen">\u2922</button>'
       +'</div>'
-      +'<div class="dm-focus-stage" id="dm-focus-stage"><img id="dm-focus-img" src="" draggable="false" ondblclick="openLightboxAt(_dmFocusIdx)" title="Double-click for full-screen"></div>'
       +'<div class="dm-focus-meta">'
       +'<span class="dm-focus-label" id="dm-focus-label"></span>'
       +'<div class="dm-focus-nav">'
@@ -10307,6 +10339,13 @@ async function openDetail(id,opts){
       +'<span class="dm-focus-counter" id="dm-focus-counter"></span>'
       +'<button id="dm-focus-next" onclick="dmFocusNav(1)">Next \u203a</button>'
       +'</div></div>'
+      +'<div class="dm-focus-stage-wrap" id="dm-focus-stage-wrap">'
+      +'<div class="dm-focus-stage" id="dm-focus-stage">'
+      +'<img id="dm-focus-img" src="" draggable="false" ondblclick="openLightboxAt(_dmFocusIdx)" title="Double-click for full-screen">'
+      +'</div>'
+      +'<button class="dm-focus-side-nav dm-focus-side-prev" id="dm-focus-side-prev" onclick="dmFocusNav(-1)" title="Previous"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>'
+      +'<button class="dm-focus-side-nav dm-focus-side-next" id="dm-focus-side-next" onclick="dmFocusNav(1)" title="Next"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>'
+      +'</div>'
       +'</div>'
       +'</div>'
       +'</div>'
@@ -10317,6 +10356,8 @@ async function openDetail(id,opts){
     document.getElementById('dm-body').innerHTML=leftHtml;
   }
   document.getElementById('detail-overlay').classList.add('open');
+  document.getElementById('detail-overlay').classList.toggle('review-mode',_dmReviewModeActive);
+  _dmSyncReviewBtn(_dmReviewModeActive);
   // Async: compute fees from current asset settings and inject into detail panel
   computeTradeFeesAsync(trade).then(function(feeResult){
     var inj = document.getElementById('dm-fees-inject');
@@ -10332,7 +10373,17 @@ async function openDetail(id,opts){
       +'<div class="detail-item"><div class="di-label">Net P/L ($)</div><div class="di-val mono" style="color:'+netColor+'">'+(netPL>=0?'+':'')+netPL.toFixed(2)+'</div></div>';
   });
 }
-function closeDetail(e){if(e&&e.target!==document.getElementById('detail-overlay'))return;document.getElementById('detail-overlay').classList.remove('open');}
+function closeDetail(e){
+  if(e&&e.target!==document.getElementById('detail-overlay'))return;
+  var overlay=document.getElementById('detail-overlay');
+  overlay.classList.remove('open');
+  if(_dmReviewModeActive){
+    overlay.classList.remove('review-mode');
+    _dmReviewModeActive=false;
+    _dmSyncReviewBtn(false);
+    if(document.fullscreenElement&&document.exitFullscreen){document.exitFullscreen().catch(function(){});}
+  }
+}
 // Collapse/expand a screenshots category group in the detail modal's grid view.
 // Always starts expanded when a trade is opened; toggling only affects the current
 // view (not remembered across trades), so every trade you open shows all its
@@ -10364,8 +10415,9 @@ function _wireDetailPanelResizer(){
     document.body.style.userSelect='none';
   });
   resizer.addEventListener('dblclick',function(){
-    rightPanel.style.width='360px';
-    try{localStorage.setItem('tj-detail-panel-w','360');}catch(err){}
+    var resetW=_dmReviewDefaultPanelW();
+    rightPanel.style.width=resetW+'px';
+    try{localStorage.setItem(_dmReviewPanelWidthKey(),String(resetW));}catch(err){}
   });
   if(!_dmResizerWired){
     _dmResizerWired=true;
@@ -10384,10 +10436,65 @@ function _wireDetailPanelResizer(){
       if(!s)return;
       s.resizer.classList.remove('dragging');
       document.body.style.userSelect='';
-      try{localStorage.setItem('tj-detail-panel-w',Math.round(s.rightPanel.getBoundingClientRect().width));}catch(err){}
+      try{localStorage.setItem(_dmReviewPanelWidthKey(),String(Math.round(s.rightPanel.getBoundingClientRect().width)));}catch(err){}
       _dmDragState=null;
     });
   }
+}
+// ══ Detail modal — Trade Review mode (full screen) ═══════════════════════
+// Expands the SAME detail modal that History/Calendar already open into a
+// full-viewport, distraction-free layout — no separate page, no duplicated
+// data/screenshot-rendering logic. openDetail() (above) reads _dmReviewModeActive
+// to pick a review-specific panel width/default and to keep the overlay's
+// review-mode class in sync across dmNav() prev/next, so cycling through trades
+// while reviewing stays full-screen automatically.
+var _dmReviewModeActive=false;
+var _dmReviewIconExpand='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H3v5"/><path d="M16 3h5v5"/><path d="M3 16v5h5"/><path d="M21 16v5h-5"/></svg>';
+var _dmReviewIconCollapse='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5"/><path d="M16 3h5v5"/><path d="M21 16v5h-5"/><path d="M8 21H3v-5"/></svg>';
+function _dmSyncReviewBtn(active){
+  var btn=document.getElementById('dm-review-toggle-btn');
+  if(!btn)return;
+  btn.innerHTML=active?_dmReviewIconCollapse:_dmReviewIconExpand;
+  btn.title=active?'Exit Trade Review':'Trade Review (full screen)';
+  btn.classList.toggle('active',!!active);
+}
+// Review mode remembers its own (larger) screenshots-panel width separately from
+// the popup modal's, so toggling doesn't fight over one saved size.
+function _dmReviewPanelWidthKey(){return _dmReviewModeActive?'tj-review-panel-w':'tj-detail-panel-w';}
+function _dmReviewDefaultPanelW(){return _dmReviewModeActive?Math.round(Math.min(900,Math.max(480,window.innerWidth*0.55))):360;}
+// Toggled by the expand button in the modal header. Purely a layout change on the
+// already-open modal — flips the full-screen CSS class, re-applies that mode's
+// panel width, and (best-effort) asks the browser for true native fullscreen too.
+function toggleReviewMode(){
+  var overlay=document.getElementById('detail-overlay');
+  if(!overlay||!overlay.classList.contains('open'))return;
+  _dmReviewModeActive=!overlay.classList.contains('review-mode');
+  overlay.classList.toggle('review-mode',_dmReviewModeActive);
+  _dmSyncReviewBtn(_dmReviewModeActive);
+  var rightPanel=document.getElementById('dm-panel-right');
+  if(rightPanel){
+    var saved=parseInt(localStorage.getItem(_dmReviewPanelWidthKey()),10);
+    rightPanel.style.width=(saved&&!isNaN(saved)?saved:_dmReviewDefaultPanelW())+'px';
+  }
+  if(_dmReviewModeActive){
+    if(document.documentElement.requestFullscreen){document.documentElement.requestFullscreen().catch(function(){});}
+  }else if(document.fullscreenElement&&document.exitFullscreen){
+    document.exitFullscreen().catch(function(){});
+  }
+}
+// If native fullscreen is exited by some other means (browser Esc handling, F11,
+// browser chrome button) while reviewing, drop the in-app full-screen layout back
+// to the normal popup too — but leave the trade detail modal itself open.
+if(!window._tjReviewFullscreenListenerRegistered){
+  window._tjReviewFullscreenListenerRegistered=true;
+  document.addEventListener('fullscreenchange',function(){
+    if(!document.fullscreenElement&&_dmReviewModeActive){
+      var overlay=document.getElementById('detail-overlay');
+      if(overlay)overlay.classList.remove('review-mode');
+      _dmReviewModeActive=false;
+      _dmSyncReviewBtn(false);
+    }
+  });
 }
 // ══ Lightbox ══════════════════════════════════════
 // _dmImgList holds every screenshot shown in the currently-open trade detail modal (in
@@ -10484,12 +10591,16 @@ function _dmFocusRender(){
   var counter=document.getElementById('dm-focus-counter');
   var prevBtn=document.getElementById('dm-focus-prev');
   var nextBtn=document.getElementById('dm-focus-next');
+  var sidePrevBtn=document.getElementById('dm-focus-side-prev');
+  var sideNextBtn=document.getElementById('dm-focus-side-next');
   if(img)img.src=_dmImgList[_dmFocusIdx];
   if(label)label.textContent=(_dmImgLabels&&_dmImgLabels[_dmFocusIdx])||'';
   if(counter)counter.textContent=(_dmFocusIdx+1)+' / '+_dmImgList.length;
   var multi=_dmImgList.length>1;
   if(prevBtn)prevBtn.disabled=!multi;
   if(nextBtn)nextBtn.disabled=!multi;
+  if(sidePrevBtn)sidePrevBtn.disabled=!multi;
+  if(sideNextBtn)sideNextBtn.disabled=!multi;
   var stage=document.getElementById('dm-focus-stage');
   if(stage){stage.scrollLeft=0;stage.scrollTop=0;}
   _dmFocusApplyZoom();
@@ -13263,7 +13374,10 @@ if(!window._tjKeydownListenerRegistered){
   // Close in priority order: lightbox → screenshots focus view → trade detail modal → other modals.
   if(document.getElementById('lightbox').classList.contains('open')){closeLightbox();return;}
   if(_dmFocusOpen){dmFocusBack();return;}
-  if(document.getElementById('detail-overlay').classList.contains('open')){closeDetail();return;}
+  if(document.getElementById('detail-overlay').classList.contains('open')){
+    if(_dmReviewModeActive){toggleReviewMode();return;}
+    closeDetail();return;
+  }
   if(document.getElementById('retro-view-overlay').classList.contains('open')){closeRetroView();return;}
   var modalIds=['theme-modal','col-manager-modal','session-modal','strategy-modal','asset-modal'];
   for(var i=0;i<modalIds.length;i++){
