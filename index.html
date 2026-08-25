@@ -2673,11 +2673,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         <div style="display:flex;justify-content:space-between;gap:8px;padding-top:10px;border-top:1px solid var(--border)">
           <button class="btn btn-ghost" onclick="switchTab(0,document.querySelector('.form-tab:nth-child(1)'))">← Back</button>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-ghost btn-sm" onclick="switchTab(3,document.querySelector('.form-tab:nth-child(4)'));document.getElementById('tab-3').scrollIntoView({behavior:'smooth',block:'start'})" title="Jump to Save Trade">
+            <button class="btn btn-ghost btn-sm" onclick="clProceedGate(function(){switchTab(3,document.querySelector('.form-tab:nth-child(4)'));document.getElementById('tab-3').scrollIntoView({behavior:'smooth',block:'start'});})" title="Jump to Save Trade">
               <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
               Jump to Save ↓
             </button>
-            <button class="btn" onclick="switchTab(2,document.querySelector('.form-tab:nth-child(3)'))">Next: Analysis →</button>
+            <button class="btn" onclick="clProceedGate(function(){switchTab(2,document.querySelector('.form-tab:nth-child(3)'));})">Next: Analysis →</button>
           </div>
         </div>
       </div>
@@ -2972,6 +2972,13 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           Unsaved changes — will be discarded if you leave this page
         </div>
         <div id="sr-editor-area"></div>
+        <div id="sr-warn-row" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);display:none;align-items:center;gap:14px;flex-wrap:wrap">
+          <div style="flex:1;min-width:220px">
+            <div style="font-size:12px;font-weight:600;color:var(--text)">Low-rating confirmation</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">Ask before continuing past the Checklist step in Log Trade if the setup rating is at or below:</div>
+          </div>
+          <select id="sr-warn-select" onchange="srWarnTierChanged()" style="min-width:190px"></select>
+        </div>
       </div>
     </div>
     <!-- HISTORY -->
@@ -5146,6 +5153,25 @@ document.addEventListener('DOMContentLoaded',function(){
     </div>
   </div>
 </div>
+<!-- Low setup-rating confirmation modal (replaces native confirm() for clProceedGate) -->
+<div class="modal-overlay" id="sr-warn-modal" onclick="closeSrWarnModal(false)">
+  <div class="modal-box" style="max-width:400px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <h3>Low setup rating</h3>
+      </div>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="closeSrWarnModal(false)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div id="sr-warn-modal-msg" style="font-size:12.5px;color:var(--text2);line-height:1.6"></div>
+      <div style="display:flex;gap:8px;margin-top:18px">
+        <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="closeSrWarnModal(false)">Cancel</button>
+        <button class="btn btn-danger" style="flex:1;justify-content:center;border:1px solid rgba(232,85,85,.35);background:rgba(232,85,85,.08)" onclick="closeSrWarnModal(true)">Continue anyway</button>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- Asset Manager modal -->
 <div class="modal-overlay" id="asset-modal" onclick="closeAssetModal()">
   <div class="modal-box" style="max-width:780px;display:flex;flex-direction:column;max-height:88vh" onclick="event.stopPropagation()">
@@ -6173,6 +6199,55 @@ function updateClStatus(){
   }
 }
 function getChecklist_state(){var cl={};document.querySelectorAll('.cl').forEach(function(c){cl[c.dataset.k]=c.checked?'yes':'no'});return cl;}
+// ── Log Trade: low-rating confirmation gate ─────────────────────────
+// Wraps the Log Trade form's Checklist tab "Next: Analysis" / "Jump to Save" buttons,
+// and the standalone pre-trade Checklist page's "Proceed to Calculator" button. If a
+// confirmation threshold is configured (Checklist settings → Setup rating criteria),
+// scores the checklist exactly as it stands on screen and — only when that result is
+// at or below the configured tier (including "no tier met") — asks for confirmation
+// before running cb(). Any better-than-threshold result, or no threshold configured,
+// runs cb() immediately with no interruption.
+// getStateFn lets callers supply the right checkbox reader for their page's DOM shape
+// (defaults to getChecklist_state() for the Log Trade form's .cl checkboxes; the
+// pre-trade checklist page passes preClGetState for its .pre-cl-item checkboxes).
+function clProceedGate(cb,getStateFn){
+  if(!_setupRatingWarnTier){cb();return;}
+  var items=_clAllItemsCache||[];
+  var tiers=_setupRatingsCache||DEFAULT_SETUP_RATINGS;
+  if(!items.length||!tiers.length){cb();return;} // nothing to score against
+  var info=computeSetupScoreInfo((getStateFn||getChecklist_state)(),items);
+  // Rank tiers by list position (best tier = index 0); "no tier met" ranks worse than
+  // every configured tier, hence the tiers.length fallback on both sides below.
+  var achievedRank=info.name?tiers.findIndex(function(t){return t.name===info.name;}):tiers.length;
+  var thresholdRank=(_setupRatingWarnTier==='__UNRATED__')?tiers.length:tiers.findIndex(function(t){return t.name===_setupRatingWarnTier;});
+  if(thresholdRank===-1){cb();return;} // configured tier was since renamed/deleted — don't block
+  if(achievedRank<thresholdRank){cb();return;} // strictly better than the threshold
+  var achievedLabel=info.name?formatSetupScoreLabel(info):'No tier met';
+  var thresholdLabel=(_setupRatingWarnTier==='__UNRATED__')?'no tier met':_setupRatingWarnTier;
+  openSrWarnModal(achievedLabel,thresholdLabel,info.color,cb);
+}
+// Backs clProceedGate's confirmation step. Styled modal (reuses the app's standard
+// .modal-overlay/.modal-box) standing in for what used to be a native confirm() popup.
+// Stores cb on _srWarnModalCb until the user answers; closeSrWarnModal(true) runs it,
+// closeSrWarnModal(false) (Cancel, ✕, or backdrop click) discards it and does nothing —
+// same semantics as confirm() returning false.
+var _srWarnModalCb=null;
+function openSrWarnModal(achievedLabel,thresholdLabel,achievedColor,cb){
+  _srWarnModalCb=cb;
+  var msgEl=document.getElementById('sr-warn-modal-msg');
+  if(msgEl){
+    msgEl.innerHTML='This setup is rated <b style="color:'+(achievedColor||'var(--text)')+'">'+escHtml(achievedLabel)+'</b> — at or below your confirmation threshold (<b>'+escHtml(thresholdLabel)+'</b>).<br><br>Continue anyway?';
+  }
+  var m=document.getElementById('sr-warn-modal');
+  if(m)m.classList.add('open');
+}
+function closeSrWarnModal(proceed){
+  var m=document.getElementById('sr-warn-modal');
+  if(m)m.classList.remove('open');
+  var cb=_srWarnModalCb;
+  _srWarnModalCb=null;
+  if(proceed&&cb)cb();
+}
 function setChecklist_state(cl){document.querySelectorAll('.cl').forEach(function(c){var v=cl&&cl[c.dataset.k];c.checked=v==='yes'||v===true||v===1});updateClStatus();}
 // A trade's checklist state (t.checklist) is stored as an object {itemText:'yes'/'no', ...}
 // — the exact shape getChecklist_state()/setChecklist_state() above read and write — NOT an
@@ -6261,12 +6336,20 @@ async function getSetupRatings(){
 // these caches directly instead of awaiting getSetupRatings()/getChecklist() each time.
 var _setupRatingsCache=null;
 var _clAllItemsCache=null;
+// Tier name whose rating (or below) should trigger the Log Trade "low-rating confirmation"
+// popup before leaving the Checklist step — see clProceedGate(). '' = off/disabled,
+// '__UNRATED__' = the "no tier met" sentinel (below every configured tier).
+var _setupRatingWarnTier='';
 // itemText -> section name, rebuilt alongside _clAllItemsCache every time that cache is
 // loaded. Kept separate because _clAllItemsCache deliberately flattens sections away (see
 // its own comment below) — this sidecar map lets the Checklist Item Breakdown analytics
 // (below) label each item with where it lives without re-fetching/re-flattening itself.
 var _clSectionByText=null;
-async function loadSetupRatingsCache(){_setupRatingsCache=await getSetupRatings();return _setupRatingsCache;}
+async function loadSetupRatingsCache(){
+  _setupRatingsCache=await getSetupRatings();
+  _setupRatingWarnTier=await getSetting('setupRatingWarnTier','');
+  return _setupRatingsCache;
+}
 async function loadClAllItemsCache(){
   var cl=await getChecklist();
   var items=[];
@@ -6326,6 +6409,11 @@ function formatSetupScoreLabel(info){
 // an uncommitted clone, mutated by every add/remove/move/toggle and re-rendered from,
 // with saveSetupRatingsEditor() the only place that commits it to settings.
 var _srWorkingCopy=null;
+// In-session draft of the "low-rating confirmation" threshold (see _setupRatingWarnTier
+// above for the value shape). null = not yet loaded from settings into this editing
+// session; loaded once in renderSetupRatingsEditor() and discarded alongside the tier
+// working copy so an unsaved dropdown change doesn't leak past a page navigation.
+var _srWarnTierWorking=null;
 // Sums checklist item weights for the "Total possible weight" readout above the tier
 // list. Reads live from the Checklist editor's rendered <input class=cl-weight> boxes
 // when that editor is on screen, so it reflects unsaved weight edits immediately;
@@ -6351,15 +6439,50 @@ async function updateSrTotalWeightDisplay(){
   el.textContent=total;
 }
 function srMarkUnsaved(){var b=document.getElementById('sr-unsaved-banner');if(b)b.style.display='flex';}
-function srDiscardWorkingCopy(){_srWorkingCopy=null;var b=document.getElementById('sr-unsaved-banner');if(b)b.style.display='none';}
+function srDiscardWorkingCopy(){_srWorkingCopy=null;_srWarnTierWorking=null;var b=document.getElementById('sr-unsaved-banner');if(b)b.style.display='none';}
+// Rebuilds the "low-rating confirmation" dropdown from the current tier working copy
+// (so it stays in sync with in-progress add/remove/reorder edits) and restores whichever
+// tier _srWarnTierWorking points to by name, so reordering tiers doesn't silently change
+// what the threshold means. Hidden entirely when there are no tiers to threshold against.
+function renderSrWarnSelect(){
+  var row=document.getElementById('sr-warn-row');
+  var sel=document.getElementById('sr-warn-select');
+  if(!row||!sel)return;
+  if(!_srWorkingCopy||!_srWorkingCopy.length){row.style.display='none';return;}
+  row.style.display='flex';
+  var html='<option value="">Off — don\'t ask</option>';
+  _srWorkingCopy.forEach(function(tier,idx){
+    html+='<option value="idx:'+idx+'">'+escHtml(tier.name||('Tier '+(idx+1)))+'</option>';
+  });
+  html+='<option value="unrated">No tier met (unrated)</option>';
+  sel.innerHTML=html;
+  var val='';
+  if(_srWarnTierWorking==='__UNRATED__')val='unrated';
+  else if(_srWarnTierWorking){
+    var idx=_srWorkingCopy.findIndex(function(t){return t.name===_srWarnTierWorking;});
+    if(idx!==-1)val='idx:'+idx;
+  }
+  sel.value=val;
+}
+function srWarnTierChanged(){
+  var sel=document.getElementById('sr-warn-select');
+  if(!sel)return;
+  var v=sel.value;
+  if(v==='unrated')_srWarnTierWorking='__UNRATED__';
+  else if(v.indexOf('idx:')===0){var idx=parseInt(v.slice(4),10);_srWarnTierWorking=(_srWorkingCopy[idx]&&_srWorkingCopy[idx].name)||'';}
+  else _srWarnTierWorking='';
+  srMarkUnsaved();
+}
 async function renderSetupRatingsEditor(){
   if(!_srWorkingCopy){_srWorkingCopy=JSON.parse(JSON.stringify(await getSetupRatings()));}
   else{srMarkUnsaved();}
+  if(_srWarnTierWorking===null)_srWarnTierWorking=await getSetting('setupRatingWarnTier','');
   var el=document.getElementById('sr-editor-area');
   if(!el)return;
   if(!_srWorkingCopy.length){
     el.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px;border:1px dashed var(--border);border-radius:var(--radius)">No rating tiers yet. Click "+ Add tier" above to create one (e.g. A+, A, B+, B).</div>';
     updateSrTotalWeightDisplay();
+    renderSrWarnSelect();
     return;
   }
   var html='';
@@ -6383,6 +6506,7 @@ async function renderSetupRatingsEditor(){
   });
   el.innerHTML=html;
   updateSrTotalWeightDisplay();
+  renderSrWarnSelect();
 }
 // Live-updates a single tier's preview badge (name text + color) as the user types/picks,
 // without a full re-render — keeps focus in the input the user is actively editing.
@@ -6438,6 +6562,13 @@ async function saveSetupRatingsEditor(){
   _srWorkingCopy=null;
   await setSetting('setupRatings',ratings);
   _setupRatingsCache=ratings;
+  // Persist the low-rating confirmation threshold. If it pointed at a tier that got
+  // deleted/blanked out before saving, fall back to off rather than save a dangling name.
+  var warnTier=_srWarnTierWorking||'';
+  if(warnTier&&warnTier!=='__UNRATED__'&&!ratings.some(function(t){return t.name===warnTier;}))warnTier='';
+  await setSetting('setupRatingWarnTier',warnTier);
+  _setupRatingWarnTier=warnTier;
+  _srWarnTierWorking=null;
   srDiscardWorkingCopy();
   renderSetupRatingsEditor();
   if(typeof updateClStatus==='function')updateClStatus(); // refresh live badge if Log Trade checklist is on screen
@@ -14849,17 +14980,22 @@ function preClReset() {
   preClUpdateStatus();
 }
 function preClProceedToCalc() {
-  // Save the current checklist state so it can be applied to the log trade form later
-  _pendingChecklistState = preClGetState();
-  _flowActive = true;
-  flowUpdateStepIndicators();
-  // Show banner and set mode before nav() — nav() won't reset either since _flowActive is true
-  var calcBanner = document.getElementById('calc-flow-banner');
-  if(calcBanner) calcBanner.style.display = 'flex';
-  calcSetMode('backtest');
-  var calcNavBtn = document.querySelector('.nav-item[onclick*="nav(\'calculator\'"]');
-  nav('calculator', calcNavBtn);
-  toast('Checklist saved — proceed to size your position', 'ok');
+  // Gate on the low-rating confirmation (same threshold used by the Log Trade form's
+  // Checklist tab — see clProceedGate) before leaving this page. Pass preClGetState so
+  // it scores against THIS page's checkboxes (.pre-cl-item), not the Log Trade form's.
+  clProceedGate(function(){
+    // Save the current checklist state so it can be applied to the log trade form later
+    _pendingChecklistState = preClGetState();
+    _flowActive = true;
+    flowUpdateStepIndicators();
+    // Show banner and set mode before nav() — nav() won't reset either since _flowActive is true
+    var calcBanner = document.getElementById('calc-flow-banner');
+    if(calcBanner) calcBanner.style.display = 'flex';
+    calcSetMode('backtest');
+    var calcNavBtn = document.querySelector('.nav-item[onclick*="nav(\'calculator\'"]');
+    nav('calculator', calcNavBtn);
+    toast('Checklist saved — proceed to size your position', 'ok');
+  },preClGetState);
 }
 // Push the calculator's position size + prices onto the Log Trade form and navigate there.
 // Captures every value needed *before* nav() (which resets the calculator page), snapshots the
