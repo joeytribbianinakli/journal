@@ -511,15 +511,21 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .detail-panel-resizer:hover::before,.detail-panel-resizer.dragging::before{background:var(--accent)}
 .detail-panel-resizer:hover::after,.detail-panel-resizer.dragging::after{background:var(--accent)}
 @media(max-width:900px){
-  .detail-modal.has-images .detail-modal-body{height:auto;max-height:80vh;overflow-y:auto}
-  .detail-panels{flex-direction:column;height:auto}
-  .detail-panel-right{width:100%!important;border-left:none;border-top:1px solid var(--border)}
-  .detail-panel-resizer{display:none}
-  /* Below this width the panels stack and .detail-panel-right no longer has a fixed
-     height to hand down via flex:1, so the focus-view stage gets an explicit height
-     here instead — otherwise the enlarged image would have nowhere defined to size into. */
-  .dm-focus-view{height:auto}
-  .dm-focus-stage-wrap{height:52vh;flex:none}
+  .detail-modal.has-images .detail-modal-body{height:80vh;max-height:80vh;overflow:hidden}
+  .detail-panels{flex-direction:column;height:100%}
+  .detail-panel-left{flex:none;height:var(--dm-left-h,45%);min-height:110px;overflow-y:auto}
+  .detail-panel-right{flex:1;min-height:0;width:100%!important;border-left:none;border-top:1px solid var(--border)}
+  /* Resizer becomes a horizontal drag strip between the stacked panels instead of
+     being hidden — dragging it up/down reallocates height between the trade-info
+     panel (above) and the screenshots panel (below, which flexes to fill the rest). */
+  .detail-panel-resizer{width:100%;height:16px;cursor:row-resize}
+  .detail-panel-resizer::after{top:50%;bottom:auto;left:0;right:0;width:auto;height:1px;transform:translateY(-50%)}
+  .detail-panel-resizer::before{width:30px;height:3px}
+  /* Below this width the panels stack, but .detail-panel-right still has a real
+     flexed height (see above) to hand down via flex:1, so the focus-view stage
+     can size itself the same way it does on desktop. */
+  .dm-focus-view{height:100%}
+  .dm-focus-stage-wrap{height:auto;flex:1;min-height:160px}
 }
 /* Screenshots panel — single-image "focus" view. Lets the trader click a thumbnail
    to see it large in the same right-hand panel (trade info on the left stays visible
@@ -539,11 +545,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .dm-focus-expand{background:var(--bg3);border:1px solid var(--border);color:var(--text2);width:26px;height:26px;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:background .12s,color .12s}
 .dm-focus-expand:hover{background:var(--bg4);color:var(--text)}
 .dm-focus-stage-wrap{position:relative;flex:1;min-height:280px;display:flex}
-.dm-focus-stage{flex:1;min-width:0;overflow:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3);display:flex}
+.dm-focus-stage{flex:1;min-width:0;overflow:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3);display:flex;touch-action:none}
 .dm-focus-stage:not(.zoomed){align-items:center;justify-content:center}
 .dm-focus-stage.zoomed{cursor:grab;align-items:flex-start;justify-content:flex-start}
 .dm-focus-stage.zoomed.grabbing{cursor:grabbing}
-.dm-focus-stage img{max-width:100%;max-height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none}
+.dm-focus-stage img{max-width:100%;max-height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none;touch-action:none}
 .dm-focus-stage.zoomed img{max-width:none;max-height:none}
 /* Side arrows: siblings of the scrollable/zoomable stage (positioned against the
    outer wrap, not the stage itself) so they stay pinned to the panel edges and never
@@ -10453,9 +10459,10 @@ async function openDetail(id,opts){
     dmModalEl.classList.add('has-images');
     var _savedPanelW=parseInt(localStorage.getItem(_dmReviewPanelWidthKey()),10);
     if(!_savedPanelW||isNaN(_savedPanelW))_savedPanelW=_dmReviewDefaultPanelW();
+    var _savedPanelH=parseInt(localStorage.getItem(_dmReviewPanelHeightKey()),10);
     document.getElementById('dm-body').innerHTML=
       '<div class="detail-panels">'
-      +'<div class="detail-panel-left">'+leftHtml+'</div>'
+      +'<div class="detail-panel-left" id="dm-panel-left"'+((_savedPanelH&&!isNaN(_savedPanelH))?' style="--dm-left-h:'+_savedPanelH+'px"':'')+'>'+leftHtml+'</div>'
       +'<div class="detail-panel-resizer" id="dm-panel-resizer" title="Drag to resize panels"></div>'
       +'<div class="detail-panel-right" id="dm-panel-right" style="width:'+_savedPanelW+'px">'
       +'<div class="dm-panel-right-inner">'
@@ -10539,42 +10546,72 @@ function dmToggleSSGroup(groupEl){
 // elements are looked up fresh each time — but the window-level drag
 // listeners are attached exactly once (guarded by _dmResizerWired) to avoid
 // stacking duplicate handlers across repeated opens.
+// On desktop the resizer drags left/right, reallocating width between the two
+// side-by-side panels. Below 900px the panels stack top/bottom instead, so the
+// same handle drags up/down and reallocates height (trade-info panel's height is
+// the resizable one; the screenshots panel flexes to fill whatever's left).
 var _dmResizerWired=false;
-var _dmDragState=null; // {resizer, rightPanel, panelsEl, startX, startW}
+var _dmDragState=null; // {mode:'h'|'v', resizer, rightPanel|leftPanel, panelsEl, startX|startY, startW|startH}
+function _dmIsMobileLayout(){return window.matchMedia('(max-width:900px)').matches;}
 function _wireDetailPanelResizer(){
   var resizer=document.getElementById('dm-panel-resizer');
   var rightPanel=document.getElementById('dm-panel-right');
+  var leftPanel=document.getElementById('dm-panel-left');
   var panelsEl=resizer?resizer.parentElement:null;
-  if(!resizer||!rightPanel||!panelsEl)return;
+  if(!resizer||!rightPanel||!leftPanel||!panelsEl)return;
   var MIN_RIGHT=260,MIN_LEFT=280;
+  var MIN_TOP=110,MIN_BOTTOM=140;
   resizer.addEventListener('pointerdown',function(e){
-    _dmDragState={resizer:resizer,rightPanel:rightPanel,panelsEl:panelsEl,startX:e.clientX,startW:rightPanel.getBoundingClientRect().width,minRight:MIN_RIGHT,minLeft:MIN_LEFT};
+    if(_dmIsMobileLayout()){
+      _dmDragState={mode:'v',resizer:resizer,leftPanel:leftPanel,panelsEl:panelsEl,startY:e.clientY,startH:leftPanel.getBoundingClientRect().height,minTop:MIN_TOP,minBottom:MIN_BOTTOM};
+    }else{
+      _dmDragState={mode:'h',resizer:resizer,rightPanel:rightPanel,panelsEl:panelsEl,startX:e.clientX,startW:rightPanel.getBoundingClientRect().width,minRight:MIN_RIGHT,minLeft:MIN_LEFT};
+    }
     resizer.classList.add('dragging');
     document.body.style.userSelect='none';
   });
   resizer.addEventListener('dblclick',function(){
-    var resetW=_dmReviewDefaultPanelW();
-    rightPanel.style.width=resetW+'px';
-    try{localStorage.setItem(_dmReviewPanelWidthKey(),String(resetW));}catch(err){}
+    if(_dmIsMobileLayout()){
+      leftPanel.style.removeProperty('--dm-left-h');
+      try{localStorage.removeItem(_dmReviewPanelHeightKey());}catch(err){}
+    }else{
+      var resetW=_dmReviewDefaultPanelW();
+      rightPanel.style.width=resetW+'px';
+      try{localStorage.setItem(_dmReviewPanelWidthKey(),String(resetW));}catch(err){}
+    }
   });
   if(!_dmResizerWired){
     _dmResizerWired=true;
     window.addEventListener('pointermove',function(e){
       var s=_dmDragState;
       if(!s)return;
-      var dx=e.clientX-s.startX; // dragging left (negative dx) widens the right panel
-      var newW=s.startW-dx;
-      var maxRight=s.panelsEl.getBoundingClientRect().width-s.minLeft-s.resizer.getBoundingClientRect().width;
-      if(newW<s.minRight)newW=s.minRight;
-      if(newW>maxRight)newW=maxRight;
-      s.rightPanel.style.width=newW+'px';
+      if(s.mode==='v'){
+        var dy=e.clientY-s.startY; // dragging down grows the top (trade-info) panel
+        var newH=s.startH+dy;
+        var totalH=s.panelsEl.getBoundingClientRect().height;
+        var maxTop=totalH-s.minBottom-s.resizer.getBoundingClientRect().height;
+        if(newH<s.minTop)newH=s.minTop;
+        if(newH>maxTop)newH=maxTop;
+        s.leftPanel.style.setProperty('--dm-left-h',newH+'px');
+      }else{
+        var dx=e.clientX-s.startX; // dragging left (negative dx) widens the right panel
+        var newW=s.startW-dx;
+        var maxRight=s.panelsEl.getBoundingClientRect().width-s.minLeft-s.resizer.getBoundingClientRect().width;
+        if(newW<s.minRight)newW=s.minRight;
+        if(newW>maxRight)newW=maxRight;
+        s.rightPanel.style.width=newW+'px';
+      }
     });
     window.addEventListener('pointerup',function(){
       var s=_dmDragState;
       if(!s)return;
       s.resizer.classList.remove('dragging');
       document.body.style.userSelect='';
-      try{localStorage.setItem(_dmReviewPanelWidthKey(),String(Math.round(s.rightPanel.getBoundingClientRect().width)));}catch(err){}
+      if(s.mode==='v'){
+        try{localStorage.setItem(_dmReviewPanelHeightKey(),String(Math.round(s.leftPanel.getBoundingClientRect().height)));}catch(err){}
+      }else{
+        try{localStorage.setItem(_dmReviewPanelWidthKey(),String(Math.round(s.rightPanel.getBoundingClientRect().width)));}catch(err){}
+      }
       _dmDragState=null;
     });
   }
@@ -10600,6 +10637,9 @@ function _dmSyncReviewBtn(active){
 // the popup modal's, so toggling doesn't fight over one saved size.
 function _dmReviewPanelWidthKey(){return _dmReviewModeActive?'tj-review-panel-w':'tj-detail-panel-w';}
 function _dmReviewDefaultPanelW(){return _dmReviewModeActive?Math.round(Math.min(900,Math.max(480,window.innerWidth*0.55))):360;}
+// Mirrors the width key/default above, but for the mobile stacked-layout's
+// draggable top-panel height (see _dmIsMobileLayout branch in the resizer).
+function _dmReviewPanelHeightKey(){return _dmReviewModeActive?'tj-review-panel-h':'tj-detail-panel-h';}
 // Toggled by the expand button in the modal header. Purely a layout change on the
 // already-open modal — flips the full-screen CSS class, re-applies that mode's
 // panel width, and (best-effort) asks the browser for true native fullscreen too.
@@ -10613,6 +10653,12 @@ function toggleReviewMode(){
   if(rightPanel){
     var saved=parseInt(localStorage.getItem(_dmReviewPanelWidthKey()),10);
     rightPanel.style.width=(saved&&!isNaN(saved)?saved:_dmReviewDefaultPanelW())+'px';
+  }
+  var leftPanel=document.getElementById('dm-panel-left');
+  if(leftPanel){
+    var savedH=parseInt(localStorage.getItem(_dmReviewPanelHeightKey()),10);
+    if(savedH&&!isNaN(savedH))leftPanel.style.setProperty('--dm-left-h',savedH+'px');
+    else leftPanel.style.removeProperty('--dm-left-h');
   }
   if(_dmReviewModeActive){
     if(document.documentElement.requestFullscreen){document.documentElement.requestFullscreen().catch(function(){});}
@@ -10668,6 +10714,8 @@ var _dmFocusIdx=0;
 var _dmFocusZoom=1; // 1 = fit-to-panel; >1 = zoomed, scrollable/pannable
 var _dmFocusPanWired=false;
 var _dmFocusPanState=null;
+var _dmFocusPointers=new Map(); // pointerId -> {x,y}, tracks all fingers currently down on the stage
+var _dmFocusPinchState=null; // active two-finger pinch-to-zoom gesture, if any
 function dmFocusImage(idx){
   if(!_dmImgList.length)return;
   _dmFocusIdx=idx;
@@ -10743,28 +10791,67 @@ function _dmFocusRender(){
   if(stage){stage.scrollLeft=0;stage.scrollTop=0;}
   _dmFocusApplyZoom();
 }
-// Click-drag to pan around a zoomed-in image, and mouse-wheel to zoom in/out — both
+// Click-drag to pan around a zoomed-in image (mouse or one finger), two-finger pinch
+// to zoom in/out on touch devices, and mouse-wheel to zoom in/out on desktop — all
 // wired once (guarded) since the modal body's innerHTML — and therefore #dm-focus-stage
-// — is rebuilt on every openDetail().
+// — is rebuilt on every openDetail(). Pinch and single-finger pan share the same
+// pointer-tracking map so a second finger landing mid-drag cleanly hands off from
+// panning to pinching instead of the two gestures fighting each other.
 function _wireDmFocusPan(){
   if(_dmFocusPanWired)return;
   _dmFocusPanWired=true;
+  function pinchDist(pts){var dx=pts[0].x-pts[1].x,dy=pts[0].y-pts[1].y;return Math.sqrt(dx*dx+dy*dy);}
   document.addEventListener('pointerdown',function(e){
     var stage=document.getElementById('dm-focus-stage');
-    if(!stage||!stage.classList.contains('zoomed'))return;
-    if(!stage.contains(e.target))return;
-    _dmFocusPanState={stage:stage,startX:e.clientX,startY:e.clientY,startLeft:stage.scrollLeft,startTop:stage.scrollTop};
-    stage.classList.add('grabbing');
+    if(!stage||!stage.contains(e.target))return;
+    _dmFocusPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(_dmFocusPointers.size===2){
+      // Second finger just landed — hand off from single-finger pan (if any) to pinch-zoom.
+      _dmFocusPanState=null;
+      stage.classList.remove('grabbing');
+      var pts=Array.from(_dmFocusPointers.values());
+      var rect=stage.getBoundingClientRect();
+      var midX=(pts[0].x+pts[1].x)/2,midY=(pts[0].y+pts[1].y)/2;
+      _dmFocusPinchState={stage:stage,startDist:pinchDist(pts),startZoom:_dmFocusZoom,
+        anchorX:midX-rect.left+stage.scrollLeft,anchorY:midY-rect.top+stage.scrollTop,
+        midX:midX,midY:midY};
+    }else if(_dmFocusPointers.size===1&&stage.classList.contains('zoomed')){
+      _dmFocusPanState={stage:stage,startX:e.clientX,startY:e.clientY,startLeft:stage.scrollLeft,startTop:stage.scrollTop};
+      stage.classList.add('grabbing');
+    }
   });
   document.addEventListener('pointermove',function(e){
+    if(_dmFocusPointers.has(e.pointerId))_dmFocusPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    var pinch=_dmFocusPinchState;
+    if(pinch&&_dmFocusPointers.size===2){
+      e.preventDefault();
+      var pts=Array.from(_dmFocusPointers.values());
+      var newZoom=Math.round(Math.min(4,Math.max(1,pinch.startZoom*(pinchDist(pts)/pinch.startDist)))*100)/100;
+      if(newZoom!==_dmFocusZoom){
+        _dmFocusZoom=newZoom;
+        _dmFocusApplyZoom();
+        var ratio=_dmFocusZoom/pinch.startZoom;
+        var rect=pinch.stage.getBoundingClientRect();
+        pinch.stage.scrollLeft=pinch.anchorX*ratio-(pinch.midX-rect.left);
+        pinch.stage.scrollTop=pinch.anchorY*ratio-(pinch.midY-rect.top);
+      }
+      return;
+    }
     var s=_dmFocusPanState;
     if(!s)return;
     s.stage.scrollLeft=s.startLeft-(e.clientX-s.startX);
     s.stage.scrollTop=s.startTop-(e.clientY-s.startY);
   });
-  document.addEventListener('pointerup',function(){
-    if(_dmFocusPanState){_dmFocusPanState.stage.classList.remove('grabbing');_dmFocusPanState=null;}
-  });
+  function endPointer(e){
+    _dmFocusPointers.delete(e.pointerId);
+    if(_dmFocusPointers.size<2)_dmFocusPinchState=null;
+    if(_dmFocusPanState&&_dmFocusPointers.size===0){
+      _dmFocusPanState.stage.classList.remove('grabbing');
+      _dmFocusPanState=null;
+    }
+  }
+  document.addEventListener('pointerup',endPointer);
+  document.addEventListener('pointercancel',endPointer);
   document.addEventListener('wheel',function(e){
     var focusView=document.getElementById('dm-focus-view');
     var stage=document.getElementById('dm-focus-stage');
