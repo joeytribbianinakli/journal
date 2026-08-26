@@ -10716,6 +10716,7 @@ var _dmFocusPanWired=false;
 var _dmFocusPanState=null;
 var _dmFocusPointers=new Map(); // pointerId -> {x,y}, tracks all fingers currently down on the stage
 var _dmFocusPinchState=null; // active two-finger pinch-to-zoom gesture, if any
+var _dmFocusSwipeState=null; // candidate single-finger swipe-to-change-image, only tracked at fit-to-view zoom
 function dmFocusImage(idx){
   if(!_dmImgList.length)return;
   _dmFocusIdx=idx;
@@ -10792,11 +10793,12 @@ function _dmFocusRender(){
   _dmFocusApplyZoom();
 }
 // Click-drag to pan around a zoomed-in image (mouse or one finger), two-finger pinch
-// to zoom in/out on touch devices, and mouse-wheel to zoom in/out on desktop — all
+// to zoom in/out on touch devices, one-finger swipe left/right to step to the next/
+// previous image when not zoomed in, and mouse-wheel to zoom in/out on desktop — all
 // wired once (guarded) since the modal body's innerHTML — and therefore #dm-focus-stage
-// — is rebuilt on every openDetail(). Pinch and single-finger pan share the same
-// pointer-tracking map so a second finger landing mid-drag cleanly hands off from
-// panning to pinching instead of the two gestures fighting each other.
+// — is rebuilt on every openDetail(). Pinch, pan and swipe all share the same
+// pointer-tracking map so a second finger landing mid-gesture cleanly hands off
+// instead of the gestures fighting each other.
 function _wireDmFocusPan(){
   if(_dmFocusPanWired)return;
   _dmFocusPanWired=true;
@@ -10806,8 +10808,9 @@ function _wireDmFocusPan(){
     if(!stage||!stage.contains(e.target))return;
     _dmFocusPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(_dmFocusPointers.size===2){
-      // Second finger just landed — hand off from single-finger pan (if any) to pinch-zoom.
+      // Second finger just landed — hand off from single-finger pan/swipe (if any) to pinch-zoom.
       _dmFocusPanState=null;
+      _dmFocusSwipeState=null;
       stage.classList.remove('grabbing');
       var pts=Array.from(_dmFocusPointers.values());
       var rect=stage.getBoundingClientRect();
@@ -10818,6 +10821,11 @@ function _wireDmFocusPan(){
     }else if(_dmFocusPointers.size===1&&stage.classList.contains('zoomed')){
       _dmFocusPanState={stage:stage,startX:e.clientX,startY:e.clientY,startLeft:stage.scrollLeft,startTop:stage.scrollTop};
       stage.classList.add('grabbing');
+    }else if(_dmFocusPointers.size===1&&!stage.classList.contains('zoomed')&&e.pointerType==='touch'){
+      // Fit-to-view (unzoomed) is exactly when a drag can't mean "pan" — that's the
+      // moment to treat a one-finger horizontal drag as swipe-to-change-image instead.
+      // Touch-only so desktop click-drag behavior is untouched.
+      _dmFocusSwipeState={pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,startTime:Date.now()};
     }
   });
   document.addEventListener('pointermove',function(e){
@@ -10838,9 +10846,10 @@ function _wireDmFocusPan(){
       return;
     }
     var s=_dmFocusPanState;
-    if(!s)return;
-    s.stage.scrollLeft=s.startLeft-(e.clientX-s.startX);
-    s.stage.scrollTop=s.startTop-(e.clientY-s.startY);
+    if(s){
+      s.stage.scrollLeft=s.startLeft-(e.clientX-s.startX);
+      s.stage.scrollTop=s.startTop-(e.clientY-s.startY);
+    }
   });
   function endPointer(e){
     _dmFocusPointers.delete(e.pointerId);
@@ -10848,6 +10857,22 @@ function _wireDmFocusPan(){
     if(_dmFocusPanState&&_dmFocusPointers.size===0){
       _dmFocusPanState.stage.classList.remove('grabbing');
       _dmFocusPanState=null;
+    }
+    var sw=_dmFocusSwipeState;
+    if(sw&&sw.pointerId===e.pointerId){
+      _dmFocusSwipeState=null;
+      // pointercancel means the gesture was interrupted (e.g. by a scroll or a second
+      // finger) — never treat that as a completed swipe, only a clean pointerup.
+      if(e.type==='pointerup'){
+        var dx=e.clientX-sw.startX,dy=e.clientY-sw.startY;
+        var elapsed=Date.now()-sw.startTime;
+        // Deliberate horizontal flick: far enough, clearly more horizontal than
+        // vertical, and quick — so an ordinary tap or a mostly-vertical touch never
+        // misfires as a page change.
+        if(Math.abs(dx)>=40&&Math.abs(dx)>Math.abs(dy)*1.5&&elapsed<800){
+          dmFocusNav(dx<0?1:-1);
+        }
+      }
     }
   }
   document.addEventListener('pointerup',endPointer);
