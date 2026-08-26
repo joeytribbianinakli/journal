@@ -36,7 +36,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .nav-item svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;opacity:.6;transition:opacity .12s}
 .nav-item:hover{background:var(--bg3);color:var(--text)}
 .nav-item:hover svg{opacity:1}
-.nav-item.active{background:rgba(77,127,255,.12);color:var(--accent)}
+.nav-item.active{background:rgba(77,127,255,.12);color:var(--accent);font-weight:700;border-left:3px solid var(--accent);padding-left:7px}
 .nav-item.active svg{opacity:1;stroke:var(--accent)}
 .nav-section-label{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.09em;text-transform:uppercase;padding:18px 10px 6px;opacity:.7}
 .nav-section-label:first-child{padding-top:6px}
@@ -77,9 +77,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .btn:disabled{opacity:.4;cursor:not-allowed}
 /* ── Stats: top-level stat cards (dashboard KPI tiles) ── */
 .stats-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.dash-top-stats{grid-template-columns:repeat(4,minmax(0,1fr)) minmax(0,0.72fr);grid-template-rows:repeat(2,1fr);gap:8px;margin-bottom:22px;align-items:stretch}
+@media(max-width:900px){.dash-top-stats{grid-template-columns:repeat(2,1fr);grid-template-rows:none}}
+@media(max-width:600px){.dash-top-stats{grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}}
 .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 12px;position:relative;overflow:hidden}
 .stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
 .stat-card.green::after{background:var(--green)}.stat-card.red::after{background:var(--red)}.stat-card.purple::after{background:var(--purple)}.stat-card.amber::after{background:var(--amber)}
+.mini-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;width:100%}
+.mini-cal-grid.mini-cal-dow-row{margin-bottom:2px}
+.mini-cal-dow{font-size:9px;font-weight:700;color:var(--text3);text-align:center;text-transform:uppercase}
+.mini-cal-day{aspect-ratio:1;border-radius:4px;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;background:var(--bg3);color:var(--text3)}
+.mini-cal-day.mc-empty{background:transparent}
+.mini-cal-day.mc-green{background:var(--green);color:#fff}
+.mini-cal-day.mc-red{background:var(--red);color:#fff}
+.mini-cal-day.mc-yellow{background:var(--amber);color:#fff}
+.streak-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:12px;color:var(--text2)}
+.streak-row+.streak-row{border-top:1px solid var(--border)}
+.streak-row .streak-val{font-weight:700;font-family:DM Mono,monospace;font-size:12px}
+.streak-val.pos{color:var(--green)}.streak-val.neg{color:var(--red)}
 .stat-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
 .stat-value{font-size:22px;font-weight:600;font-family:DM Mono,monospace;line-height:1;letter-spacing:-.02em}
 .stat-value.pos{color:var(--green)}.stat-value.neg{color:var(--red)}
@@ -964,6 +979,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 @media(max-width:900px){
   :root{--sidebar-w:170px}
   .stats-grid{grid-template-columns:repeat(2,1fr)}
+  /* Calendar card was explicitly placed at column 5 / rows 1-3 for the 5-col
+     desktop layout — with only 2 columns here that forces extra implicit
+     columns+rows and balloons the grid's height. Drop it to its own full-width
+     row instead so the stat-cards simply flow 2-per-row beneath it. */
+  .stats-grid>.card{grid-column:1/-1!important;grid-row:auto!important}
   .charts-grid{grid-template-columns:1fr}
   .cal-year-months{grid-template-columns:repeat(3,1fr)}
   .page-content{padding:14px 14px}
@@ -1308,7 +1328,24 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           </div>
         </div>
       </div>
-      <div class="stats-grid" id="dash-stats"></div>
+      <div class="stats-grid dash-top-stats">
+        <div class="card" style="grid-column:5;grid-row:1/3;display:flex;flex-direction:column">
+          <div class="card-header" style="justify-content:center;gap:6px;padding:6px 10px">
+            <button class="btn btn-ghost btn-sm" style="padding:1px 6px" onclick="dashMiniCalNav(-1)">‹</button>
+            <span class="card-title" id="dash-minical-title" style="font-size:11px"></span>
+            <button class="btn btn-ghost btn-sm" style="padding:1px 6px" onclick="dashMiniCalNav(1)">›</button>
+          </div>
+          <div class="card-body" style="padding:5px 10px;display:flex;flex-direction:column;justify-content:center;flex:1"><div id="dash-minical-grid" style="width:100%"></div></div>
+        </div>
+        <div class="stat-card" id="dash-stat-total" style="padding:10px 12px"></div>
+        <div class="stat-card" id="dash-streak-current" style="padding:10px 12px"></div>
+        <div class="stat-card" id="dash-streak-best" style="padding:10px 12px"></div>
+        <div class="stat-card" id="dash-streak-worst" style="padding:10px 12px"></div>
+        <div class="stat-card" id="dash-stat-winrate" style="padding:10px 12px"></div>
+        <div class="stat-card" id="dash-pl-card" style="padding:10px 12px"></div>
+        <div class="stat-card" id="dash-stat-rr" style="padding:10px 12px"></div>
+        <div class="stat-card" id="dash-stat-hold" style="padding:10px 12px"></div>
+      </div>
       <div class="charts-grid">
         <div class="card">
           <div class="card-header">
@@ -9901,6 +9938,58 @@ function safeChart(ctx, config){
   }
   return new Chart(ctx, config);
 }
+// ── Dashboard: Streaks mini-cards (current / best win / worst loss) ─
+function _dashRenderStreaksMini(trades){
+  var curEl=document.getElementById('dash-streak-current'),
+      bestEl=document.getElementById('dash-streak-best'),
+      worstEl=document.getElementById('dash-streak-worst');
+  if(!curEl||!bestEl||!worstEl)return;
+  var seq=trades.filter(function(t){return t.winLoss===1||t.winLoss===0||t.winLoss===0.5;})
+    .slice().sort(function(a,b){return new Date(a.entryTime||a.savedAt)-new Date(b.entryTime||b.savedAt);});
+  var winStreaks=[],lossStreaks=[],curType=null,curLen=0;
+  seq.forEach(function(t){
+    if(t.winLoss===1){ if(curType==='W'){curLen++;}else{if(curType==='L')lossStreaks.push(curLen);curType='W';curLen=1;} }
+    else if(t.winLoss===0){ if(curType==='L'){curLen++;}else{if(curType==='W')winStreaks.push(curLen);curType='L';curLen=1;} }
+    else { if(curType==='W')winStreaks.push(curLen); else if(curType==='L')lossStreaks.push(curLen); curType=null;curLen=0; }
+  });
+  if(curType==='W')winStreaks.push(curLen); else if(curType==='L')lossStreaks.push(curLen);
+  var maxWinStreak=winStreaks.length?Math.max.apply(null,winStreaks):0;
+  var maxLossStreak=lossStreaks.length?Math.max.apply(null,lossStreaks):0;
+  var curLabel=curType?(curLen+' '+(curType==='W'?(curLen>1?'wins':'win'):(curLen>1?'losses':'loss'))):'—';
+  curEl.innerHTML='<div class="stat-label">Current streak</div><div class="stat-value '+(curType==='W'?'pos':(curType==='L'?'neg':''))+'" style="font-size:18px">'+curLabel+'</div>';
+  bestEl.innerHTML='<div class="stat-label">Best win streak</div><div class="stat-value '+(maxWinStreak?'pos':'')+'" style="font-size:18px">'+(maxWinStreak||'—')+(maxWinStreak?' wins':'')+'</div>';
+  worstEl.innerHTML='<div class="stat-label">Worst loss streak</div><div class="stat-value '+(maxLossStreak?'neg':'')+'" style="font-size:18px">'+(maxLossStreak||'—')+(maxLossStreak?' losses':'')+'</div>';
+}
+// ── Dashboard: small month calendar, green/red/yellow days only ────
+function _dashRenderMiniCal(trades){
+  var titleEl=document.getElementById('dash-minical-title'),grid=document.getElementById('dash-minical-grid');
+  if(!titleEl||!grid)return;
+  var d=_dashMiniCalDate||new Date();
+  var y=d.getFullYear(),m=d.getMonth();
+  titleEl.textContent=calFmt(new Date(y,m,1),'month-year');
+  var byDay=calGroupByDay(trades);
+  var startOffset=new Date(y,m,1).getDay();
+  var daysInMonth=new Date(y,m+1,0).getDate();
+  var dowRow=['S','M','T','W','T','F','S'].map(function(x){return'<div class="mini-cal-dow">'+x+'</div>';}).join('');
+  var cells='';
+  for(var i=0;i<startOffset;i++)cells+='<div class="mini-cal-day mc-empty"></div>';
+  for(var dnum=1;dnum<=daysInMonth;dnum++){
+    var key=calDateKey(new Date(y,m,dnum));
+    var dt=byDay[key]||[];
+    var cls='';
+    if(dt.length){
+      var pl=dt.reduce(function(a,t){return a+(parseFloat(t.plDollar)||0);},0);
+      cls=pl>0?'mc-green':(pl<0?'mc-red':'mc-yellow');
+    }
+    cells+='<div class="mini-cal-day '+cls+'" title="'+key+'">'+dnum+'</div>';
+  }
+  grid.innerHTML='<div class="mini-cal-grid mini-cal-dow-row">'+dowRow+'</div><div class="mini-cal-grid">'+cells+'</div>';
+}
+function dashMiniCalNav(dir){
+  var d=_dashMiniCalDate||new Date();
+  _dashMiniCalDate=new Date(d.getFullYear(),d.getMonth()+dir,1);
+  _dashRenderMiniCal(_dashLastTrades);
+}
 function renderDashboard()     { guardedRender('renderDashboard',     _renderDashboardImpl); }
 function renderTradeAnalytics(){ guardedRender('renderTradeAnalytics', _renderTradeAnalyticsImpl); }
 function renderEdgeAnalyzer(){ guardedRender('renderEdgeAnalyzer', _renderEdgeAnalyzerImpl); }
@@ -10972,12 +11061,22 @@ async function _renderDashboardImpl(){
   var finalEquity=baselineForStats+totalPL;
   var plColor=totalPL>=0?'green':'red';
   var plSign=totalPL>=0?'+':'';
-  document.getElementById('dash-stats').innerHTML=
-    '<div class="stat-card"><div class="stat-label">Total trades</div><div class="stat-value">'+n+'</div><div class="stat-sub">'+wins.length+' wins · '+(n-wins.length)+' losses</div></div>'+
-    '<div class="stat-card '+(parseFloat(wr)>=50?'green':'red')+'"><div class="stat-label">Win rate</div><div class="stat-value '+(parseFloat(wr)>=50?'pos':'neg')+'">'+wr+'%</div><div class="stat-sub">of '+n+' trades</div></div>'+
-    '<div class="stat-card '+plColor+'" id="dash-pl-card"><div class="stat-label">Total P/L</div><div class="stat-value '+(totalPL>=0?'pos':'neg')+'" id="dash-pl-val">'+plSign+totalPL.toFixed(2)+'</div><div class="stat-sub" id="dash-pl-sub">'+(totalPLpct>=0?'+':'')+totalPLpct.toFixed(2)+'% · $'+baselineForStats.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+' \u2192 $'+finalEquity.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+'</div><div class="stat-sub" id="dash-fees-line" style="color:var(--text3);font-size:10px;margin-top:2px"></div></div>'+
-    '<div class="stat-card purple"><div class="stat-label">Avg RR · PF</div><div class="stat-value '+(avgRR!=null?(avgRR>=0?'pos':'neg'):'')+'">'+( avgRR!=null?avgRR.toFixed(2)+'R':'—')+'</div><div class="stat-sub">PF: '+pf+'</div></div>'+
-    '<div class="stat-card amber"><div class="stat-label">Avg hold time</div><div class="stat-value" style="font-size:20px">'+durDisplay+'</div><div class="stat-sub">'+durSub+'</div></div>';
+  document.getElementById('dash-stat-total').innerHTML='<div class="stat-label">Total trades</div><div class="stat-value">'+n+'</div><div class="stat-sub">'+wins.length+' wins · '+(n-wins.length)+' losses</div>';
+  document.getElementById('dash-stat-winrate').innerHTML='<div class="stat-label">Win rate</div><div class="stat-value '+(parseFloat(wr)>=50?'pos':'neg')+'">'+wr+'%</div><div class="stat-sub">of '+n+' trades</div>';
+  document.getElementById('dash-pl-card').innerHTML='<div class="stat-label">Total P/L</div><div class="stat-value '+(totalPL>=0?'pos':'neg')+'" id="dash-pl-val">'+plSign+totalPL.toFixed(2)+'</div><div class="stat-sub" id="dash-pl-sub">'+(totalPLpct>=0?'+':'')+totalPLpct.toFixed(2)+'% · $'+baselineForStats.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+' \u2192 $'+finalEquity.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+'</div><div class="stat-sub" id="dash-fees-line" style="color:var(--text3);font-size:10px;margin-top:2px"></div>';
+  document.getElementById('dash-stat-rr').innerHTML='<div class="stat-label">Avg RR · PF</div><div class="stat-value '+(avgRR!=null?(avgRR>=0?'pos':'neg'):'')+'">'+( avgRR!=null?avgRR.toFixed(2)+'R':'—')+'</div><div class="stat-sub">PF: '+pf+'</div>';
+  document.getElementById('dash-stat-hold').innerHTML='<div class="stat-label">Avg hold time</div><div class="stat-value" style="font-size:20px">'+durDisplay+'</div><div class="stat-sub">'+durSub+'</div>';
+  _dashRenderStreaksMini(trades);
+  _dashLastTrades=trades;
+  var dashFilterSig=JSON.stringify([sesF,atF,pairF,stratF,skipF,demoOn]);
+  if(_dashMiniCalFilterSig!==dashFilterSig){
+    _dashMiniCalFilterSig=dashFilterSig;
+    var datedTrades=trades.filter(function(t){return t.entryTime||t.savedAt;}).slice()
+      .sort(function(a,b){return new Date(b.entryTime||b.savedAt)-new Date(a.entryTime||a.savedAt);});
+    var latest=datedTrades.length?new Date(datedTrades[0].entryTime||datedTrades[0].savedAt):new Date();
+    _dashMiniCalDate=new Date(latest.getFullYear(),latest.getMonth(),1);
+  }
+  _dashRenderMiniCal(trades);
   // Async: compute total fees, then update Total P/L card to show net figures
   (async function(){
     var totalFees = 0;
@@ -10996,7 +11095,7 @@ async function _renderDashboardImpl(){
     var plCard   = document.getElementById('dash-pl-card');
     if(plValEl)  plValEl.textContent = netSign + netPL.toFixed(2);
     if(plValEl)  plValEl.className   = 'stat-value ' + (netPL >= 0 ? 'pos' : 'neg');
-    if(plCard){  plCard.className    = 'stat-card ' + (netPL >= 0 ? 'green' : 'red'); }
+    if(plCard){  plCard.className    = 'stat-card'; }
     if(plSubEl)  plSubEl.textContent = (netPct>=0?'+':'')+netPct.toFixed(2)+'% · $'+baselineForStats.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+' \u2192 $'+netEquity.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
     if(feesLine) feesLine.textContent = 'est. fees: -$'+totalFees.toFixed(2);
   })();
@@ -13232,6 +13331,9 @@ function toggleCalFilters(){
 }
 // ── Demo mode toggle ───────────────────────────────────────
 var _dashDemoMode=false; // false = real sessions, true = demo sessions (shared by dash, cal, mc, hist)
+var _dashMiniCalDate=null;    // pivot date (1st of month) for the dashboard mini calendar
+var _dashMiniCalFilterSig=null; // last-seen filter signature, used to re-default the pivot month on filter change
+var _dashLastTrades=[];       // filtered trades from the most recent dashboard render, reused by mini-cal nav
 var _histDemoMode=false;  // alias — kept for backward-compat; always mirrors _dashDemoMode
 var _histStarredOnly=false; // when true, history table only shows starred trades
 // Track auto-selected default session IDs so badge/chips don't count them as active filters
