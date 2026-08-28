@@ -1480,6 +1480,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
           Trade Composition
         </button>
+        <button class="trd-tabnav-btn" data-tab="pairs" onclick="trdSwitchTab('pairs',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 21l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          Pairs
+        </button>
       </div>
       <div class="trd-tab-panel active" data-tab="quality">
       <div class="analytics-group-label first">Quality &amp; Ratings</div>
@@ -1807,6 +1811,24 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div class="card-header"><span class="card-title">Asset type breakdown</span></div>
           <div class="table-wrap" id="dash-assettype-table"></div>
         </div>
+      </div>
+      </div>
+      <div class="trd-tab-panel" data-tab="pairs">
+      <div class="analytics-group-label first">Performance by Pair</div>
+      <div style="font-size:11px;color:var(--text3);margin:-6px 2px 14px;line-height:1.5">Shows every pair regardless of the Asset/Pair filter above (that filter is ignored here so pairs can be compared side by side) — all other filters still apply.</div>
+      <div class="stats-grid" id="dash-pairs-stats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px">
+        <div class="card"><div class="card-header"><span class="card-title">Trades by pair</span></div><div class="card-body"><div class="chart-wrap" style="height:180px"><canvas id="chart-pairs-count"></canvas></div></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Win rate by pair</span></div><div class="card-body"><div class="chart-wrap" style="height:180px"><canvas id="chart-pairs-wr"></canvas></div></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Total P/L by pair</span></div><div class="card-body"><div class="chart-wrap" style="height:180px"><canvas id="chart-pairs-pl"></canvas></div></div></div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-header"><span class="card-title">Exit criteria by pair</span></div>
+        <div class="card-body"><div class="chart-wrap" id="chart-pairs-exit-wrap" style="height:220px"><canvas id="chart-pairs-exit"></canvas></div></div>
+      </div>
+      <div class="card" style="margin-bottom:22px">
+        <div class="card-header"><span class="card-title">Pair breakdown</span></div>
+        <div class="table-wrap" id="dash-pairs-table"></div>
       </div>
       </div>
     </div>
@@ -11705,6 +11727,23 @@ async function _renderTradeAnalyticsImpl(){
   _renderDowAnalytics(trades);
   _renderCategoryAnalytics(trades,'assetType','Uncategorized','dash-assettype-stats','chart-assettype-wr','chart-assettype-pl','dash-assettype-table','assetTypeWR','assetTypePL','Asset type');
   _renderCategoryAnalytics(trades,'ltf','No LTF logged','dash-ltf-stats','chart-ltf-wr','chart-ltf-pl','dash-ltf-table','ltfWR','ltfPL','LTF entry');
+  // Pairs tab compares pairs against each other, so it deliberately re-derives its own
+  // trade set from allTrades applying every filter EXCEPT the Asset/Pair one above.
+  var tradesAllPairs=allTrades.filter(function(t){
+    if(archivedIds.has(t.sessionId))return false;
+    if(demoOn&&!demoIds.has(t.sessionId))return false;
+    if(!demoOn&&demoIds.has(t.sessionId))return false;
+    if(skipF==='skipped'&&!t.skipped)return false;
+    if(skipF==='taken'&&t.skipped)return false;
+    if(sesF&&t.sessionId!==sesF)return false;
+    if(!sesF&&trdTypeIds&&!trdTypeIds.has(t.sessionId))return false;
+    if(dirF&&t.type!==dirF)return false;
+    if(errF==='__clean__'){ if(tradeActiveErrors(t).length>0)return false; }
+    else if(errF){ if(tradeActiveErrors(t).indexOf(errF)===-1)return false; }
+    return true;
+  });
+  tradesAllPairs=enrichSkippedPL(tradesAllPairs);
+  _renderPairAnalytics(tradesAllPairs);
 }
 // ══ Edge Analyzer ═══════════════════════════════════════════════════
 // Answers "is there a statistically real edge in these trades?" from the same
@@ -12274,6 +12313,97 @@ function _renderCategoryAnalytics(trades,field,emptyLabel,statsElId,wrChartId,pl
   }).join('');
   var tblEl=document.getElementById(tableElId);
   if(tblEl)tblEl.innerHTML=!trades.length?'<div class="empty-state"><p>No trades yet</p></div>':'<table class="data"><thead><tr><th>'+label+'</th><th>Trades</th><th>Win rate</th><th>Avg RR</th><th>Total P/L</th></tr></thead><tbody>'+tblHtml+'</tbody></table>';
+}
+// ── Per-pair breakdown (wins/losses, exit criteria, avg duration) ──────
+// Deliberately ignores the page's Asset/Pair filter (trd-pair-filter) — the whole
+// point of this view is comparing pairs side by side, so the caller passes in a
+// trade set filtered by every OTHER active filter but not by pair.
+function _fmtDurShort(min){
+  if(min==null||min<0)return'—';
+  var d=Math.floor(min/1440),h=Math.floor((min%1440)/60),m=Math.round(min%60);
+  if(d>0)return d+'d'+(h>0?' '+h+'h':'');
+  if(h>0)return h+'h'+(m>0?' '+m+'m':'');
+  return m+'m';
+}
+function _renderPairAnalytics(trades){
+  trades=trades||[];
+  var c=chartColors(true);
+  var exitTypes=['TP','SL','TSL','Partial','Manual'];
+  var buckets={};
+  trades.forEach(function(t){
+    var k=(t.pair&&String(t.pair).trim())?String(t.pair):'No pair logged';
+    if(!buckets[k])buckets[k]={trades:[],exits:{TP:0,SL:0,TSL:0,Partial:0,Manual:0,none:0}};
+    buckets[k].trades.push(t);
+    var e=t.tpExitA;
+    if(e&&buckets[k].exits.hasOwnProperty(e))buckets[k].exits[e]++;else buckets[k].exits.none++;
+  });
+  var keys=Object.keys(buckets).sort(function(a,b){return buckets[b].trades.length-buckets[a].trades.length;});
+  // ── Stat cards: pairs traded, most traded, best win rate, most/least profitable ──
+  var byVolume=keys[0]||null;
+  var bestWRKey=null,bestWR=-1,bestPLKey=null,bestPL=-Infinity,worstPLKey=null,worstPL=Infinity;
+  keys.forEach(function(k){
+    var arr=buckets[k].trades;
+    var wr=winRate(arr),tp=totalPLof(arr);
+    if(wr!=null&&wr>bestWR){bestWR=wr;bestWRKey=k;}
+    if(tp>bestPL){bestPL=tp;bestPLKey=k;}
+    if(tp<worstPL){worstPL=tp;worstPLKey=k;}
+  });
+  var statsEl=document.getElementById('dash-pairs-stats');
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="stat-card"><div class="stat-label">Pairs traded</div><div class="stat-value">'+keys.length+'</div><div class="stat-sub">'+trades.length+' trades in current filter</div></div>'+
+      '<div class="stat-card"><div class="stat-label">Most traded pair</div><div class="stat-value" style="font-size:15px">'+(byVolume?escHtml(byVolume):'—')+'</div><div class="stat-sub">'+(byVolume?buckets[byVolume].trades.length+' trades':'no trades')+'</div></div>'+
+      '<div class="stat-card '+(bestWRKey?'green':'')+'"><div class="stat-label">Best win rate</div><div class="stat-value" style="font-size:15px">'+(bestWRKey?escHtml(bestWRKey):'—')+'</div><div class="stat-sub">'+(bestWRKey?bestWR.toFixed(0)+'% · '+buckets[bestWRKey].trades.length+' trade'+(buckets[bestWRKey].trades.length===1?'':'s'):'no trades')+'</div></div>'+
+      '<div class="stat-card '+(bestPLKey?'green':'')+'"><div class="stat-label">Most profitable</div><div class="stat-value" style="font-size:15px">'+(bestPLKey?escHtml(bestPLKey):'—')+'</div><div class="stat-sub">'+(bestPLKey?(bestPL>=0?'+':'')+bestPL.toFixed(2)+' total P/L':'no trades')+'</div></div>'+
+      '<div class="stat-card '+(worstPLKey?'red':'')+'"><div class="stat-label">Weakest pair</div><div class="stat-value" style="font-size:15px">'+(worstPLKey?escHtml(worstPLKey):'—')+'</div><div class="stat-sub">'+(worstPLKey?worstPL.toFixed(2)+' total P/L':'no trades')+'</div></div>';
+  }
+  // ── Trades by pair (bar) ──
+  var countData=keys.map(function(k){return buckets[k].trades.length;});
+  if(charts.pairsCount)charts.pairsCount.destroy();
+  var _cvPC=document.getElementById('chart-pairs-count');
+  if(_cvPC)charts.pairsCount=safeChart(_cvPC.getContext('2d'),{type:'bar',data:{labels:keys,datasets:[{label:'Trades',data:countData,backgroundColor:c.accent,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.x+' trade'+(ctx.parsed.x===1?'':'s');}}}},scales:{x:{ticks:{color:c.tick,font:{size:10},stepSize:1,precision:0},grid:{color:c.grid}},y:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}}}},plugins:[barValueLabelsPlugin('barVLpairsCount')]});
+  // ── Win rate by pair (bar) ──
+  var wrData=keys.map(function(k){var wr=winRate(buckets[k].trades);return wr!=null?parseFloat(wr.toFixed(1)):0;});
+  var wrColors=keys.map(function(k){var wr=winRate(buckets[k].trades);return wr!=null&&wr>=50?c.green:c.red;});
+  if(charts.pairsWR)charts.pairsWR.destroy();
+  var _cvPW=document.getElementById('chart-pairs-wr');
+  if(_cvPW)charts.pairsWR=safeChart(_cvPW.getContext('2d'),{type:'bar',data:{labels:keys,datasets:[{label:'Win rate %',data:wrData,backgroundColor:wrColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.x+'% win rate ('+buckets[keys[ctx.dataIndex]].trades.length+' trades)';}}}},scales:{x:{ticks:{color:c.tick,font:{size:10},callback:function(v){return v+'%';}},grid:{color:c.grid},suggestedMax:100},y:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}}}},plugins:[barValueLabelsPlugin('barVLpairsWR')]});
+  // ── Total P/L by pair (bar) ──
+  var plData=keys.map(function(k){return parseFloat(totalPLof(buckets[k].trades).toFixed(2));});
+  if(charts.pairsPL)charts.pairsPL.destroy();
+  var _cvPP=document.getElementById('chart-pairs-pl');
+  if(_cvPP)charts.pairsPL=safeChart(_cvPP.getContext('2d'),{type:'bar',data:{labels:keys,datasets:[{label:'Total P/L ($)',data:plData,backgroundColor:plData.map(function(v){return v>=0?c.green:c.red;}),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tick,font:{size:10},callback:function(v){return'$'+v;}},grid:{color:c.grid}},y:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}}}},plugins:[barValueLabelsPlugin('barVLpairsPL')]});
+  // ── Exit criteria by pair (stacked horizontal bar: TP/SL/TSL/Partial/Manual/Not logged) ──
+  var exitColors={TP:c.green,SL:c.red,TSL:c.amber,Partial:c.accent,Manual:c.purple,none:c.tick};
+  var exitDatasets=exitTypes.concat(['none']).map(function(e){
+    return {label:e==='none'?'Not logged':e,data:keys.map(function(k){return buckets[k].exits[e]||0;}),backgroundColor:exitColors[e],stack:'exit'};
+  });
+  if(charts.pairsExit)charts.pairsExit.destroy();
+  var _cvPE=document.getElementById('chart-pairs-exit');
+  var exitChartH=Math.max(140,keys.length*34+40);
+  var _exitWrap=document.getElementById('chart-pairs-exit-wrap');
+  if(_exitWrap)_exitWrap.style.height=exitChartH+'px';
+  if(_cvPE)charts.pairsExit=safeChart(_cvPE.getContext('2d'),{type:'bar',data:{labels:keys,datasets:exitDatasets},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:true,position:'bottom',labels:{color:c.legend,font:{size:10},boxWidth:10,padding:8}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+ctx.parsed.x+' trade'+(ctx.parsed.x===1?'':'s');}}}},scales:{x:{stacked:true,ticks:{color:c.tick,font:{size:10},stepSize:1,precision:0},grid:{color:c.grid}},y:{stacked:true,ticks:{color:c.tick,font:{size:10}},grid:{display:false}}}}});
+  // ── Breakdown table: wins/losses, avg RR, total P/L, avg duration ──
+  var tblHtml=keys.map(function(k){
+    var arr=buckets[k].trades,wr=winRate(arr),rr=avgRRof(arr),tp=totalPLof(arr);
+    var wins=arr.filter(function(t){return t.winLoss===1;}).length;
+    var losses=arr.filter(function(t){return t.winLoss===0;}).length;
+    var be=arr.filter(function(t){return t.winLoss===0.5;}).length;
+    var durT=arr.filter(function(t){return t.durationMin!=null&&t.durationMin>=0;});
+    var avgDur=durT.length?durT.reduce(function(a,t){return a+t.durationMin;},0)/durT.length:null;
+    return '<tr>'+
+      '<td style="font-weight:600;color:var(--text)">'+escHtml(k)+'</td>'+
+      '<td class="mono">'+arr.length+'</td>'+
+      '<td class="mono"><span style="color:var(--green)">'+wins+'W</span> / <span style="color:var(--red)">'+losses+'L</span>'+(be?' / <span style="color:var(--amber)">'+be+'BE</span>':'')+'</td>'+
+      '<td class="mono" style="color:'+(wr!=null?(wr>=50?'var(--green)':'var(--red)'):'var(--text3)')+'">'+(wr!=null?wr.toFixed(1)+'%':'—')+'</td>'+
+      '<td class="mono">'+(rr!=null?rr.toFixed(2)+'R':'—')+'</td>'+
+      '<td class="mono" style="color:'+(tp>=0?'var(--green)':'var(--red)')+'">'+(tp>=0?'+':'')+tp.toFixed(2)+'</td>'+
+      '<td class="mono">'+_fmtDurShort(avgDur)+'</td>'+
+      '</tr>';
+  }).join('');
+  var tblEl=document.getElementById('dash-pairs-table');
+  if(tblEl)tblEl.innerHTML=!trades.length?'<div class="empty-state"><p>No trades yet</p></div>':'<table class="data"><thead><tr><th>Pair</th><th>Trades</th><th>W / L / BE</th><th>Win rate</th><th>Avg RR</th><th>Total P/L</th><th>Avg duration</th></tr></thead><tbody>'+tblHtml+'</tbody></table>';
 }
 // ── Trade volume over time (monthly / yearly counts) ─────────────────
 var _trdVolumeView='month'; // 'month' | 'year' — remembered across re-renders in this session
