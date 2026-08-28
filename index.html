@@ -75,6 +75,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .btn-sm{padding:4px 9px;font-size:11px}
 .btn-icon{padding:5px}
 .btn:disabled{opacity:.4;cursor:not-allowed}
+/* ── Keyboard focus ring for buttons: browsers already draw *some* default
+   ring, but it's inconsistent across browsers/OSes and doesn't match the
+   app's accent color. :focus-visible (not :focus) so it only appears for
+   keyboard/programmatic focus, never on a mouse click. ── */
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn-primary:focus-visible{outline-color:#fff;box-shadow:0 0 0 2px var(--accent)}
 /* ── Stats: top-level stat cards (dashboard KPI tiles) ── */
 .stats-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:18px}
 .dash-top-stats{grid-template-columns:repeat(4,minmax(0,1fr)) minmax(0,0.72fr);grid-template-rows:repeat(2,1fr);gap:8px;margin-bottom:22px;align-items:stretch}
@@ -98,7 +104,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .stat-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
 .stat-value{font-size:22px;font-weight:600;font-family:DM Mono,monospace;line-height:1;letter-spacing:-.02em}
 .stat-value.pos{color:var(--green)}.stat-value.neg{color:var(--red)}
-.stat-sub{font-size:10px;color:var(--text3);margin-top:5px}
+.stat-sub{font-size:10px;color:var(--text3);margin-top:5px;font-family:'DM Mono',monospace}
 /* ── Edge Analyzer: verdict banner ── */
 .edge-verdict{border-radius:var(--radius-xl);padding:20px 22px;margin-bottom:18px;border:1px solid var(--border);background:var(--bg2);display:flex;gap:16px;align-items:flex-start}
 .edge-verdict.green{background:rgba(52,201,122,.08);border-color:rgba(52,201,122,.35)}
@@ -141,6 +147,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .card-body{padding:14px}
 .charts-grid{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:18px}
 .chart-wrap{position:relative;width:100%;height:200px}
+/* ── Loading skeleton: covers the blank-flash gap between a page becoming
+   visible and its charts/tables actually being populated (e.g. the
+   Trade Analytics async populate→render chain, or initial data load).
+   Charts: shown by default via :not(.cw-ready) and cleared from the single
+   safeChart() choke point above, so every chart in the app is covered
+   without touching individual render functions. Tables/stat grids: these
+   containers are genuinely empty in the markup until a render function sets
+   their innerHTML, so plain CSS :empty covers them with zero JS. Either way
+   the shimmer disappears the instant real content lands — automatic, no
+   render function needs to know it exists. ── */
+@keyframes skel-sweep{0%{background-position:-140% 0}100%{background-position:140% 0}}
+.chart-wrap:not(.cw-ready)::after,
+.table-wrap:empty::before,
+.stats-grid:empty::before{
+  content:'';position:absolute;inset:0;border-radius:var(--radius-lg);
+  background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);
+  background-size:250% 100%;animation:skel-sweep 1.3s ease-in-out infinite;pointer-events:none;
+}
+.table-wrap:empty,.stats-grid:empty{position:relative;min-height:110px}
 /* ── Table: shared history/trade table styles ── */
 /* ── Exit criteria by pair: compact per-pair proportional bar. Replaces a
    grouped Chart.js horizontal bar chart that (a) reserved a fixed vertical
@@ -4963,8 +4988,8 @@ document.addEventListener('DOMContentLoaded',function(){
   </div>
 </div>
 <!-- Session modal -->
-<div class="modal-overlay" id="session-modal">
-  <div class="modal-box" style="max-width:500px;transition:max-width .25s ease">
+<div class="modal-overlay" id="session-modal" onclick="closeSessionModal()">
+  <div class="modal-box" style="max-width:500px;transition:max-width .25s ease" onclick="event.stopPropagation()">
     <div class="modal-header">
       <h3 id="sm-title">New Session</h3>
       <button class="btn btn-ghost btn-icon btn-sm" onclick="closeSessionModal()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
@@ -5350,8 +5375,8 @@ document.addEventListener('DOMContentLoaded',function(){
   </div>
 </div>
 <!-- Column Manager Modal -->
-<div class="modal-overlay" id="col-manager-modal">
-  <div class="modal-box" style="max-width:520px">
+<div class="modal-overlay" id="col-manager-modal" onclick="closeColumnManager()">
+  <div class="modal-box" style="max-width:520px" onclick="event.stopPropagation()">
     <div class="modal-header">
       <h3>Customize History Columns</h3>
       <button class="btn btn-ghost btn-icon btn-sm" onclick="closeColumnManager()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
@@ -5410,6 +5435,20 @@ document.addEventListener('DOMContentLoaded',function(){
 <script>
 // ── Utility: debounce ────────────────────────────
 function debounce(fn, ms){ var t; return function(){ clearTimeout(t); t = setTimeout(fn, ms); }; }
+// ── Utility: fast UTF-8-safe base64 encode ────────
+// Same output as the old btoa(unescape(encodeURIComponent(str))) idiom, but avoids that
+// idiom's double string pass (URI-encode then unescape) which gets slow on large strings.
+// TextEncoder gives raw UTF-8 bytes directly; String.fromCharCode.apply is chunked to stay
+// well under engines' per-call argument limits for very large payloads (e.g. big GitHub
+// sync JSON blobs with embedded base64 images).
+function utf8ToBase64(str){
+  var bytes=new TextEncoder().encode(str);
+  var chunkSize=0x8000,binary='';
+  for(var i=0;i<bytes.length;i+=chunkSize){
+    binary+=String.fromCharCode.apply(null,bytes.subarray(i,i+chunkSize));
+  }
+  return btoa(binary);
+}
 // ══ DB ════════════════════════════════════════════
 // IndexedDB schema: 4 object stores, all keyed on 'id' (see onupgradeneeded below).
 //   trades   — one record per logged trade (save/edit/history)
@@ -10093,9 +10132,22 @@ function safeChart(ctx, config){
       canvas.style.display = 'none';
       canvas.parentElement.appendChild(note);
     }
+    _clearChartSkeleton(canvas);
     return null;
   }
-  return new Chart(ctx, config);
+  var chart = new Chart(ctx, config);
+  _clearChartSkeleton(ctx && ctx.canvas);
+  return chart;
+}
+// Marks a chart's .chart-wrap as painted so its CSS skeleton shimmer (see
+// .chart-wrap:not(.cw-ready)::after) stops showing. Runs on every safeChart()
+// call — success or the offline fallback above — so every chart in the app
+// is covered from this one choke point instead of touching every render
+// function individually. Left in place (never re-added) after the first
+// paint, so re-renders from filter changes don't re-flash the skeleton.
+function _clearChartSkeleton(canvas){
+  var wrap = canvas && canvas.closest && canvas.closest('.chart-wrap');
+  if(wrap) wrap.classList.add('cw-ready');
 }
 // ── Adaptive point radius for line/curve charts ─────────────────────────
 // Dots start large when there are only a few data points and shrink smoothly
@@ -10313,6 +10365,17 @@ async function _renderHistoryImpl(){
   (async function(){
     var feeMap = {}; // assetType -> fees object (promise resolved)
     var feeCells = wrap.querySelectorAll('.hist-fee-cell');
+    // Pre-index net-P/L cells by trade id once, instead of re-running querySelectorAll
+    // for every fee cell in the loop below (was an O(n²) DOM scan over the page).
+    // Grouped into arrays so multiple cells sharing the same trade id are still all found,
+    // matching the previous behavior exactly.
+    var netCellsByTradeId = {};
+    var allNetCells = wrap.querySelectorAll('.hist-netpl-cell');
+    for(var k=0;k<allNetCells.length;k++){
+      var ncTid = allNetCells[k].dataset.tradeId;
+      if(!netCellsByTradeId[ncTid]) netCellsByTradeId[ncTid] = [];
+      netCellsByTradeId[ncTid].push(allNetCells[k]);
+    }
     for(var i=0;i<feeCells.length;i++){
       if(window._histRenderGen !== myGen) return; // abort — a newer render has started
       var cell = feeCells[i];
@@ -10333,7 +10396,7 @@ async function _renderHistoryImpl(){
         ? '<span style="color:var(--amber)">-$'+feeTotal.toFixed(4)+'</span>'
         : '<span style="color:var(--text3)">—</span>';
       // Populate matching netPL cell
-      var netCells = wrap.querySelectorAll('.hist-netpl-cell[data-trade-id="'+tid+'"]');
+      var netCells = netCellsByTradeId[tid] || [];
       for(var j=0;j<netCells.length;j++){
         var nc = netCells[j];
         var grossPL = parseFloat(nc.dataset.pl)||0;
@@ -10675,7 +10738,7 @@ async function openDetail(id,opts){
     +'<div class="detail-item"><div class="di-label">Qty (units)</div><div class="di-val mono">'+(trade.qty||'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Position size</div><div class="di-val mono">'+(function(){var q=parseFloat(trade.qty),e=parseFloat(trade.entryPrice);return(q&&e)?'$'+calcFmt(q*e,2):'—';})()+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Acct balance</div><div class="di-val mono">'+(trade.acct?'$'+parseFloat(trade.acct).toLocaleString():'—')+'</div></div>'
-    +'<div class="detail-item"><div class="di-label">Duration</div><div class="di-val">'+(function(){if(!trade.durationMin)return'—';var tot=trade.durationMin,d=Math.floor(tot/1440),h=Math.floor((tot%1440)/60),m=tot%60;if(d>0)return'<span style="color:var(--purple);font-weight:700">'+d+'d'+(h>0?' '+h+'h':'')+(m>0?' '+m+'m':'')+'</span>';return(h>0?h+'h ':'')+m+'m';})()+'</div></div>'
+    +'<div class="detail-item"><div class="di-label">Duration</div><div class="di-val mono">'+(function(){if(!trade.durationMin)return'—';var tot=trade.durationMin,d=Math.floor(tot/1440),h=Math.floor((tot%1440)/60),m=tot%60;if(d>0)return'<span style="color:var(--purple);font-weight:700">'+d+'d'+(h>0?' '+h+'h':'')+(m>0?' '+m+'m':'')+'</span>';return(h>0?h+'h ':'')+m+'m';})()+'</div></div>'
     +'<div class="detail-item"><div class="di-label">LTF entry</div><div class="di-val">'+(trade.ltf||'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Asset type</div><div class="di-val">'+(trade.assetType||'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Entry date/time</div><div class="di-val mono">'+(trade.entryTime?trade.entryTime.slice(0,10)+(trade.entryTime.length>10?' '+to12h(trade.entryTime.slice(11,16)):''):'—')+'</div></div>'
@@ -14001,6 +14064,19 @@ function applyThemeFilters(brightRaw,contrastRaw){
   try{localStorage.setItem(THEME_BRIGHTNESS_KEY,String(b));localStorage.setItem(THEME_CONTRAST_KEY,String(c));}catch(e){}
   return{b:b,c:c};
 }
+// Persisting to IndexedDB on every 'input' tick would fire a write transaction for every
+// pixel of a slider drag. applyThemeFilters() above already updates the visible filter and
+// localStorage synchronously (so dragging stays instant and nothing is lost if the tab closes
+// mid-drag); only the IndexedDB write + GitHub config push are debounced here to land once,
+// shortly after the user stops moving the slider, using the same debounce() utility already
+// used elsewhere (e.g. history search). Reads the just-written localStorage value when it
+// fires, so the final persisted value always matches wherever the slider ended up.
+var _persistBrightnessDebounced=debounce(function(){
+  if(typeof setSetting==='function'){setSetting(THEME_BRIGHTNESS_KEY,getSavedBrightness()).then(function(){ghAutoSyncConfig();});}
+},400);
+var _persistContrastDebounced=debounce(function(){
+  if(typeof setSetting==='function'){setSetting(THEME_CONTRAST_KEY,getSavedContrast()).then(function(){ghAutoSyncConfig();});}
+},400);
 function onBrightnessInput(rawPosition){
   var rawVal=themePositionToValue(parseFloat(rawPosition),THEME_BRIGHTNESS_RANGE);
   var snapped=Math.round(rawVal/5)*5; // keep the old step=5 feel now that step lives in value-space
@@ -14009,8 +14085,9 @@ function onBrightnessInput(rawPosition){
   if(slider)slider.value=themeValueToPosition(res.b,THEME_BRIGHTNESS_RANGE);
   var lbl=document.getElementById('theme-brightness-val');
   if(lbl)lbl.textContent=res.b+'%';
-  // Persist to IndexedDB (canonical) and push to config JSON/GitHub, same as theme
-  if(typeof setSetting==='function'){setSetting(THEME_BRIGHTNESS_KEY,res.b).then(function(){ghAutoSyncConfig();});}
+  // Persist to IndexedDB (canonical) and push to config JSON/GitHub, same as theme — debounced,
+  // see _persistBrightnessDebounced above.
+  _persistBrightnessDebounced();
 }
 function onContrastInput(rawPosition){
   var rawVal=themePositionToValue(parseFloat(rawPosition),THEME_CONTRAST_RANGE);
@@ -14020,7 +14097,7 @@ function onContrastInput(rawPosition){
   if(slider)slider.value=themeValueToPosition(res.c,THEME_CONTRAST_RANGE);
   var lbl=document.getElementById('theme-contrast-val');
   if(lbl)lbl.textContent=res.c+'%';
-  if(typeof setSetting==='function'){setSetting(THEME_CONTRAST_KEY,res.c).then(function(){ghAutoSyncConfig();});}
+  _persistContrastDebounced();
 }
 function resetBrightness(){
   var slider=document.getElementById('theme-brightness-slider');
@@ -16068,7 +16145,7 @@ async function ghPushConfigFile(cfg){
     }catch(e){ sha=await ghGetFileSHAByPath(cfg,GH_CONFIG_FILE); }
     // Stamp exportedAt at the moment we actually push (real change confirmed above)
     payload.exportedAt=new Date().toISOString();
-    var content=btoa(unescape(encodeURIComponent(JSON.stringify(payload,null,2))));
+    var content=utf8ToBase64(JSON.stringify(payload,null,2));
     var body={message:'TJ config — '+new Date().toISOString().slice(0,16).replace('T',' '),content:content};
     if(sha)body.sha=sha;
     await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/'+GH_CONFIG_FILE,{
@@ -16181,7 +16258,7 @@ async function ghPushAlertsFile(cfg){
         if(JSON.stringify(newCopy)===JSON.stringify(oldCopy))return; // no real change — skip push
       }
     }catch(e){ sha=await ghGetFileSHAByPath(cfg,GH_ALERTS_FILE); }
-    var content=btoa(unescape(encodeURIComponent(JSON.stringify(payload,null,2))));
+    var content=utf8ToBase64(JSON.stringify(payload,null,2));
     var body={message:'TJ alerts — '+new Date().toISOString().slice(0,16).replace('T',' '),content:content};
     if(sha)body.sha=sha;
     await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/'+GH_ALERTS_FILE,{
@@ -16492,7 +16569,7 @@ async function _ghPushOnce(showToast){
   }
   var doAttempt=async function(){
     var payload=await ghBuildPayload();
-    var content=btoa(unescape(encodeURIComponent(JSON.stringify(payload,null,2))));
+    var content=utf8ToBase64(JSON.stringify(payload,null,2));
     var sha=await ghGetFileSHA(cfg);
     var body={message:'TJ data — '+new Date().toISOString().slice(0,16).replace('T',' '),content:content};
     if(sha)body.sha=sha;
@@ -16601,7 +16678,7 @@ async function ghSnapshot(type,name){
     var fileLabel=label?prefix+'-'+label+'-'+ts:prefix+'-'+ts;
     // Always push a trades+sessions snapshot to bkp/trades/
     var tradesPayload=await ghBuildPayload();
-    var tradesContent=btoa(unescape(encodeURIComponent(JSON.stringify(tradesPayload,null,2))));
+    var tradesContent=utf8ToBase64(JSON.stringify(tradesPayload,null,2));
     var tradesFile='bkp/trades/'+fileLabel+'.json';
     await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/'+tradesFile,{
       method:'PUT',
@@ -16611,7 +16688,7 @@ async function ghSnapshot(type,name){
     // Manual backup only: also overwrite the single config backup file
     if(type==='manual'){
       var cfgPayload=await ghBuildConfigPayload();
-      var cfgContent=btoa(unescape(encodeURIComponent(JSON.stringify(cfgPayload,null,2))));
+      var cfgContent=utf8ToBase64(JSON.stringify(cfgPayload,null,2));
       var cfgSha=await ghGetFileSHAByPath(cfg,GH_BKP_CONFIG_FILE);
       var cfgBody={message:'TJ config backup — '+ts,content:cfgContent};
       if(cfgSha)cfgBody.sha=cfgSha;
@@ -16630,7 +16707,7 @@ async function ghSnapshot(type,name){
           finnhubKey:    localStorage.getItem(PA_KEY_FINNHUB_KEY)    || '',
           coingeckoKey:  localStorage.getItem(PA_KEY_COINGECKO_KEY)  || ''
         }};
-        var alertsContent=btoa(unescape(encodeURIComponent(JSON.stringify(alertsPayload,null,2))));
+        var alertsContent=utf8ToBase64(JSON.stringify(alertsPayload,null,2));
         var alertsBkpSha=await ghGetFileSHAByPath(cfg,GH_BKP_ALERTS_FILE);
         var alertsBkpBody={message:'TJ alerts backup — '+ts,content:alertsContent};
         if(alertsBkpSha)alertsBkpBody.sha=alertsBkpSha;
