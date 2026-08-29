@@ -4874,7 +4874,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><span class="card-title">Conversion history</span><span style="font-size:11px;color:var(--text3)">Rate = CAD per 1 USD · <span id="fx-rate-label">fetching live rate…</span></span></div>
+        <div class="card-header"><span class="card-title">Conversion history</span><span style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3)">Rate = CAD per 1 USD · <span id="fx-rate-label">fetching live rate…</span><button class="btn btn-ghost btn-sm" id="fx-refresh-btn" onclick="fxManualRefresh()" title="Fetch the latest rate now (uses one API call) — otherwise this only refreshes once every 24h"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></button></span></div>
         <div class="table-wrap" id="fx-table"></div>
       </div>
     </div><!-- /page-fx-tracker -->
@@ -4887,9 +4887,82 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 // Plain localStorage, matching Price Alerts' storage pattern (this isn't
 // trade data, so it doesn't belong in the IndexedDB trades store). ──
 var FX_KEY='tj-fx-conversions';
-var _fxRate=null; // live CAD per USD, null until fetched
+var _fxRate=null; // live CAD per USD, null until fetched (or on failure)
 var _fxRateProvider=null; // which price provider served _fxRate (or last attempted, on failure)
 var _fxEditingId=null; // set while editing an existing row; null = add mode
+// ── Rate fetch throttling ───────────────────────────────────────────────
+// This tracker is never polled in the background — a fetch only ever happens as a
+// direct result of opening this page or clicking Refresh. On top of that, the fetched
+// rate is cached in localStorage for FX_RATE_MAX_AGE_MS so a fresh browser session
+// doesn't spend an API call just to redisplay a rate that's still good for the day.
+// A failed attempt is remembered in-memory (not cached to localStorage — no sense
+// persisting "unavailable") and won't be retried again this session for
+// FX_RETRY_MIN_GAP_MS, so a string of page actions (adding/deleting conversions, each
+// of which re-renders this page) can't hammer a provider that's currently down.
+var FX_RATE_CACHE_KEY='tj-fx-rate-cache';
+var FX_RATE_MAX_AGE_MS=24*60*60*1000;      // re-fetch at most once/day
+var FX_RETRY_MIN_GAP_MS=5*60*1000;         // after a failure, wait at least 5min before retrying
+var _fxRateFetchedAt=null;  // ms epoch of last fetch attempt this session (success OR failure); null = not attempted yet
+var _fxRateFetching=false;  // true while a fetch is in flight — guards against overlapping requests
+function fxLoadRateCache(){try{return JSON.parse(localStorage.getItem(FX_RATE_CACHE_KEY)||'null');}catch(e){return null;}}
+function fxSaveRateCache(rate,provider,fetchedAt){try{localStorage.setItem(FX_RATE_CACHE_KEY,JSON.stringify({rate:rate,provider:provider,fetchedAt:fetchedAt}));}catch(e){}}
+function fxFormatAge(ts){
+  var mins=Math.max(0,Math.round((Date.now()-ts)/60000));
+  if(mins<1)return'just now';
+  if(mins<60)return mins+'m ago';
+  var hrs=Math.round(mins/60);
+  if(hrs<24)return hrs+'h ago';
+  return Math.round(hrs/24)+'d ago';
+}
+function _fxSetRefreshBtnBusy(busy){
+  var btn=document.getElementById('fx-refresh-btn');
+  if(!btn)return;
+  btn.disabled=!!busy;
+  btn.style.opacity=busy?'.45':'';
+  btn.style.cursor=busy?'default':'';
+}
+function fxUpdateRateLabel(){
+  var lbl=document.getElementById('fx-rate-label');
+  if(!lbl)return;
+  if(_fxRateFetching){lbl.textContent='fetching live rate…';return;}
+  var provLabel=(PA_PROVIDER_LABELS[_fxRateProvider]||_fxRateProvider||'—');
+  if(_fxRate){
+    lbl.textContent='live '+_fxRate.toFixed(4)+' · via '+provLabel+(_fxRateFetchedAt?' · '+fxFormatAge(_fxRateFetchedAt):'');
+  } else if(_fxRateFetchedAt){
+    lbl.textContent='rate unavailable — '+provLabel+' didn\'t respond ('+fxFormatAge(_fxRateFetchedAt)+') · showing cost basis only';
+  } else {
+    lbl.textContent='rate not fetched yet';
+  }
+}
+// Does the actual network fetch (via the same provider chain Price Alerts uses) and
+// updates cache/state. Never call this directly from a render path without going
+// through the freshness checks in fxRender() — use fxManualRefresh() for a
+// user-initiated override.
+function fxDoFetch(){
+  if(_fxRateFetching)return;
+  _fxRateFetching=true;
+  _fxSetRefreshBtnBusy(true);
+  fxUpdateRateLabel();
+  // Pick up any provider keys saved since this session started (see fxRender's own
+  // comment below for why this matters).
+  if(typeof paLoadConfig==='function')paLoadConfig();
+  paFetchOnePrice('USDCAD',function(price,provider){
+    _fxRateFetching=false;
+    _fxSetRefreshBtnBusy(false);
+    _fxRate=price;
+    _fxRateProvider=provider; // on success: provider that served it. On failure: last one attempted.
+    _fxRateFetchedAt=Date.now();
+    if(price!==null)fxSaveRateCache(price,provider,_fxRateFetchedAt); // only cache successes
+    fxUpdateRateLabel();
+    fxRenderBody();
+  });
+}
+// Wired to the Refresh button — always hits the network (spends one API call)
+// regardless of how fresh the cached/session rate is, since the person asked for it.
+function fxManualRefresh(){
+  if(_fxRateFetching)return;
+  fxDoFetch();
+}
 function fxLoad(){try{return JSON.parse(localStorage.getItem(FX_KEY)||'[]');}catch(e){return[];}}
 function fxSave(list){try{localStorage.setItem(FX_KEY,JSON.stringify(list));}catch(e){}}
 function fxSubmit(){
@@ -4943,15 +5016,24 @@ function fxDelete(id){
 }
 function fxRender(){
   if(!document.getElementById('fx-date').value)document.getElementById('fx-date').value=new Date().toISOString().slice(0,10);
-  if(_fxRate===null){
-    paFetchOnePrice('USDCAD',function(price,provider){
-      _fxRate=price;
-      _fxRateProvider=provider; // on success: provider that served it. On failure: last one attempted.
-      var lbl=document.getElementById('fx-rate-label');
-      var provLabel=(PA_PROVIDER_LABELS[provider]||provider||'—');
-      if(lbl)lbl.textContent=price?('live '+price.toFixed(4)+' · via '+provLabel):('rate unavailable — '+provLabel+' didn\'t respond · showing cost basis only');
-      fxRenderBody();
-    });
+  // This is the ONLY place a rate fetch gets triggered automatically — fxRender() runs
+  // when this page is opened (nav) and after actions taken on it (add/delete/edit a
+  // conversion, a GitHub pull). There is no setInterval/background polling anywhere
+  // for this tracker, so no fetch happens while you're on any other page.
+  // Even here, a live fetch only happens when there's nothing cached (or usable) yet:
+  if(_fxRateFetchedAt===null&&!_fxRateFetching){
+    var cached=fxLoadRateCache();
+    if(cached&&typeof cached.fetchedAt==='number'&&typeof cached.rate==='number'&&(Date.now()-cached.fetchedAt<FX_RATE_MAX_AGE_MS)){
+      // Cache is still within the day — reuse it, no network call.
+      _fxRate=cached.rate;_fxRateProvider=cached.provider;_fxRateFetchedAt=cached.fetchedAt;
+      fxUpdateRateLabel();
+    } else {
+      fxDoFetch(); // no cache, or it's ≥24h old — worth spending one call
+    }
+  } else if(!_fxRateFetching&&_fxRate===null&&_fxRateFetchedAt!==null&&(Date.now()-_fxRateFetchedAt>FX_RETRY_MIN_GAP_MS)){
+    // A previous attempt this session failed a while ago — safe to retry now rather
+    // than leaving it broken for the rest of the session, but not on every render.
+    fxDoFetch();
   }
   fxRenderBody();
 }
@@ -4993,7 +5075,7 @@ function fxRenderBody(){
     card('Total CAD Invested','$'+totalCad.toFixed(2))
     +card('Total USD Held','$'+totalUsd.toFixed(2))
     +card('Avg Rate Paid',totalUsd?avgRate.toFixed(4):'—','CAD per USD')
-    +card('Current Rate',rate?rate.toFixed(4):'—',rate?('CAD per USD · '+(PA_PROVIDER_LABELS[_fxRateProvider]||_fxRateProvider||'live')):('via '+(PA_PROVIDER_LABELS[_fxRateProvider]||_fxRateProvider||'—')+' — unavailable'))
+    +card('Current Rate',rate?rate.toFixed(4):'—',rate?('CAD per USD · '+(PA_PROVIDER_LABELS[_fxRateProvider]||_fxRateProvider||'live')+(_fxRateFetchedAt?' · '+fxFormatAge(_fxRateFetchedAt):'')):(_fxRateFetching?'fetching…':('via '+(PA_PROVIDER_LABELS[_fxRateProvider]||_fxRateProvider||'—')+' — unavailable')))
     +card('Value Today',curTotal===null?'—':'$'+curTotal.toFixed(2))
     +card('Unrealized P/L',totalPl===null?'—':((totalPl>=0?'+$':'-$')+Math.abs(totalPl).toFixed(2)),totalPlPct===null?'':((totalPlPct>=0?'+':'')+totalPlPct.toFixed(2)+'% · USD '+(totalPl>=0?'strengthened':'weakened')+' vs your avg rate'),plCls);
 }
@@ -14393,6 +14475,11 @@ if(!window._tjAutoNumberListenerRegistered){
 openDB().then(async function(){
   loadSavedTheme();
   loadSavedThemeFilters();
+  // Load saved price-provider keys (Oanda/Twelve Data/Alpha Vantage/etc.) into _paConfig
+  // up front, rather than waiting for the Price Alerts page to be opened. Anything that
+  // fetches a live price before that page has ever been visited this session (e.g. the
+  // FX tracker) would otherwise see empty keys and silently fall back to keyless Yahoo.
+  if(typeof paLoadConfig==='function')paLoadConfig();
   initNavSections();
   restoreSessionTypeFilterPrefs();
   await populatePairSelect();
