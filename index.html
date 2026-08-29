@@ -3289,7 +3289,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         <div class="card-header" style="cursor:pointer;user-select:none" onclick="toggleBkpSection('local-backup')">
           <div style="display:flex;align-items:center;gap:8px">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <span class="card-title">JSON / CSV Backup &amp; Restore</span>
+            <span class="card-title">JSON Backup &amp; Restore</span>
           </div>
           <svg id="local-backup-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .18s"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
@@ -3298,21 +3298,22 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <div class="backup-card">
               <div class="bc-icon" style="background:rgba(79,142,247,.12);color:var(--accent)"><svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
               <div class="bc-title">Export JSON</div>
-              <div class="bc-desc">Full export of all trades, images, sessions, settings and preferences. Keep this as your portable data file — import it on any device or browser.</div>
+              <div class="bc-desc">Downloads 3 separate files — <strong>trade data</strong> (trades, images, sessions, settings), <strong>config</strong> (strategies, checklist, asset pairs, theme, AI &amp; Cloudinary selections) and <strong>FX</strong> (USD/CAD conversions) — the exact same data a GitHub Manual Backup pushes, just downloaded instead of pushed. Alerts are not included.</div>
               <button class="btn btn-primary" onclick="exportBackup()"><svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download JSON</button>
             </div>
             <div class="backup-card">
-              <div class="bc-icon" style="background:rgba(246,173,85,.12);color:var(--amber)"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-              <div class="bc-title">Export CSV</div>
-              <div class="bc-desc">Download trade data as a spreadsheet. Useful for analysis in Excel or Google Sheets. Does not include images or settings.</div>
-              <button class="btn" onclick="exportCSV()"><svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download CSV</button>
+              <div class="bc-icon" style="background:rgba(155,127,240,.12);color:var(--purple)"><svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+              <div class="bc-title">Restore JSON</div>
+              <div class="bc-desc">Select one or more of the JSON files above (trade data, config, FX — any combination); each is detected automatically. <strong style="color:var(--amber)">Deletes your existing trades, images and sessions first</strong>, then loads only what's in the selected file(s) — a true restore, just like GitHub's "Restore latest". Config/FX files always fully overwrite the matching settings. All-or-nothing — if any selected file is invalid, nothing is touched. Also syncs the actual GitHub data files (not the bkp/ backup folder) if GitHub is configured.</div>
+              <input type="file" id="imp-file-restore" accept=".json" multiple style="display:none" onchange="importJsonFiles(this,'restore')">
+              <button class="btn" style="border-color:rgba(155,127,240,.3);color:var(--purple)" onclick="document.getElementById('imp-file-restore').click()"><svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Restore file(s)</button>
             </div>
             <div class="backup-card">
               <div class="bc-icon" style="background:rgba(62,207,142,.12);color:var(--green)"><svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-              <div class="bc-title">Import (JSON or CSV)</div>
-              <div class="bc-desc">Upload a <strong>JSON data file</strong> or <strong>CSV</strong> — format is detected automatically. JSON restores everything; CSV imports trades only. Duplicates are skipped.</div>
-              <input type="file" id="imp-file" accept=".json,.csv" style="display:none" onchange="importAuto(this)">
-              <button class="btn" onclick="document.getElementById('imp-file').click()"><svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Choose file</button>
+              <div class="bc-title">Merge JSON</div>
+              <div class="bc-desc">Select one or more of the JSON files above (trade data, config, FX — any combination); each is detected automatically. <strong style="color:var(--text2)">Keeps your existing data</strong> and merges in trades, images, sessions, config and FX from the selected file(s) — duplicate trades are skipped, nothing existing is deleted. Config/FX files still fully overwrite the matching settings. All-or-nothing — if any selected file is invalid, nothing is touched. Also syncs the actual GitHub data files (not the bkp/ backup folder) if GitHub is configured.</div>
+              <input type="file" id="imp-file-merge" accept=".json" multiple style="display:none" onchange="importJsonFiles(this,'merge')">
+              <button class="btn" style="border-color:rgba(62,207,142,.3);color:var(--green)" onclick="document.getElementById('imp-file-merge').click()"><svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Merge file(s)</button>
             </div>
           </div>
         </div>
@@ -3462,7 +3463,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
               </div>
               <div class="bc-title">Manual Backup</div>
-              <div class="bc-desc">Saves a timestamped trades snapshot to <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-size:10px">bkp/trades/</code> and overwrites the single config backup at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-size:10px">bkp/config_backup.json</code> with all current settings (strategies, checklist, pairs, columns, theme, defaults).</div>
+              <div class="bc-desc">Saves a timestamped trades snapshot to <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-size:10px">bkp/trades/</code> and overwrites the single config backup at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-size:10px">bkp/config_backup.json</code> with all current settings (strategies, checklist, pairs, columns, theme, defaults), plus the single FX backup at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-size:10px">bkp/fx_backup.json</code> with your USD/CAD conversions.</div>
               <button class="btn" style="border-color:rgba(52,201,122,.3);color:var(--green)" onclick="ghManualBackup()">
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                 Save manual backup
@@ -3472,12 +3473,18 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               <div class="bc-icon" style="background:rgba(155,127,240,.12);color:var(--purple)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
               </div>
-              <div class="bc-title">Restore Latest Trade Backup</div>
-              <div class="bc-desc">Replace your current trades, sessions and settings with the most recent snapshot in <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-size:10px">bkp/trades/</code>. To restore your config (strategies/checklist/pairs), use the Snapshots list below. <strong style="color:var(--amber)">This overwrites current data.</strong></div>
-              <button class="btn" style="border-color:rgba(155,127,240,.3);color:var(--purple)" onclick="ghRestoreLatestBackup()">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-                Restore latest
-              </button>
+              <div class="bc-title">Restore / Merge Latest Trade Backup</div>
+              <div class="bc-desc">Uses the most recent snapshot in <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-size:10px">bkp/trades/</code>. To restore your config (strategies/checklist/pairs), use the Snapshots list below. <strong style="color:var(--amber)">Restore</strong> deletes your current trades, images and sessions first, then loads only what's in the snapshot. <strong style="color:var(--text2)">Merge</strong> keeps your current data and adds in the snapshot's trades, images, sessions and settings — duplicate trades are skipped.</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn" style="border-color:rgba(155,127,240,.3);color:var(--purple)" onclick="ghRestoreLatestBackup()">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+                  Restore latest
+                </button>
+                <button class="btn" style="border-color:rgba(62,207,142,.3);color:var(--green)" onclick="ghMergeLatestBackup()">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Merge latest
+                </button>
+              </div>
             </div>
           </div>
           <!-- Automatic weekly backup -->
@@ -3528,17 +3535,18 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <div class="card-header" style="cursor:pointer;user-select:none" onclick="toggleGhSnapshots()">
               <div style="display:flex;align-items:center;gap:8px">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <span class="card-title">Trade Backups &amp; Config Backup</span>
+                <span class="card-title">Trade, Config &amp; FX Backups</span>
               </div>
               <div style="display:flex;align-items:center;gap:10px">
-                <span style="font-size:11px;color:var(--text3)">bkp/trades/ · bkp/config_backup.json</span>
+                <span style="font-size:11px;color:var(--text3)">bkp/trades/ · bkp/config_backup.json · bkp/fx_backup.json</span>
                 <svg id="gh-snapshots-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .18s"><polyline points="6 9 12 15 18 9"/></svg>
               </div>
             </div>
             <div id="gh-snapshots-body" class="card-body" style="display:none">
               <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.7">
                 <strong style="color:var(--text2)">Trade Backups</strong> — timestamped snapshots in <code style="background:var(--bg3);padding:1px 4px;border-radius:3px">bkp/trades/</code>. Created automatically before session deletes and clear-all, or manually. Multiple snapshots kept so you can roll back to any point.<br><br>
-                <strong style="color:var(--text2)">Config Backup</strong> — a single file at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px">bkp/config_backup.json</code> storing strategies, checklist, and asset pairs. Auto-updated whenever you change any of those, and on Manual Backup. Only one backup kept — always the latest.
+                <strong style="color:var(--text2)">Config Backup</strong> — a single file at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px">bkp/config_backup.json</code> storing strategies, checklist, and asset pairs. Auto-updated whenever you change any of those, and on Manual Backup. Only one backup kept — always the latest.<br><br>
+                <strong style="color:var(--text2)">FX Backup</strong> — a single file at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px">bkp/fx_backup.json</code> storing your USD/CAD conversions from the FX Tracker page. Updated on Manual Backup. Only one backup kept — always the latest.
               </div>
               <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
                 <button class="btn btn-ghost btn-sm" onclick="ghListSnapshots()">
@@ -5032,6 +5040,26 @@ function fxManualRefresh(){
 }
 function fxLoad(){try{return JSON.parse(localStorage.getItem(FX_KEY)||'[]');}catch(e){return[];}}
 function fxSave(list){try{localStorage.setItem(FX_KEY,JSON.stringify(list));}catch(e){}}
+// Merges a list of incoming FX conversions into the current ones, skipping duplicates.
+// Matched by content (date+cad+fee+usd), not by id — ids are just creation timestamps and
+// can coincidentally collide or simply differ across browsers/devices for what is really
+// the same conversion. Returns how many were actually added.
+function fxMerge(remoteList){
+  var current=fxLoad();
+  var existingKeys=new Set(current.map(function(r){return r.date+'|'+r.cad+'|'+r.fee+'|'+r.usd;}));
+  var existingIds=new Set(current.map(function(r){return r.id;}));
+  var added=0;
+  (remoteList||[]).forEach(function(r){
+    var key=r.date+'|'+r.cad+'|'+r.fee+'|'+r.usd;
+    if(existingKeys.has(key))return;
+    var id=r.id;
+    if(id==null||existingIds.has(id))id=Date.now()+added; // avoid id collisions when merging in
+    current.push({id:id,date:r.date,cad:r.cad,fee:r.fee,usd:r.usd});
+    existingKeys.add(key);existingIds.add(id);added++;
+  });
+  fxSave(current);
+  return added;
+}
 function fxSubmit(){
   var date=document.getElementById('fx-date').value||new Date().toISOString().slice(0,10);
   var cad=parseFloat(document.getElementById('fx-cad').value);
@@ -5050,7 +5078,6 @@ function fxSubmit(){
     toast('Conversion added','ok');
   }
   fxSave(list);
-  ghAutoSyncFx();
   fxRender();
 }
 function fxEdit(id){
@@ -5077,7 +5104,6 @@ function fxDelete(id){
   if(!confirm('Delete this conversion?'))return;
   if(_fxEditingId===id)fxCancelEdit();
   fxSave(fxLoad().filter(function(r){return r.id!==id;}));
-  ghAutoSyncFx();
   toast('Conversion deleted','ok');
   fxRender();
 }
@@ -5585,6 +5611,31 @@ document.addEventListener('DOMContentLoaded',function(){
       <div style="display:flex;gap:8px;margin-top:18px">
         <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="closeSrWarnModal(false)">Cancel</button>
         <button class="btn btn-danger" style="flex:1;justify-content:center;border:1px solid rgba(232,85,85,.35);background:rgba(232,85,85,.08)" onclick="closeSrWarnModal(true)">Continue anyway</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Generic "type WORD to confirm" modal — replaces native prompt() for destructive restore/
+     merge actions (JSON import + GitHub backup restore). Unlike prompt(), typing the wrong
+     word does NOT dismiss the dialog: it shows an inline error and lets the user retry.
+     Only Cancel, the ✕, or a backdrop click dismiss it (see closeTypeConfirmModal()). -->
+<div class="modal-overlay" id="typeconfirm-modal" onclick="closeTypeConfirmModal()">
+  <div class="modal-box" style="max-width:440px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <h3 id="typeconfirm-modal-title">Confirm action</h3>
+      </div>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="closeTypeConfirmModal()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div id="typeconfirm-modal-msg" style="font-size:12.5px;color:var(--text2);line-height:1.6;white-space:pre-wrap"></div>
+      <div style="margin-top:14px;font-size:11.5px;color:var(--text3)">Type <b id="typeconfirm-modal-word" style="color:var(--text)"></b> to confirm:</div>
+      <input type="text" id="typeconfirm-modal-input" autocomplete="off" spellcheck="false" style="width:100%;margin-top:6px;box-sizing:border-box" onkeydown="if(event.key==='Enter'){event.preventDefault();submitTypeConfirmModal();}">
+      <div id="typeconfirm-modal-err" style="display:none;color:var(--red);font-size:11.5px;margin-top:7px;line-height:1.5"></div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="closeTypeConfirmModal()">Cancel</button>
+        <button class="btn btn-danger" id="typeconfirm-modal-confirmbtn" style="flex:1;justify-content:center;border:1px solid rgba(232,85,85,.35);background:rgba(232,85,85,.08)" onclick="submitTypeConfirmModal()">Confirm</button>
       </div>
     </div>
   </div>
@@ -13652,25 +13703,36 @@ async function _updateSidebarStatsImpl(){
 }
 // ══ Backup ════════════════════════════════════════
 // Local (manual, in-browser) backup/restore/export helpers. These are the "Backup &
-// restore" page's manual JSON/CSV buttons — distinct from the automatic GitHub cloud sync,
-// though importBackup()/exportBackup() share the same file shape GitHub sync
-// uses. `localData` is currently left empty here (kept for schema symmetry with the
-// GitHub-sync backup shape) — if a new localStorage-only setting needs to survive a manual
-// backup/restore round-trip, populate it here and read it back in importBackup() below.
-// Bump `version` if the trade/session/image record shape changes in a breaking way.
+// restore" page's manual JSON buttons — distinct from the automatic GitHub cloud sync.
+// Export downloads 3 separate files — trade data, config, FX — using the exact same
+// payload-building functions the GitHub "Manual Backup" push uses (ghBuildPayload(),
+// ghBuildConfigPayload(), and the fx {version,exportedAt,conversions} shape), so the
+// downloaded files are byte-for-byte what would otherwise be pushed to bkp/trades/,
+// bkp/config_backup.json and bkp/fx_backup.json. Alerts are intentionally excluded —
+// they're not backed up by design. Import (importJsonFiles below) reuses
+// ghApplyConfigData()/fxSave() so both directions round-trip through the same code path
+// GitHub's own restore uses, with correct cache invalidation, no page reload required.
 async function exportBackup(){
-  var trades=await dbGetAll('trades'),images=await dbGetAll('images'),sessions=await dbGetAll('sessions'),settings=await dbGetAll('settings');
-  // Also capture localStorage keys used by the app
-  var localData={};
-  localData[FX_KEY]=localStorage.getItem(FX_KEY)||'[]'; // USD/CAD tracker — separate ledger, not trade data, but still worth surviving a restore
-  var blob=new Blob([JSON.stringify({version:5,exportedAt:new Date().toISOString(),trades,images,sessions,settings,localData},null,2)],{type:'application/json'});
-  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tj_data_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);
-  toast('Full backup downloaded ('+images.length+' images, '+trades.length+' trades)','ok');
+  function downloadJSON(obj,filename){
+    var blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);
+  }
+  var date=new Date().toISOString().slice(0,10);
+  // 1. Trade data — same shape as tj_data.json / bkp/trades/ snapshots
+  var tradesPayload=await ghBuildPayload();
+  downloadJSON(tradesPayload,'tj_data_'+date+'.json');
+  // 2. Config — same shape as tj_config.json / bkp/config_backup.json
+  var configPayload=await ghBuildConfigPayload();
+  setTimeout(function(){downloadJSON(configPayload,'tj_config_'+date+'.json');},150);
+  // 3. FX conversions — same shape as bkp/fx_backup.json
+  var fxPayload={version:1,exportedAt:new Date().toISOString(),conversions:fxLoad()};
+  setTimeout(function(){downloadJSON(fxPayload,'tj_fx_'+date+'.json');},300);
+  toast('Downloaded 3 files — trade data ('+tradesPayload.trades.length+' trades, '+tradesPayload.images.length+' images), config, FX ('+fxPayload.conversions.length+' conversions)','ok');
 }
 // ══ Recompute derived fields from raw trade data ══════
 // Given a trade's raw inputs (entry/exit price, qty, risk $ or risk %), fills in the
 // derived fields the rest of the app relies on: plDollar, plPct, winLoss (1/0/0.5) and
-// actualRR. Called after any bulk import (JSON/CSV) where derived fields may be stale,
+// actualRR. Called after any bulk import (JSON) where derived fields may be stale,
 // missing, or absent from the source file — NOT called on every render, so if a new
 // derived stat is added to trades, compute it here so imported data gets it too.
 function recomputeTradeFields(t){
@@ -13718,59 +13780,102 @@ async function refreshUI(){
   await Promise.all([loadSetupRatingsCache(),loadClAllItemsCache()]);
   await Promise.all([renderDashboard(),updateSidebarStats(),populateSessionSelects(),renderHistory(),populatePairSelect(),populateStrategySelect(),populateErrorTypeSelect()]);
 }
-// Restores a full JSON backup (as produced by exportBackup() above, or a GitHub cloud
-// snapshot — same shape). Trades are de-duplicated by a num|pair|entryTime composite key
-// so re-importing the same file twice doesn't create duplicates; images/sessions/settings
-// are upserted by id instead since those are expected to be overwritten on restore.
-async function importBackup(input){
-  var file=input.files[0];if(!file)return;
-  try{
-    var data=JSON.parse(await file.text());
+// Returns 'trades' | 'config' | 'fx' | null depending on which of the three known backup
+// shapes `data` matches — a trade-data payload (has `trades`, or is itself a raw trades
+// array — same shape as tj_data.json / a trade backup snapshot / an older combined export),
+// a standalone config payload (ghBuildConfigPayload() shape), or a standalone FX payload
+// (has `conversions`, same shape as bkp/fx_backup.json). null means the file isn't a
+// recognized backup file at all (e.g. an unrelated JSON file) — used both to validate
+// files up front (importJsonFiles() below, before anything is written) and to decide how
+// to apply them (applyBackupPayload() below).
+function detectBackupShape(data){
+  if(data&&typeof data==='object'){
+    if(Array.isArray(data)||Array.isArray(data.trades))return'trades';
+    if(Array.isArray(data.conversions))return'fx';
+    if(data.checklist||data.strategies||data.assets||data.setupRatings||data.errorTypes||data.histCols||data.aiConfig||data.cloudinaryConfig)return'config';
+  }
+  return null;
+}
+// Applies a single parsed JSON payload — auto-detects whether it's a trade-data payload
+// (has `trades`, or is itself a raw trades array — same shape as tj_data.json / a trade
+// backup snapshot), a standalone config payload (ghBuildConfigPayload() shape — has
+// `checklist`/`strategies`/etc. at the top level, same shape as tj_config.json /
+// bkp/config_backup.json), a standalone FX payload (has `conversions` — same shape as
+// bkp/fx_backup.json), or an older combined export that carries trades + config + fx all
+// in one object (the `data.config`/`data.fx`/`data.localData` fields below).
+// `mode` controls how trades are written: 'merge' (default) de-duplicates by a
+// num|pair|entryTime composite key so re-importing the same file twice doesn't create
+// duplicates, leaving all existing trades untouched; 'restore' writes every trade in the
+// payload as-is (matching ghRestoreLatestBackup's true clear-then-restore) — callers using
+// 'restore' are expected to dbClear('trades')/('images')/('sessions') BEFORE calling this,
+// same as ghRestoreLatestBackup does, since this function only ever adds/overwrites, never
+// deletes. Images/sessions/settings are always upserted by id either way — those are
+// expected to be overwritten when present. Config and FX are restored via
+// ghApplyConfigData()/fxSave() — the exact same restore path GitHub's own config/FX
+// restore uses — so cloudinaryConfig/aiConfig (localStorage-only, never in the `settings`
+// IndexedDB store) come back correctly and caches (setup ratings, checklist items, asset
+// fees, history columns) are invalidated instead of silently going stale until reload.
+// Config/FX are always a full overwrite of the matching keys regardless of `mode` — trades
+// are the only piece that can be merged, since config/FX aren't meaningfully mergeable.
+// Returns a summary used by importJsonFiles() below to build one combined toast message.
+async function applyBackupPayload(data,mode){
+  mode=mode==='restore'?'restore':'merge';
+  var result={trades:0,skippedTrades:0,images:0,configRestored:false,fx:null};
+  var isTradeData=detectBackupShape(data)==='trades';
+  if(isTradeData){
     var importedTrades=Array.isArray(data)?data:(data.trades||[]);
-    var existing=new Set((await dbGetAll('trades')).map(function(t){return t.num+'|'+t.pair+'|'+t.entryTime}));
-    var added=0,skipped=0;
-    for(var t of importedTrades){
-      var key=t.num+'|'+t.pair+'|'+t.entryTime;
-      if(!existing.has(key)){recomputeTradeFields(t);await dbPut('trades',t);added++;existing.add(key);}
-      else skipped++;
+    if(mode==='restore'){
+      // True restore: write every trade as-is. Caller already cleared the trades/images/
+      // sessions stores first, so there's nothing to de-dupe against.
+      for(var rt of importedTrades){recomputeTradeFields(rt);await dbPut('trades',rt);result.trades++;}
+    } else {
+      var existing=new Set((await dbGetAll('trades')).map(function(t){return t.num+'|'+t.pair+'|'+t.entryTime}));
+      for(var t of importedTrades){
+        var key=t.num+'|'+t.pair+'|'+t.entryTime;
+        if(!existing.has(key)){recomputeTradeFields(t);await dbPut('trades',t);result.trades++;existing.add(key);}
+        else result.skippedTrades++;
+      }
     }
     // Images: always upsert (they're keyed by id)
-    var imgCount=0;
-    for(var img of(data.images||[])){await dbPut('images',img);imgCount++;}
+    for(var img of(data.images||[])){await dbPut('images',img);result.images++;}
     // Sessions: upsert
     for(var sess of(data.sessions||[]))await dbPut('sessions',sess);
-    // Settings: upsert
+    // Settings: upsert (raw fallback — covers older backup files with no `config` block)
     for(var setting of(data.settings||[]))await dbPut('settings',setting);
-    // Restore localStorage (theme, column config, etc.)
+    // Restore localStorage (theme, column config, etc.) — legacy shape, superseded by
+    // `config`/`fx` below for files that have them, but still applied for older exports.
     if(data.localData){Object.keys(data.localData).forEach(function(k){localStorage.setItem(k,data.localData[k]);});}
-    var msg='Imported '+added+' trades, '+imgCount+' images'+(skipped?' ('+skipped+' dupes skipped)':'');
-    toast(msg,'ok');
-    await refreshUI();
-    ghAutoSync();
-  }catch(e){toast('Invalid file: '+e.message,'err');}
-  input.value='';
-}
-// Trades-only CSV export (no images/sessions/settings — use exportBackup() for a full
-// restore-capable backup). `cols` is the fixed column whitelist/order written to the file;
-// add a field name here to include it in future exports.
-async function exportCSV(){
-  var trades=await dbGetAll('trades');
-  var cols=['num','pair','assetType','type','sessionId','strategy','ltf','rating','riskpct','riskDollar','entryPrice','stopLoss','exitPrice','qty','targetRR','actualRR','plDollar','plPct','durationMin','winLoss','entryTime','exitTime','savedAt'];
-  var csv=[cols.join(',')].concat(trades.map(function(t){return cols.map(function(c){var v=t[c]??'';return'"'+String(v).replace(/"/g,'""')+'"'}).join(',')})).join('\n');
-  var blob=new Blob([csv],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='trades_'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(a.href);
-  toast('CSV downloaded','ok');
+  }
+  // Config: either nested inside an older combined export (data.config), or the standalone
+  // config JSON file's top-level payload itself (ghBuildConfigPayload() shape).
+  var configData=data.config||(!isTradeData&&(data.checklist||data.strategies||data.assets||data.setupRatings||data.errorTypes||data.histCols||data.aiConfig||data.cloudinaryConfig)?data:null);
+  if(configData){await ghApplyConfigData(configData);result.configRestored=true;}
+  // FX: explicit `fx` field (combined export), the older localData[FX_KEY] shape, or the
+  // standalone FX JSON file's top-level `conversions` array.
+  var fxData=Array.isArray(data.fx)?data.fx
+    :(data.localData&&data.localData[FX_KEY]?JSON.parse(data.localData[FX_KEY])
+    :(Array.isArray(data.conversions)?data.conversions:null));
+  if(fxData){fxSave(fxData);result.fx=fxData;}
+  return result;
 }
 // Destructive local reset (trades, images, sessions — settings/config are untouched).
 // Requires typing "CLEAR" to confirm, and takes a GitHub snapshot first (if configured)
 // so the wipe is always recoverable from bkp/ even without a manual export.
 async function clearAll(){
-  var answer=prompt('This will delete ALL trades and sessions from this browser.\n\nCloudinary images are kept so a restore will bring them back.\n\nIf GitHub is configured, a snapshot is saved to bkp/ first.\n\nType CLEAR to confirm:');
-  if(!answer||answer.trim().toUpperCase()!=='CLEAR'){toast('Cancelled','ok');return;}
-  toast('Saving snapshot before clearing…','ok');
-  await ghSnapshot('clear-all',null);
-  await dbClear('trades');await dbClear('images');await dbClear('sessions');
-  toast('All data cleared','ok');renderDashboard();updateSidebarStats();renderSessionsList();
-  await ghAutoSync();
+  openTypeConfirmModal({
+    title:'Clear all data?',
+    message:'This will delete ALL trades and sessions from this browser.\n\nCloudinary images are kept so a restore will bring them back.\n\nIf GitHub is configured, a snapshot is saved to bkp/ first.',
+    expectedWord:'CLEAR',
+    confirmLabel:'Clear all trades',
+    onCancel:function(){toast('Cancelled','ok');},
+    onConfirm:async function(){
+      toast('Saving snapshot before clearing…','ok');
+      await ghSnapshot('clear-all',null);
+      await dbClear('trades');await dbClear('images');await dbClear('sessions');
+      toast('All data cleared','ok');renderDashboard();updateSidebarStats();renderSessionsList();
+      await ghAutoSync();
+    }
+  });
 }
 // ══ Toast ═════════════════════════════════════════
 // Transient bottom/corner notification. `type` selects the colored dot: 'ok' (default)
@@ -14173,42 +14278,6 @@ function toggleHistFilters(){
   document.getElementById('hist-filter-toggle-btn').classList.toggle('active',!open);
 }
 function updateHistChips(){}
-// ══ Import CSV ════════════════════════════════════
-// Trades-only CSV import — the counterpart to exportCSV() above. Parses a minimal
-// hand-rolled CSV reader (handles quoted fields/commas, not full RFC4180) rather than
-// pulling in a CSV library, since the only producer is expected to be this app's own
-// exportCSV(). Same num|pair|entryTime de-dupe key as importBackup(). If a new numeric
-// field is added to the trade schema, add its name to the coercion list below or it will
-// import as a string.
-async function importCSV(input){
-  var file=input.files[0];if(!file)return;
-  try{
-    var text=await file.text();
-    var lines=text.split('\n').map(function(l){return l.trim()}).filter(Boolean);
-    if(!lines.length){toast('Empty CSV','err');return;}
-    var headers=lines[0].split(',').map(function(h){return h.replace(/^"|"$/g,'').trim()});
-    var added=0;
-    var existing=new Set((await dbGetAll('trades')).map(function(t){return t.num+'|'+t.pair+'|'+t.entryTime}));
-    for(var i=1;i<lines.length;i++){
-      var vals=[];var cur='';var inQ=false;
-      for(var c=0;c<lines[i].length;c++){var ch=lines[i][c];if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){vals.push(cur);cur='';}else cur+=ch;}
-      vals.push(cur);
-      var trade={};
-      headers.forEach(function(h,idx){trade[h]=(vals[idx]||'').replace(/^"|"$/g,'');});
-      // coerce numeric fields
-      ['entryPrice','exitPrice','qty','riskpct','riskDollar','plDollar','plPct','actualRR','targetRR','durationMin','stopLoss'].forEach(function(f){if(trade[f]!==''&&trade[f]!=null)trade[f]=parseFloat(trade[f])||0;});
-      trade.winLoss=parseInt(trade.winLoss)||0;
-      if(!trade.id)trade.id=Date.now().toString(36)+Math.random().toString(36).slice(2)+(i);
-      if(!trade.savedAt)trade.savedAt=new Date().toISOString();
-      var key=(trade.num||i)+'|'+(trade.pair||'')+'|'+(trade.entryTime||'');
-      if(!existing.has(key)){recomputeTradeFields(trade);await dbPut('trades',trade);added++;existing.add(key);}
-    }
-    toast('Imported '+added+' trades from CSV','ok');
-    await refreshUI();
-    ghAutoSync();
-  }catch(e){toast('CSV error: '+e.message,'err');console.error(e);}
-  input.value='';
-}
 // ══ Theme system ══════════════════════════════════
 // Every theme is a flat map of CSS custom-property values applied to :root via
 // applyThemeVars(). To add a new theme: add a new key here with all of the same fields
@@ -16384,7 +16453,7 @@ var GH_CONFIG_FILE='tj_config.json';       // live config (always overwritten)
 var GH_BKP_CONFIG_FILE='bkp/config_backup.json'; // single config backup (always overwritten)
 var GH_ALERTS_FILE='tjalert.json';         // live alerts (always overwritten)
 var GH_BKP_ALERTS_FILE='bkp/alerts_backup.json'; // single alerts backup (manual backup only)
-var GH_FX_FILE='tjfx.json';                // live USD/CAD conversion log (own file — unrelated to trade data)
+var GH_BKP_FX_FILE='bkp/fx_backup.json';   // single FX (USD/CAD conversions) backup — manual backup only, mirrors config backup
 // ── Config file helpers (checklist, strategies, assets & pairs) ──
 async function ghBuildConfigPayload(){
   var checklist=await getChecklist();
@@ -16498,6 +16567,84 @@ async function ghApplyConfigData(data){
     if(data.cloudinaryConfig.cloudName)localStorage.setItem('tj-cld-cloud-name',data.cloudinaryConfig.cloudName);
     if(data.cloudinaryConfig.uploadPreset)localStorage.setItem('tj-cld-upload-preset',data.cloudinaryConfig.uploadPreset);
   }
+}
+// Merges a config backup payload into the current config, adding new items and skipping
+// duplicates — unlike ghApplyConfigData() above (used by Restore), which replaces each
+// field wholesale. Only touches the fields that are actually lists a user builds up over
+// time and where a "duplicate" is a meaningful concept: strategies, error types, asset
+// types/pairs, and checklist sections/items. Scalar preferences (theme, brightness/
+// contrast, history column layout, calendar/Monte Carlo/calculator defaults, AI/Cloudinary
+// config) aren't list-shaped and can't be "merged" the same way, so — unlike a strategy or
+// checklist item — merging them would silently overwrite whatever's already set, which is
+// exactly what a merge should NOT do; they're left untouched here (use Restore config for
+// those instead). Returns counts used to build the confirmation toast.
+async function ghMergeConfigData(data){
+  var added={strategies:0,errorTypes:0,assetTypes:0,pairs:0,checklistSections:0,checklistItems:0};
+  if(Array.isArray(data.strategies)){
+    var strats=await getStrategies();
+    data.strategies.forEach(function(s){if(s&&!strats.includes(s)){strats.push(s);added.strategies++;}});
+    if(added.strategies)await setSetting('strategies',strats);
+  }
+  if(Array.isArray(data.errorTypes)){
+    var errs=await getSetting('errorTypes',[]);
+    data.errorTypes.forEach(function(s){if(s&&!errs.includes(s)){errs.push(s);added.errorTypes++;}});
+    if(added.errorTypes)await setSetting('errorTypes',errs);
+  }
+  if(Array.isArray(data.assets)){
+    var assets=await getAssets();
+    data.assets.forEach(function(incAt){
+      if(!incAt||!incAt.name)return;
+      var at=assets.find(function(a){return a.name===incAt.name;});
+      if(!at){
+        at={name:incAt.name,pairs:(incAt.pairs||[]).slice(),fees:incAt.fees||_getDefaultFees(incAt.name)};
+        assets.push(at);added.assetTypes++;added.pairs+=at.pairs.length;
+      } else {
+        (incAt.pairs||[]).forEach(function(p){if(p&&!at.pairs.includes(p)){at.pairs.push(p);added.pairs++;}});
+      }
+    });
+    if(added.assetTypes||added.pairs)await saveAssetsData(assets);
+  }
+  if(Array.isArray(data.checklist)){
+    var checklist=await getSetting('checklist',JSON.parse(JSON.stringify(DEFAULT_CHECKLIST)));
+    data.checklist.forEach(function(incSec){
+      if(!incSec||!incSec.section)return;
+      var sec=checklist.find(function(s){return s.section===incSec.section;});
+      if(!sec){
+        checklist.push({section:incSec.section,items:(incSec.items||[]).slice()});
+        added.checklistSections++;added.checklistItems+=(incSec.items||[]).length;
+        return;
+      }
+      var existingTexts=sec.items.map(function(it){return typeof it==='string'?it:it.text;});
+      (incSec.items||[]).forEach(function(it){
+        var txt=typeof it==='string'?it:it.text;
+        if(txt&&!existingTexts.includes(txt)){sec.items.push(it);existingTexts.push(txt);added.checklistItems++;}
+      });
+    });
+    if(added.checklistSections||added.checklistItems){await setSetting('checklist',checklist);await loadClAllItemsCache();}
+  }
+  return added;
+}
+// Silently syncs the FX Tracker's current USD/CAD conversions to bkp/fx_backup.json —
+// the single file that holds FX data on GitHub (there's no separate "live" FX file the
+// way tj_data.json/tj_config.json exist for trades/config, so this one file IS the actual
+// current data, not a historical snapshot). Called after a local JSON import restores FX
+// conversions, so restoring keeps GitHub in sync too. No-ops silently if not configured —
+// same as ghAutoSync().
+async function ghPushFxLive(){
+  var cfg=ghGetConfig();
+  if(!cfg.user||!cfg.repo||!cfg.token)return;
+  try{
+    var fxPayload={version:1,exportedAt:new Date().toISOString(),conversions:fxLoad()};
+    var fxContent=utf8ToBase64(JSON.stringify(fxPayload,null,2));
+    var fxSha=await ghGetFileSHAByPath(cfg,GH_BKP_FX_FILE);
+    var fxBody={message:'TJ FX sync — '+new Date().toISOString().slice(0,16).replace('T',' '),content:fxContent};
+    if(fxSha)fxBody.sha=fxSha;
+    await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/'+GH_BKP_FX_FILE,{
+      method:'PUT',
+      headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
+      body:JSON.stringify(fxBody)
+    });
+  }catch(e){console.warn('FX sync error:',e.message);}
 }
 // ── Debounce utility for GitHub sync calls ────────────────────
 // Coalesces rapid repeated calls with the same key into a single
@@ -16617,51 +16764,6 @@ async function ghPullAlertsFile(cfg){
     if(typeof paProviderBadgeRefresh === 'function') paProviderBadgeRefresh();
   }catch(e){console.warn('Alerts pull error:',e.message);}
 }
-// ── FX tracker file (tjfx.json) — own file, separate from tj_data.json, since
-// USD/CAD conversions aren't trade data. Mirrors ghPushAlertsFile/ghPullAlertsFile. ──
-async function ghPushFxFile(cfg){
-  try{
-    var payload={version:1,exportedAt:new Date().toISOString(),conversions:fxLoad()};
-    var sha=null;
-    try{
-      var existingResp=await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/'+GH_FX_FILE,{
-        headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json'}
-      });
-      if(existingResp.ok){
-        var existingFile=await existingResp.json();
-        sha=existingFile.sha||null;
-        var existingText=decodeURIComponent(escape(atob(existingFile.content.replace(/\n/g,''))));
-        var existingData=JSON.parse(existingText);
-        if(JSON.stringify(payload.conversions)===JSON.stringify(existingData.conversions))return; // no real change
-      }
-    }catch(e){ sha=await ghGetFileSHAByPath(cfg,GH_FX_FILE); }
-    var content=utf8ToBase64(JSON.stringify(payload,null,2));
-    var body={message:'TJ FX tracker — '+new Date().toISOString().slice(0,16).replace('T',' '),content:content};
-    if(sha)body.sha=sha;
-    await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/'+GH_FX_FILE,{
-      method:'PUT',
-      headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
-      body:JSON.stringify(body)
-    });
-  }catch(e){console.warn('FX file push error:',e.message);}
-}
-// No debounce here, matching trades' ghAutoSync() — a conversion is a deliberate
-// button click, not a rapid-fire autosave, so there's nothing to collapse.
-function ghAutoSyncFx(){
-  var cfg=ghGetConfig();
-  if(!cfg.user||!cfg.repo||!cfg.token)return;
-  ghPushFxFile(cfg);
-}
-async function ghPullFxFile(cfg){
-  try{
-    var raw=await ghFetchFileContent(cfg,GH_FX_FILE);
-    if(!raw)return;
-    var data=JSON.parse(raw);
-    var remote=Array.isArray(data)?data:(data.conversions||[]);
-    fxSave(remote);
-    if(_currentPage==='fx-tracker')fxRender();
-  }catch(e){console.warn('FX pull error:',e.message);}
-}
 function ghGetConfig(){
   return{
     user:localStorage.getItem('tj-gh-user')||'',
@@ -16762,7 +16864,6 @@ async function ghAutoPullOnSetup(){
     }catch(ce){console.warn('Config pull error:',ce.message);}
     // Pull alerts file
     await ghPullAlertsFile(cfg);
-    await ghPullFxFile(cfg);
     var now=new Date().toISOString();
     localStorage.setItem('tj-gh-last-sync',now);
     ghRefreshStatus();
@@ -17000,7 +17101,6 @@ async function ghPull(){
     }catch(ce){console.warn('Config pull error:',ce.message);}
     // Pull alerts file
     await ghPullAlertsFile(cfg);
-    await ghPullFxFile(cfg);
     var now=new Date().toISOString();
     localStorage.setItem('tj-gh-last-sync',now);
     ghRefreshStatus();
@@ -17071,7 +17171,24 @@ async function ghSnapshot(type,name){
         });
         }
       }catch(ae){console.warn('Alerts backup error:',ae.message);}
-      var alertsBkpMsg=(_paAlerts&&_paAlerts.length>0)?'trades snapshot + config backup + alerts backup updated':'trades snapshot + config backup updated (no alerts to back up)';
+      // Also overwrite the single FX backup file (bkp/fx_backup.json) — exactly like
+      // config backup: one file, always overwritten, unconditional (matches config's
+      // no-empty-guard behavior since USD/CAD conversions are the FX tracker's whole state).
+      var fxBkpMsg='no fx backup';
+      try{
+        var fxPayload={version:1,exportedAt:new Date().toISOString(),conversions:fxLoad()};
+        var fxContent=utf8ToBase64(JSON.stringify(fxPayload,null,2));
+        var fxSha=await ghGetFileSHAByPath(cfg,GH_BKP_FX_FILE);
+        var fxBody={message:'TJ FX backup — '+ts,content:fxContent};
+        if(fxSha)fxBody.sha=fxSha;
+        await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/'+GH_BKP_FX_FILE,{
+          method:'PUT',
+          headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
+          body:JSON.stringify(fxBody)
+        });
+        fxBkpMsg='fx backup updated';
+      }catch(fe){console.warn('FX backup error:',fe.message);}
+      var alertsBkpMsg=(_paAlerts&&_paAlerts.length>0)?'trades snapshot + config backup + alerts backup + '+fxBkpMsg:'trades snapshot + config backup + '+fxBkpMsg+' (no alerts to back up)';
       toast('Manual backup saved — '+alertsBkpMsg,'ok');
     } else {
       toast('Snapshot saved to GitHub bkp/trades/','ok');
@@ -17123,14 +17240,18 @@ async function ghListSnapshots(){
     el._snapshotFiles=tradeFiles;
     // ── Config backup: single bkp/config_backup.json ──
     var cfgFile=allFiles.find(function(f){return f.path==='bkp/config_backup.json';});
+    // ── FX backup: single bkp/fx_backup.json ──
+    var fxFile=allFiles.find(function(f){return f.path==='bkp/fx_backup.json';});
     // Build tabbed UI
     el.innerHTML=
       '<div style="display:flex;gap:2px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:3px;margin-bottom:14px" id="snap-tab-bar">'
       +'<button id="snap-tab-trades" class="form-tab active" onclick="ghSnapTabSwitch(\'trades\')" style="flex:1">📈 Trade Backups</button>'
       +'<button id="snap-tab-config" class="form-tab" onclick="ghSnapTabSwitch(\'config\')" style="flex:1">⚙️ Config Backup</button>'
+      +'<button id="snap-tab-fx" class="form-tab" onclick="ghSnapTabSwitch(\'fx\')" style="flex:1">💱 FX Backup</button>'
       +'</div>'
       +'<div id="snap-pane-trades"></div>'
-      +'<div id="snap-pane-config" style="display:none"></div>';
+      +'<div id="snap-pane-config" style="display:none"></div>'
+      +'<div id="snap-pane-fx" style="display:none"></div>';
     // ── Trade pane ──
     var tradePane=document.getElementById('snap-pane-trades');
     if(!tradeFiles.length){
@@ -17146,6 +17267,8 @@ async function ghListSnapshots(){
           +'<div style="display:flex;gap:5px;flex-shrink:0">'
           +'<button class="btn btn-ghost btn-sm" style="color:var(--purple)" onclick="ghRestoreSnapshot(\''+escHtml(f.download_url)+'\',\''+escHtml(f.path)+'\')">'
           +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Restore</button>'
+          +'<button class="btn btn-ghost btn-sm" style="color:var(--green)" onclick="ghMergeSnapshot(\''+escHtml(f.download_url)+'\',\''+escHtml(f.path)+'\')">'
+          +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Merge</button>'
           +'</div></div>';
       }).join('');
       var bulkBar='<div id="snap-bulk-bar" style="display:none;align-items:center;gap:8px;margin-bottom:10px;padding:7px 10px;background:rgba(232,85,85,.06);border:1px solid rgba(232,85,85,.2);border-radius:var(--radius)">'
@@ -17160,6 +17283,21 @@ async function ghListSnapshots(){
     if(!cfgFile){
       cfgPane.innerHTML='<div style="font-size:11px;color:var(--text3);padding:10px 0">No config backup yet. Use <strong>Manual Backup</strong> above to create one. Config is backed up as a single file — it is overwritten each time.</div>';
     } else {
+      // The file itself has a fixed name (always overwritten), so there's no timestamp in
+      // the path like trade snapshots have — pull it from the file's last commit instead.
+      var cfgCommitDate=null;
+      try{
+        var cfgCommitResp=await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/commits?path='+encodeURIComponent(GH_BKP_CONFIG_FILE)+'&per_page=1&_='+Date.now(),{
+          headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json'}
+        });
+        if(cfgCommitResp.ok){
+          var cfgCommits=await cfgCommitResp.json();
+          if(cfgCommits&&cfgCommits[0]&&cfgCommits[0].commit){
+            cfgCommitDate=cfgCommits[0].commit.committer&&cfgCommits[0].commit.committer.date||cfgCommits[0].commit.author&&cfgCommits[0].commit.author.date||null;
+          }
+        }
+      }catch(ce){console.warn('Config backup commit date error:',ce.message);}
+      var cfgTimeLine=cfgCommitDate?'<div class="js-hint-mt" style="margin-top:4px">Backed up '+escHtml(new Date(cfgCommitDate).toLocaleString())+'</div>':'';
       cfgPane.innerHTML='<div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.7">'
         +'Config backup stores your <strong style="color:var(--text2)">strategies, checklist, asset pairs, history column layout, theme, calendar default view, Monte Carlo defaults, calculator default capital, and demo session defaults</strong> in a single file that is overwritten each time you run a Manual Backup or change any setting. '
         +'<code style="background:var(--bg3);padding:1px 5px;border-radius:3px">bkp/config_backup.json</code>'
@@ -17168,57 +17306,267 @@ async function ghListSnapshots(){
         +'<div>'
         +'<div style="font-size:12px;font-weight:600;color:var(--text)">config_backup.json</div>'
         +'<div class="js-hint-mt">Strategies · Checklist · Asset pairs · Column layout · Theme · Calendar view · MC defaults · Calculator capital · Demo defaults</div>'
+        +cfgTimeLine
         +'</div>'
-        +'<button class="btn btn-ghost btn-sm" style="color:var(--purple);flex-shrink:0" onclick="ghRestoreConfigBackup()">'
+        +'<div style="display:flex;gap:5px;flex-shrink:0">'
+        +'<button class="btn btn-ghost btn-sm" style="color:var(--purple)" onclick="ghRestoreConfigBackup()">'
         +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Restore config'
-        +'</button></div>';
+        +'</button>'
+        +'<button class="btn btn-ghost btn-sm" style="color:var(--green)" onclick="ghMergeConfigBackup()">'
+        +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Merge config'
+        +'</button></div></div>';
+    }
+    // ── FX pane ──
+    var fxPane=document.getElementById('snap-pane-fx');
+    if(!fxFile){
+      fxPane.innerHTML='<div style="font-size:11px;color:var(--text3);padding:10px 0">No FX backup yet. Use <strong>Manual Backup</strong> above to create one. FX conversions are backed up as a single file — it is overwritten each time.</div>';
+    } else {
+      // Fixed filename (always overwritten) — no timestamp in the path, so pull it from
+      // the file's last commit instead, same approach as the config pane above.
+      var fxCommitDate=null;
+      try{
+        var fxCommitResp=await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/commits?path='+encodeURIComponent(GH_BKP_FX_FILE)+'&per_page=1&_='+Date.now(),{
+          headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json'}
+        });
+        if(fxCommitResp.ok){
+          var fxCommits=await fxCommitResp.json();
+          if(fxCommits&&fxCommits[0]&&fxCommits[0].commit){
+            fxCommitDate=fxCommits[0].commit.committer&&fxCommits[0].commit.committer.date||fxCommits[0].commit.author&&fxCommits[0].commit.author.date||null;
+          }
+        }
+      }catch(fce){console.warn('FX backup commit date error:',fce.message);}
+      var fxTimeLine=fxCommitDate?'<div class="js-hint-mt" style="margin-top:4px">Backed up '+escHtml(new Date(fxCommitDate).toLocaleString())+'</div>':'';
+      // Conversion count, read straight from the repo file content so the pane reflects
+      // what's actually backed up, not just what's stored locally in this browser.
+      var fxCount=null;
+      try{
+        var fxRaw=await ghFetchFileContent(cfg,GH_BKP_FX_FILE);
+        if(fxRaw){var fxData=JSON.parse(fxRaw);fxCount=Array.isArray(fxData)?fxData.length:(fxData.conversions||[]).length;}
+      }catch(fre){}
+      fxPane.innerHTML='<div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.7">'
+        +'FX backup stores your <strong style="color:var(--text2)">USD/CAD conversions</strong> from the FX Tracker page in a single file that is overwritten each time you run a Manual Backup. '
+        +'<code style="background:var(--bg3);padding:1px 5px;border-radius:3px">bkp/fx_backup.json</code>'
+        +'</div>'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius)">'
+        +'<div>'
+        +'<div style="font-size:12px;font-weight:600;color:var(--text)">fx_backup.json</div>'
+        +'<div class="js-hint-mt">'+(fxCount!==null?fxCount+' conversion(s)':'USD/CAD conversions')+'</div>'
+        +fxTimeLine
+        +'</div>'
+        +'<div style="display:flex;gap:5px;flex-shrink:0">'
+        +'<button class="btn btn-ghost btn-sm" style="color:var(--purple)" onclick="ghRestoreFxBackup()">'
+        +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Restore FX'
+        +'</button>'
+        +'<button class="btn btn-ghost btn-sm" style="color:var(--green)" onclick="ghMergeFxBackup()">'
+        +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Merge FX'
+        +'</button></div></div>';
     }
   }catch(e){el.innerHTML='<div style="font-size:11px;color:var(--red)">Error: '+escHtml(e.message)+'</div>';}
 }
 function ghSnapTabSwitch(tab){
   document.getElementById('snap-tab-trades').classList.toggle('active',tab==='trades');
   document.getElementById('snap-tab-config').classList.toggle('active',tab==='config');
+  document.getElementById('snap-tab-fx').classList.toggle('active',tab==='fx');
   document.getElementById('snap-pane-trades').style.display=tab==='trades'?'':'none';
   document.getElementById('snap-pane-config').style.display=tab==='config'?'':'none';
+  document.getElementById('snap-pane-fx').style.display=tab==='fx'?'':'none';
 }
 // Restore the single config backup from bkp/config_backup.json
+// ── Generic "type WORD to confirm" modal (see #typeconfirm-modal in the HTML) ──
+// Replaces native prompt() for every destructive restore/merge confirmation below. The key
+// difference from prompt(): typing the wrong word does NOT close the dialog — submitTypeConfirmModal()
+// shows an inline error and refocuses the input so the user can just try again. The dialog is only
+// dismissed (without confirming) via Cancel, the ✕, or a backdrop click, all of which route through
+// closeTypeConfirmModal() and fire opts.onCancel if one was given — same semantics as prompt()
+// returning null.
+var _typeConfirmCb=null;
+var _typeConfirmCancelCb=null;
+var _typeConfirmExpected='';
+function openTypeConfirmModal(opts){
+  opts=opts||{};
+  _typeConfirmCb=opts.onConfirm||null;
+  _typeConfirmCancelCb=opts.onCancel||null;
+  _typeConfirmExpected=(opts.expectedWord||'').trim().toUpperCase();
+  var titleEl=document.getElementById('typeconfirm-modal-title');
+  if(titleEl)titleEl.textContent=opts.title||'Confirm action';
+  var msgEl=document.getElementById('typeconfirm-modal-msg');
+  if(msgEl)msgEl.innerHTML=escHtml(opts.message||'').replace(/\n/g,'<br>');
+  var wordEl=document.getElementById('typeconfirm-modal-word');
+  if(wordEl)wordEl.textContent=opts.expectedWord||'';
+  var inputEl=document.getElementById('typeconfirm-modal-input');
+  if(inputEl)inputEl.value='';
+  var errEl=document.getElementById('typeconfirm-modal-err');
+  if(errEl){errEl.style.display='none';errEl.textContent='';}
+  var btn=document.getElementById('typeconfirm-modal-confirmbtn');
+  if(btn)btn.textContent=opts.confirmLabel||opts.expectedWord||'Confirm';
+  var m=document.getElementById('typeconfirm-modal');
+  if(m)m.classList.add('open');
+  if(inputEl)setTimeout(function(){inputEl.focus();},50);
+}
+function closeTypeConfirmModal(){
+  var m=document.getElementById('typeconfirm-modal');
+  if(m)m.classList.remove('open');
+  var cancelCb=_typeConfirmCancelCb;
+  _typeConfirmCb=null;_typeConfirmCancelCb=null;_typeConfirmExpected='';
+  if(cancelCb)cancelCb();
+}
+function submitTypeConfirmModal(){
+  var inputEl=document.getElementById('typeconfirm-modal-input');
+  var val=(inputEl&&inputEl.value||'').trim().toUpperCase();
+  if(!val||val!==_typeConfirmExpected){
+    var errEl=document.getElementById('typeconfirm-modal-err');
+    if(errEl){errEl.textContent='Text didn\'t match "'+_typeConfirmExpected+'" — check it and try again, or click Cancel.';errEl.style.display='block';}
+    if(inputEl){inputEl.focus();inputEl.select();}
+    return;
+  }
+  var cb=_typeConfirmCb;
+  var m=document.getElementById('typeconfirm-modal');
+  if(m)m.classList.remove('open');
+  _typeConfirmCb=null;_typeConfirmCancelCb=null;_typeConfirmExpected='';
+  if(cb)cb();
+}
 async function ghRestoreConfigBackup(){
   var cfg=ghGetConfig();
   if(!cfg.user||!cfg.repo||!cfg.token){toast('GitHub not configured','err');return;}
+  var data,trades,missingStrats=[],missingPairs=[];
   try{
     toast('Fetching config backup…','ok');
     var rawContent=await ghFetchFileContent(cfg,GH_BKP_CONFIG_FILE);
     if(!rawContent){toast('Config backup not found. Run a Manual Backup first.','err');return;}
-    var data=JSON.parse(rawContent);
+    data=JSON.parse(rawContent);
     // Warn if incoming config is missing strategies or pairs used by current trades
-    var trades=await dbGetAll('trades');
+    trades=await dbGetAll('trades');
     var incomingStrats=data.strategies||[];
     var incomingAssets=data.assets||[];
     var incomingPairs=incomingAssets.reduce(function(acc,at){return acc.concat(at.pairs);;},[]);
-    var missingStrats=[...new Set(trades.map(function(t){return t.strategy;}).filter(function(s){return s&&!incomingStrats.includes(s);}))];
-    var missingPairs=[...new Set(trades.map(function(t){return t.pair;}).filter(function(p){return p&&!incomingPairs.includes(p);}))];
-    if(missingStrats.length||missingPairs.length){
-      var warn='WARNING: This config backup is missing items used by your current trades:\n\n';
-      if(missingStrats.length)warn+='Strategies: '+missingStrats.join(', ')+'\n';
-      if(missingPairs.length)warn+='Pairs: '+missingPairs.join(', ')+'\n';
-      warn+='\nThese will be added back to config automatically after restore.\n\nType RESTORE to continue:';
-      var answer=prompt(warn);
-      if(!answer||answer.trim().toUpperCase()!=='RESTORE'){toast('Restore cancelled','ok');return;}
-    } else {
-      var answer2=prompt('RESTORE config backup?\n\nThis will replace your current strategies, checklist, and asset pairs.\n\nType RESTORE to confirm:');
-      if(!answer2||answer2.trim().toUpperCase()!=='RESTORE'){toast('Restore cancelled','ok');return;}
+    missingStrats=[...new Set(trades.map(function(t){return t.strategy;}).filter(function(s){return s&&!incomingStrats.includes(s);}))];
+    missingPairs=[...new Set(trades.map(function(t){return t.pair;}).filter(function(p){return p&&!incomingPairs.includes(p);}))];
+  }catch(e){toast('Restore error: '+e.message,'err');return;}
+  var msg;
+  if(missingStrats.length||missingPairs.length){
+    msg='WARNING: This config backup is missing items used by your current trades:\n\n';
+    if(missingStrats.length)msg+='Strategies: '+missingStrats.join(', ')+'\n';
+    if(missingPairs.length)msg+='Pairs: '+missingPairs.join(', ')+'\n';
+    msg+='\nThese will be added back to config automatically after restore.\n\nIf this backup file turns out to be invalid or corrupt, the restore is cancelled and nothing is touched.';
+  } else {
+    msg='This will replace your current strategies, checklist, and asset pairs.\n\nIf this backup file turns out to be invalid or corrupt, the restore is cancelled and nothing is touched.';
+  }
+  openTypeConfirmModal({
+    title:'Restore config backup?',
+    message:msg,
+    expectedWord:'RESTORE',
+    confirmLabel:'Restore',
+    onCancel:function(){toast('Restore cancelled','ok');},
+    onConfirm:async function(){
+      try{
+        await ghApplyConfigData(data);
+        // Re-add any missing items that current trades still need
+        if(missingStrats.length||missingPairs.length)await syncConfigFromTrades(trades);
+        toast('Config restored','ok');
+        await populateStrategySelect();
+        await populateErrorTypeSelect();
+        await populatePairSelect();
+        if(typeof renderChecklistEditor==='function')renderChecklistEditor();
+        if(typeof renderChecklist==='function')renderChecklist();
+        await ghAutoSync();
+      }catch(e){toast('Restore error: '+e.message,'err');}
     }
-    await ghApplyConfigData(data);
-    // Re-add any missing items that current trades still need
-    if(missingStrats.length||missingPairs.length)await syncConfigFromTrades(trades);
-    toast('Config restored','ok');
-    await populateStrategySelect();
-    await populateErrorTypeSelect();
-    await populatePairSelect();
-    if(typeof renderChecklistEditor==='function')renderChecklistEditor();
-    if(typeof renderChecklist==='function')renderChecklist();
-    await ghAutoSync();
-  }catch(e){toast('Restore error: '+e.message,'err');}
+  });
+}
+// Restore the single FX backup from bkp/fx_backup.json
+async function ghRestoreFxBackup(){
+  var cfg=ghGetConfig();
+  if(!cfg.user||!cfg.repo||!cfg.token){toast('GitHub not configured','err');return;}
+  var remote;
+  try{
+    toast('Fetching FX backup…','ok');
+    var rawContent=await ghFetchFileContent(cfg,GH_BKP_FX_FILE);
+    if(!rawContent){toast('FX backup not found. Run a Manual Backup first.','err');return;}
+    var data=JSON.parse(rawContent);
+    remote=Array.isArray(data)?data:(data.conversions||[]);
+  }catch(e){toast('Restore error: '+e.message,'err');return;}
+  openTypeConfirmModal({
+    title:'Restore FX backup?',
+    message:'This will replace your current USD/CAD conversions ('+fxLoad().length+' currently saved) with '+remote.length+' from the backup.\n\nIf this backup file turns out to be invalid or corrupt, the restore is cancelled and nothing is touched.',
+    expectedWord:'RESTORE',
+    confirmLabel:'Restore',
+    onCancel:function(){toast('Restore cancelled','ok');},
+    onConfirm:function(){
+      try{
+        fxSave(remote);
+        if(_currentPage==='fx-tracker'&&typeof fxRender==='function')fxRender();
+        toast('FX conversions restored ('+remote.length+')','ok');
+      }catch(e){toast('Restore error: '+e.message,'err');}
+    }
+  });
+}
+// Merge the single config backup from bkp/config_backup.json into current config —
+// adds new strategies/error types/asset types/pairs/checklist items, skips duplicates.
+// Unlike Restore, nothing existing is replaced or deleted (see ghMergeConfigData()).
+async function ghMergeConfigBackup(){
+  var cfg=ghGetConfig();
+  if(!cfg.user||!cfg.repo||!cfg.token){toast('GitHub not configured','err');return;}
+  var data;
+  try{
+    toast('Fetching config backup…','ok');
+    var rawContent=await ghFetchFileContent(cfg,GH_BKP_CONFIG_FILE);
+    if(!rawContent){toast('Config backup not found. Run a Manual Backup first.','err');return;}
+    data=JSON.parse(rawContent);
+  }catch(e){toast('Merge error: '+e.message,'err');return;}
+  openTypeConfirmModal({
+    title:'Merge config backup?',
+    message:'This will add any strategies, error types, asset types/pairs and checklist items from the backup that you don\'t already have. Duplicates are skipped — nothing existing is changed or removed. Theme, columns and other single-value settings are not touched by merge.\n\nIf this backup file turns out to be invalid or corrupt, the merge is cancelled and nothing is touched.',
+    expectedWord:'MERGE',
+    confirmLabel:'Merge',
+    onCancel:function(){toast('Merge cancelled','ok');},
+    onConfirm:async function(){
+      try{
+        var added=await ghMergeConfigData(data);
+        var parts=[];
+        if(added.strategies)parts.push(added.strategies+' strateg'+(added.strategies>1?'ies':'y'));
+        if(added.errorTypes)parts.push(added.errorTypes+' error type'+(added.errorTypes>1?'s':''));
+        if(added.assetTypes)parts.push(added.assetTypes+' asset type'+(added.assetTypes>1?'s':''));
+        if(added.pairs)parts.push(added.pairs+' pair'+(added.pairs>1?'s':''));
+        if(added.checklistSections)parts.push(added.checklistSections+' checklist section'+(added.checklistSections>1?'s':''));
+        if(added.checklistItems)parts.push(added.checklistItems+' checklist item'+(added.checklistItems>1?'s':''));
+        await populateStrategySelect();
+        await populateErrorTypeSelect();
+        await populatePairSelect();
+        if(typeof renderChecklistEditor==='function')renderChecklistEditor();
+        if(typeof renderChecklist==='function')renderChecklist();
+        toast(parts.length?'Config merged: added '+parts.join(', '):'Config merged: nothing new to add','ok');
+        await ghAutoSync();
+      }catch(e){toast('Merge error: '+e.message,'err');}
+    }
+  });
+}
+// Merge the single FX backup from bkp/fx_backup.json into current FX conversions —
+// adds conversions from the backup that aren't already saved, skips duplicates.
+async function ghMergeFxBackup(){
+  var cfg=ghGetConfig();
+  if(!cfg.user||!cfg.repo||!cfg.token){toast('GitHub not configured','err');return;}
+  var remote;
+  try{
+    toast('Fetching FX backup…','ok');
+    var rawContent=await ghFetchFileContent(cfg,GH_BKP_FX_FILE);
+    if(!rawContent){toast('FX backup not found. Run a Manual Backup first.','err');return;}
+    var data=JSON.parse(rawContent);
+    remote=Array.isArray(data)?data:(data.conversions||[]);
+  }catch(e){toast('Merge error: '+e.message,'err');return;}
+  openTypeConfirmModal({
+    title:'Merge FX backup?',
+    message:'This will add conversions from the backup ('+remote.length+' total) into your existing '+fxLoad().length+' conversion(s). Conversions with the same date, CAD, fee and USD amount are skipped as duplicates — nothing existing is deleted or overwritten.\n\nIf this backup file turns out to be invalid or corrupt, the merge is cancelled and nothing is touched.',
+    expectedWord:'MERGE',
+    confirmLabel:'Merge',
+    onCancel:function(){toast('Merge cancelled','ok');},
+    onConfirm:function(){
+      try{
+        var added=fxMerge(remote);
+        if(_currentPage==='fx-tracker'&&typeof fxRender==='function')fxRender();
+        toast('FX conversions merged: '+added+' added'+((remote.length-added)>0?', '+(remote.length-added)+' dupe(s) skipped':''),'ok');
+      }catch(e){toast('Merge error: '+e.message,'err');}
+    }
+  });
 }
 function ghSnapDeselectAll(){
   document.querySelectorAll('.snap-chk').forEach(function(c){c.checked=false;});
@@ -17243,32 +17591,101 @@ function toggleAllBkpSections(expand){
     if(chevron)chevron.style.transform=expand?'rotate(180deg)':'';
   });
 }
-async function importAuto(input){
-  var file=input.files[0];if(!file)return;
-  var name=file.name.toLowerCase();
-  var isCSV=name.endsWith('.csv');
-  var isJSON=name.endsWith('.json');
-  if(!isCSV&&!isJSON){
-    // try sniffing content
-    var peek=await file.slice(0,5).text();
-    isJSON=peek.trim().startsWith('{');
-    isCSV=!isJSON;
+// Handles one or more selected JSON files from the "Restore" or "Merge" file pickers — any
+// combination of trade data / config / FX files (as downloaded by exportBackup() above),
+// or an older combined export. All-or-nothing: every file is parsed and shape-checked
+// FIRST, before anything is written — if even one file fails to parse or doesn't match a
+// recognized shape, nothing is touched. Only once every file checks out does the confirm
+// prompt appear.
+// `mode`: 'restore' (default — true restore, matching ghRestoreLatestBackup) clears the
+// trades/images/sessions stores FIRST if any selected file contains trade data, then loads
+// only what's in the selected file(s) — nothing from before survives. 'merge' leaves
+// existing data in place and adds in what's in the file(s), skipping trades that already
+// exist. Either way, each file is then applied through applyBackupPayload() and the results
+// combined into one toast message. Config/FX files always fully overwrite the matching
+// settings regardless of mode — see applyBackupPayload() for why.
+async function importJsonFiles(input,mode){
+  mode=mode==='merge'?'merge':'restore';
+  var files=Array.prototype.slice.call(input.files||[]);
+  if(!files.length)return;
+  var isRestore=mode==='restore';
+  var actionWord=isRestore?'Restore':'Merge';
+  // ── Validation pass: parse + shape-check every file before writing anything ──
+  var parsedFiles=[];
+  var badFiles=[];
+  for(var i=0;i<files.length;i++){
+    var file=files[i];
+    try{
+      var data=JSON.parse(await file.text());
+      if(!detectBackupShape(data)){badFiles.push(file.name+': not a recognized trade data / config / FX backup file');continue;}
+      parsedFiles.push(data);
+    }catch(e){badFiles.push(file.name+': invalid JSON ('+e.message+')');}
   }
-  var typeLabel=isCSV?'CSV':'JSON';
-  var confirmMsg=isCSV
-    ?'Import trades from CSV file "'+file.name+'"?\n\nThis will ADD trades from the file. Duplicates are skipped. Your existing data is NOT deleted.'
-    :'Import from JSON data file "'+file.name+'"?\n\nTrades, images, sessions and settings will be merged in. Duplicates are skipped. Your existing data is NOT deleted.\n\nType YES to confirm.';
-  if(isJSON){
-    var answer=prompt(confirmMsg);
-    if(!answer||answer.trim().toUpperCase()!=='YES'){toast('Import cancelled','ok');input.value='';return;}
-  } else {
-    if(!confirm(confirmMsg)){input.value='';return;}
+  if(badFiles.length){
+    toast((isRestore?'Restore':'Merge')+' cancelled — nothing was touched. '+badFiles.length+' file(s) invalid: '+badFiles.join('; '),'err');
+    input.value='';
+    return;
   }
-  if(isCSV){
-    await importCSV(input);
-  } else {
-    await importBackup(input);
-  }
+  // ── Every file is valid — confirm, then apply all of them ──
+  var fileList=files.map(function(f){return f.name;}).join('\n');
+  var expectedWord=isRestore?'RESTORE':'MERGE';
+  var confirmMsg=isRestore
+    ?('File'+(files.length>1?'s':'')+': '+fileList+'\n\n'
+      +'This will DELETE your existing trades, images and sessions, then load only what is in the selected file(s) — a true restore, just like GitHub\'s "Restore latest". Config/FX files (if included) fully overwrite the matching settings. This cannot be undone.\n\n'
+      +'All-or-nothing: if any selected file were invalid or corrupt, the entire restore would be cancelled and nothing touched — but every file here has already passed that check.')
+    :('File'+(files.length>1?'s':'')+': '+fileList+'\n\n'
+      +'Trades, images, sessions, config and FX conversions (whichever are present) will be merged into your existing data. Duplicate trades are skipped. Your existing data is NOT deleted.\n\n'
+      +'All-or-nothing: if any selected file were invalid or corrupt, the entire merge would be cancelled and nothing touched — but every file here has already passed that check.');
+  openTypeConfirmModal({
+    title:(isRestore?'Restore':'Merge')+' from '+parsedFiles.length+' JSON file'+(parsedFiles.length>1?'s':'')+'?',
+    message:confirmMsg,
+    expectedWord:expectedWord,
+    confirmLabel:actionWord,
+    onCancel:function(){toast(actionWord+' cancelled','ok');input.value='';},
+    onConfirm:async function(){
+      try{
+        // True restore: wipe trades/images/sessions ONCE up front (only if a trade-data file was
+        // selected) — mirrors ghRestoreLatestBackup exactly. Done after confirmation, before any
+        // file is applied, so a multi-file restore never clears data that a prior file in the
+        // same batch just wrote.
+        var hasTradeData=parsedFiles.some(function(d){return detectBackupShape(d)==='trades';});
+        if(isRestore&&hasTradeData){await dbClear('trades');await dbClear('images');await dbClear('sessions');}
+        var totals={trades:0,skippedTrades:0,images:0,configRestored:false,fx:null};
+        var allImportedTrades=[];
+        for(var j=0;j<parsedFiles.length;j++){
+          var pf=parsedFiles[j];
+          var r=await applyBackupPayload(pf,mode);
+          totals.trades+=r.trades;totals.skippedTrades+=r.skippedTrades;totals.images+=r.images;
+          if(r.configRestored)totals.configRestored=true;
+          if(r.fx)totals.fx=r.fx;
+          if(detectBackupShape(pf)==='trades')allImportedTrades=allImportedTrades.concat(Array.isArray(pf)?pf:(pf.trades||[]));
+        }
+        // Restore mode only: same as ghRestoreLatestBackup, top up strategies/asset types/pairs
+        // referenced by the restored trades but missing from config (bkp/trades/-shaped files
+        // don't carry a `config` block of their own).
+        if(isRestore&&allImportedTrades.length)await syncConfigFromTrades(allImportedTrades);
+        if(totals.fx&&_currentPage==='fx-tracker'&&typeof fxRender==='function')fxRender();
+        // Refresh anything config-related that refreshUI() below doesn't already cover
+        if(totals.configRestored){
+          if(typeof renderChecklistEditor==='function')renderChecklistEditor();
+          if(typeof renderChecklist==='function')renderChecklist();
+          if(typeof cloudinaryRefreshStatus==='function')cloudinaryRefreshStatus();
+          if(typeof aiUpdateProviderStatus==='function')aiUpdateProviderStatus();
+        }
+        var msg=(isRestore?'Restored ':'Merged ')+totals.trades+' trades, '+totals.images+' images'+(totals.skippedTrades?' ('+totals.skippedTrades+' dupes skipped)':'')
+          +(totals.configRestored?', config restored':'')+(totals.fx?', '+totals.fx.length+' FX conversions':'');
+        toast(msg,'ok');
+        await refreshUI();
+        // Sync the actual GitHub data files (tj_data.json + tj_config.json) — NOT the bkp/
+        // backup folder — same as any other local change. No-ops silently if GitHub isn't configured.
+        ghAutoSync();
+        // FX has no separate "live" file on GitHub (only bkp/fx_backup.json), so that single file
+        // is the actual data for it — keep it in sync too, without touching any other bkp/ file.
+        if(totals.fx)ghPushFxLive();
+      }catch(e){toast((isRestore?'Restore':'Merge')+' error: '+e.message,'err');}
+      input.value='';
+    }
+  });
 }
 // ── Manual backup → bkp/manual/ ──
 async function ghManualBackup(){
@@ -17281,23 +17698,24 @@ async function ghManualBackup(){
   var body=document.getElementById('gh-snapshots-body');
   if(body&&body.style.display==='block')ghListSnapshots();
 }
-// ── Restore latest backup from bkp/ ──
-async function ghRestoreLatestBackup(){
-  var cfg=ghGetConfig();
-  if(!cfg.user||!cfg.repo||!cfg.token){toast('GitHub not configured','err');return;}
-  // Fetch snapshot list to find the most recent file
+// ── Shared: locate the most recent trade snapshot in bkp/ ──────────────────
+// Used by both ghRestoreLatestBackup() (clears then restores) and ghMergeLatestBackup()
+// (merges, skipping duplicates) so the "find the latest file" logic — and any future fix to
+// it — lives in exactly one place. Returns {path,tsDisplay} on success, or null if nothing
+// was found / a request failed (a toast explaining why has already been shown in that case).
+async function ghFindLatestTradeBackup(cfg){
   try{
     var branchResp=await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/git/ref/heads/main?_='+Date.now(),{
       headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json'}
     });
-    if(!branchResp.ok){toast('Could not fetch repo info','err');return;}
+    if(!branchResp.ok){toast('Could not fetch repo info','err');return null;}
     var branchData=await branchResp.json();
     var treeSha=branchData.object&&branchData.object.sha;
-    if(!treeSha){toast('Could not resolve branch','err');return;}
+    if(!treeSha){toast('Could not resolve branch','err');return null;}
     var treeResp=await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/git/trees/'+treeSha+'?recursive=1&_='+Date.now(),{
       headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json'}
     });
-    if(!treeResp.ok){toast('Could not list backup files','err');return;}
+    if(!treeResp.ok){toast('Could not list backup files','err');return null;}
     var treeData=await treeResp.json();
     var files=(treeData.tree||[])
       .filter(function(f){
@@ -17311,36 +17729,80 @@ async function ghRestoreLatestBackup(){
         var tsRaw=parts[parts.length-1].replace('.json','').replace(/^.*?(\d{4}-\d{2}-\d{2}T)/,'$1');
         return{path:f.path,tsRaw:tsRaw,download_url:'https://raw.githubusercontent.com/'+cfg.user+'/'+cfg.repo+'/main/'+f.path};
       });
-    if(!files.length){toast('No backups found in bkp/ folder','err');return;}
+    if(!files.length){toast('No backups found in bkp/ folder','err');return null;}
     files.sort(function(a,b){return b.tsRaw.localeCompare(a.tsRaw);});
     var latest=files[0];
     var tsDisplay=latest.tsRaw.replace('T',' ').replace(/-/g,function(m,i){return i<10?'-':':'});
-    var answer=prompt(
-      'RESTORE from backup?\n\n'+
-      'File: '+latest.path+'\n'+
-      'Time: '+tsDisplay+'\n\n'+
-      'This will REPLACE your current data with this backup.\n'+
-      'Your current data will be overwritten.\n\n'+
-      'Type RESTORE to confirm:'
-    );
-    if(!answer||answer.trim().toUpperCase()!=='RESTORE'){toast('Restore cancelled','ok');return;}
-    toast('Fetching backup file…','ok');
-    var rawContent=await ghFetchFileContent(cfg,latest.path);
-    if(!rawContent){toast('Failed to fetch or decode backup file','err');return;}
-    var data=JSON.parse(rawContent);
-    // Clear existing data first, then import
-    await dbClear('trades');await dbClear('images');await dbClear('sessions');
-    var importedTrades=Array.isArray(data)?data:(data.trades||[]);
-    for(var t of importedTrades){recomputeTradeFields(t);await dbPut('trades',t);}
-    for(var img of(data.images||[]))await dbPut('images',img);
-    for(var sess of(data.sessions||[]))await dbPut('sessions',sess);
-    for(var setting of(data.settings||[]))await dbPut('settings',setting);
-    if(data.localData){Object.keys(data.localData).forEach(function(k){localStorage.setItem(k,data.localData[k]);});}
-    await syncConfigFromTrades(importedTrades);
-    toast('Restored from '+latest.path,'ok');
-    await refreshUI();
-    await ghAutoSync();
-  }catch(e){toast('Restore error: '+e.message,'err');}
+    return{path:latest.path,tsDisplay:tsDisplay};
+  }catch(e){toast('Backup lookup error: '+e.message,'err');return null;}
+}
+// ── Restore latest backup from bkp/ (true restore — clears existing data first) ──
+async function ghRestoreLatestBackup(){
+  var cfg=ghGetConfig();
+  if(!cfg.user||!cfg.repo||!cfg.token){toast('GitHub not configured','err');return;}
+  var latest=await ghFindLatestTradeBackup(cfg);
+  if(!latest)return;
+  openTypeConfirmModal({
+    title:'Restore from backup?',
+    message:'File: '+latest.path+'\n'+
+      'Time: '+latest.tsDisplay+'\n\n'+
+      'This will REPLACE your current data with this backup. Your current data will be overwritten.\n\n'+
+      'If this backup file turns out to be invalid or corrupt, the restore is cancelled and nothing is touched.',
+    expectedWord:'RESTORE',
+    confirmLabel:'Restore',
+    onCancel:function(){toast('Restore cancelled','ok');},
+    onConfirm:async function(){
+      try{
+        toast('Fetching backup file…','ok');
+        var rawContent=await ghFetchFileContent(cfg,latest.path);
+        if(!rawContent){toast('Failed to fetch or decode backup file','err');return;}
+        var data=JSON.parse(rawContent);
+        // Clear existing data first, then import
+        await dbClear('trades');await dbClear('images');await dbClear('sessions');
+        var importedTrades=Array.isArray(data)?data:(data.trades||[]);
+        for(var t of importedTrades){recomputeTradeFields(t);await dbPut('trades',t);}
+        for(var img of(data.images||[]))await dbPut('images',img);
+        for(var sess of(data.sessions||[]))await dbPut('sessions',sess);
+        for(var setting of(data.settings||[]))await dbPut('settings',setting);
+        if(data.localData){Object.keys(data.localData).forEach(function(k){localStorage.setItem(k,data.localData[k]);});}
+        await syncConfigFromTrades(importedTrades);
+        toast('Restored from '+latest.path,'ok');
+        await refreshUI();
+        await ghAutoSync();
+      }catch(e){toast('Restore error: '+e.message,'err');}
+    }
+  });
+}
+// ── Merge latest backup from bkp/ (keeps existing data, skips duplicate trades) ──
+async function ghMergeLatestBackup(){
+  var cfg=ghGetConfig();
+  if(!cfg.user||!cfg.repo||!cfg.token){toast('GitHub not configured','err');return;}
+  var latest=await ghFindLatestTradeBackup(cfg);
+  if(!latest)return;
+  openTypeConfirmModal({
+    title:'Merge from backup?',
+    message:'File: '+latest.path+'\n'+
+      'Time: '+latest.tsDisplay+'\n\n'+
+      'This will merge trades, images, sessions and settings from this backup into your existing data. Duplicate trades (same trade #, pair & entry time) are skipped — nothing existing is deleted or overwritten.\n\n'+
+      'If this backup file turns out to be invalid or corrupt, the merge is cancelled and nothing is touched.',
+    expectedWord:'MERGE',
+    confirmLabel:'Merge',
+    onCancel:function(){toast('Merge cancelled','ok');},
+    onConfirm:async function(){
+      try{
+        toast('Fetching backup file…','ok');
+        var rawContent=await ghFetchFileContent(cfg,latest.path);
+        if(!rawContent){toast('Failed to fetch or decode backup file','err');return;}
+        var data=JSON.parse(rawContent);
+        var r=await applyBackupPayload(data,'merge');
+        var importedTrades=Array.isArray(data)?data:(data.trades||[]);
+        if(importedTrades.length)await syncConfigFromTrades(importedTrades);
+        toast('Merged from '+latest.path+': '+r.trades+' trade'+(r.trades===1?'':'s')+' added'+(r.skippedTrades?', '+r.skippedTrades+' dupe'+(r.skippedTrades===1?'':'s')+' skipped':''),'ok');
+        await refreshUI();
+        await ghAutoSync();
+      }catch(e){toast('Merge error: '+e.message,'err');}
+    }
+  });
 }
 // ── After restoring trades, ensure config has all strategies/pairs/asset types referenced ──
 async function syncConfigFromTrades(importedTrades){
@@ -17373,27 +17835,58 @@ async function syncConfigFromTrades(importedTrades){
 }
 // ── Restore a specific snapshot by path ──
 async function ghRestoreSnapshot(downloadUrl,filePath){
-  var confirmMsg='RESTORE this trade backup?\n\nFile: '+filePath+'\n\nThis will REPLACE your current trades, sessions, and settings.\n\nType RESTORE to confirm:';
-  var answer=prompt(confirmMsg);
-  if(!answer||answer.trim().toUpperCase()!=='RESTORE'){toast('Restore cancelled','ok');return;}
   var cfg=ghGetConfig();
-  try{
-    toast('Fetching backup…','ok');
-    var rawContent=await ghFetchFileContent(cfg,filePath);
-    if(!rawContent){toast('Failed to fetch or decode backup file','err');return;}
-    var data=JSON.parse(rawContent);
-    await dbClear('trades');await dbClear('images');await dbClear('sessions');
-    var importedTrades=Array.isArray(data)?data:(data.trades||[]);
-    for(var t of importedTrades){recomputeTradeFields(t);await dbPut('trades',t);}
-    for(var img of(data.images||[]))await dbPut('images',img);
-    for(var sess of(data.sessions||[]))await dbPut('sessions',sess);
-    for(var setting of(data.settings||[]))await dbPut('settings',setting);
-    if(data.localData){Object.keys(data.localData).forEach(function(k){localStorage.setItem(k,data.localData[k]);});}
-    await syncConfigFromTrades(importedTrades);
-    toast('Trades restored from '+filePath,'ok');
-    await refreshUI();
-    await ghAutoSync();
-  }catch(e){toast('Restore error: '+e.message,'err');}
+  openTypeConfirmModal({
+    title:'Restore this trade backup?',
+    message:'File: '+filePath+'\n\nThis will REPLACE your current trades, sessions, and settings.\n\nIf this backup file turns out to be invalid or corrupt, the restore is cancelled and nothing is touched.',
+    expectedWord:'RESTORE',
+    confirmLabel:'Restore',
+    onCancel:function(){toast('Restore cancelled','ok');},
+    onConfirm:async function(){
+      try{
+        toast('Fetching backup…','ok');
+        var rawContent=await ghFetchFileContent(cfg,filePath);
+        if(!rawContent){toast('Failed to fetch or decode backup file','err');return;}
+        var data=JSON.parse(rawContent);
+        await dbClear('trades');await dbClear('images');await dbClear('sessions');
+        var importedTrades=Array.isArray(data)?data:(data.trades||[]);
+        for(var t of importedTrades){recomputeTradeFields(t);await dbPut('trades',t);}
+        for(var img of(data.images||[]))await dbPut('images',img);
+        for(var sess of(data.sessions||[]))await dbPut('sessions',sess);
+        for(var setting of(data.settings||[]))await dbPut('settings',setting);
+        if(data.localData){Object.keys(data.localData).forEach(function(k){localStorage.setItem(k,data.localData[k]);});}
+        await syncConfigFromTrades(importedTrades);
+        toast('Trades restored from '+filePath,'ok');
+        await refreshUI();
+        await ghAutoSync();
+      }catch(e){toast('Restore error: '+e.message,'err');}
+    }
+  });
+}
+// ── Merge a specific snapshot by path — keeps existing data, skips duplicate trades ──
+async function ghMergeSnapshot(downloadUrl,filePath){
+  var cfg=ghGetConfig();
+  openTypeConfirmModal({
+    title:'Merge this trade backup?',
+    message:'File: '+filePath+'\n\nThis will merge trades, images, sessions and settings from this backup into your existing data. Duplicate trades (same trade #, pair & entry time) are skipped — nothing existing is deleted or overwritten.\n\nIf this backup file turns out to be invalid or corrupt, the merge is cancelled and nothing is touched.',
+    expectedWord:'MERGE',
+    confirmLabel:'Merge',
+    onCancel:function(){toast('Merge cancelled','ok');},
+    onConfirm:async function(){
+      try{
+        toast('Fetching backup…','ok');
+        var rawContent=await ghFetchFileContent(cfg,filePath);
+        if(!rawContent){toast('Failed to fetch or decode backup file','err');return;}
+        var data=JSON.parse(rawContent);
+        var r=await applyBackupPayload(data,'merge');
+        var importedTrades=Array.isArray(data)?data:(data.trades||[]);
+        if(importedTrades.length)await syncConfigFromTrades(importedTrades);
+        toast('Merged from '+filePath+': '+r.trades+' trade'+(r.trades===1?'':'s')+' added'+(r.skippedTrades?', '+r.skippedTrades+' dupe'+(r.skippedTrades===1?'':'s')+' skipped':''),'ok');
+        await refreshUI();
+        await ghAutoSync();
+      }catch(e){toast('Merge error: '+e.message,'err');}
+    }
+  });
 }
 function ghSnapshotSelectionChanged(){
   var el=document.getElementById('gh-snapshot-list');
