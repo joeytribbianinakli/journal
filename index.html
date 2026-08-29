@@ -1275,7 +1275,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <button type="button" class="nav-section-header" onclick="toggleNavSection('tools')">
         <svg class="nav-section-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
         <span class="nav-section-title">Tools</span>
-        <span class="nav-section-count">5</span>
+        <span class="nav-section-count">6</span>
       </button>
       <div class="nav-section-collapse"><div class="nav-section-body">
         <button class="nav-item" id="nav-fxstreet" onclick="_flowActive=false;nav('fxstreet',this)">
@@ -1290,6 +1290,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         </button>
         <button class="nav-item" onclick="nav('montecarlo',this)">
           <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Monte Carlo
+        </button>
+        <button class="nav-item" onclick="nav('fx-tracker',this)">
+          <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>USD/CAD Tracker
         </button>
         <button class="nav-item" onclick="nav('backup',this)">
           <svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Backup &amp; restore
@@ -4853,6 +4856,148 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         </div>
       </div>
     </div><!-- /page-fxstreet -->
+    <div class="page" id="page-fx-tracker">
+      <div class="stats-grid" id="fx-stats" style="margin-bottom:14px"></div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-header"><span class="card-title">Log a conversion</span></div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:end">
+            <div class="frow" style="margin-bottom:0"><label class="flabel">Date</label><input type="date" id="fx-date" min="1000-01-01" max="9999-12-31"></div>
+            <div class="frow" style="margin-bottom:0"><label class="flabel">CAD converted</label><input type="number" id="fx-cad" step="0.01" placeholder="1000.00"></div>
+            <div class="frow" style="margin-bottom:0"><label class="flabel">Fee (CAD, optional)</label><input type="number" id="fx-fee" step="0.01" placeholder="0.00"></div>
+            <div class="frow" style="margin-bottom:0"><label class="flabel">USD received</label><input type="number" id="fx-usd" step="0.01" placeholder="730.00"></div>
+          </div>
+          <button class="btn btn-primary" id="fx-submit-btn" style="margin-top:12px" onclick="fxSubmit()">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add conversion
+          </button>
+          <button class="btn" id="fx-cancel-btn" style="margin-top:12px;margin-left:8px;display:none" onclick="fxCancelEdit()">Cancel</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Conversion history</span><span style="font-size:11px;color:var(--text3)">Rate = CAD per 1 USD · <span id="fx-rate-label">fetching live rate…</span></span></div>
+        <div class="table-wrap" id="fx-table"></div>
+      </div>
+    </div><!-- /page-fx-tracker -->
+<script>
+// ── USD/CAD conversion tracker: not a converter, a ledger. Each row is a
+// CAD→USD conversion the person actually did; we compute the rate they
+// effectively paid (including fee), what that USD is worth in CAD at
+// today's live rate (reusing paFetchOnePrice, the same fetch chain Price
+// Alerts already uses — no new network code), and the resulting gain/loss.
+// Plain localStorage, matching Price Alerts' storage pattern (this isn't
+// trade data, so it doesn't belong in the IndexedDB trades store). ──
+var FX_KEY='tj-fx-conversions';
+var _fxRate=null; // live CAD per USD, null until fetched
+var _fxRateProvider=null; // which price provider served _fxRate (or last attempted, on failure)
+var _fxEditingId=null; // set while editing an existing row; null = add mode
+function fxLoad(){try{return JSON.parse(localStorage.getItem(FX_KEY)||'[]');}catch(e){return[];}}
+function fxSave(list){try{localStorage.setItem(FX_KEY,JSON.stringify(list));}catch(e){}}
+function fxSubmit(){
+  var date=document.getElementById('fx-date').value||new Date().toISOString().slice(0,10);
+  var cad=parseFloat(document.getElementById('fx-cad').value);
+  var fee=parseFloat(document.getElementById('fx-fee').value)||0;
+  var usd=parseFloat(document.getElementById('fx-usd').value);
+  if(!cad||!usd||cad<=0||usd<=0){toast('Enter CAD converted and USD received','err');return;}
+  var list=fxLoad();
+  if(_fxEditingId!==null){
+    var row=list.find(function(r){return r.id===_fxEditingId;});
+    if(row){row.date=date;row.cad=cad;row.fee=fee;row.usd=usd;}
+    toast('Conversion updated','ok');
+    fxCancelEdit(); // resets form + button back to "Add" mode
+  } else {
+    list.push({id:Date.now(),date:date,cad:cad,fee:fee,usd:usd});
+    document.getElementById('fx-cad').value='';document.getElementById('fx-fee').value='';document.getElementById('fx-usd').value='';
+    toast('Conversion added','ok');
+  }
+  fxSave(list);
+  ghAutoSyncFx();
+  fxRender();
+}
+function fxEdit(id){
+  var row=fxLoad().find(function(r){return r.id===id;});
+  if(!row)return;
+  _fxEditingId=id;
+  document.getElementById('fx-date').value=row.date;
+  document.getElementById('fx-cad').value=row.cad;
+  document.getElementById('fx-fee').value=row.fee;
+  document.getElementById('fx-usd').value=row.usd;
+  var btn=document.getElementById('fx-submit-btn');
+  btn.innerHTML='<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Update conversion';
+  document.getElementById('fx-cancel-btn').style.display='inline-flex';
+  btn.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function fxCancelEdit(){
+  _fxEditingId=null;
+  document.getElementById('fx-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('fx-cad').value='';document.getElementById('fx-fee').value='';document.getElementById('fx-usd').value='';
+  document.getElementById('fx-submit-btn').innerHTML='<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add conversion';
+  document.getElementById('fx-cancel-btn').style.display='none';
+}
+function fxDelete(id){
+  if(!confirm('Delete this conversion?'))return;
+  if(_fxEditingId===id)fxCancelEdit();
+  fxSave(fxLoad().filter(function(r){return r.id!==id;}));
+  ghAutoSyncFx();
+  toast('Conversion deleted','ok');
+  fxRender();
+}
+function fxRender(){
+  if(!document.getElementById('fx-date').value)document.getElementById('fx-date').value=new Date().toISOString().slice(0,10);
+  if(_fxRate===null){
+    paFetchOnePrice('USDCAD',function(price,provider){
+      _fxRate=price;
+      _fxRateProvider=provider; // on success: provider that served it. On failure: last one attempted.
+      var lbl=document.getElementById('fx-rate-label');
+      var provLabel=(PA_PROVIDER_LABELS[provider]||provider||'—');
+      if(lbl)lbl.textContent=price?('live '+price.toFixed(4)+' · via '+provLabel):('rate unavailable — '+provLabel+' didn\'t respond · showing cost basis only');
+      fxRenderBody();
+    });
+  }
+  fxRenderBody();
+}
+function fxRenderBody(){
+  var list=fxLoad().sort(function(a,b){return a.date<b.date?1:-1;});
+  var rate=_fxRate;
+  var totalCad=0,totalUsd=0;
+  var rows=list.map(function(r){
+    var cost=r.cad+r.fee;
+    var paidRate=cost/r.usd;
+    totalCad+=cost;totalUsd+=r.usd;
+    var curVal=rate?r.usd*rate:null;
+    var pl=curVal!==null?curVal-cost:null;
+    var plPct=curVal!==null?(pl/cost*100):null;
+    var plCls=pl===null?'':(pl>=0?'var(--green)':'var(--red)');
+    var plTxt=pl===null?'—':((pl>=0?'+$':'-$')+Math.abs(pl).toFixed(2));
+    var plPctTxt=plPct===null?'':(' ('+(plPct>=0?'+':'')+plPct.toFixed(2)+'%)');
+    return'<tr>'
+      +'<td class="mono">'+escHtml(r.date)+'</td>'
+      +'<td class="mono">$'+r.cad.toFixed(2)+'</td>'
+      +'<td class="mono">$'+r.fee.toFixed(2)+'</td>'
+      +'<td class="mono">$'+r.usd.toFixed(2)+'</td>'
+      +'<td class="mono">'+paidRate.toFixed(4)+'</td>'
+      +'<td class="mono">'+(curVal===null?'—':'$'+curVal.toFixed(2))+'</td>'
+      +'<td class="mono" style="color:'+plCls+'">'+plTxt+plPctTxt+'</td>'
+      +'<td><button class="btn" style="padding:4px 8px" onclick="fxEdit('+r.id+')" title="Edit"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button> <button class="btn" style="padding:4px 8px" onclick="fxDelete('+r.id+')" title="Delete"><svg width="13" height="13" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></td>'
+      +'</tr>';
+  }).join('');
+  document.getElementById('fx-table').innerHTML=list.length?
+    '<table class="data"><thead><tr><th>Date</th><th>CAD paid</th><th>Fee</th><th>USD received</th><th>Rate paid</th><th>Value today</th><th>Gain/loss</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>'
+    :'<div class="empty-state"><svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/></svg><p>No conversions logged yet</p></div>';
+  var avgRate=totalUsd?totalCad/totalUsd:0;
+  var curTotal=rate?totalUsd*rate:null;
+  var totalPl=curTotal!==null?curTotal-totalCad:null;
+  var totalPlPct=totalPl!==null&&totalCad?(totalPl/totalCad*100):null;
+  var plCls=totalPl===null?'var(--text)':(totalPl>=0?'var(--green)':'var(--red)');
+  function card(label,val,sub,color){return'<div class="stat-card"><div class="stat-label">'+label+'</div><div class="stat-value"'+(color?' style="color:'+color+'"':'')+'>'+val+'</div>'+(sub?'<div class="stat-sub">'+sub+'</div>':'')+'</div>';}
+  document.getElementById('fx-stats').innerHTML=
+    card('Total CAD Invested','$'+totalCad.toFixed(2))
+    +card('Total USD Held','$'+totalUsd.toFixed(2))
+    +card('Avg Rate Paid',totalUsd?avgRate.toFixed(4):'—','CAD per USD')
+    +card('Current Rate',rate?rate.toFixed(4):'—',rate?('CAD per USD · '+(PA_PROVIDER_LABELS[_fxRateProvider]||_fxRateProvider||'live')):('via '+(PA_PROVIDER_LABELS[_fxRateProvider]||_fxRateProvider||'—')+' — unavailable'))
+    +card('Value Today',curTotal===null?'—':'$'+curTotal.toFixed(2))
+    +card('Unrealized P/L',totalPl===null?'—':((totalPl>=0?'+$':'-$')+Math.abs(totalPl).toFixed(2)),totalPlPct===null?'':((totalPlPct>=0?'+':'')+totalPlPct.toFixed(2)+'% · USD '+(totalPl>=0?'strengthened':'weakened')+' vs your avg rate'),plCls);
+}
+</script>
 <script>
 // ── ForexFactory calendar-link helpers (page-fxstreet) ──────────────────
 // ForexFactory's URLs encode dates as e.g. "jan1.2026" (day), "jan1.2026"
@@ -8136,7 +8281,7 @@ async function populateSessionSelects(restoreSessionId){
   updateFilterSessionSummary('edg-session-filter','edg-filter-summary','edg-skipped-filter');
 }
 // ══ Navigation ════════════════════════════════════
-var pageMap={'pre-checklist':{title:'Pre-trade checklist',sub:'Calendar → Checklist → Calculator → Log trade'},dashboard:{title:'Dashboard',sub:'Overview of your trading performance'},log:{title:'Log trade',sub:'Record a new trade entry'},history:{title:'Trade history',sub:'Browse and filter all your trades'},sessions:{title:'Sessions',sub:'Manage your trading session periods'},'checklist-editor':{title:'Checklist editor',sub:'Edit checklist items globally'},backup:{title:'Backup & restore',sub:'Export, import or clear your journal data'},montecarlo:{title:'Monte Carlo',sub:'Simulate future equity paths from historical trade data'},calculator:{title:'Position Size Calculator',sub:'Forex · Crypto · Gold · Stocks · Indices'},calendar:{title:'Calendar view',sub:'Visual trade activity by day, week and year'},'ai-analyzer':{title:'AI Trade Analyzer',sub:'Intelligent session review powered by AI'},'price-alerts':{title:'Price Alerts',sub:'Get notified on your phone when a price target is hit'},fxstreet:{title:'Economic calendar',sub:'ForexFactory calendar — check before trading'},'trade-analytics':{title:'Trade Analytics',sub:'Ratings, error types, direction & entry-time performance'},edge:{title:'Edge Analyzer',sub:'Is there a statistically real edge in your logged trades?'}};;
+var pageMap={'pre-checklist':{title:'Pre-trade checklist',sub:'Calendar → Checklist → Calculator → Log trade'},dashboard:{title:'Dashboard',sub:'Overview of your trading performance'},log:{title:'Log trade',sub:'Record a new trade entry'},history:{title:'Trade history',sub:'Browse and filter all your trades'},sessions:{title:'Sessions',sub:'Manage your trading session periods'},'checklist-editor':{title:'Checklist editor',sub:'Edit checklist items globally'},backup:{title:'Backup & restore',sub:'Export, import or clear your journal data'},montecarlo:{title:'Monte Carlo',sub:'Simulate future equity paths from historical trade data'},calculator:{title:'Position Size Calculator',sub:'Forex · Crypto · Gold · Stocks · Indices'},calendar:{title:'Calendar view',sub:'Visual trade activity by day, week and year'},'ai-analyzer':{title:'AI Trade Analyzer',sub:'Intelligent session review powered by AI'},'price-alerts':{title:'Price Alerts',sub:'Get notified on your phone when a price target is hit'},fxstreet:{title:'Economic calendar',sub:'ForexFactory calendar — check before trading'},'trade-analytics':{title:'Trade Analytics',sub:'Ratings, error types, direction & entry-time performance'},edge:{title:'Edge Analyzer',sub:'Is there a statistically real edge in your logged trades?'},'fx-tracker':{title:'USD/CAD Tracker',sub:'Track your CAD→USD conversions and currency gains/losses'}};;
 var _currentPage='dashboard';
 function nav(id,btn){
   // Reset log form when navigating away — but preserve it if going back to calc within the flow
@@ -8195,6 +8340,7 @@ function nav(id,btn){
   if(id==='fxstreet'){fxsOnPageEnter();}
   if(id==='trade-analytics'){populateSessionSelects().then(function(){populateTrdFilters().then(function(){renderTradeAnalytics();});});}
   if(id==='edge'){populateSessionSelects().then(function(){populateEdgFilters().then(function(){renderEdgeAnalyzer();});});}
+  if(id==='fx-tracker'){fxRender();}
 }
 // ── Sidebar nav: collapsible sections + quick search ──────────────────────
 // Sections default to Overview/Trades expanded (day-to-day pages) and Manage/Tools
@@ -13363,6 +13509,7 @@ async function exportBackup(){
   var trades=await dbGetAll('trades'),images=await dbGetAll('images'),sessions=await dbGetAll('sessions'),settings=await dbGetAll('settings');
   // Also capture localStorage keys used by the app
   var localData={};
+  localData[FX_KEY]=localStorage.getItem(FX_KEY)||'[]'; // USD/CAD tracker — separate ledger, not trade data, but still worth surviving a restore
   var blob=new Blob([JSON.stringify({version:5,exportedAt:new Date().toISOString(),trades,images,sessions,settings,localData},null,2)],{type:'application/json'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tj_data_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);
   toast('Full backup downloaded ('+images.length+' images, '+trades.length+' trades)','ok');
@@ -16079,6 +16226,7 @@ var GH_CONFIG_FILE='tj_config.json';       // live config (always overwritten)
 var GH_BKP_CONFIG_FILE='bkp/config_backup.json'; // single config backup (always overwritten)
 var GH_ALERTS_FILE='tjalert.json';         // live alerts (always overwritten)
 var GH_BKP_ALERTS_FILE='bkp/alerts_backup.json'; // single alerts backup (manual backup only)
+var GH_FX_FILE='tjfx.json';                // live USD/CAD conversion log (own file — unrelated to trade data)
 // ── Config file helpers (checklist, strategies, assets & pairs) ──
 async function ghBuildConfigPayload(){
   var checklist=await getChecklist();
@@ -16311,6 +16459,51 @@ async function ghPullAlertsFile(cfg){
     if(typeof paProviderBadgeRefresh === 'function') paProviderBadgeRefresh();
   }catch(e){console.warn('Alerts pull error:',e.message);}
 }
+// ── FX tracker file (tjfx.json) — own file, separate from tj_data.json, since
+// USD/CAD conversions aren't trade data. Mirrors ghPushAlertsFile/ghPullAlertsFile. ──
+async function ghPushFxFile(cfg){
+  try{
+    var payload={version:1,exportedAt:new Date().toISOString(),conversions:fxLoad()};
+    var sha=null;
+    try{
+      var existingResp=await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/'+GH_FX_FILE,{
+        headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json'}
+      });
+      if(existingResp.ok){
+        var existingFile=await existingResp.json();
+        sha=existingFile.sha||null;
+        var existingText=decodeURIComponent(escape(atob(existingFile.content.replace(/\n/g,''))));
+        var existingData=JSON.parse(existingText);
+        if(JSON.stringify(payload.conversions)===JSON.stringify(existingData.conversions))return; // no real change
+      }
+    }catch(e){ sha=await ghGetFileSHAByPath(cfg,GH_FX_FILE); }
+    var content=utf8ToBase64(JSON.stringify(payload,null,2));
+    var body={message:'TJ FX tracker — '+new Date().toISOString().slice(0,16).replace('T',' '),content:content};
+    if(sha)body.sha=sha;
+    await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/'+GH_FX_FILE,{
+      method:'PUT',
+      headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+  }catch(e){console.warn('FX file push error:',e.message);}
+}
+// No debounce here, matching trades' ghAutoSync() — a conversion is a deliberate
+// button click, not a rapid-fire autosave, so there's nothing to collapse.
+function ghAutoSyncFx(){
+  var cfg=ghGetConfig();
+  if(!cfg.user||!cfg.repo||!cfg.token)return;
+  ghPushFxFile(cfg);
+}
+async function ghPullFxFile(cfg){
+  try{
+    var raw=await ghFetchFileContent(cfg,GH_FX_FILE);
+    if(!raw)return;
+    var data=JSON.parse(raw);
+    var remote=Array.isArray(data)?data:(data.conversions||[]);
+    fxSave(remote);
+    if(_currentPage==='fx-tracker')fxRender();
+  }catch(e){console.warn('FX pull error:',e.message);}
+}
 function ghGetConfig(){
   return{
     user:localStorage.getItem('tj-gh-user')||'',
@@ -16411,6 +16604,7 @@ async function ghAutoPullOnSetup(){
     }catch(ce){console.warn('Config pull error:',ce.message);}
     // Pull alerts file
     await ghPullAlertsFile(cfg);
+    await ghPullFxFile(cfg);
     var now=new Date().toISOString();
     localStorage.setItem('tj-gh-last-sync',now);
     ghRefreshStatus();
@@ -16648,6 +16842,7 @@ async function ghPull(){
     }catch(ce){console.warn('Config pull error:',ce.message);}
     // Pull alerts file
     await ghPullAlertsFile(cfg);
+    await ghPullFxFile(cfg);
     var now=new Date().toISOString();
     localStorage.setItem('tj-gh-last-sync',now);
     ghRefreshStatus();
@@ -20776,9 +20971,11 @@ function paFetchOnePrice(sym, cb){
   }
   // Walk the provider chain, trying each in order and falling back on null/error.
   var originalFirst = null;
+  var lastTried = null; // last provider actually attempted, for reporting on total failure
   function tryNext(remaining){
-    if(remaining.length === 0){ cb(null); return; }
+    if(remaining.length === 0){ cb(null, lastTried); return; }
     var provider = remaining[0];
+    lastTried    = provider;
     var rest     = remaining.slice(1);
     // ── Helper: call cb with price, showing a fallback toast if we fell back ──
     function succeed(price){
@@ -20798,7 +20995,7 @@ function paFetchOnePrice(sym, cb){
       _paProviderFailed[assetType]  = !!didFallback;
       _paLastProvider = provider; // legacy compat
       paProviderLastBadgeRefresh();
-      cb(price);
+      cb(price, provider);
     }
     if(provider === 'binance'){
       if(!binancePair){ tryNext(rest); return; }
