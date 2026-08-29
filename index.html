@@ -3309,11 +3309,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               <button class="btn" style="border-color:rgba(155,127,240,.3);color:var(--purple)" onclick="document.getElementById('imp-file-restore').click()"><svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Restore file(s)</button>
             </div>
             <div class="backup-card">
-              <div class="bc-icon" style="background:rgba(62,207,142,.12);color:var(--green)"><svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+              <div class="bc-icon" style="background:rgba(62,207,142,.12);color:var(--green)"><svg viewBox="0 0 24 24"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg></div>
               <div class="bc-title">Merge JSON</div>
               <div class="bc-desc">Select one or more of the JSON files above (trade data, config, FX — any combination); each is detected automatically. <strong style="color:var(--text2)">Keeps your existing data</strong> and merges in trades, images, sessions, config and FX from the selected file(s) — duplicate trades are skipped, nothing existing is deleted. Config/FX files still fully overwrite the matching settings. All-or-nothing — if any selected file is invalid, nothing is touched. Also syncs the actual GitHub data files (not the bkp/ backup folder) if GitHub is configured.</div>
               <input type="file" id="imp-file-merge" accept=".json" multiple style="display:none" onchange="importJsonFiles(this,'merge')">
-              <button class="btn" style="border-color:rgba(62,207,142,.3);color:var(--green)" onclick="document.getElementById('imp-file-merge').click()"><svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Merge file(s)</button>
+              <button class="btn" style="border-color:rgba(62,207,142,.3);color:var(--green)" onclick="document.getElementById('imp-file-merge').click()"><svg viewBox="0 0 24 24"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>Merge file(s)</button>
             </div>
           </div>
         </div>
@@ -3408,6 +3408,119 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               <div id="gh-last-sync-time" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
             </div>
           </div>
+          <!-- Backup & Snapshots (nested here since it's all GitHub bkp/ restore & backup functionality) -->
+          <div class="card" style="margin-bottom:12px">
+            <div class="card-header" style="cursor:pointer;user-select:none" onclick="toggleBkpSection('bkp-snapshots-section')">
+              <div style="display:flex;align-items:center;gap:8px">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span class="card-title">Backup &amp; Snapshots</span>
+              </div>
+              <svg id="bkp-snapshots-section-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .18s"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div id="bkp-snapshots-section-body" class="card-body" style="display:none">
+              <!-- Manual backup + Restore latest -->
+              <div class="backup-grid" style="grid-template-columns:1fr 1fr;margin-bottom:12px">
+                <div class="backup-card" style="border-color:rgba(52,201,122,.25)">
+                  <div class="bc-icon" style="background:rgba(52,201,122,.12);color:var(--green)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                  </div>
+                  <div class="bc-title">Manual Backup</div>
+                  <div class="bc-desc">Saves a timestamped trades snapshot to <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-size:10px">bkp/trades/</code> and overwrites the single config backup at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-size:10px">bkp/config_backup.json</code> with all current settings (strategies, checklist, pairs, columns, theme, defaults), plus the single FX backup at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-size:10px">bkp/fx_backup.json</code> with your USD/CAD conversions.</div>
+                  <button class="btn" style="border-color:rgba(52,201,122,.3);color:var(--green)" onclick="ghManualBackup()">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Save manual backup
+                  </button>
+                </div>
+                <div class="backup-card" style="border-color:rgba(155,127,240,.25)">
+                  <div class="bc-icon" style="background:rgba(155,127,240,.12);color:var(--purple)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+                  </div>
+                  <div class="bc-title">Restore / Merge Latest Trade Backup</div>
+                  <div class="bc-desc">Uses the most recent snapshot in <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-size:10px">bkp/trades/</code>. To restore your config (strategies/checklist/pairs), use the Snapshots list below. <strong style="color:var(--amber)">Restore</strong> deletes your current trades, images and sessions first, then loads only what's in the snapshot. <strong style="color:var(--text2)">Merge</strong> keeps your current data and adds in the snapshot's trades, images, sessions and settings — duplicate trades are skipped.</div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button class="btn" style="border-color:rgba(155,127,240,.3);color:var(--purple)" onclick="ghRestoreLatestBackup()">
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+                      Restore latest
+                    </button>
+                    <button class="btn" style="border-color:rgba(62,207,142,.3);color:var(--green)" onclick="ghMergeLatestBackup()">
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>
+                      Merge latest
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <!-- Automatic weekly backup -->
+              <div class="card" style="margin-bottom:12px;border-color:rgba(77,127,255,.25)">
+                <div class="card-header" style="cursor:pointer;user-select:none" onclick="toggleBkpSection('autobkp-section')">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span class="card-title">Automatic Weekly Backup</span>
+                    <span id="autobkp-status-dot" style="width:7px;height:7px;border-radius:50%;background:var(--border2);display:inline-block;margin-left:2px"></span>
+                    <span id="autobkp-status-label" style="font-size:10px;font-weight:500;color:var(--text3);text-transform:none;letter-spacing:0">Off</span>
+                  </div>
+                  <svg id="autobkp-section-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .18s"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div id="autobkp-section-body" class="card-body" style="display:none">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px;flex-wrap:wrap">
+                    <div class="bc-desc" style="margin-bottom:0">Runs the exact same backup as <strong style="color:var(--text2)">Save manual backup</strong> above — automatically, once a week, on the day and time you set.</div>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;color:var(--text2);cursor:pointer;flex-shrink:0;user-select:none">
+                      <input type="checkbox" id="autobkp-enabled" onchange="autoBkpSaveConfig()" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer">
+                      Enabled
+                    </label>
+                  </div>
+                  <div class="frow-inline" style="margin-bottom:10px">
+                    <div class="frow" style="max-width:190px">
+                      <label class="flabel">Day of week</label>
+                      <select id="autobkp-day" onchange="autoBkpSaveConfig()">
+                        <option value="0">Sunday</option>
+                        <option value="1">Monday</option>
+                        <option value="2">Tuesday</option>
+                        <option value="3">Wednesday</option>
+                        <option value="4">Thursday</option>
+                        <option value="5">Friday</option>
+                        <option value="6">Saturday</option>
+                      </select>
+                    </div>
+                    <div class="frow" style="max-width:140px">
+                      <label class="flabel">Time</label>
+                      <input type="time" id="autobkp-time" value="20:00" onchange="autoBkpSaveConfig()">
+                    </div>
+                  </div>
+                  <div id="autobkp-status" style="font-size:11px;color:var(--text3);line-height:1.7"></div>
+                  <div style="font-size:10px;color:var(--text3);margin-top:8px;line-height:1.6;opacity:.8">
+                    Needs GitHub configured above. This app has no server, so the schedule is only checked while the app is open in a tab (on load, and every few minutes after) — it won't fire while your browser is fully closed. If the scheduled moment passes while you're away, it catches up once, the next time you open the app.
+                  </div>
+                </div>
+              </div>
+              <!-- All snapshots collapsible list -->
+              <div class="card" style="margin-bottom:0">
+                <div class="card-header" style="cursor:pointer;user-select:none" onclick="toggleGhSnapshots()">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span class="card-title">Trade, Config &amp; FX Backups</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <span style="font-size:11px;color:var(--text3)">bkp/trades/ · bkp/config_backup.json · bkp/fx_backup.json</span>
+                    <svg id="gh-snapshots-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .18s"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+                <div id="gh-snapshots-body" class="card-body" style="display:none">
+                  <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.7">
+                    <strong style="color:var(--text2)">Trade Backups</strong> — timestamped snapshots in <code style="background:var(--bg3);padding:1px 4px;border-radius:3px">bkp/trades/</code>. Created automatically before session deletes and clear-all, or manually. Multiple snapshots kept so you can roll back to any point.<br><br>
+                    <strong style="color:var(--text2)">Config Backup</strong> — a single file at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px">bkp/config_backup.json</code> storing strategies, checklist, and asset pairs. Auto-updated whenever you change any of those, and on Manual Backup. Only one backup kept — always the latest.<br><br>
+                    <strong style="color:var(--text2)">FX Backup</strong> — a single file at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px">bkp/fx_backup.json</code> storing your USD/CAD conversions from the FX Tracker page. Updated on Manual Backup. Only one backup kept — always the latest.
+                  </div>
+                  <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+                    <button class="btn btn-ghost btn-sm" onclick="ghListSnapshots()">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+                      Refresh
+                    </button>
+                  </div>
+                  <div id="gh-snapshot-list"></div>
+                </div>
+              </div>
+            </div><!-- /bkp-snapshots-section-body -->
+          </div><!-- /bkp-snapshots card -->
           <!-- GitHub Pages Deploy -->
           <div class="card" style="margin-bottom:0">
             <div class="card-header" style="cursor:pointer;user-select:none" onclick="toggleGhPages()">
@@ -3446,120 +3559,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           </div>
         </div><!-- /github-sync-section-body -->
       </div><!-- /github-sync-section card -->
-      <!-- ── 3. Backup & Snapshots ── -->
-      <div class="card" style="margin-bottom:10px">
-        <div class="card-header" style="cursor:pointer;user-select:none" onclick="toggleBkpSection('bkp-snapshots-section')">
-          <div style="display:flex;align-items:center;gap:8px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <span class="card-title">Backup &amp; Snapshots</span>
-          </div>
-          <svg id="bkp-snapshots-section-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .18s"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-        <div id="bkp-snapshots-section-body" class="card-body" style="display:none">
-          <!-- Manual backup + Restore latest -->
-          <div class="backup-grid" style="grid-template-columns:1fr 1fr;margin-bottom:12px">
-            <div class="backup-card" style="border-color:rgba(52,201,122,.25)">
-              <div class="bc-icon" style="background:rgba(52,201,122,.12);color:var(--green)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
-              </div>
-              <div class="bc-title">Manual Backup</div>
-              <div class="bc-desc">Saves a timestamped trades snapshot to <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-size:10px">bkp/trades/</code> and overwrites the single config backup at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-size:10px">bkp/config_backup.json</code> with all current settings (strategies, checklist, pairs, columns, theme, defaults), plus the single FX backup at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-size:10px">bkp/fx_backup.json</code> with your USD/CAD conversions.</div>
-              <button class="btn" style="border-color:rgba(52,201,122,.3);color:var(--green)" onclick="ghManualBackup()">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                Save manual backup
-              </button>
-            </div>
-            <div class="backup-card" style="border-color:rgba(155,127,240,.25)">
-              <div class="bc-icon" style="background:rgba(155,127,240,.12);color:var(--purple)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-              </div>
-              <div class="bc-title">Restore / Merge Latest Trade Backup</div>
-              <div class="bc-desc">Uses the most recent snapshot in <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-size:10px">bkp/trades/</code>. To restore your config (strategies/checklist/pairs), use the Snapshots list below. <strong style="color:var(--amber)">Restore</strong> deletes your current trades, images and sessions first, then loads only what's in the snapshot. <strong style="color:var(--text2)">Merge</strong> keeps your current data and adds in the snapshot's trades, images, sessions and settings — duplicate trades are skipped.</div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn" style="border-color:rgba(155,127,240,.3);color:var(--purple)" onclick="ghRestoreLatestBackup()">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-                  Restore latest
-                </button>
-                <button class="btn" style="border-color:rgba(62,207,142,.3);color:var(--green)" onclick="ghMergeLatestBackup()">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  Merge latest
-                </button>
-              </div>
-            </div>
-          </div>
-          <!-- Automatic weekly backup -->
-          <div class="card" style="margin-bottom:12px;border-color:rgba(77,127,255,.25)">
-            <div class="card-header" style="cursor:pointer;user-select:none" onclick="toggleBkpSection('autobkp-section')">
-              <div style="display:flex;align-items:center;gap:8px">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                <span class="card-title">Automatic Weekly Backup</span>
-                <span id="autobkp-status-dot" style="width:7px;height:7px;border-radius:50%;background:var(--border2);display:inline-block;margin-left:2px"></span>
-                <span id="autobkp-status-label" style="font-size:10px;font-weight:500;color:var(--text3);text-transform:none;letter-spacing:0">Off</span>
-              </div>
-              <svg id="autobkp-section-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .18s"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-            <div id="autobkp-section-body" class="card-body" style="display:none">
-              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px;flex-wrap:wrap">
-                <div class="bc-desc" style="margin-bottom:0">Runs the exact same backup as <strong style="color:var(--text2)">Save manual backup</strong> above — automatically, once a week, on the day and time you set.</div>
-                <label style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;color:var(--text2);cursor:pointer;flex-shrink:0;user-select:none">
-                  <input type="checkbox" id="autobkp-enabled" onchange="autoBkpSaveConfig()" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer">
-                  Enabled
-                </label>
-              </div>
-              <div class="frow-inline" style="margin-bottom:10px">
-                <div class="frow" style="max-width:190px">
-                  <label class="flabel">Day of week</label>
-                  <select id="autobkp-day" onchange="autoBkpSaveConfig()">
-                    <option value="0">Sunday</option>
-                    <option value="1">Monday</option>
-                    <option value="2">Tuesday</option>
-                    <option value="3">Wednesday</option>
-                    <option value="4">Thursday</option>
-                    <option value="5">Friday</option>
-                    <option value="6">Saturday</option>
-                  </select>
-                </div>
-                <div class="frow" style="max-width:140px">
-                  <label class="flabel">Time</label>
-                  <input type="time" id="autobkp-time" value="20:00" onchange="autoBkpSaveConfig()">
-                </div>
-              </div>
-              <div id="autobkp-status" style="font-size:11px;color:var(--text3);line-height:1.7"></div>
-              <div style="font-size:10px;color:var(--text3);margin-top:8px;line-height:1.6;opacity:.8">
-                Needs GitHub configured above. This app has no server, so the schedule is only checked while the app is open in a tab (on load, and every few minutes after) — it won't fire while your browser is fully closed. If the scheduled moment passes while you're away, it catches up once, the next time you open the app.
-              </div>
-            </div>
-          </div>
-          <!-- All snapshots collapsible list -->
-          <div class="card" style="margin-bottom:0">
-            <div class="card-header" style="cursor:pointer;user-select:none" onclick="toggleGhSnapshots()">
-              <div style="display:flex;align-items:center;gap:8px">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <span class="card-title">Trade, Config &amp; FX Backups</span>
-              </div>
-              <div style="display:flex;align-items:center;gap:10px">
-                <span style="font-size:11px;color:var(--text3)">bkp/trades/ · bkp/config_backup.json · bkp/fx_backup.json</span>
-                <svg id="gh-snapshots-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .18s"><polyline points="6 9 12 15 18 9"/></svg>
-              </div>
-            </div>
-            <div id="gh-snapshots-body" class="card-body" style="display:none">
-              <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.7">
-                <strong style="color:var(--text2)">Trade Backups</strong> — timestamped snapshots in <code style="background:var(--bg3);padding:1px 4px;border-radius:3px">bkp/trades/</code>. Created automatically before session deletes and clear-all, or manually. Multiple snapshots kept so you can roll back to any point.<br><br>
-                <strong style="color:var(--text2)">Config Backup</strong> — a single file at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px">bkp/config_backup.json</code> storing strategies, checklist, and asset pairs. Auto-updated whenever you change any of those, and on Manual Backup. Only one backup kept — always the latest.<br><br>
-                <strong style="color:var(--text2)">FX Backup</strong> — a single file at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px">bkp/fx_backup.json</code> storing your USD/CAD conversions from the FX Tracker page. Updated on Manual Backup. Only one backup kept — always the latest.
-              </div>
-              <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
-                <button class="btn btn-ghost btn-sm" onclick="ghListSnapshots()">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-                  Refresh
-                </button>
-              </div>
-              <div id="gh-snapshot-list"></div>
-            </div>
-          </div>
-        </div><!-- /bkp-snapshots-section-body -->
-      </div><!-- /bkp-snapshots card -->
-      <!-- ── 4. Cloudinary — Image Hosting ── -->
+      <!-- ── 3. Cloudinary — Image Hosting ── -->
       <div class="card" style="margin-bottom:10px">
         <div class="card-header" style="cursor:pointer;user-select:none" onclick="toggleCloudinarySetup()">
           <div style="display:flex;align-items:center;gap:8px">
@@ -3593,7 +3593,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <div id="cloudinary-config-status" style="font-size:11px;color:var(--text3)"></div>
         </div>
       </div>
-      <!-- ── 5. Danger Zone ── -->
+      <!-- ── 4. Danger Zone ── -->
       <div class="card" style="margin-bottom:10px;border-color:rgba(232,85,85,.2)">
         <div class="card-header" style="cursor:pointer;user-select:none" onclick="toggleBkpSection('danger-zone-section')">
           <div style="display:flex;align-items:center;gap:8px">
@@ -17268,7 +17268,7 @@ async function ghListSnapshots(){
           +'<button class="btn btn-ghost btn-sm" style="color:var(--purple)" onclick="ghRestoreSnapshot(\''+escHtml(f.download_url)+'\',\''+escHtml(f.path)+'\')">'
           +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Restore</button>'
           +'<button class="btn btn-ghost btn-sm" style="color:var(--green)" onclick="ghMergeSnapshot(\''+escHtml(f.download_url)+'\',\''+escHtml(f.path)+'\')">'
-          +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Merge</button>'
+          +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>Merge</button>'
           +'</div></div>';
       }).join('');
       var bulkBar='<div id="snap-bulk-bar" style="display:none;align-items:center;gap:8px;margin-bottom:10px;padding:7px 10px;background:rgba(232,85,85,.06);border:1px solid rgba(232,85,85,.2);border-radius:var(--radius)">'
@@ -17313,7 +17313,7 @@ async function ghListSnapshots(){
         +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Restore config'
         +'</button>'
         +'<button class="btn btn-ghost btn-sm" style="color:var(--green)" onclick="ghMergeConfigBackup()">'
-        +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Merge config'
+        +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>Merge config'
         +'</button></div></div>';
     }
     // ── FX pane ──
@@ -17358,7 +17358,7 @@ async function ghListSnapshots(){
         +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Restore FX'
         +'</button>'
         +'<button class="btn btn-ghost btn-sm" style="color:var(--green)" onclick="ghMergeFxBackup()">'
-        +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Merge FX'
+        +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>Merge FX'
         +'</button></div></div>';
     }
   }catch(e){el.innerHTML='<div style="font-size:11px;color:var(--red)">Error: '+escHtml(e.message)+'</div>';}
