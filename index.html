@@ -4874,7 +4874,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><span class="card-title">Conversion history</span><span style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3)">Rate = CAD per 1 USD · <span id="fx-rate-label">fetching live rate…</span><button class="btn btn-ghost btn-sm" id="fx-refresh-btn" onclick="fxManualRefresh()" title="Fetch the latest rate now (uses one API call) — otherwise this only refreshes once every 24h"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></button></span></div>
+        <div class="card-header"><span class="card-title">Conversion history</span><span style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text3)">Rate = CAD per 1 USD · <span id="fx-rate-label">fetching live rate…</span><button class="btn btn-primary btn-sm" id="fx-refresh-btn" onclick="fxManualRefresh()" title="Fetch the latest rate now (uses one API call) — otherwise this only refreshes once every 24h"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>Refresh rate</button></span></div>
         <div class="table-wrap" id="fx-table"></div>
       </div>
     </div><!-- /page-fx-tracker -->
@@ -4882,13 +4882,15 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 // ── USD/CAD conversion tracker: not a converter, a ledger. Each row is a
 // CAD→USD conversion the person actually did; we compute the rate they
 // effectively paid (including fee), what that USD is worth in CAD at
-// today's live rate (reusing paFetchOnePrice, the same fetch chain Price
-// Alerts already uses — no new network code), and the resulting gain/loss.
-// Plain localStorage, matching Price Alerts' storage pattern (this isn't
-// trade data, so it doesn't belong in the IndexedDB trades store). ──
+// today's live rate — via the CloudMonitor worker's /price endpoint when
+// connected (fetched server-side, so no browser CORS proxy needed), else a
+// direct Yahoo Finance call (see fxDoFetch below) — and the resulting
+// gain/loss. Plain localStorage, matching Price Alerts' storage pattern
+// (this isn't trade data, so it doesn't belong in the IndexedDB trades store). ──
 var FX_KEY='tj-fx-conversions';
 var _fxRate=null; // live CAD per USD, null until fetched (or on failure)
 var _fxRateProvider=null; // which price provider served _fxRate (or last attempted, on failure)
+var _fxRateViaCloud=false; // true if the last successful fetch went through the CloudMonitor worker's /price endpoint
 var _fxEditingId=null; // set while editing an existing row; null = add mode
 // ── Rate fetch throttling ───────────────────────────────────────────────
 // This tracker is never polled in the background — a fetch only ever happens as a
@@ -4927,35 +4929,57 @@ function fxUpdateRateLabel(){
   if(_fxRateFetching){lbl.textContent='fetching live rate…';return;}
   var provLabel=(PA_PROVIDER_LABELS[_fxRateProvider]||_fxRateProvider||'—');
   if(_fxRate){
-    lbl.textContent='live '+_fxRate.toFixed(4)+' · via '+provLabel+(_fxRateFetchedAt?' · '+fxFormatAge(_fxRateFetchedAt):'');
+    lbl.textContent='live '+_fxRate.toFixed(4)+' · via '+provLabel+(_fxRateViaCloud?' (cloud)':'')+(_fxRateFetchedAt?' · '+fxFormatAge(_fxRateFetchedAt):'');
   } else if(_fxRateFetchedAt){
     lbl.textContent='rate unavailable — '+provLabel+' didn\'t respond ('+fxFormatAge(_fxRateFetchedAt)+') · showing cost basis only';
   } else {
     lbl.textContent='rate not fetched yet';
   }
 }
-// Does the actual network fetch (via the same provider chain Price Alerts uses) and
-// updates cache/state. Never call this directly from a render path without going
-// through the freshness checks in fxRender() — use fxManualRefresh() for a
-// user-initiated override.
+// Does the actual network fetch and updates cache/state. Never call this directly
+// from a render path without going through the freshness checks in fxRender() —
+// use fxManualRefresh() for a user-initiated override.
+//
+// Rate source, in order:
+//   1. CloudMonitor worker's /price?symbol=USDCAD endpoint, if a Worker URL is saved.
+//      The worker fetches server-side (no browser CORS restrictions), so it can hit
+//      Oanda directly without needing a browser CORS proxy at all — this sidesteps
+//      corsproxy.io entirely, whether or not it's working.
+//   2. If no worker is configured, or the worker call fails, fetch Yahoo Finance
+//      directly (paFetchYahoo) — deliberately NOT paFetchOnePrice's full chain, so a
+//      configured-but-broken Oanda+corsproxy path is never even attempted here.
 function fxDoFetch(){
   if(_fxRateFetching)return;
   _fxRateFetching=true;
   _fxSetRefreshBtnBusy(true);
   fxUpdateRateLabel();
-  // Pick up any provider keys saved since this session started (see fxRender's own
-  // comment below for why this matters).
-  if(typeof paLoadConfig==='function')paLoadConfig();
-  paFetchOnePrice('USDCAD',function(price,provider){
+  function finish(price,provider,viaCloud){
     _fxRateFetching=false;
     _fxSetRefreshBtnBusy(false);
     _fxRate=price;
     _fxRateProvider=provider; // on success: provider that served it. On failure: last one attempted.
+    _fxRateViaCloud=!!viaCloud&&price!==null;
     _fxRateFetchedAt=Date.now();
     if(price!==null)fxSaveRateCache(price,provider,_fxRateFetchedAt); // only cache successes
     fxUpdateRateLabel();
     fxRenderBody();
-  });
+  }
+  function fetchYahooDirect(){
+    paFetchYahoo('USDCAD',function(price){ finish(price,'yahoo',false); });
+  }
+  if(typeof cmHasUrl==='function'&&cmHasUrl()){
+    cmFetch('/price?symbol=USDCAD','GET').then(function(info){
+      if(info&&info.price!=null&&!isNaN(parseFloat(info.price))){
+        finish(parseFloat(info.price),info.provider||'cloud',true);
+      } else {
+        fetchYahooDirect(); // worker responded but had nothing usable — fall back
+      }
+    }).catch(function(){
+      fetchYahooDirect(); // worker unreachable/misconfigured — fall back
+    });
+  } else {
+    fetchYahooDirect();
+  }
 }
 // Wired to the Refresh button — always hits the network (spends one API call)
 // regardless of how fresh the cached/session rate is, since the person asked for it.
