@@ -410,7 +410,7 @@ table.data tbody tr:hover td{background:var(--bg3);color:var(--text)}
 .fsec-title{font-size:9px;font-weight:700;color:var(--text2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
 input[type=number]{-moz-appearance:textfield}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
-input[type=text],input[type=number],input[type=date],select,textarea{
+input[type=text],input[type=number],input[type=date],input[type=time],select,textarea{
   background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);
   font-family:'DM Sans',sans-serif;font-size:12px;padding:7px 10px;width:100%;
   transition:border-color .12s,box-shadow .12s;outline:none
@@ -3480,6 +3480,49 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               </button>
             </div>
           </div>
+          <!-- Automatic weekly backup -->
+          <div class="card" style="margin-bottom:12px;border-color:rgba(77,127,255,.25)">
+            <div class="card-header" style="cursor:pointer;user-select:none" onclick="toggleBkpSection('autobkp-section')">
+              <div style="display:flex;align-items:center;gap:8px">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span class="card-title">Automatic Weekly Backup</span>
+                <span id="autobkp-status-dot" style="width:7px;height:7px;border-radius:50%;background:var(--border2);display:inline-block;margin-left:2px"></span>
+                <span id="autobkp-status-label" style="font-size:10px;font-weight:500;color:var(--text3);text-transform:none;letter-spacing:0">Off</span>
+              </div>
+              <svg id="autobkp-section-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .18s"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div id="autobkp-section-body" class="card-body" style="display:none">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px;flex-wrap:wrap">
+                <div class="bc-desc" style="margin-bottom:0">Runs the exact same backup as <strong style="color:var(--text2)">Save manual backup</strong> above — automatically, once a week, on the day and time you set.</div>
+                <label style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;color:var(--text2);cursor:pointer;flex-shrink:0;user-select:none">
+                  <input type="checkbox" id="autobkp-enabled" onchange="autoBkpSaveConfig()" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer">
+                  Enabled
+                </label>
+              </div>
+              <div class="frow-inline" style="margin-bottom:10px">
+                <div class="frow" style="max-width:190px">
+                  <label class="flabel">Day of week</label>
+                  <select id="autobkp-day" onchange="autoBkpSaveConfig()">
+                    <option value="0">Sunday</option>
+                    <option value="1">Monday</option>
+                    <option value="2">Tuesday</option>
+                    <option value="3">Wednesday</option>
+                    <option value="4">Thursday</option>
+                    <option value="5">Friday</option>
+                    <option value="6">Saturday</option>
+                  </select>
+                </div>
+                <div class="frow" style="max-width:140px">
+                  <label class="flabel">Time</label>
+                  <input type="time" id="autobkp-time" value="20:00" onchange="autoBkpSaveConfig()">
+                </div>
+              </div>
+              <div id="autobkp-status" style="font-size:11px;color:var(--text3);line-height:1.7"></div>
+              <div style="font-size:10px;color:var(--text3);margin-top:8px;line-height:1.6;opacity:.8">
+                Needs GitHub configured above. This app has no server, so the schedule is only checked while the app is open in a tab (on load, and every few minutes after) — it won't fire while your browser is fully closed. If the scheduled moment passes while you're away, it catches up once, the next time you open the app.
+              </div>
+            </div>
+          </div>
           <!-- All snapshots collapsible list -->
           <div class="card" style="margin-bottom:0">
             <div class="card-header" style="cursor:pointer;user-select:none" onclick="toggleGhSnapshots()">
@@ -4874,7 +4917,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><span class="card-title">Conversion history</span><span style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text3)">Rate = CAD per 1 USD · <span id="fx-rate-label">fetching live rate…</span><button class="btn btn-primary btn-sm" id="fx-refresh-btn" onclick="fxManualRefresh()" title="Fetch the latest rate now (uses one API call) — otherwise this only refreshes once every 24h"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>Refresh rate</button></span></div>
+        <div class="card-header"><span class="card-title">Conversion history</span><span style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text3)"><span id="fx-rate-label">fetching live rate…</span><button class="btn btn-primary btn-sm" id="fx-refresh-btn" onclick="fxManualRefresh()" title="Fetch the latest rate now (uses one API call) — otherwise this only refreshes once every 24h"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>Refresh rate</button></span></div>
         <div class="table-wrap" id="fx-table"></div>
       </div>
     </div><!-- /page-fx-tracker -->
@@ -4927,11 +4970,11 @@ function fxUpdateRateLabel(){
   var lbl=document.getElementById('fx-rate-label');
   if(!lbl)return;
   if(_fxRateFetching){lbl.textContent='fetching live rate…';return;}
-  var provLabel=(PA_PROVIDER_LABELS[_fxRateProvider]||_fxRateProvider||'—');
   if(_fxRate){
-    lbl.textContent='live '+_fxRate.toFixed(4)+' · via '+provLabel+(_fxRateViaCloud?' (cloud)':'')+(_fxRateFetchedAt?' · '+fxFormatAge(_fxRateFetchedAt):'');
+    // Just the freshness — the rate value/provider are already shown on the Current Rate stat card above.
+    lbl.textContent=(_fxRateFetchedAt?'Updated '+fxFormatAge(_fxRateFetchedAt):'');
   } else if(_fxRateFetchedAt){
-    lbl.textContent='rate unavailable — '+provLabel+' didn\'t respond ('+fxFormatAge(_fxRateFetchedAt)+') · showing cost basis only';
+    lbl.textContent='rate unavailable ('+fxFormatAge(_fxRateFetchedAt)+')';
   } else {
     lbl.textContent='rate not fetched yet';
   }
@@ -5059,6 +5102,10 @@ function fxRender(){
     // than leaving it broken for the rest of the session, but not on every render.
     fxDoFetch();
   }
+  // Re-stamp the "Updated Xm ago" label every render (not just right after a fetch) so it
+  // never drifts out of sync with the Current Rate stat card below, which fxRenderBody()
+  // always recomputes fresh from the same _fxRateFetchedAt timestamp.
+  if(!_fxRateFetching)fxUpdateRateLabel();
   fxRenderBody();
 }
 function fxRenderBody(){
@@ -17185,6 +17232,7 @@ function toggleBkpSection(id){
   var open=body.style.display==='block';
   body.style.display=open?'none':'block';
   if(chevron)chevron.style.transform=open?'':'rotate(180deg)';
+  if(!open&&(id==='bkp-snapshots-section'||id==='autobkp-section')&&typeof autoBkpRefreshUI==='function')autoBkpRefreshUI();
 }
 function toggleAllBkpSections(expand){
   ['local-backup','github-sync-section','bkp-snapshots-section','danger-zone-section'].forEach(function(id){
@@ -17401,6 +17449,115 @@ function toggleGhSnapshots(){
 (function(){
   ghRefreshStatus();
 })();
+// ══ Automatic Weekly Backup ═══════════════════════
+// Runs the exact same push as the "Save manual backup" button (ghSnapshot('manual',null)),
+// on a day-of-week + time you pick. This is a static, single-file, client-side app with no
+// server or service worker, so the schedule can only be checked while the app is open in a
+// tab: once shortly after load, then every few minutes for as long as the tab stays open.
+// If the scheduled moment passes while the app wasn't open, it catches up once — the next
+// time you open it — rather than skipping the week entirely.
+var AUTOBKP_CHECK_MS=5*60*1000; // re-check every 5 min while the tab is open
+function autoBkpGetConfig(){
+  return{
+    enabled:localStorage.getItem('tj-autobkp-enabled')==='1',
+    day:localStorage.getItem('tj-autobkp-day')||'0',
+    time:localStorage.getItem('tj-autobkp-time')||'20:00',
+    last:localStorage.getItem('tj-autobkp-last')||''
+  };
+}
+function autoBkpSaveConfig(){
+  var en=document.getElementById('autobkp-enabled');
+  var day=document.getElementById('autobkp-day');
+  var time=document.getElementById('autobkp-time');
+  if(en)localStorage.setItem('tj-autobkp-enabled',en.checked?'1':'0');
+  if(day)localStorage.setItem('tj-autobkp-day',day.value);
+  if(time)localStorage.setItem('tj-autobkp-time',time.value||'20:00');
+  autoBkpRefreshUI();
+  if(en&&en.checked){
+    var cfg=ghGetConfig();
+    if(!cfg.user||!cfg.repo||!cfg.token)toast('Automatic backup saved — set up GitHub above so it can actually push','err');
+    else toast('Automatic weekly backup enabled','ok');
+  }
+  autoBkpMaybeRun(); // catches up immediately if this week's slot already passed
+}
+// Most recent moment matching day-of-week (0=Sun..6=Sat) + HH:MM that is <= `now`
+function autoBkpLastOccurrence(day,hh,mm,now){
+  var d=new Date(now.getTime());
+  d.setHours(hh,mm,0,0);
+  var diff=(d.getDay()-day+7)%7;
+  d.setDate(d.getDate()-diff);
+  if(d.getTime()>now.getTime())d.setDate(d.getDate()-7);
+  return d;
+}
+function autoBkpDue(cfg){
+  if(!cfg.enabled)return false;
+  var parts=(cfg.time||'20:00').split(':');
+  var hh=parseInt(parts[0],10);if(isNaN(hh))hh=20;
+  var mm=parseInt(parts[1],10);if(isNaN(mm))mm=0;
+  var occ=autoBkpLastOccurrence(parseInt(cfg.day,10)||0,hh,mm,new Date());
+  var last=cfg.last?new Date(cfg.last):null;
+  return !last||isNaN(last.getTime())||last.getTime()<occ.getTime();
+}
+async function autoBkpMaybeRun(){
+  try{
+    var cfg=autoBkpGetConfig();
+    if(!cfg.enabled)return;
+    var ghcfg=ghGetConfig();
+    if(!ghcfg.user||!ghcfg.repo||!ghcfg.token)return; // nothing configured to push to
+    if(!autoBkpDue(cfg))return;
+    await ghSnapshot('manual',null); // identical path to the "Save manual backup" button
+    localStorage.setItem('tj-autobkp-last',new Date().toISOString());
+    autoBkpRefreshUI();
+  }catch(e){console.warn('Auto backup error:',e.message);}
+}
+function autoBkpRefreshUI(){
+  var cfg=autoBkpGetConfig();
+  var en=document.getElementById('autobkp-enabled');
+  var day=document.getElementById('autobkp-day');
+  var time=document.getElementById('autobkp-time');
+  var status=document.getElementById('autobkp-status');
+  var dot=document.getElementById('autobkp-status-dot');
+  var label=document.getElementById('autobkp-status-label');
+  if(en)en.checked=cfg.enabled;
+  if(day)day.value=cfg.day;
+  if(time)time.value=cfg.time;
+  var dayNames=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var parts=(cfg.time||'20:00').split(':');
+  var hh=parseInt(parts[0],10)||0,mm=parseInt(parts[1],10)||0;
+  var lastOcc=autoBkpLastOccurrence(parseInt(cfg.day,10)||0,hh,mm,new Date());
+  var nextOcc=new Date(lastOcc.getTime());
+  if(nextOcc.getTime()<=Date.now())nextOcc.setDate(nextOcc.getDate()+7);
+  var lastRunTxt=(cfg.last&&!isNaN(new Date(cfg.last).getTime()))?new Date(cfg.last).toLocaleString():'Never';
+  var ghcfg=ghGetConfig();
+  var ghOk=!!(ghcfg.user&&ghcfg.repo&&ghcfg.token);
+  // Header badge — visible even while the section is collapsed
+  if(dot&&label){
+    if(!cfg.enabled){
+      dot.style.background='var(--border2)';
+      label.textContent='Off';
+      label.style.color='var(--text3)';
+    }else if(!ghOk){
+      dot.style.background='var(--amber)';
+      label.textContent=dayNames[parseInt(cfg.day,10)||0].slice(0,3)+' '+cfg.time+' — needs GitHub';
+      label.style.color='var(--amber)';
+    }else{
+      dot.style.background='var(--green)';
+      label.textContent=dayNames[parseInt(cfg.day,10)||0].slice(0,3)+' '+cfg.time;
+      label.style.color='var(--green)';
+    }
+  }
+  if(!status)return;
+  if(!cfg.enabled){
+    status.innerHTML='Automatic backup is off.';
+  }else{
+    var warn=!ghOk?' <span style="color:var(--amber)">— GitHub isn\'t configured yet, so this can\'t push.</span>':'';
+    status.innerHTML='Every <strong style="color:var(--text2)">'+dayNames[parseInt(cfg.day,10)||0]+'</strong> at <strong style="color:var(--text2)">'+cfg.time+'</strong>. Next run: '+nextOcc.toLocaleString()+'.<br>Last automatic backup: '+lastRunTxt+warn;
+  }
+}
+// Populate the form + do a due-check shortly after load (after DB/config settle),
+// then keep re-checking periodically for as long as the tab stays open.
+setTimeout(function(){autoBkpRefreshUI();autoBkpMaybeRun();},4000);
+setInterval(function(){autoBkpMaybeRun();autoBkpRefreshUI();},AUTOBKP_CHECK_MS);
 // ── GitHub Pages deploy helper (hosts this HTML file as a static site) ──
 function toggleGhPages(){
   var b=document.getElementById('gh-pages-body');
