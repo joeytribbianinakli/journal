@@ -14133,6 +14133,13 @@ function toast(msg,type){
   setTimeout(function(){el.classList.remove('show');setTimeout(function(){el.remove()},300)},3500);
 }
 function escHtml(s){if(!s)return'';return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];})}
+// Turns bare URLs inside a comment into clickable links (raw URL as the link text —
+// no title fetching, no domain-name shortening).
+function linkifyComment(s){
+  return escHtml(s).replace(/https?:\/\/[^\s<]+/g,function(url){
+    return '<a href="'+url+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:none" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">'+url+'</a>';
+  });
+}
 // Small "i" info icon with a hover/focus popover, for annotating a table header or card
 // title with a plain-English explanation of a non-obvious metric (e.g. "WR impact", a
 // percentage-point delta, or a derived count). `tip` is trusted static copy written by us
@@ -24633,7 +24640,7 @@ function wlRenderItems(w){
         +'<svg class="wl-row-chev" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>'
       +'</div>'
       +'<div class="wl-detail">'
-        +(it.comment?'<div class="wl-watch-comment"><span style="opacity:.6;margin-right:4px;">📝</span>'+escHtml(it.comment)+'</div>':'')
+        +(it.comment?'<div class="wl-watch-comment"><span style="opacity:.6;margin-right:4px;">📝</span>'+linkifyComment(it.comment)+'</div>':'')
         +'<div class="wl-watch-meta">Added on: '+escHtml(addedStr)+'</div>'
       +'</div>'
     +'</div>';
@@ -24649,6 +24656,8 @@ async function wlAddItem(){
   var symSel = document.getElementById('wl-symbol');
   if(!symSel.value){ toast('Select an asset to add','err'); return; }
   var sel = symSel.options[symSel.selectedIndex];
+  var priceRaw = (document.getElementById('wl-price').value||'').trim();
+  if(priceRaw && isNaN(parseFloat(priceRaw.replace(/,/g,'')))){ toast('Watch price must be a number (or left blank)','err'); return; }
   var lists = await getWatchlists();
   var w = lists.find(function(x){return x.id===_wlActiveId;});
   if(!w){ toast('Select a watchlist first','err'); return; }
@@ -24656,7 +24665,7 @@ async function wlAddItem(){
     id: Date.now().toString(36)+Math.random().toString(36).slice(2),
     assetType: sel.dataset ? sel.dataset.assetType : '',
     pair: sel.textContent,
-    price: (document.getElementById('wl-price').value||'').trim(),
+    price: priceRaw,
     dir: _wlDir,
     comment: (document.getElementById('wl-comment').value||'').trim(),
     createdAt: Date.now()
@@ -24732,6 +24741,8 @@ function wlCancelEditItem(){
 }
 async function wlUpdateItem(){
   if(!_wlEditingItemId) return;
+  var priceRaw = (document.getElementById('wl-price').value||'').trim();
+  if(priceRaw && isNaN(parseFloat(priceRaw.replace(/,/g,'')))){ toast('Watch price must be a number (or left blank)','err'); return; }
   var lists = await getWatchlists();
   var w = lists.find(function(x){return x.id===_wlEditingWatchlistId;});
   if(!w){ wlCancelEditItem(); return; }
@@ -24743,7 +24754,7 @@ async function wlUpdateItem(){
     it.assetType = sel.dataset ? sel.dataset.assetType : it.assetType;
     it.pair = sel.textContent;
   }
-  it.price = (document.getElementById('wl-price').value||'').trim();
+  it.price = priceRaw;
   it.dir = _wlDir;
   it.comment = (document.getElementById('wl-comment').value||'').trim();
   await saveWatchlistsData(lists);
