@@ -1258,7 +1258,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <button type="button" class="nav-section-header" onclick="toggleNavSection('manage')">
         <svg class="nav-section-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
         <span class="nav-section-title">Manage</span>
-        <span class="nav-section-count">4</span>
+        <span class="nav-section-count">5</span>
       </button>
       <div class="nav-section-collapse"><div class="nav-section-body">
         <button class="nav-item" onclick="nav('sessions',this)">
@@ -1273,13 +1273,16 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         <button class="nav-item" onclick="openAssetManager()">
           <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Assets &amp; pairs
         </button>
+        <button class="nav-item" onclick="nav('backup',this)">
+          <svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Backup &amp; restore
+        </button>
       </div></div>
     </div>
-    <div class="nav-section" data-section="tools">
-      <button type="button" class="nav-section-header" onclick="toggleNavSection('tools')">
+    <div class="nav-section" data-section="market-tools">
+      <button type="button" class="nav-section-header" onclick="toggleNavSection('market-tools')">
         <svg class="nav-section-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-        <span class="nav-section-title">Tools</span>
-        <span class="nav-section-count">6</span>
+        <span class="nav-section-title">Market Tools</span>
+        <span class="nav-section-count">4</span>
       </button>
       <div class="nav-section-collapse"><div class="nav-section-body">
         <button class="nav-item" id="nav-fxstreet" onclick="_flowActive=false;nav('fxstreet',this)">
@@ -1289,17 +1292,26 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/><circle cx="18" cy="5" r="3" fill="var(--red)" stroke="none" id="nav-alerts-badge" style="display:none"/></svg>Price Alerts
           <span id="nav-alerts-count" style="display:none;margin-left:auto;font-size:9px;font-weight:700;background:var(--red);color:#fff;border-radius:10px;padding:1px 5px;line-height:1.5"></span>
         </button>
+        <button class="nav-item" onclick="nav('watchlist',this)" id="nav-watchlist">
+          <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Watchlist
+        </button>
         <button class="nav-item" onclick="nav('fx-tracker',this)">
           <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>USD/CAD Tracker
         </button>
+      </div></div>
+    </div>
+    <div class="nav-section" data-section="analysis">
+      <button type="button" class="nav-section-header" onclick="toggleNavSection('analysis')">
+        <svg class="nav-section-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        <span class="nav-section-title">Analysis</span>
+        <span class="nav-section-count">2</span>
+      </button>
+      <div class="nav-section-collapse"><div class="nav-section-body">
         <button class="nav-item" onclick="nav('ai-analyzer',this)">
           <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M21.17 8H12V2.83"/><circle cx="12" cy="12" r="2"/></svg>AI Analyzer
         </button>
         <button class="nav-item" onclick="nav('montecarlo',this)">
           <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Monte Carlo
-        </button>
-        <button class="nav-item" onclick="nav('backup',this)">
-          <svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Backup &amp; restore
         </button>
       </div></div>
     </div>
@@ -3303,20 +3315,20 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <div class="backup-card">
               <div class="bc-icon" style="background:rgba(79,142,247,.12);color:var(--accent)"><svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
               <div class="bc-title">Export JSON</div>
-              <div class="bc-desc">Downloads 3 separate files — <strong>trade data</strong> (trades, images, sessions, settings), <strong>config</strong> (strategies, checklist, asset pairs, theme, AI &amp; Cloudinary selections) and <strong>FX</strong> (USD/CAD conversions) — the exact same data a GitHub Manual Backup pushes, just downloaded instead of pushed. Alerts are not included.</div>
+              <div class="bc-desc">Downloads 4 separate files — <strong>trade data</strong> (trades, images, sessions &amp; settings), <strong>config</strong> (strategies, checklist, asset pairs, theme, AI &amp; Cloudinary selections), <strong>FX</strong> (USD/CAD conversions) and <strong>watchlists</strong> — the exact same data a GitHub Manual Backup pushes, just downloaded instead of pushed. Alerts are not included.</div>
               <button class="btn btn-primary" onclick="exportBackup()"><svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download JSON</button>
             </div>
             <div class="backup-card">
               <div class="bc-icon" style="background:rgba(155,127,240,.12);color:var(--purple)"><svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
               <div class="bc-title">Restore JSON</div>
-              <div class="bc-desc">Select one or more of the JSON files above (trade data, config, FX — any combination); each is detected automatically. <strong style="color:var(--amber)">Deletes your existing trades, images and sessions first</strong>, then loads only what's in the selected file(s) — a true restore, just like GitHub's "Restore latest". Config/FX files always fully overwrite the matching settings. All-or-nothing — if any selected file is invalid, nothing is touched. Also syncs the actual GitHub data files (not the bkp/ backup folder) if GitHub is configured.</div>
+              <div class="bc-desc">Select one or more of the JSON files above (trade data, config, FX, watchlists — any combination); each is detected automatically. <strong style="color:var(--amber)">Deletes your existing trades, images and sessions first</strong>, then loads only what's in the selected file(s) — a true restore, just like GitHub's "Restore latest". Config/FX/Watchlist files always fully overwrite the matching settings. All-or-nothing — if any selected file is invalid, nothing is touched. Also syncs the actual GitHub data files (not the bkp/ backup folder) if GitHub is configured.</div>
               <input type="file" id="imp-file-restore" accept=".json" multiple style="display:none" onchange="importJsonFiles(this,'restore')">
               <button class="btn" style="border-color:rgba(155,127,240,.3);color:var(--purple)" onclick="document.getElementById('imp-file-restore').click()"><svg viewBox="0 0 24 24"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Restore file(s)</button>
             </div>
             <div class="backup-card">
               <div class="bc-icon" style="background:rgba(62,207,142,.12);color:var(--green)"><svg viewBox="0 0 24 24"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg></div>
               <div class="bc-title">Merge JSON</div>
-              <div class="bc-desc">Select one or more of the JSON files above (trade data, config, FX — any combination); each is detected automatically. <strong style="color:var(--text2)">Keeps your existing data</strong> and merges in trades, images, sessions, config and FX from the selected file(s) — duplicate trades are skipped, nothing existing is deleted. Config/FX files still fully overwrite the matching settings. All-or-nothing — if any selected file is invalid, nothing is touched. Also syncs the actual GitHub data files (not the bkp/ backup folder) if GitHub is configured.</div>
+              <div class="bc-desc">Select one or more of the JSON files above (trade data, config, FX, watchlists — any combination); each is detected automatically. <strong style="color:var(--text2)">Keeps your existing data</strong> and merges in trades, images, sessions, config, FX and watchlists from the selected file(s) — duplicate trades are skipped, nothing existing is deleted. Config/FX/Watchlist files still fully overwrite the matching settings. All-or-nothing — if any selected file is invalid, nothing is touched. Also syncs the actual GitHub data files (not the bkp/ backup folder) if GitHub is configured.</div>
               <input type="file" id="imp-file-merge" accept=".json" multiple style="display:none" onchange="importJsonFiles(this,'merge')">
               <button class="btn" style="border-color:rgba(62,207,142,.3);color:var(--green)" onclick="document.getElementById('imp-file-merge').click()"><svg viewBox="0 0 24 24"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>Merge file(s)</button>
             </div>
@@ -3387,7 +3399,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               </div>
               <div class="bc-title">Push to GitHub</div>
-              <div class="bc-desc">Manually push your full journal — trades, images, sessions, settings, config (strategies, checklist, assets &amp; pairs), price alerts and FX conversions — to your GitHub repo right now.</div>
+              <div class="bc-desc">Manually push your full journal — trades, images, sessions, settings, watchlists, config (strategies, checklist, assets &amp; pairs), price alerts and FX conversions — to your GitHub repo right now.</div>
               <button class="btn btn-primary" onclick="ghPushManual()">
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>
                 Push now
@@ -3398,7 +3410,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               </div>
               <div class="bc-title">Pull from GitHub</div>
-              <div class="bc-desc">Restore your full journal — trades, images, sessions, settings, config, price alerts and FX conversions — from GitHub. Use this on a new browser or device. Existing data is merged (no duplicates).</div>
+              <div class="bc-desc">Restore your full journal — trades, images, sessions, settings, watchlists, config, price alerts and FX conversions — from GitHub. Use this on a new browser or device. Existing data is merged (no duplicates).</div>
               <button class="btn" onclick="ghPull()">
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>
                 Pull now
@@ -3502,10 +3514,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                 <div class="card-header" style="cursor:pointer;user-select:none" onclick="toggleGhSnapshots()">
                   <div style="display:flex;align-items:center;gap:8px">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <span class="card-title">Trade, Config &amp; FX Backups</span>
+                    <span class="card-title">Trade, Config, FX &amp; Watchlist Backups</span>
                   </div>
                   <div style="display:flex;align-items:center;gap:10px">
-                    <span style="font-size:11px;color:var(--text3)">bkp/trades/ · bkp/config_backup.json · bkp/fx_backup.json</span>
+                    <span style="font-size:11px;color:var(--text3)">bkp/trades/ · bkp/config_backup.json · bkp/fx_backup.json · bkp/watchlist_backup.json</span>
                     <svg id="gh-snapshots-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .18s"><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
                 </div>
@@ -3513,7 +3525,8 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                   <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.7">
                     <strong style="color:var(--text2)">Trade Backups</strong> — timestamped snapshots in <code style="background:var(--bg3);padding:1px 4px;border-radius:3px">bkp/trades/</code>. Created automatically before session deletes and clear-all, or manually. Multiple snapshots kept so you can roll back to any point.<br><br>
                     <strong style="color:var(--text2)">Config Backup</strong> — a single file at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px">bkp/config_backup.json</code> storing strategies, checklist, and asset pairs. Auto-updated whenever you change any of those, and on Manual Backup. Only one backup kept — always the latest.<br><br>
-                    <strong style="color:var(--text2)">FX Backup</strong> — a single file at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px">bkp/fx_backup.json</code> storing your USD/CAD conversions from the FX Tracker page. Updated on Manual Backup. Only one backup kept — always the latest.
+                    <strong style="color:var(--text2)">FX Backup</strong> — a single file at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px">bkp/fx_backup.json</code> storing your USD/CAD conversions from the FX Tracker page. Updated on Manual Backup. Only one backup kept — always the latest.<br><br>
+                    <strong style="color:var(--text2)">Watchlist Backup</strong> — a single file at <code style="background:var(--bg3);padding:1px 4px;border-radius:3px">bkp/watchlist_backup.json</code> storing all your watchlists. Updated on Manual Backup. Only one backup kept — always the latest.
                   </div>
                   <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
                     <button class="btn btn-ghost btn-sm" onclick="ghListSnapshots()">
@@ -4587,11 +4600,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
               <div class="pa-dir-row" style="margin-bottom:0">
                 <button class="pa-dir-btn above-on" id="pa-btn-above" onclick="paSetDir('above')">
                   <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
-                  Price rises above
+                  Above
                 </button>
                 <button class="pa-dir-btn" id="pa-btn-below" onclick="paSetDir('below')">
                   <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                  Price drops below
+                  Below
                 </button>
               </div>
             </div>
@@ -4791,6 +4804,151 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         </div><!-- /cf-deploy-guide -->
       </div>
     </div><!-- /page-price-alerts -->
+    <!-- WATCHLIST -->
+    <div class="page" id="page-watchlist">
+      <style>
+      #page-watchlist .wl-grid{display:grid;grid-template-columns:340px 1fr;gap:12px;align-items:start;}
+      @media(max-width:800px){#page-watchlist .wl-grid{grid-template-columns:1fr;}}
+      #page-watchlist .wl-panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;}
+      #page-watchlist .wl-ptitle{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+      #page-watchlist .wl-field{margin-bottom:11px;}
+      #page-watchlist .wl-field label{display:block;font-size:10px;font-weight:600;color:var(--text3);margin-bottom:4px;letter-spacing:.04em;}
+      #page-watchlist .wl-field input,#page-watchlist .wl-field select,#page-watchlist .wl-field textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:7px 10px;outline:none;transition:border-color .12s;appearance:none;-webkit-appearance:none;box-sizing:border-box;}
+      #page-watchlist .wl-field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:28px;}
+      #page-watchlist .wl-field textarea{resize:vertical;min-height:70px;font-family:'DM Sans',sans-serif;line-height:1.5;}
+      #page-watchlist .wl-field input:focus,#page-watchlist .wl-field select:focus,#page-watchlist .wl-field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(77,127,255,.1);}
+      #page-watchlist .wl-list{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+      #page-watchlist .wl-list-empty{font-size:11px;color:var(--text3);font-style:italic;padding:4px 0 10px;}
+      #page-watchlist .wl-item{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);cursor:pointer;transition:all .12s;}
+      #page-watchlist .wl-item:hover{border-color:var(--border2);}
+      #page-watchlist .wl-item.active{border-color:var(--accent);background:rgba(77,127,255,.08);}
+      #page-watchlist .wl-item-name{font-size:12px;font-weight:600;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+      #page-watchlist .wl-item-count{font-size:9px;font-weight:700;font-family:DM Mono,monospace;background:var(--bg4);border:1px solid var(--border2);color:var(--text3);border-radius:10px;padding:1px 6px;line-height:1.5;flex-shrink:0;}
+      #page-watchlist .wl-detail-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;}
+      #page-watchlist .wl-detail-goal{font-size:12px;color:var(--text2);line-height:1.5;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--border);}
+      #page-watchlist .wl-add-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+      #page-watchlist .wl-dir-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;}
+      #page-watchlist .wl-dir-btn{padding:6px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;}
+      #page-watchlist .wl-dir-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+      #page-watchlist .wl-dir-btn.above-on{background:rgba(52,201,122,.1);border-color:rgba(52,201,122,.3);color:var(--green);}
+      #page-watchlist .wl-dir-btn.below-on{background:rgba(232,85,85,.1);border-color:rgba(232,85,85,.3);color:var(--red);}
+      #page-watchlist .wl-watch-list{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+      /* Row-actions: shared icon-button row for both the watchlist selector list and item cards — mirrors pa-row-actions in Price Alerts */
+      #page-watchlist .wl-row-actions{display:flex;gap:3px;align-items:center;margin-left:auto;flex-shrink:0;}
+      /* Compact expandable item card — mirrors pa-alert-card in Price Alerts */
+      #page-watchlist .wl-watch-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:0;position:relative;cursor:pointer;transition:border-color .18s;}
+      #page-watchlist .wl-watch-card.wl-expanded{cursor:default;}
+      #page-watchlist .wl-row-main{display:flex;align-items:center;gap:8px;padding:8px 10px;}
+      #page-watchlist .wl-watch-symbol{font-family:DM Mono,monospace;font-size:11px;font-weight:700;color:var(--text);background:var(--bg4);border:1px solid var(--border2);border-radius:5px;padding:2px 6px;}
+      #page-watchlist .wl-alert-bell{color:var(--pending);}
+      #page-watchlist .wl-alert-bell:hover{background:rgba(234,179,8,.12);color:var(--pending);}
+      #page-watchlist .wl-alert-bell svg{width:12px;height:12px;}
+      #page-watchlist .wl-watch-price{font-family:DM Mono,monospace;font-size:13px;font-weight:700;color:var(--accent);display:flex;align-items:center;gap:3px;}
+      #page-watchlist .wl-watch-price svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.5;}
+      #page-watchlist .wl-watch-price.dir-above{color:var(--green);}
+      #page-watchlist .wl-watch-price.dir-below{color:var(--red);}
+      #page-watchlist .wl-row-chev{color:var(--text3);flex-shrink:0;transition:transform .18s;}
+      #page-watchlist .wl-watch-card.wl-expanded .wl-row-chev{transform:rotate(180deg);}
+      #page-watchlist .wl-detail{display:none;padding:0 13px 11px;border-top:1px solid var(--border);margin-top:1px;}
+      #page-watchlist .wl-watch-card.wl-expanded .wl-detail{display:block;padding-top:9px;}
+      #page-watchlist .wl-watch-comment{font-size:11px;color:var(--text2);font-style:italic;white-space:pre-wrap;word-break:break-word;margin-bottom:6px;}
+      #page-watchlist .wl-watch-meta{font-size:10px;color:var(--text3);}
+      #page-watchlist .wl-empty{text-align:center;padding:32px 16px;color:var(--text3);}
+      #page-watchlist .wl-empty svg{width:36px;height:36px;stroke:var(--border2);fill:none;stroke-width:1.5;margin-bottom:10px;}
+      </style>
+      <div class="wl-grid">
+        <!-- LEFT column: Watchlist selector + Add item form -->
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <!-- Watchlists panel -->
+          <div class="wl-panel">
+            <p class="wl-ptitle">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              Your Watchlists
+            </p>
+            <div class="wl-list" id="wl-list"></div>
+            <button class="btn btn-ghost" id="wl-new-toggle-btn" style="width:100%;justify-content:center" onclick="wlToggleNewForm()">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              New Watchlist
+            </button>
+            <div id="wl-new-form" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+              <div class="wl-field">
+                <label>Name</label>
+                <input type="text" id="wl-new-name" placeholder="e.g. Breakout candidates">
+              </div>
+              <div class="wl-field">
+                <label>Goal <span style="color:var(--text3);font-size:10px">(what is this watchlist for?)</span></label>
+                <textarea id="wl-new-goal" rows="2" placeholder="e.g. Assets showing early signs of a range breakout"></textarea>
+              </div>
+              <button class="btn btn-primary" style="width:100%" onclick="wlCreate()">Create Watchlist</button>
+            </div>
+          </div>
+          <!-- Add item to selected watchlist -->
+          <div class="wl-panel" id="wl-add-panel">
+            <p class="wl-ptitle" id="wl-form-title">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add to Watchlist
+            </p>
+            <div id="wl-add-target-hint" style="font-size:11px;color:var(--text3);margin:-8px 0 12px"></div>
+            <div class="wl-add-row">
+              <div class="wl-field">
+                <label>Asset Type</label>
+                <select id="wl-asset-type" onchange="wlOnAssetTypeChange()">
+                  <option value="">All types</option>
+                </select>
+              </div>
+              <div class="wl-field">
+                <label>Symbol / Asset</label>
+                <select id="wl-symbol">
+                  <option value="">— select symbol —</option>
+                </select>
+              </div>
+            </div>
+            <div class="wl-field">
+              <label>Watch Price <span style="color:var(--text3);font-size:10px">(optional)</span></label>
+              <input type="text" id="wl-price" inputmode="decimal" placeholder="e.g. 1.08500">
+              <div class="wl-dir-row">
+                <button type="button" class="wl-dir-btn above-on" id="wl-btn-above" onclick="wlSetDir('above')">
+                  <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+                  Above
+                </button>
+                <button type="button" class="wl-dir-btn" id="wl-btn-below" onclick="wlSetDir('below')">
+                  <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                  Below
+                </button>
+              </div>
+            </div>
+            <div class="wl-field">
+              <label>Comment <span style="color:var(--text3);font-size:10px">(optional)</span></label>
+              <textarea id="wl-comment" rows="4" placeholder="e.g. Watch for breakout above range"></textarea>
+            </div>
+            <button class="btn btn-primary" id="wl-add-btn" style="width:100%;justify-content:center" onclick="wlAddItem()">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add to Watchlist
+            </button>
+            <button class="btn btn-ghost" id="wl-cancel-edit-btn" style="width:100%;margin-top:6px;display:none" onclick="wlCancelEditItem()">Cancel edit</button>
+          </div>
+        </div>
+        <!-- RIGHT column: Selected watchlist detail + items -->
+        <div class="wl-panel" id="wl-detail-panel">
+          <div id="wl-empty-state" class="wl-empty">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <div>No watchlist selected. Create one to start tracking assets.</div>
+          </div>
+          <div id="wl-detail-body" style="display:none">
+            <div class="wl-detail-title" id="wl-detail-name"></div>
+            <div class="wl-detail-goal" id="wl-detail-goal"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)">Items</span>
+              <span style="display:flex;gap:6px;">
+                <button class="btn btn-ghost btn-sm" onclick="wlExpandAllItems()" title="Expand all items">Expand all</button>
+                <button class="btn btn-ghost btn-sm" onclick="wlCollapseAllItems()" title="Collapse all items">Collapse all</button>
+              </span>
+            </div>
+            <div class="wl-watch-list" id="wl-items"></div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /page-watchlist -->
     <!-- FXSTREET -->
     <div class="page" id="page-fxstreet" style="flex-direction:column">
       <!-- Flow breadcrumb (only shown in full trade flow) -->
@@ -8491,7 +8649,7 @@ async function populateSessionSelects(restoreSessionId){
   updateFilterSessionSummary('edg-session-filter','edg-filter-summary','edg-skipped-filter');
 }
 // ══ Navigation ════════════════════════════════════
-var pageMap={'pre-checklist':{title:'Pre-trade checklist',sub:'Calendar → Checklist → Calculator → Log trade'},dashboard:{title:'Dashboard',sub:'Overview of your trading performance'},log:{title:'Log trade',sub:'Record a new trade entry'},history:{title:'Trade history',sub:'Browse and filter all your trades'},sessions:{title:'Sessions',sub:'Manage your trading session periods'},'checklist-editor':{title:'Checklist editor',sub:'Edit checklist items globally'},backup:{title:'Backup & restore',sub:'Export, import or clear your journal data'},montecarlo:{title:'Monte Carlo',sub:'Simulate future equity paths from historical trade data'},calculator:{title:'Position Size Calculator',sub:'Forex · Crypto · Gold · Stocks · Indices'},calendar:{title:'Calendar view',sub:'Visual trade activity by day, week and year'},'ai-analyzer':{title:'AI Trade Analyzer',sub:'Intelligent session review powered by AI'},'price-alerts':{title:'Price Alerts',sub:'Get notified on your phone when a price target is hit'},fxstreet:{title:'Economic calendar',sub:'ForexFactory calendar — check before trading'},'trade-analytics':{title:'Trade Analytics',sub:'Ratings, error types, direction & entry-time performance'},edge:{title:'Edge Analyzer',sub:'Is there a statistically real edge in your logged trades?'},'fx-tracker':{title:'USD/CAD Tracker',sub:'Track your CAD→USD conversions and currency gains/losses'}};;
+var pageMap={'pre-checklist':{title:'Pre-trade checklist',sub:'Calendar → Checklist → Calculator → Log trade'},dashboard:{title:'Dashboard',sub:'Overview of your trading performance'},log:{title:'Log trade',sub:'Record a new trade entry'},history:{title:'Trade history',sub:'Browse and filter all your trades'},sessions:{title:'Sessions',sub:'Manage your trading session periods'},'checklist-editor':{title:'Checklist editor',sub:'Edit checklist items globally'},backup:{title:'Backup & restore',sub:'Export, import or clear your journal data'},montecarlo:{title:'Monte Carlo',sub:'Simulate future equity paths from historical trade data'},calculator:{title:'Position Size Calculator',sub:'Forex · Crypto · Gold · Stocks · Indices'},calendar:{title:'Calendar view',sub:'Visual trade activity by day, week and year'},'ai-analyzer':{title:'AI Trade Analyzer',sub:'Intelligent session review powered by AI'},'price-alerts':{title:'Price Alerts',sub:'Get notified on your phone when a price target is hit'},'watchlist':{title:'Watchlist',sub:'Track assets you\'re keeping an eye on'},fxstreet:{title:'Economic calendar',sub:'ForexFactory calendar — check before trading'},'trade-analytics':{title:'Trade Analytics',sub:'Ratings, error types, direction & entry-time performance'},edge:{title:'Edge Analyzer',sub:'Is there a statistically real edge in your logged trades?'},'fx-tracker':{title:'USD/CAD Tracker',sub:'Track your CAD→USD conversions and currency gains/losses'}};;
 var _currentPage='dashboard';
 function nav(id,btn){
   // Reset log form when navigating away — but preserve it if going back to calc within the flow
@@ -8553,12 +8711,12 @@ function nav(id,btn){
   if(id==='fx-tracker'){fxRender();}
 }
 // ── Sidebar nav: collapsible sections + quick search ──────────────────────
-// Sections default to Overview/Trades expanded (day-to-day pages) and Manage/Tools
-// collapsed (setup/utility pages), but any toggle the user makes is remembered per
-// section in localStorage — same purely-local pattern used for theme/filter prefs.
-var NAV_SECTIONS=['overview','trades','manage','tools'];
+// Sections default to Overview/Trades expanded (day-to-day pages) and Manage/Market
+// Tools/Analysis collapsed (setup/utility pages), but any toggle the user makes is
+// remembered per section in localStorage — same purely-local pattern used for theme/filter prefs.
+var NAV_SECTIONS=['overview','trades','manage','market-tools','analysis'];
 var NAV_COLLAPSE_KEY='tj-nav-collapsed';
-var NAV_DEFAULT_COLLAPSED={overview:false,trades:true,manage:true,tools:true};
+var NAV_DEFAULT_COLLAPSED={overview:false,trades:true,manage:true,'market-tools':true,analysis:true};
 function getNavCollapseState(){
   try{var saved=JSON.parse(localStorage.getItem(NAV_COLLAPSE_KEY)||'null');if(saved)return saved;}catch(e){}
   return Object.assign({},NAV_DEFAULT_COLLAPSED);
@@ -13722,15 +13880,23 @@ async function _updateSidebarStatsImpl(){
   document.getElementById('sidebar-stats').innerHTML=trades.length+' trades<br>'+(trades.length?((wins.length/trades.length*100).toFixed(0)+'% win rate'):'');
 }
 // ══ Backup ════════════════════════════════════════
+// MAINTENANCE NOTE: whenever a new data JSON file/store is added, or the shape of an
+// existing one (trades, config, FX, watchlists, alerts) changes, update ALL of: the
+// payload builder (ghBuildPayload/ghBuildConfigPayload/ghBuildWatchlistPayload/etc.),
+// detectBackupShape(), applyBackupPayload(), exportBackup(), importJsonFiles(), the
+// GitHub push/pull path (ghPushManual/ghPull/ghSnapshot), and any dedicated
+// restore/merge functions (e.g. ghRestoreFxBackup/ghMergeFxBackup) — otherwise backup
+// and restore silently fall out of sync with the live data.
 // Local (manual, in-browser) backup/restore/export helpers. These are the "Backup &
 // restore" page's manual JSON buttons — distinct from the automatic GitHub cloud sync.
-// Export downloads 3 separate files — trade data, config, FX — using the exact same
-// payload-building functions the GitHub "Manual Backup" push uses (ghBuildPayload(),
-// ghBuildConfigPayload(), and the fx {version,exportedAt,conversions} shape), so the
-// downloaded files are byte-for-byte what would otherwise be pushed to bkp/trades/,
-// bkp/config_backup.json and bkp/fx_backup.json. Alerts are intentionally excluded —
-// they're not backed up by design. Import (importJsonFiles below) reuses
-// ghApplyConfigData()/fxSave() so both directions round-trip through the same code path
+// Export downloads 4 separate files — trade data, config, FX, watchlists — using the
+// exact same payload-building functions the GitHub "Manual Backup" push uses
+// (ghBuildPayload(), ghBuildConfigPayload(), the fx {version,exportedAt,conversions}
+// shape, and ghBuildWatchlistPayload()), so the downloaded files are byte-for-byte what
+// would otherwise be pushed to bkp/trades/, bkp/config_backup.json, bkp/fx_backup.json
+// and bkp/watchlist_backup.json. Alerts are intentionally excluded — they're not backed
+// up by design. Import (importJsonFiles below) reuses ghApplyConfigData()/fxSave()/
+// saveWatchlistsData() so both directions round-trip through the same code path
 // GitHub's own restore uses, with correct cache invalidation, no page reload required.
 async function exportBackup(){
   function downloadJSON(obj,filename){
@@ -13747,7 +13913,10 @@ async function exportBackup(){
   // 3. FX conversions — same shape as bkp/fx_backup.json
   var fxPayload={version:1,exportedAt:new Date().toISOString(),conversions:fxLoad()};
   setTimeout(function(){downloadJSON(fxPayload,'tj_fx_'+date+'.json');},300);
-  toast('Downloaded 3 files — trade data ('+tradesPayload.trades.length+' trades, '+tradesPayload.images.length+' images), config, FX ('+fxPayload.conversions.length+' conversions)','ok');
+  // 4. Watchlists — same shape as bkp/watchlist_backup.json
+  var wlPayload=await ghBuildWatchlistPayload();
+  setTimeout(function(){downloadJSON(wlPayload,'tj_watchlist_'+date+'.json');},450);
+  toast('Downloaded 4 files — trade data ('+tradesPayload.trades.length+' trades, '+tradesPayload.images.length+' images), config, FX ('+fxPayload.conversions.length+' conversions), watchlists ('+wlPayload.watchlists.length+')','ok');
 }
 // ══ Recompute derived fields from raw trade data ══════
 // Given a trade's raw inputs (entry/exit price, qty, risk $ or risk %), fills in the
@@ -13799,6 +13968,9 @@ async function refreshUI(){
   // these in-memory caches (see computeSetupScoreInfo), not from a fresh read.
   await Promise.all([loadSetupRatingsCache(),loadClAllItemsCache()]);
   await Promise.all([renderDashboard(),updateSidebarStats(),populateSessionSelects(),renderHistory(),populatePairSelect(),populateStrategySelect(),populateErrorTypeSelect()]);
+  // Watchlists live in the same generic 'settings' store as everything else refreshUI()
+  // covers, so a pull/restore/merge that changed them needs the page re-rendered too if open.
+  if(_currentPage==='watchlist'&&typeof wlInit==='function')wlInit();
 }
 // Returns 'trades' | 'config' | 'fx' | null depending on which of the three known backup
 // shapes `data` matches — a trade-data payload (has `trades`, or is itself a raw trades
@@ -13812,6 +13984,7 @@ function detectBackupShape(data){
   if(data&&typeof data==='object'){
     if(Array.isArray(data)||Array.isArray(data.trades))return'trades';
     if(Array.isArray(data.conversions))return'fx';
+    if(Array.isArray(data.watchlists))return'watchlist';
     if(data.checklist||data.strategies||data.assets||data.setupRatings||data.errorTypes||data.histCols||data.aiConfig||data.cloudinaryConfig)return'config';
   }
   return null;
@@ -13835,12 +14008,12 @@ function detectBackupShape(data){
 // restore uses — so cloudinaryConfig/aiConfig (localStorage-only, never in the `settings`
 // IndexedDB store) come back correctly and caches (setup ratings, checklist items, asset
 // fees, history columns) are invalidated instead of silently going stale until reload.
-// Config/FX are always a full overwrite of the matching keys regardless of `mode` — trades
+// Config/FX/Watchlists are always a full overwrite of the matching keys regardless of `mode` — trades
 // are the only piece that can be merged, since config/FX aren't meaningfully mergeable.
 // Returns a summary used by importJsonFiles() below to build one combined toast message.
 async function applyBackupPayload(data,mode){
   mode=mode==='restore'?'restore':'merge';
-  var result={trades:0,skippedTrades:0,images:0,configRestored:false,fx:null};
+  var result={trades:0,skippedTrades:0,images:0,configRestored:false,fx:null,watchlists:null};
   var isTradeData=detectBackupShape(data)==='trades';
   if(isTradeData){
     var importedTrades=Array.isArray(data)?data:(data.trades||[]);
@@ -13876,6 +14049,10 @@ async function applyBackupPayload(data,mode){
     :(data.localData&&data.localData[FX_KEY]?JSON.parse(data.localData[FX_KEY])
     :(Array.isArray(data.conversions)?data.conversions:null));
   if(fxData){fxSave(fxData);result.fx=fxData;}
+  // Watchlists: standalone watchlist JSON file's top-level `watchlists` array (same shape
+  // as bkp/watchlist_backup.json). Like config/FX, always a full overwrite — not merged
+  // by trade-import mode — since a list of watchlists isn't meaningfully mergeable here.
+  if(Array.isArray(data.watchlists)){await saveWatchlistsData(data.watchlists);result.watchlists=data.watchlists;}
   return result;
 }
 // Destructive local reset (trades, images, sessions — settings/config are untouched).
@@ -16483,6 +16660,12 @@ var GH_BKP_CONFIG_FILE='bkp/config_backup.json'; // single config backup (always
 var GH_ALERTS_FILE='tjalert.json';         // live alerts (always overwritten)
 var GH_BKP_ALERTS_FILE='bkp/alerts_backup.json'; // single alerts backup (manual backup only)
 var GH_BKP_FX_FILE='bkp/fx_backup.json';   // single FX (USD/CAD conversions) backup — manual backup only, mirrors config backup
+var GH_WATCHLIST_FILE='tj_watchlist.json'; // live watchlist (always overwritten)
+var GH_BKP_WATCHLIST_FILE='bkp/watchlist_backup.json'; // single watchlist backup — manual backup only, mirrors config backup
+// ── Watchlist file helpers (mirrors the config helpers — live file always overwritten, bkp/ only touched on Manual Backup) ──
+async function ghBuildWatchlistPayload(){
+  return{version:1,exportedAt:new Date().toISOString(),watchlists:await getWatchlists()};
+}
 // ── Config file helpers (checklist, strategies, assets & pairs) ──
 async function ghBuildConfigPayload(){
   var checklist=await getChecklist();
@@ -16675,6 +16858,46 @@ async function ghPushFxLive(){
     });
   }catch(e){console.warn('FX sync error:',e.message);}
 }
+// Silently syncs Watchlists to the live tj_watchlist.json file — mirrors ghPushConfigFile()
+// (live tj_config.json). bkp/watchlist_backup.json is a separate, distinct file that is
+// ONLY touched by Manual Backup/Snapshot (see ghSnapshot()) — this function never writes
+// there, so the bkp/ folder stays purely a backup/restore point and isn't churned by
+// every live edit. Called after every watchlist/item add/remove/change (via the debounced
+// ghAutoSyncWatchlist() below), after a local JSON import restores watchlists, and as
+// part of Push — so GitHub always reflects the latest watchlist state.
+async function ghPushWatchlistLive(){
+  var cfg=ghGetConfig();
+  if(!cfg.user||!cfg.repo||!cfg.token)return;
+  try{
+    var wlPayload=await ghBuildWatchlistPayload();
+    // Compare new payload vs existing file — skip push if only exportedAt differs
+    // (same no-op guard ghPushConfigFile() uses for tj_config.json)
+    var wlSha=null;
+    try{
+      var existingResp=await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/'+GH_WATCHLIST_FILE,{
+        headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json'}
+      });
+      if(existingResp.ok){
+        var existingFile=await existingResp.json();
+        wlSha=existingFile.sha||null;
+        var existingText=decodeURIComponent(escape(atob(existingFile.content.replace(/\n/g,''))));
+        var existingData=JSON.parse(existingText);
+        var newCopy=Object.assign({},wlPayload);delete newCopy.exportedAt;
+        var oldCopy=Object.assign({},existingData);delete oldCopy.exportedAt;
+        if(JSON.stringify(newCopy)===JSON.stringify(oldCopy))return; // no real change — skip push
+      }
+    }catch(e){ wlSha=await ghGetFileSHAByPath(cfg,GH_WATCHLIST_FILE); }
+    wlPayload.exportedAt=new Date().toISOString();
+    var wlContent=utf8ToBase64(JSON.stringify(wlPayload,null,2));
+    var wlBody={message:'TJ watchlist — '+new Date().toISOString().slice(0,16).replace('T',' '),content:wlContent};
+    if(wlSha)wlBody.sha=wlSha;
+    await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/'+GH_WATCHLIST_FILE,{
+      method:'PUT',
+      headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
+      body:JSON.stringify(wlBody)
+    });
+  }catch(e){console.warn('Watchlist sync error:',e.message);}
+}
 // ── Debounce utility for GitHub sync calls ────────────────────
 // Coalesces rapid repeated calls with the same key into a single
 // deferred execution, preventing API rate-limit hammering when the
@@ -16696,6 +16919,18 @@ function ghAutoSyncConfig(){
     if(!cfg.user||!cfg.repo||!cfg.token)return;
     ghPushConfigFile(cfg);
   }, 'config', 1500);
+}
+// Silently push the live tj_watchlist.json after any watchlist/item add/remove/change —
+// debounced, same pattern as ghAutoSyncConfig(). Never touches bkp/watchlist_backup.json
+// (that's Manual Backup's job only — see ghSnapshot()). Also does NOT touch tj_data.json
+// (watchlists aren't in that payload — see ghBuildPayload()), so a watchlist-only change
+// no longer produces a pointless tj_data.json commit.
+function ghAutoSyncWatchlist(){
+  ghDebounce(function(){
+    var cfg=ghGetConfig();
+    if(!cfg.user||!cfg.repo||!cfg.token)return;
+    ghPushWatchlistLive();
+  }, 'watchlist', 1500);
 }
 // ── Alerts file helpers ────────────────────────────────────────
 async function ghPushAlertsFile(cfg){
@@ -17013,7 +17248,10 @@ async function ghTestConnection(){
 // Images already hosted on Cloudinary are slimmed to just their URL + metadata so the
 // backup file doesn't balloon with duplicate base64 blobs.
 async function ghBuildPayload(){
-  var trades=await dbGetAll('trades'),images=await dbGetAll('images'),sessions=await dbGetAll('sessions'),settings=await dbGetAll('settings');
+  var trades=await dbGetAll('trades'),images=await dbGetAll('images'),sessions=await dbGetAll('sessions');
+  // Watchlists are backed up separately (bkp/watchlist_backup.json / ghBuildWatchlistPayload()) —
+  // excluded here so they aren't duplicated inside tj_data.json's settings dump.
+  var settings=(await dbGetAll('settings')).filter(function(s){return s.id!=='watchlists';});
   var localData={};
   // Strip base64 data from images that have a Cloudinary URL — keeps the backup lean
   var imagesForGH=images.map(function(img){
@@ -17034,6 +17272,7 @@ async function ghPushManual(){
   var cfg=ghGetConfig();
   if(cfg.user&&cfg.repo&&cfg.token){
     await ghPushFxLive();
+    await ghPushWatchlistLive();
     await ghPushAlertsFile(cfg);
   }
 }
@@ -17149,6 +17388,18 @@ async function ghPull(){
         if(_currentPage==='fx-tracker'&&typeof fxRender==='function')fxRender();
       }
     }catch(fe){console.warn('FX pull error:',fe.message);}
+    // Pull Watchlists from the live tj_watchlist.json — also no longer stored in
+    // tj_data.json's settings dump (see ghBuildPayload()), so Pull needs this separate
+    // step to restore them. Reads the live file, not bkp/watchlist_backup.json — Pull
+    // always reflects current state, the same way it reads GH_CONFIG_FILE for config.
+    try{
+      var wlStr=await ghFetchFileContent(cfg,GH_WATCHLIST_FILE);
+      if(wlStr){
+        var wlData=JSON.parse(wlStr);
+        var wlRemote=Array.isArray(wlData)?wlData:(wlData.watchlists||[]);
+        await saveWatchlistsData(wlRemote);
+      }
+    }catch(we){console.warn('Watchlist pull error:',we.message);}
     var now=new Date().toISOString();
     localStorage.setItem('tj-gh-last-sync',now);
     ghRefreshStatus();
@@ -17236,7 +17487,23 @@ async function ghSnapshot(type,name){
         });
         fxBkpMsg='fx backup updated';
       }catch(fe){console.warn('FX backup error:',fe.message);}
-      var alertsBkpMsg=(_paAlerts&&_paAlerts.length>0)?'trades snapshot + config backup + alerts backup + '+fxBkpMsg:'trades snapshot + config backup + '+fxBkpMsg+' (no alerts to back up)';
+      // Also overwrite the single watchlist backup file (bkp/watchlist_backup.json) —
+      // same unconditional single-file pattern as config/FX backup.
+      var wlBkpMsg='no watchlist backup';
+      try{
+        var wlPayload=await ghBuildWatchlistPayload();
+        var wlContent=utf8ToBase64(JSON.stringify(wlPayload,null,2));
+        var wlSha=await ghGetFileSHAByPath(cfg,GH_BKP_WATCHLIST_FILE);
+        var wlBody={message:'TJ watchlist backup — '+ts,content:wlContent};
+        if(wlSha)wlBody.sha=wlSha;
+        await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/contents/'+GH_BKP_WATCHLIST_FILE,{
+          method:'PUT',
+          headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
+          body:JSON.stringify(wlBody)
+        });
+        wlBkpMsg='watchlist backup updated';
+      }catch(we){console.warn('Watchlist backup error:',we.message);}
+      var alertsBkpMsg=(_paAlerts&&_paAlerts.length>0)?'trades snapshot + config backup + alerts backup + '+fxBkpMsg+' + '+wlBkpMsg:'trades snapshot + config backup + '+fxBkpMsg+' + '+wlBkpMsg+' (no alerts to back up)';
       toast('Manual backup saved — '+alertsBkpMsg,'ok');
     } else {
       toast('Snapshot saved to GitHub bkp/trades/','ok');
@@ -17290,16 +17557,20 @@ async function ghListSnapshots(){
     var cfgFile=allFiles.find(function(f){return f.path==='bkp/config_backup.json';});
     // ── FX backup: single bkp/fx_backup.json ──
     var fxFile=allFiles.find(function(f){return f.path==='bkp/fx_backup.json';});
+    // ── Watchlist backup: single bkp/watchlist_backup.json ──
+    var wlFile=allFiles.find(function(f){return f.path==='bkp/watchlist_backup.json';});
     // Build tabbed UI
     el.innerHTML=
       '<div style="display:flex;gap:2px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:3px;margin-bottom:14px" id="snap-tab-bar">'
       +'<button id="snap-tab-trades" class="form-tab active" onclick="ghSnapTabSwitch(\'trades\')" style="flex:1">📈 Trade Backups</button>'
       +'<button id="snap-tab-config" class="form-tab" onclick="ghSnapTabSwitch(\'config\')" style="flex:1">⚙️ Config Backup</button>'
       +'<button id="snap-tab-fx" class="form-tab" onclick="ghSnapTabSwitch(\'fx\')" style="flex:1">💱 FX Backup</button>'
+      +'<button id="snap-tab-watchlist" class="form-tab" onclick="ghSnapTabSwitch(\'watchlist\')" style="flex:1">👁 Watchlist Backup</button>'
       +'</div>'
       +'<div id="snap-pane-trades"></div>'
       +'<div id="snap-pane-config" style="display:none"></div>'
-      +'<div id="snap-pane-fx" style="display:none"></div>';
+      +'<div id="snap-pane-fx" style="display:none"></div>'
+      +'<div id="snap-pane-watchlist" style="display:none"></div>';
     // ── Trade pane ──
     var tradePane=document.getElementById('snap-pane-trades');
     if(!tradeFiles.length){
@@ -17409,15 +17680,58 @@ async function ghListSnapshots(){
         +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>Merge FX'
         +'</button></div></div>';
     }
+    // ── Watchlist pane ──
+    var wlPane=document.getElementById('snap-pane-watchlist');
+    if(!wlFile){
+      wlPane.innerHTML='<div style="font-size:11px;color:var(--text3);padding:10px 0">No watchlist backup yet. Use <strong>Manual Backup</strong> above to create one. Watchlists are backed up as a single file — it is overwritten each time.</div>';
+    } else {
+      var wlCommitDate=null;
+      try{
+        var wlCommitResp=await fetch('https://api.github.com/repos/'+cfg.user+'/'+cfg.repo+'/commits?path='+encodeURIComponent(GH_BKP_WATCHLIST_FILE)+'&per_page=1&_='+Date.now(),{
+          headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json'}
+        });
+        if(wlCommitResp.ok){
+          var wlCommits=await wlCommitResp.json();
+          if(wlCommits&&wlCommits[0]&&wlCommits[0].commit){
+            wlCommitDate=wlCommits[0].commit.committer&&wlCommits[0].commit.committer.date||wlCommits[0].commit.author&&wlCommits[0].commit.author.date||null;
+          }
+        }
+      }catch(wce){console.warn('Watchlist backup commit date error:',wce.message);}
+      var wlTimeLine=wlCommitDate?'<div class="js-hint-mt" style="margin-top:4px">Backed up '+escHtml(new Date(wlCommitDate).toLocaleString())+'</div>':'';
+      var wlCount=null;
+      try{
+        var wlRaw=await ghFetchFileContent(cfg,GH_BKP_WATCHLIST_FILE);
+        if(wlRaw){var wlData=JSON.parse(wlRaw);wlCount=Array.isArray(wlData)?wlData.length:(wlData.watchlists||[]).length;}
+      }catch(wre){}
+      wlPane.innerHTML='<div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.7">'
+        +'Watchlist backup stores all your <strong style="color:var(--text2)">watchlists</strong> from the Watchlist page in a single file that is overwritten each time you run a Manual Backup. '
+        +'<code style="background:var(--bg3);padding:1px 5px;border-radius:3px">bkp/watchlist_backup.json</code>'
+        +'</div>'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius)">'
+        +'<div>'
+        +'<div style="font-size:12px;font-weight:600;color:var(--text)">watchlist_backup.json</div>'
+        +'<div class="js-hint-mt">'+(wlCount!==null?wlCount+' watchlist(s)':'Watchlists')+'</div>'
+        +wlTimeLine
+        +'</div>'
+        +'<div style="display:flex;gap:5px;flex-shrink:0">'
+        +'<button class="btn btn-ghost btn-sm" style="color:var(--purple)" onclick="ghRestoreWatchlistBackup()">'
+        +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Restore watchlists'
+        +'</button>'
+        +'<button class="btn btn-ghost btn-sm" style="color:var(--green)" onclick="ghMergeWatchlistBackup()">'
+        +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>Merge watchlists'
+        +'</button></div></div>';
+    }
   }catch(e){el.innerHTML='<div style="font-size:11px;color:var(--red)">Error: '+escHtml(e.message)+'</div>';}
 }
 function ghSnapTabSwitch(tab){
   document.getElementById('snap-tab-trades').classList.toggle('active',tab==='trades');
   document.getElementById('snap-tab-config').classList.toggle('active',tab==='config');
   document.getElementById('snap-tab-fx').classList.toggle('active',tab==='fx');
+  document.getElementById('snap-tab-watchlist').classList.toggle('active',tab==='watchlist');
   document.getElementById('snap-pane-trades').style.display=tab==='trades'?'':'none';
   document.getElementById('snap-pane-config').style.display=tab==='config'?'':'none';
   document.getElementById('snap-pane-fx').style.display=tab==='fx'?'':'none';
+  document.getElementById('snap-pane-watchlist').style.display=tab==='watchlist'?'':'none';
 }
 // Restore the single config backup from bkp/config_backup.json
 // ── Generic "type WORD to confirm" modal (see #typeconfirm-modal in the HTML) ──
@@ -17616,6 +17930,67 @@ async function ghMergeFxBackup(){
     }
   });
 }
+// Restore the single watchlist backup from bkp/watchlist_backup.json
+async function ghRestoreWatchlistBackup(){
+  var cfg=ghGetConfig();
+  if(!cfg.user||!cfg.repo||!cfg.token){toast('GitHub not configured','err');return;}
+  var remote;
+  try{
+    toast('Fetching watchlist backup…','ok');
+    var rawContent=await ghFetchFileContent(cfg,GH_BKP_WATCHLIST_FILE);
+    if(!rawContent){toast('Watchlist backup not found. Run a Manual Backup first.','err');return;}
+    var data=JSON.parse(rawContent);
+    remote=Array.isArray(data)?data:(data.watchlists||[]);
+  }catch(e){toast('Restore error: '+e.message,'err');return;}
+  var currentCount=(await getWatchlists()).length;
+  openTypeConfirmModal({
+    title:'Restore watchlist backup?',
+    message:'This will replace your current watchlists ('+currentCount+' currently saved) with '+remote.length+' from the backup.\n\nIf this backup file turns out to be invalid or corrupt, the restore is cancelled and nothing is touched.',
+    expectedWord:'RESTORE',
+    confirmLabel:'Restore',
+    onCancel:function(){toast('Restore cancelled','ok');},
+    onConfirm:async function(){
+      try{
+        await saveWatchlistsData(remote);
+        if(_currentPage==='watchlist'&&typeof wlInit==='function')wlInit();
+        toast('Watchlists restored ('+remote.length+')','ok');
+      }catch(e){toast('Restore error: '+e.message,'err');}
+    }
+  });
+}
+// Merge the single watchlist backup from bkp/watchlist_backup.json into current watchlists —
+// adds watchlists from the backup whose id isn't already present locally. Unlike Restore,
+// nothing existing is replaced or deleted.
+async function ghMergeWatchlistBackup(){
+  var cfg=ghGetConfig();
+  if(!cfg.user||!cfg.repo||!cfg.token){toast('GitHub not configured','err');return;}
+  var remote;
+  try{
+    toast('Fetching watchlist backup…','ok');
+    var rawContent=await ghFetchFileContent(cfg,GH_BKP_WATCHLIST_FILE);
+    if(!rawContent){toast('Watchlist backup not found. Run a Manual Backup first.','err');return;}
+    var data=JSON.parse(rawContent);
+    remote=Array.isArray(data)?data:(data.watchlists||[]);
+  }catch(e){toast('Merge error: '+e.message,'err');return;}
+  openTypeConfirmModal({
+    title:'Merge watchlist backup?',
+    message:'This will add watchlists from the backup ('+remote.length+' total) that you don\'t already have (matched by id). Existing watchlists are not deleted or overwritten.\n\nIf this backup file turns out to be invalid or corrupt, the merge is cancelled and nothing is touched.',
+    expectedWord:'MERGE',
+    confirmLabel:'Merge',
+    onCancel:function(){toast('Merge cancelled','ok');},
+    onConfirm:async function(){
+      try{
+        var lists=await getWatchlists();
+        var existingIds=new Set(lists.map(function(w){return w.id;}));
+        var added=0;
+        for(var w of remote){if(!existingIds.has(w.id)){lists.push(w);existingIds.add(w.id);added++;}}
+        await saveWatchlistsData(lists);
+        if(_currentPage==='watchlist'&&typeof wlInit==='function')wlInit();
+        toast('Watchlists merged: '+added+' added'+((remote.length-added)>0?', '+(remote.length-added)+' dupe(s) skipped':''),'ok');
+      }catch(e){toast('Merge error: '+e.message,'err');}
+    }
+  });
+}
 function ghSnapDeselectAll(){
   document.querySelectorAll('.snap-chk').forEach(function(c){c.checked=false;});
   ghSnapshotSelectionChanged();
@@ -17665,7 +18040,7 @@ async function importJsonFiles(input,mode){
     var file=files[i];
     try{
       var data=JSON.parse(await file.text());
-      if(!detectBackupShape(data)){badFiles.push(file.name+': not a recognized trade data / config / FX backup file');continue;}
+      if(!detectBackupShape(data)){badFiles.push(file.name+': not a recognized trade data / config / FX / watchlist backup file');continue;}
       parsedFiles.push(data);
     }catch(e){badFiles.push(file.name+': invalid JSON ('+e.message+')');}
   }
@@ -17679,10 +18054,10 @@ async function importJsonFiles(input,mode){
   var expectedWord=isRestore?'RESTORE':'MERGE';
   var confirmMsg=isRestore
     ?('File'+(files.length>1?'s':'')+': '+fileList+'\n\n'
-      +'This will DELETE your existing trades, images and sessions, then load only what is in the selected file(s) — a true restore, just like GitHub\'s "Restore latest". Config/FX files (if included) fully overwrite the matching settings. This cannot be undone.\n\n'
+      +'This will DELETE your existing trades, images and sessions, then load only what is in the selected file(s) — a true restore, just like GitHub\'s "Restore latest". Config/FX/Watchlist files (if included) fully overwrite the matching settings. This cannot be undone.\n\n'
       +'All-or-nothing: if any selected file were invalid or corrupt, the entire restore would be cancelled and nothing touched — but every file here has already passed that check.')
     :('File'+(files.length>1?'s':'')+': '+fileList+'\n\n'
-      +'Trades, images, sessions, config and FX conversions (whichever are present) will be merged into your existing data. Duplicate trades are skipped. Your existing data is NOT deleted.\n\n'
+      +'Trades, images, sessions, config, FX conversions and watchlists (whichever are present) will be merged into your existing data. Duplicate trades are skipped. Your existing data is NOT deleted.\n\n'
       +'All-or-nothing: if any selected file were invalid or corrupt, the entire merge would be cancelled and nothing touched — but every file here has already passed that check.');
   openTypeConfirmModal({
     title:(isRestore?'Restore':'Merge')+' from '+parsedFiles.length+' JSON file'+(parsedFiles.length>1?'s':'')+'?',
@@ -17698,7 +18073,7 @@ async function importJsonFiles(input,mode){
         // same batch just wrote.
         var hasTradeData=parsedFiles.some(function(d){return detectBackupShape(d)==='trades';});
         if(isRestore&&hasTradeData){await dbClear('trades');await dbClear('images');await dbClear('sessions');}
-        var totals={trades:0,skippedTrades:0,images:0,configRestored:false,fx:null};
+        var totals={trades:0,skippedTrades:0,images:0,configRestored:false,fx:null,watchlists:null};
         var allImportedTrades=[];
         for(var j=0;j<parsedFiles.length;j++){
           var pf=parsedFiles[j];
@@ -17706,6 +18081,7 @@ async function importJsonFiles(input,mode){
           totals.trades+=r.trades;totals.skippedTrades+=r.skippedTrades;totals.images+=r.images;
           if(r.configRestored)totals.configRestored=true;
           if(r.fx)totals.fx=r.fx;
+          if(r.watchlists)totals.watchlists=r.watchlists;
           if(detectBackupShape(pf)==='trades')allImportedTrades=allImportedTrades.concat(Array.isArray(pf)?pf:(pf.trades||[]));
         }
         // Restore mode only: same as ghRestoreLatestBackup, top up strategies/asset types/pairs
@@ -17721,15 +18097,17 @@ async function importJsonFiles(input,mode){
           if(typeof aiUpdateProviderStatus==='function')aiUpdateProviderStatus();
         }
         var msg=(isRestore?'Restored ':'Merged ')+totals.trades+' trades, '+totals.images+' images'+(totals.skippedTrades?' ('+totals.skippedTrades+' dupes skipped)':'')
-          +(totals.configRestored?', config restored':'')+(totals.fx?', '+totals.fx.length+' FX conversions':'');
+          +(totals.configRestored?', config restored':'')+(totals.fx?', '+totals.fx.length+' FX conversions':'')+(totals.watchlists?', '+totals.watchlists.length+' watchlists':'');
         toast(msg,'ok');
         await refreshUI();
         // Sync the actual GitHub data files (tj_data.json + tj_config.json) — NOT the bkp/
         // backup folder — same as any other local change. No-ops silently if GitHub isn't configured.
         ghAutoSync();
-        // FX has no separate "live" file on GitHub (only bkp/fx_backup.json), so that single file
-        // is the actual data for it — keep it in sync too, without touching any other bkp/ file.
+        // FX/Watchlists have no separate "live" file on GitHub (only their single bkp/ file),
+        // so that file is the actual data for them — keep it in sync too, without touching
+        // any other bkp/ file.
         if(totals.fx)ghPushFxLive();
+        if(totals.watchlists)ghPushWatchlistLive();
       }catch(e){toast((isRestore?'Restore':'Merge')+' error: '+e.message,'err');}
       input.value='';
     }
@@ -24006,6 +24384,366 @@ document.addEventListener('focusin',function(e){
   var icon=e.target.closest&&e.target.closest('.th-info');
   if(icon)_positionThInfoTip(icon);
 });
+// ══ Watchlist ═════════════════════════════════════════
+// Stored under settings key 'watchlists': [{id,name,goal,items:[{id,assetType,pair,price,comment,createdAt}],createdAt}]
+// Purely organizational — no live price fetching (that's what Price Alerts is for).
+// Backed up as its own file — see MAINTENANCE NOTE near "══ Backup ══" below. Local export/
+// import: ghBuildWatchlistPayload()/exportBackup()/detectBackupShape()/applyBackupPayload().
+// GitHub: live copy at tj_watchlist.json via ghPushWatchlistLive()/ghPull(); backup copy at
+// bkp/watchlist_backup.json via ghSnapshot()/ghRestoreWatchlistBackup()/ghMergeWatchlistBackup()
+// (Manual Backup only). Any change to this data's shape must be reflected in all of those.
+async function getWatchlists(){ return await getSetting('watchlists', []); }
+async function saveWatchlistsData(data){ await setSetting('watchlists', data); }
+var _wlActiveId = null;
+var _wlDir = 'above';        // default direction for the Watch Price above/below toggle
+async function wlInit(){
+  await wlPopulateAssetSelectors();
+  var lists = await getWatchlists();
+  if(!_wlActiveId || !lists.find(function(w){return w.id===_wlActiveId;})){
+    _wlActiveId = lists.length ? lists[0].id : null;
+  }
+  await wlRenderList();
+  await wlRenderDetail();
+}
+async function wlRenderList(){
+  var lists = await getWatchlists();
+  var el = document.getElementById('wl-list');
+  if(!el) return;
+  if(!lists.length){ el.innerHTML='<div class="wl-list-empty">No watchlists yet.</div>'; return; }
+  el.innerHTML = lists.map(function(w){
+    return '<div class="wl-item'+(w.id===_wlActiveId?' active':'')+'" onclick="wlSelect(\''+w.id+'\')">'
+      +'<span class="wl-item-name">'+escHtml(w.name)+'</span>'
+      +'<span class="wl-item-count">'+w.items.length+'</span>'
+      +'<div class="wl-row-actions">'
+      +'<button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation();wlRenameWatchlist(\''+w.id+'\')" title="Rename watchlist">'
+      +'<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'
+      +'</button>'
+      +'<button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();wlDeleteWatchlist(\''+w.id+'\')" title="Delete watchlist">'
+      +'<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>'
+      +'</button></div></div>';
+  }).join('');
+}
+async function wlRenameWatchlist(id){
+  var lists = await getWatchlists();
+  var w = lists.find(function(x){return x.id===id;});
+  if(!w) return;
+  var name = prompt('Rename watchlist:', w.name);
+  if(name===null) return;
+  name = name.trim();
+  if(!name){ toast('Name cannot be empty','err'); return; }
+  w.name = name;
+  await saveWatchlistsData(lists);
+  await wlRenderList();
+  if(_wlActiveId===id){
+    document.getElementById('wl-detail-name').textContent = name;
+    wlUpdateAddHint();
+  }
+  toast('Watchlist renamed','ok');
+  ghAutoSyncWatchlist();
+}
+function wlToggleNewForm(){
+  var f = document.getElementById('wl-new-form');
+  if(!f) return;
+  f.style.display = f.style.display==='none' ? '' : 'none';
+  if(f.style.display!=='none'){var n=document.getElementById('wl-new-name');if(n)n.focus();}
+}
+async function wlCreate(){
+  var nameEl = document.getElementById('wl-new-name');
+  var goalEl = document.getElementById('wl-new-goal');
+  var name = (nameEl.value||'').trim();
+  if(!name){ toast('Enter a name for the watchlist','err'); return; }
+  var lists = await getWatchlists();
+  var w = { id: Date.now().toString(36)+Math.random().toString(36).slice(2), name:name, goal:(goalEl.value||'').trim(), items:[], createdAt: Date.now() };
+  lists.push(w);
+  await saveWatchlistsData(lists);
+  nameEl.value=''; goalEl.value='';
+  document.getElementById('wl-new-form').style.display='none';
+  _wlActiveId = w.id;
+  await wlRenderList();
+  await wlRenderDetail();
+  toast('Watchlist created','ok');
+  ghAutoSyncWatchlist();
+}
+async function wlDeleteWatchlist(id){
+  var lists = await getWatchlists();
+  var w = lists.find(function(x){return x.id===id;});
+  if(!w) return;
+  if(!confirm('Delete watchlist "'+w.name+'" and all '+w.items.length+' item(s) in it?')) return;
+  lists = lists.filter(function(x){return x.id!==id;});
+  await saveWatchlistsData(lists);
+  if(_wlActiveId===id) _wlActiveId = lists.length ? lists[0].id : null;
+  await wlRenderList();
+  await wlRenderDetail();
+  ghAutoSyncWatchlist();
+}
+async function wlSelect(id){
+  if(_wlActiveId!==id) wlCancelEditItem();
+  _wlActiveId = id;
+  await wlRenderList();
+  await wlRenderDetail();
+}
+function wlUpdateAddHint(){
+  var hint = document.getElementById('wl-add-target-hint');
+  if(!hint) return;
+  var lists = _wlListsCache || [];
+  var w = lists.find(function(x){return x.id===_wlActiveId;});
+  hint.textContent = w ? 'Adding to: ' + w.name : 'Select or create a watchlist first';
+}
+var _wlListsCache = [];
+async function wlRenderDetail(){
+  var lists = await getWatchlists();
+  _wlListsCache = lists;
+  var w = lists.find(function(x){return x.id===_wlActiveId;});
+  var empty = document.getElementById('wl-empty-state');
+  var body = document.getElementById('wl-detail-body');
+  wlUpdateAddHint();
+  if(!w){ if(empty)empty.style.display=''; if(body)body.style.display='none'; return; }
+  if(empty)empty.style.display='none';
+  if(body)body.style.display='';
+  document.getElementById('wl-detail-name').textContent = w.name;
+  document.getElementById('wl-detail-goal').textContent = w.goal || 'No goal set for this watchlist.';
+  wlRenderItems(w);
+}
+// ── Compact card list with per-item expand state — items are expanded by default; track only collapsed ids ──
+var _wlCollapsedItems = {}; // itemId -> true when manually collapsed
+function wlToggleItem(itemId, evt){
+  if(evt && evt.target && evt.target.closest('.wl-row-actions, .wl-alert-bell')) return; // don't toggle when clicking edit/delete/alert
+  _wlCollapsedItems[itemId] = !_wlCollapsedItems[itemId];
+  var card = document.getElementById('wl-witem-' + itemId);
+  if(card) card.classList.toggle('wl-expanded', !_wlCollapsedItems[itemId]);
+}
+function wlExpandAllItems(){
+  document.querySelectorAll('#page-watchlist .wl-watch-card').forEach(function(el){
+    var id = el.id.replace('wl-witem-','');
+    _wlCollapsedItems[id] = false;
+    el.classList.add('wl-expanded');
+  });
+}
+function wlCollapseAllItems(){
+  document.querySelectorAll('#page-watchlist .wl-watch-card').forEach(function(el){
+    var id = el.id.replace('wl-witem-','');
+    _wlCollapsedItems[id] = true;
+    el.classList.remove('wl-expanded');
+  });
+}
+function wlRenderItems(w){
+  var el = document.getElementById('wl-items');
+  if(!el) return;
+  if(!w.items.length){ el.innerHTML='<div class="wl-list-empty">No assets added yet.</div>'; return; }
+  el.innerHTML = w.items.slice().reverse().map(function(it){
+    var isBelow = it.dir==='below'; // default to 'above' for legacy items with no dir saved
+    var dirIcon = isBelow
+      ? '<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>'
+      : '<svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>';
+    var isExpanded = !_wlCollapsedItems[it.id];
+    var addedStr = new Date(it.createdAt||Date.now()).toLocaleDateString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    return '<div class="wl-watch-card'+(isExpanded?' wl-expanded':'')+'" id="wl-witem-'+it.id+'">'
+      +'<div class="wl-row-main" onclick="wlToggleItem(\''+it.id+'\', event)">'
+        +'<span class="wl-watch-symbol">'+escHtml(it.pair)+'</span>'
+        +'<button class="btn btn-ghost btn-sm btn-icon wl-alert-bell" onclick="wlSetAlert(\''+w.id+'\',\''+it.id+'\')" title="Set price alert">'
+        +'<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>'
+        +'</button>'
+        +(it.price?'<span class="wl-watch-price '+(isBelow?'dir-below':'dir-above')+'">'+dirIcon+escHtml(it.price)+'</span>':'')
+        +'<div class="wl-row-actions">'
+          +'<button class="btn btn-ghost btn-sm btn-icon" onclick="wlEditItem(\''+w.id+'\',\''+it.id+'\')" title="Edit item">'
+          +'<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'
+          +'</button>'
+          +'<button class="btn btn-danger btn-sm btn-icon" onclick="wlDeleteItem(\''+w.id+'\',\''+it.id+'\')" title="Remove">'
+          +'<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>'
+          +'</button>'
+        +'</div>'
+        +'<svg class="wl-row-chev" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>'
+      +'</div>'
+      +'<div class="wl-detail">'
+        +(it.comment?'<div class="wl-watch-comment"><span style="opacity:.6;margin-right:4px;">📝</span>'+escHtml(it.comment)+'</div>':'')
+        +'<div class="wl-watch-meta">Added on: '+escHtml(addedStr)+'</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+// ── Direction toggle (Watch Price above/below) — mirrors paSetDir() in Price Alerts ──
+function wlSetDir(dir){
+  _wlDir = dir;
+  var aboveBtn = document.getElementById('wl-btn-above');
+  var belowBtn = document.getElementById('wl-btn-below');
+  if(aboveBtn){ aboveBtn.classList.toggle('above-on', dir==='above'); }
+  if(belowBtn){ belowBtn.classList.toggle('below-on', dir==='below'); }
+}
+async function wlAddItem(){
+  var symSel = document.getElementById('wl-symbol');
+  if(!symSel.value){ toast('Select an asset to add','err'); return; }
+  var sel = symSel.options[symSel.selectedIndex];
+  var lists = await getWatchlists();
+  var w = lists.find(function(x){return x.id===_wlActiveId;});
+  if(!w){ toast('Select a watchlist first','err'); return; }
+  var item = {
+    id: Date.now().toString(36)+Math.random().toString(36).slice(2),
+    assetType: sel.dataset ? sel.dataset.assetType : '',
+    pair: sel.textContent,
+    price: (document.getElementById('wl-price').value||'').trim(),
+    dir: _wlDir,
+    comment: (document.getElementById('wl-comment').value||'').trim(),
+    createdAt: Date.now()
+  };
+  w.items.push(item);
+  await saveWatchlistsData(lists);
+  document.getElementById('wl-price').value='';
+  document.getElementById('wl-comment').value='';
+  wlSetDir('above');
+  await wlRenderList();
+  wlRenderItems(w);
+  toast('Added to watchlist','ok');
+  ghAutoSyncWatchlist();
+}
+async function wlDeleteItem(watchlistId, itemId){
+  var lists = await getWatchlists();
+  var w = lists.find(function(x){return x.id===watchlistId;});
+  if(!w) return;
+  var it = w.items.find(function(x){return x.id===itemId;});
+  if(!it) return;
+  if(!confirm('Remove "'+it.pair+'" from "'+w.name+'"?')) return;
+  if(_wlEditingItemId===itemId) wlCancelEditItem();
+  w.items = w.items.filter(function(x){return x.id!==itemId;});
+  await saveWatchlistsData(lists);
+  await wlRenderList();
+  wlRenderItems(w);
+  ghAutoSyncWatchlist();
+}
+// ── Edit item: populate the Add-to-Watchlist form for editing — mirrors paEditAlert/paUpdateAlert ──
+var _wlEditingItemId = null;
+var _wlEditingWatchlistId = null;
+async function wlEditItem(watchlistId, itemId){
+  var lists = await getWatchlists();
+  var w = lists.find(function(x){return x.id===watchlistId;});
+  if(!w) return;
+  var it = w.items.find(function(x){return x.id===itemId;});
+  if(!it) return;
+  _wlEditingItemId = itemId;
+  _wlEditingWatchlistId = watchlistId;
+  var typeSel = document.getElementById('wl-asset-type');
+  if(typeSel) typeSel.value = it.assetType || '';
+  await wlPopulateAssetSelectors();
+  var symSel = document.getElementById('wl-symbol');
+  if(symSel) symSel.value = it.pair || '';
+  document.getElementById('wl-price').value = it.price || '';
+  document.getElementById('wl-comment').value = it.comment || '';
+  wlSetDir(it.dir==='below' ? 'below' : 'above');
+  var addBtn = document.getElementById('wl-add-btn');
+  var cancelBtn = document.getElementById('wl-cancel-edit-btn');
+  if(addBtn){ addBtn.innerHTML='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Update Item'; addBtn.onclick=wlUpdateItem; }
+  if(cancelBtn) cancelBtn.style.display='block';
+  var panel = document.getElementById('wl-add-panel');
+  if(panel) panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function wlCancelEditItem(){
+  _wlEditingItemId = null;
+  _wlEditingWatchlistId = null;
+  var priceEl = document.getElementById('wl-price');
+  var commentEl = document.getElementById('wl-comment');
+  if(priceEl) priceEl.value='';
+  if(commentEl) commentEl.value='';
+  wlSetDir('above');
+  var addBtn = document.getElementById('wl-add-btn');
+  if(addBtn){ addBtn.innerHTML='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add to Watchlist'; addBtn.onclick=wlAddItem; }
+  var cancelBtn = document.getElementById('wl-cancel-edit-btn');
+  if(cancelBtn) cancelBtn.style.display='none';
+}
+async function wlUpdateItem(){
+  if(!_wlEditingItemId) return;
+  var lists = await getWatchlists();
+  var w = lists.find(function(x){return x.id===_wlEditingWatchlistId;});
+  if(!w){ wlCancelEditItem(); return; }
+  var it = w.items.find(function(x){return x.id===_wlEditingItemId;});
+  if(!it){ wlCancelEditItem(); return; }
+  var symSel = document.getElementById('wl-symbol');
+  if(symSel && symSel.value){
+    var sel = symSel.options[symSel.selectedIndex];
+    it.assetType = sel.dataset ? sel.dataset.assetType : it.assetType;
+    it.pair = sel.textContent;
+  }
+  it.price = (document.getElementById('wl-price').value||'').trim();
+  it.dir = _wlDir;
+  it.comment = (document.getElementById('wl-comment').value||'').trim();
+  await saveWatchlistsData(lists);
+  wlCancelEditItem();
+  await wlRenderList();
+  wlRenderItems(w);
+  toast('Watchlist item updated','ok');
+  ghAutoSyncWatchlist();
+}
+// ── Set Alert: send a watchlist item straight to the Price Alerts "Add Alert" form ──
+// Fills in asset type, symbol, direction and target price from the item, and a note
+// that identifies it as coming from this watchlist (so it's clear on the Price Alerts
+// page why the alert exists). Fields are filled in BEFORE nav('price-alerts') runs —
+// that switch triggers paInit(), which itself re-populates the symbol dropdown; doing
+// our fills first means that refresh just rebuilds around the values already set
+// (same asset-type filter in, same list out) instead of racing to clear them.
+async function wlSetAlert(watchlistId, itemId){
+  var lists = await getWatchlists();
+  var w = lists.find(function(x){return x.id===watchlistId;});
+  if(!w) return;
+  var it = w.items.find(function(x){return x.id===itemId;});
+  if(!it) return;
+  await paPopulateSymbolSuggestions();
+  var typeSel = document.getElementById('pa-asset-type');
+  if(typeSel) typeSel.value = it.assetType || '';
+  await paPopulateSymbolSuggestions(); // rebuild symbol list filtered to that asset type
+  var symSel = document.getElementById('pa-symbol');
+  if(symSel) symSel.value = (it.pair||'').replace(/\//g,''); // pa-symbol values are slash-stripped — see paPopulateSymbolSuggestions()
+  paSetDir(it.dir==='below' ? 'below' : 'above');
+  var targetEl = document.getElementById('pa-target');
+  if(targetEl) targetEl.value = it.price || '';
+  var noteEl = document.getElementById('pa-note');
+  if(noteEl) noteEl.value = 'Watchlist '+w.name;
+  nav('price-alerts', document.getElementById('nav-price-alerts'));
+  if(it.price){
+    paAddAlert();
+  } else {
+    toast('Filled in from "'+w.name+'" — this item has no watch price, enter a target to set the alert','ok');
+  }
+}
+// Asset/pair selectors — mirrors paPopulateSymbolSuggestions in Price Alerts
+async function wlPopulateAssetSelectors(){
+  var assets = await getAssets();
+  var typeFilter = (document.getElementById('wl-asset-type')||{}).value || '';
+  var typeSel = document.getElementById('wl-asset-type');
+  if(typeSel && typeSel.options.length <= 1){
+    assets.forEach(function(at){
+      var opt = document.createElement('option');
+      opt.value = at.name; opt.textContent = at.name;
+      typeSel.appendChild(opt);
+    });
+  }
+  var symSel = document.getElementById('wl-symbol');
+  if(!symSel) return;
+  var prevVal = symSel.value;
+  symSel.innerHTML = '<option value="">— select symbol —</option>';
+  assets.forEach(function(at){
+    if(typeFilter && at.name !== typeFilter) return;
+    if(!at.pairs || !at.pairs.length) return;
+    var grp = document.createElement('optgroup');
+    grp.label = at.name;
+    at.pairs.forEach(function(p){
+      var opt = document.createElement('option');
+      opt.value = p; opt.textContent = p;
+      opt.dataset.assetType = at.name;
+      grp.appendChild(opt);
+    });
+    symSel.appendChild(grp);
+  });
+  if(prevVal) symSel.value = prevVal;
+}
+async function wlOnAssetTypeChange(){
+  await wlPopulateAssetSelectors();
+  var symSel = document.getElementById('wl-symbol');
+  if(symSel) symSel.value='';
+}
+// Hook into nav() — init when navigating to watchlist (same pattern used for price-alerts)
+var _wlNavOriginal = nav;
+nav = function(id, btn){
+  _wlNavOriginal(id, btn);
+  if(id === 'watchlist') wlInit();
+};
 </script>
 </body>
 </html>
