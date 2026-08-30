@@ -4049,6 +4049,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       #page-price-alerts .pa-filter-tab.active{background:var(--accent);border-color:var(--accent);color:#fff;}
       #page-price-alerts .pa-filter-tab.active .pa-filter-n{opacity:.85;}
       #page-price-alerts .pa-filter-tab:hover:not(.active){background:var(--bg4);color:var(--text2);}
+      #page-price-alerts .pa-src-toggle{display:inline-flex;border:1px solid var(--border2);border-radius:20px;overflow:hidden;margin-right:2px;}
+      #page-price-alerts .pa-src-chip{font-size:11px;font-weight:700;letter-spacing:.02em;padding:6px 14px;border:none;background:var(--bg3);color:var(--text3);cursor:pointer;transition:background .15s,color .15s;font-family:'DM Sans',sans-serif;line-height:1;text-align:center;}
+      #page-price-alerts .pa-src-chip+.pa-src-chip{border-left:1px solid var(--border2);}
+      #page-price-alerts .pa-src-chip.active{background:var(--accent);color:#fff;}
+      #page-price-alerts .pa-src-chip:hover:not(.active){background:var(--bg4);color:var(--text2);}
       /* Compact card: default is one slim row, details expand on click */
       #page-price-alerts .pa-alert-card{padding:0;cursor:pointer;}
       #page-price-alerts .pa-alert-card.pa-expanded{cursor:default;}
@@ -4636,13 +4641,17 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         </div>
         <!-- RIGHT column: Active Alerts -->
         <div class="pa-panel">
-          <p class="pa-ptitle" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-            <span style="display:flex;align-items:center;gap:7px;">
+          <p class="pa-ptitle" style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-bottom:6px;column-gap:8px;">
+            <span style="display:flex;align-items:center;gap:7px;justify-self:start;">
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
               Active Alerts
               <span id="pa-alert-count-badge" style="display:none;font-size:9px;font-weight:700;background:var(--accent);color:#fff;border-radius:10px;padding:1px 6px;letter-spacing:.03em;font-family:DM Mono,monospace;"></span>
             </span>
-            <span style="display:flex;align-items:center;gap:6px;">
+            <span class="pa-src-toggle" id="pa-src-toggle" style="justify-self:center;">
+              <button type="button" class="pa-src-chip" data-src="manual" onclick="paToggleSourceChip('manual')" title="Show only alerts added directly">Manual</button>
+              <button type="button" class="pa-src-chip" data-src="watchlist" onclick="paToggleSourceChip('watchlist')" title="Show only alerts added via watchlist">Watchlist</button>
+            </span>
+            <span style="display:flex;align-items:center;gap:6px;justify-self:end;">
               <button class="btn btn-ghost btn-sm" onclick="paExpandAllGroups()" title="Expand all asset type groups">Expand all</button>
               <button class="btn btn-ghost btn-sm" onclick="paCollapseAllGroups()" title="Collapse all asset type groups">Collapse all</button>
               <button class="btn btn-ghost btn-sm" onclick="paClearFired()" title="Remove triggered alerts">Clear fired</button>
@@ -20716,6 +20725,7 @@ var _paDeleteInterval  = null;
 var _paCountdownInterval = null; // ticks every second to update per-card countdown
 var _paNextPollAt = 0;           // timestamp (ms) of the next scheduled poll
 var _paDir = 'above';        // default direction for new alert
+var _paPendingSource = null; // set right before paAddAlert() to tag where the alert came from ('watchlist'), read+cleared inside paAddAlert
 var _paPollMs = 120000;      // poll interval (ms) — recomputed on monitoring start
 // Minimum safe poll interval per provider (free-tier rate limits).
 // binance   : no key, 1200 req/min weight limit → 15 s is fine
@@ -20737,6 +20747,7 @@ var PA_PROVIDER_MIN_POLL_MS = {
   twelvedata: 2   * 60 * 1000    // 2 min base (dynamically scaled by paComputePollMs)
 };
 var PA_KEY_ALERTS       = 'tj-price-alerts';
+var PA_KEY_SRC_FILTER   = 'tj-pa-src-filter'; // last-selected Manual/Watchlist tab, remembered across visits
 // ── Cloud sync model ─────────────────────────────────────────────
 // CloudMonitor (the Cloudflare Worker) is the single source of truth
 // for the alert list whenever it's connected:
@@ -21460,6 +21471,8 @@ function paSetDir(dir){
 }
 // ── Add alert ────────────────────────────────────────────────
 function paAddAlert(){
+  var sourceTag = _paPendingSource || 'manual'; // capture + clear immediately so it can't leak into a later, unrelated add
+  _paPendingSource = null;
   if(!cmIsConnected()){
     toast('Connect CloudMonitor before adding alerts — see Cloud Monitor setup below', 'err');
     return;
@@ -21477,6 +21490,7 @@ function paAddAlert(){
     target:  target,
     targetStr: rawInput, // preserve exact digits the user typed for display
     note:    note,
+    source:  sourceTag, // 'manual' (added directly here) or 'watchlist' (added via the watchlist's Set Alert icon)
     created: Date.now(),
     fired:   false,
     firedAt: null
@@ -21575,6 +21589,7 @@ function paUpdateAlert(){
 }
 function paCancelEdit(){
   _paEditingId = null;
+  _paPendingSource = null; // discard any pending watchlist-source tag along with the pre-filled form
   // Reset form
   var symEl = document.getElementById('pa-symbol');
   var tgtEl = document.getElementById('pa-target');
@@ -21648,11 +21663,20 @@ function paToggleGroup(assetType){
 }
 // ── Compact card list: filter tab + per-card expand state ──
 var _paFilter = 'all'; // 'active' | 'fired' | 'all'
+var _paSourceFilter = localStorage.getItem(PA_KEY_SRC_FILTER) === 'watchlist' ? 'watchlist' : 'manual'; // 'manual' | 'watchlist' — remembers the last one you had open
 var _paExpandedCards = {}; // id -> true
 function paSetFilter(filter){
   _paFilter = filter;
   document.querySelectorAll('#pa-filter-tabs .pa-filter-tab').forEach(function(btn){
     btn.classList.toggle('active', btn.getAttribute('data-pa-filter') === filter);
+  });
+  paRender();
+}
+function paToggleSourceChip(which){
+  _paSourceFilter = which; // exclusive — exactly one of Manual/Watchlist is selected at all times
+  localStorage.setItem(PA_KEY_SRC_FILTER, which);
+  document.querySelectorAll('#pa-src-toggle .pa-src-chip').forEach(function(btn){
+    btn.classList.toggle('active', btn.getAttribute('data-src') === _paSourceFilter);
   });
   paRender();
 }
@@ -21679,6 +21703,9 @@ async function paRender(){
   var badge  = document.getElementById('pa-alert-count-badge');
   var navCnt = document.getElementById('nav-alerts-count');
   if(!list) return;
+  document.querySelectorAll('#pa-src-toggle .pa-src-chip').forEach(function(btn){
+    btn.classList.toggle('active', btn.getAttribute('data-src') === _paSourceFilter);
+  });
   var active = _paAlerts.filter(function(a){ return !a.fired; });
   var fired  = _paAlerts.filter(function(a){ return a.fired; });
   if(badge){
@@ -21689,13 +21716,16 @@ async function paRender(){
     if(active.length > 0){ navCnt.style.display='inline'; navCnt.textContent=active.length; }
     else navCnt.style.display='none';
   }
-  // Filter tab counts
+  // Filter tab counts — scoped to the currently selected Manual/Watchlist source
+  var bySource  = _paAlerts.filter(function(a){ return (a.source||'manual') === _paSourceFilter; });
+  var srcActive = bySource.filter(function(a){ return !a.fired; });
+  var srcFired  = bySource.filter(function(a){ return a.fired; });
   var nActiveEl = document.getElementById('pa-filter-n-active');
   var nFiredEl  = document.getElementById('pa-filter-n-fired');
   var nAllEl    = document.getElementById('pa-filter-n-all');
-  if(nActiveEl) nActiveEl.textContent = active.length ? ' ' + active.length : '';
-  if(nFiredEl)  nFiredEl.textContent  = fired.length ? ' ' + fired.length : '';
-  if(nAllEl)    nAllEl.textContent    = _paAlerts.length ? ' ' + _paAlerts.length : '';
+  if(nActiveEl) nActiveEl.textContent = srcActive.length ? ' ' + srcActive.length : '';
+  if(nFiredEl)  nFiredEl.textContent  = srcFired.length ? ' ' + srcFired.length : '';
+  if(nAllEl)    nAllEl.textContent    = bySource.length ? ' ' + bySource.length : '';
   if(_paAlerts.length === 0){
     if(empty) empty.style.display='block';
     list.innerHTML = '';
@@ -21703,10 +21733,10 @@ async function paRender(){
     paRenderTickers();
     return;
   }
-  // Apply active/fired/all filter
-  var filtered = _paFilter === 'active' ? active : (_paFilter === 'fired' ? fired : active.concat(fired));
+  // Apply the source filter, then the active/fired/all filter
+  var filtered = _paFilter === 'active' ? srcActive : (_paFilter === 'fired' ? srcFired : bySource);
   if(filtered.length === 0){
-    list.innerHTML = '<div class="pa-empty"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="var(--border2)" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:4px">No ' + (_paFilter === 'all' ? '' : _paFilter + ' ') + 'alerts</div><div style="font-size:11px">' + (_paFilter === 'fired' ? 'Alerts will appear here once triggered' : 'Add an alert using the form on the left') + '</div></div>';
+    list.innerHTML = '<div class="pa-empty"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="var(--border2)" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:4px">No ' + (_paFilter === 'all' ? '' : _paFilter + ' ') + (_paSourceFilter === 'watchlist' ? 'watchlist ' : '') + 'alerts</div><div style="font-size:11px">' + (_paFilter === 'fired' ? 'Alerts will appear here once triggered' : (_paSourceFilter === 'watchlist' ? 'Alerts added via a watchlist\'s bell icon will appear here' : 'Add an alert using the form on the left')) + '</div></div>';
     paRenderTickers();
     return;
   }
@@ -21780,6 +21810,7 @@ async function paRender(){
     html += '<div class="pa-detail">';
     html += '<div class="pa-alert-meta">';
     html += '<span>Created on: ' + escHtml(createdStr) + '</span>';
+    html += '<span title="How this alert was added">' + (a.source==='watchlist' ? '★ From watchlist' : '🔔 Added directly') + '</span>';
     if(a.fired){
       // Fired alert: show the price at trigger time, not the live price.
       // paUpdatePrices skips these spans so this value is never overwritten.
@@ -24809,6 +24840,7 @@ async function wlSetAlert(watchlistId, itemId){
   if(targetEl) targetEl.value = it.price || '';
   var noteEl = document.getElementById('pa-note');
   if(noteEl) noteEl.value = 'Watchlist - '+w.name+(it.comment?'\n\n'+it.comment:'');
+  _paPendingSource = 'watchlist'; // tag whatever gets submitted next from this pre-filled form as watchlist-sourced
   nav('price-alerts', document.getElementById('nav-price-alerts'));
   if(it.price){
     paAddAlert();
