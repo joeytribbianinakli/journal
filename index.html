@@ -4879,7 +4879,8 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                 <label>Goal <span style="color:var(--text3);font-size:10px">(what is this watchlist for?)</span></label>
                 <textarea id="wl-new-goal" rows="2" placeholder="e.g. Assets showing early signs of a range breakout"></textarea>
               </div>
-              <button class="btn btn-primary" style="width:100%" onclick="wlCreate()">Create Watchlist</button>
+              <button class="btn btn-primary" id="wl-create-btn" style="width:100%" onclick="wlCreate()">Create Watchlist</button>
+              <button class="btn btn-ghost" id="wl-cancel-edit-list-btn" style="width:100%;margin-top:6px;display:none;justify-content:center" onclick="wlCancelEditList()">Cancel edit</button>
             </div>
           </div>
           <!-- Add item to selected watchlist -->
@@ -24418,7 +24419,7 @@ async function wlRenderList(){
       +'<span class="wl-item-name">'+escHtml(w.name)+'</span>'
       +'<span class="wl-item-count">'+w.items.length+'</span>'
       +'<div class="wl-row-actions">'
-      +'<button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation();wlRenameWatchlist(\''+w.id+'\')" title="Rename watchlist">'
+      +'<button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation();wlEditWatchlist(\''+w.id+'\')" title="Edit watchlist">'
       +'<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'
       +'</button>'
       +'<button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();wlDeleteWatchlist(\''+w.id+'\')" title="Delete watchlist">'
@@ -24426,29 +24427,65 @@ async function wlRenderList(){
       +'</button></div></div>';
   }).join('');
 }
-async function wlRenameWatchlist(id){
+// ── Edit watchlist (name + goal): populates the New Watchlist form for editing — mirrors wlEditItem/wlCancelEditItem/wlUpdateItem ──
+var _wlEditingListId = null;
+async function wlEditWatchlist(id){
   var lists = await getWatchlists();
   var w = lists.find(function(x){return x.id===id;});
   if(!w) return;
-  var name = prompt('Rename watchlist:', w.name);
-  if(name===null) return;
-  name = name.trim();
+  _wlEditingListId = id;
+  document.getElementById('wl-new-name').value = w.name || '';
+  document.getElementById('wl-new-goal').value = w.goal || '';
+  var f = document.getElementById('wl-new-form');
+  if(f) f.style.display = '';
+  var createBtn = document.getElementById('wl-create-btn');
+  var cancelBtn = document.getElementById('wl-cancel-edit-list-btn');
+  if(createBtn){ createBtn.textContent='Update Watchlist'; createBtn.onclick=wlUpdateWatchlist; }
+  if(cancelBtn) cancelBtn.style.display='block';
+  var nameEl = document.getElementById('wl-new-name');
+  if(nameEl) nameEl.focus();
+  var panel = document.getElementById('wl-new-form');
+  if(panel) panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function wlCancelEditList(){
+  _wlEditingListId = null;
+  document.getElementById('wl-new-name').value = '';
+  document.getElementById('wl-new-goal').value = '';
+  document.getElementById('wl-new-form').style.display = 'none';
+  var createBtn = document.getElementById('wl-create-btn');
+  var cancelBtn = document.getElementById('wl-cancel-edit-list-btn');
+  if(createBtn){ createBtn.textContent='Create Watchlist'; createBtn.onclick=wlCreate; }
+  if(cancelBtn) cancelBtn.style.display='none';
+}
+async function wlUpdateWatchlist(){
+  if(!_wlEditingListId) return;
+  var nameEl = document.getElementById('wl-new-name');
+  var goalEl = document.getElementById('wl-new-goal');
+  var name = (nameEl.value||'').trim();
   if(!name){ toast('Name cannot be empty','err'); return; }
+  var lists = await getWatchlists();
+  var w = lists.find(function(x){return x.id===_wlEditingListId;});
+  if(!w){ wlCancelEditList(); return; }
   w.name = name;
+  w.goal = (goalEl.value||'').trim();
   await saveWatchlistsData(lists);
+  var editedId = _wlEditingListId;
+  wlCancelEditList();
   await wlRenderList();
-  if(_wlActiveId===id){
-    document.getElementById('wl-detail-name').textContent = name;
-    wlUpdateAddHint();
-  }
-  toast('Watchlist renamed','ok');
+  if(_wlActiveId===editedId) await wlRenderDetail();
+  toast('Watchlist updated','ok');
   ghAutoSyncWatchlist();
 }
 function wlToggleNewForm(){
   var f = document.getElementById('wl-new-form');
   if(!f) return;
-  f.style.display = f.style.display==='none' ? '' : 'none';
-  if(f.style.display!=='none'){var n=document.getElementById('wl-new-name');if(n)n.focus();}
+  if(f.style.display==='none'){
+    if(_wlEditingListId) wlCancelEditList(); // start a fresh create form, not a stale edit
+    f.style.display='';
+    var n=document.getElementById('wl-new-name');if(n)n.focus();
+  } else {
+    f.style.display='none';
+  }
 }
 async function wlCreate(){
   var nameEl = document.getElementById('wl-new-name');
@@ -24472,6 +24509,7 @@ async function wlDeleteWatchlist(id){
   var w = lists.find(function(x){return x.id===id;});
   if(!w) return;
   if(!confirm('Delete watchlist "'+w.name+'" and all '+w.items.length+' item(s) in it?')) return;
+  if(_wlEditingListId===id) wlCancelEditList();
   lists = lists.filter(function(x){return x.id!==id;});
   await saveWatchlistsData(lists);
   if(_wlActiveId===id) _wlActiveId = lists.length ? lists[0].id : null;
