@@ -3974,7 +3974,8 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       #page-price-alerts .pa-alert-card.fired.fired-below{border-color:rgba(232,85,85,.45);background:linear-gradient(rgba(232,85,85,.05),rgba(232,85,85,.05)),var(--bg3);box-shadow:0 0 0 1px rgba(232,85,85,.2) inset;}
       #page-price-alerts .pa-alert-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
       #page-price-alerts .pa-alert-symbol{font-family:DM Mono,monospace;font-size:13px;font-weight:700;color:var(--text);background:var(--bg4);border:1px solid var(--border2);border-radius:5px;padding:3px 8px;}
-      #page-price-alerts .pa-alert-dir{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:4px;}
+      #page-price-alerts .pa-alert-dir{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:4px;display:inline-flex;align-items:center;}
+      #page-price-alerts .pa-alert-dir svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.5;display:block;}
       #page-price-alerts .pa-alert-dir.above{background:rgba(52,201,122,.1);color:var(--green);}
       #page-price-alerts .pa-alert-dir.below{background:rgba(232,85,85,.1);color:var(--red);}
       #page-price-alerts .pa-alert-price{font-family:DM Mono,monospace;font-size:16px;font-weight:700;color:var(--text);margin-left:auto;}
@@ -21731,7 +21732,9 @@ async function paRender(){
     var price  = _paPrices[a.symbol];
     var f = paComputePriceFields(a, price);
     var dirClass = a.dir === 'above' ? 'above' : 'below';
-    var dirLabel = a.dir === 'above' ? '↑ Above' : '↓ Below';
+    var dirLabel = a.dir === 'above'
+      ? '<svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>'
+      : '<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>';
     var isExpanded = !!_paExpandedCards[a.id];
     var cardClass = 'pa-alert-card' + (a.fired ? (' fired' + (a.dir === 'below' ? ' fired-below' : '')) : '') + (isExpanded ? ' pa-expanded' : '');
     var createdStr = new Date(a.created).toLocaleDateString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
@@ -24625,11 +24628,11 @@ function wlRenderItems(w){
     return '<div class="wl-watch-card'+(isExpanded?' wl-expanded':'')+'" id="wl-witem-'+it.id+'">'
       +'<div class="wl-row-main" onclick="wlToggleItem(\''+it.id+'\', event)">'
         +'<span class="wl-watch-symbol">'+escHtml(it.pair)+'</span>'
-        +'<button class="btn btn-ghost btn-sm btn-icon wl-alert-bell" onclick="wlSetAlert(\''+w.id+'\',\''+it.id+'\')" title="Set price alert">'
-        +'<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>'
-        +'</button>'
         +(it.price?'<span class="wl-watch-price '+(isBelow?'dir-below':'dir-above')+'">'+dirIcon+escHtml(it.price)+'</span>':'')
         +'<div class="wl-row-actions">'
+          +'<button class="btn btn-ghost btn-sm btn-icon wl-alert-bell" onclick="wlSetAlert(\''+w.id+'\',\''+it.id+'\')" title="Set price alert">'
+          +'<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>'
+          +'</button>'
           +'<button class="btn btn-ghost btn-sm btn-icon" onclick="wlEditItem(\''+w.id+'\',\''+it.id+'\')" title="Edit item">'
           +'<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'
           +'</button>'
