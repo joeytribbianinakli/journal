@@ -5965,6 +5965,48 @@ function utf8ToBase64(str){
   }
   return btoa(binary);
 }
+// ── Utility: shared Price-Alerts/Watchlist form helpers (same UI pattern, two prefixes) ──
+// Toggles the above/below direction buttons for a given form prefix ('pa' or 'wl').
+function setDirToggleButtons(prefix, dir){
+  var aboveBtn = document.getElementById(prefix+'-btn-above');
+  var belowBtn = document.getElementById(prefix+'-btn-below');
+  if(aboveBtn){ aboveBtn.classList.toggle('above-on', dir==='above'); }
+  if(belowBtn){ belowBtn.classList.toggle('below-on', dir==='below'); }
+}
+// Populates the '<prefix>-asset-type' and '<prefix>-symbol' dropdowns from getAssets().
+// stripSlashes=true matches Price Alerts' historical behavior (option values have '/' removed);
+// Watchlist keeps the '/' in its option values, so stripSlashes=false there.
+async function populateAssetSelectors(prefix, stripSlashes){
+  var assets = await getAssets();
+  var typeFilter = (document.getElementById(prefix+'-asset-type')||{}).value || '';
+  var typeSel = document.getElementById(prefix+'-asset-type');
+  if(typeSel && typeSel.options.length <= 1){
+    assets.forEach(function(at){
+      var opt = document.createElement('option');
+      opt.value = at.name; opt.textContent = at.name;
+      typeSel.appendChild(opt);
+    });
+  }
+  var symSel = document.getElementById(prefix+'-symbol');
+  if(!symSel) return;
+  var prevVal = symSel.value;
+  symSel.innerHTML = '<option value="">— select symbol —</option>';
+  assets.forEach(function(at){
+    if(typeFilter && at.name !== typeFilter) return;
+    if(!at.pairs || !at.pairs.length) return;
+    var grp = document.createElement('optgroup');
+    grp.label = at.name;
+    at.pairs.forEach(function(p){
+      var opt = document.createElement('option');
+      opt.value = stripSlashes ? p.replace(/\//g,'') : p;
+      opt.textContent = p;
+      opt.dataset.assetType = at.name;
+      grp.appendChild(opt);
+    });
+    symSel.appendChild(grp);
+  });
+  if(prevVal) symSel.value = prevVal;
+}
 // ══ DB ════════════════════════════════════════════
 // IndexedDB schema: 4 object stores, all keyed on 'id' (see onupgradeneeded below).
 //   trades   — one record per logged trade (save/edit/history)
@@ -13888,9 +13930,12 @@ async function _updateSidebarStatsImpl(){
 // existing one (trades, config, FX, watchlists, alerts) changes, update ALL of: the
 // payload builder (ghBuildPayload/ghBuildConfigPayload/ghBuildWatchlistPayload/etc.),
 // detectBackupShape(), applyBackupPayload(), exportBackup(), importJsonFiles(), the
-// GitHub push/pull path (ghPushManual/ghPull/ghSnapshot), and any dedicated
-// restore/merge functions (e.g. ghRestoreFxBackup/ghMergeFxBackup) — otherwise backup
-// and restore silently fall out of sync with the live data.
+// GitHub push/pull path (ghPushManual/ghPull/ghSnapshot), the auto-pull-on-page-load path
+// (ghAutoPullOnSetup — EASY TO MISS: it duplicates ghPull()'s fetch logic instead of
+// calling it, so a file/field added to ghPull() does NOT automatically reach it, and the
+// only symptom is that multi-device sync silently doesn't refresh that data on load), and
+// any dedicated restore/merge functions (e.g. ghRestoreFxBackup/ghMergeFxBackup) —
+// otherwise backup, restore, and refresh-sync silently fall out of sync with live data.
 // Local (manual, in-browser) backup/restore/export helpers. These are the "Backup &
 // restore" page's manual JSON buttons — distinct from the automatic GitHub cloud sync.
 // Export downloads 4 separate files — trade data, config, FX, watchlists — using the
@@ -17132,6 +17177,27 @@ async function ghAutoPullOnSetup(){
     }catch(ce){console.warn('Config pull error:',ce.message);}
     // Pull alerts file
     await ghPullAlertsFile(cfg);
+    // Pull FX conversions (USD/CAD Tracker) — mirrors ghPull(), otherwise this device
+    // never sees FX edits made on another device until a manual Pull is run.
+    try{
+      var fxStr=await ghFetchFileContent(cfg,GH_BKP_FX_FILE);
+      if(fxStr){
+        var fxData=JSON.parse(fxStr);
+        var fxRemote=Array.isArray(fxData)?fxData:(fxData.conversions||[]);
+        fxSave(fxRemote);
+        if(_currentPage==='fx-tracker'&&typeof fxRender==='function')fxRender();
+      }
+    }catch(fe){console.warn('FX pull error:',fe.message);}
+    // Pull Watchlists from the live tj_watchlist.json — mirrors ghPull(), otherwise this
+    // device never sees watchlist edits made on another device until a manual Pull is run.
+    try{
+      var wlStr=await ghFetchFileContent(cfg,GH_WATCHLIST_FILE);
+      if(wlStr){
+        var wlData=JSON.parse(wlStr);
+        var wlRemote=Array.isArray(wlData)?wlData:(wlData.watchlists||[]);
+        await saveWatchlistsData(wlRemote);
+      }
+    }catch(we){console.warn('Watchlist pull error:',we.message);}
     var now=new Date().toISOString();
     localStorage.setItem('tj-gh-last-sync',now);
     ghRefreshStatus();
@@ -21364,10 +21430,7 @@ function paTgDeleteOldMessages(){
 // ── Direction toggle ──────────────────────────────────────────
 function paSetDir(dir){
   _paDir = dir;
-  var aboveBtn = document.getElementById('pa-btn-above');
-  var belowBtn = document.getElementById('pa-btn-below');
-  if(aboveBtn){ aboveBtn.classList.toggle('above-on', dir==='above'); }
-  if(belowBtn){ belowBtn.classList.toggle('below-on', dir==='below'); }
+  setDirToggleButtons('pa', dir);
 }
 // ── Add alert ────────────────────────────────────────────────
 function paAddAlert(){
@@ -22583,38 +22646,7 @@ function paFireAlert(a, currentPrice, provider){
 }
 // ── Init on page navigation ───────────────────────────────────
 async function paPopulateSymbolSuggestions(){
-  var assets = await getAssets();
-  var typeFilter = (document.getElementById('pa-asset-type')||{}).value || '';
-  // Populate asset type dropdown (only on first load)
-  var typeSel = document.getElementById('pa-asset-type');
-  if(typeSel && typeSel.options.length <= 1){
-    assets.forEach(function(at){
-      var opt = document.createElement('option');
-      opt.value = at.name; opt.textContent = at.name;
-      typeSel.appendChild(opt);
-    });
-  }
-  // Populate symbol select with optgroups
-  var symSel = document.getElementById('pa-symbol');
-  if(!symSel) return;
-  var prevVal = symSel.value;
-  symSel.innerHTML = '<option value="">— select symbol —</option>';
-  assets.forEach(function(at){
-    if(typeFilter && at.name !== typeFilter) return;
-    if(!at.pairs || !at.pairs.length) return;
-    var grp = document.createElement('optgroup');
-    grp.label = at.name;
-    at.pairs.forEach(function(p){
-      var opt = document.createElement('option');
-      opt.value = p.replace(/\//g,'');
-      opt.textContent = p;
-      opt.dataset.assetType = at.name;
-      grp.appendChild(opt);
-    });
-    symSel.appendChild(grp);
-  });
-  // Restore previous selection if still available
-  if(prevVal) symSel.value = prevVal;
+  await populateAssetSelectors('pa', true);
 }
 // When asset type filter changes — repopulate symbol list
 async function paOnAssetTypeChange(){
@@ -24607,13 +24639,11 @@ function wlRenderItems(w){
     +'</div>';
   }).join('');
 }
-// ── Direction toggle (Watch Price above/below) — mirrors paSetDir() in Price Alerts ──
+// ── Direction toggle (Watch Price above/below) — shares its DOM logic with paSetDir()
+// (Price Alerts) via the setDirToggleButtons() helper; only the '_wlDir'/'_paDir' state var differs ──
 function wlSetDir(dir){
   _wlDir = dir;
-  var aboveBtn = document.getElementById('wl-btn-above');
-  var belowBtn = document.getElementById('wl-btn-below');
-  if(aboveBtn){ aboveBtn.classList.toggle('above-on', dir==='above'); }
-  if(belowBtn){ belowBtn.classList.toggle('below-on', dir==='below'); }
+  setDirToggleButtons('wl', dir);
 }
 async function wlAddItem(){
   var symSel = document.getElementById('wl-symbol');
@@ -24655,7 +24685,13 @@ async function wlDeleteItem(watchlistId, itemId){
   wlRenderItems(w);
   ghAutoSyncWatchlist();
 }
-// ── Edit item: populate the Add-to-Watchlist form for editing — mirrors paEditAlert/paUpdateAlert ──
+// ── Edit item: populate the Add-to-Watchlist form for editing — follows the same UX pattern as
+// paEditAlert/paUpdateAlert/paCancelEdit (Price Alerts) but is NOT a code mirror and was deliberately
+// left separate: it looks up items in a nested watchlist→items structure (vs. pa's flat _paAlerts
+// array), has no CloudMonitor connectivity gate, doesn't reset any fired/triggered state on update,
+// doesn't highlight/outline the card being edited, and syncs via ghAutoSyncWatchlist() instead of
+// paStartMonitoring(). Consolidating these would need a much more parameterized shared function for
+// little benefit, so keep them separate rather than assume they're interchangeable ──
 var _wlEditingItemId = null;
 var _wlEditingWatchlistId = null;
 async function wlEditItem(watchlistId, itemId){
@@ -24748,36 +24784,11 @@ async function wlSetAlert(watchlistId, itemId){
     toast('Filled in from "'+w.name+'" — this item has no watch price, enter a target to set the alert','ok');
   }
 }
-// Asset/pair selectors — mirrors paPopulateSymbolSuggestions in Price Alerts
+// Asset/pair selectors — shares its dropdown-population logic with paPopulateSymbolSuggestions()
+// (Price Alerts) via the populateAssetSelectors() helper, called here with stripSlashes=false
+// (Watchlist keeps '/' in pair values; Price Alerts strips it — see the helper's own comment) ──
 async function wlPopulateAssetSelectors(){
-  var assets = await getAssets();
-  var typeFilter = (document.getElementById('wl-asset-type')||{}).value || '';
-  var typeSel = document.getElementById('wl-asset-type');
-  if(typeSel && typeSel.options.length <= 1){
-    assets.forEach(function(at){
-      var opt = document.createElement('option');
-      opt.value = at.name; opt.textContent = at.name;
-      typeSel.appendChild(opt);
-    });
-  }
-  var symSel = document.getElementById('wl-symbol');
-  if(!symSel) return;
-  var prevVal = symSel.value;
-  symSel.innerHTML = '<option value="">— select symbol —</option>';
-  assets.forEach(function(at){
-    if(typeFilter && at.name !== typeFilter) return;
-    if(!at.pairs || !at.pairs.length) return;
-    var grp = document.createElement('optgroup');
-    grp.label = at.name;
-    at.pairs.forEach(function(p){
-      var opt = document.createElement('option');
-      opt.value = p; opt.textContent = p;
-      opt.dataset.assetType = at.name;
-      grp.appendChild(opt);
-    });
-    symSel.appendChild(grp);
-  });
-  if(prevVal) symSel.value = prevVal;
+  await populateAssetSelectors('wl', false);
 }
 async function wlOnAssetTypeChange(){
   await wlPopulateAssetSelectors();
