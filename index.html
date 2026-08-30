@@ -735,6 +735,12 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .backup-card .bc-desc{font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.55}
 /* ── Toast: transient bottom-corner notifications (#toast-wrap) ── */
 .toast-wrap{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+/* ── Scroll-to-top: appears once you've scrolled past the first screen ── */
+#scroll-top-btn{position:fixed;bottom:80px;right:22px;width:40px;height:40px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(8px);transition:opacity .2s ease,transform .2s ease,background .15s,color .15s,border-color .15s;z-index:80;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+#scroll-top-btn.show{opacity:.8;visibility:visible;pointer-events:auto;transform:none}
+#scroll-top-btn:hover{opacity:1;background:var(--accent);border-color:var(--accent);color:#fff}
+#scroll-top-btn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:600px){#scroll-top-btn{bottom:20px;right:16px;width:36px;height:36px}}
 .toast{background:var(--bg4);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:9px 14px;font-size:12px;font-weight:500;pointer-events:auto;opacity:0;transform:translateY(8px);transition:all .2s;display:flex;align-items:center;gap:8px;min-width:180px}
 .toast.show{opacity:1;transform:none}
 .toast-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
@@ -1321,6 +1327,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 </aside>
 <!-- Mobile nav overlay -->
 <div id="mob-overlay" class="mob-overlay" onclick="closeMobNav()"></div>
+<!-- Scroll-to-top (shown once scrolled past the first screen; scrolls whichever element is actually the page's scroll container) -->
+<button id="scroll-top-btn" type="button" aria-label="Scroll to top" title="Back to top" onclick="scrollToTop()">
+  <svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+</button>
 <!-- Main -->
 <div class="main">
   <div class="topbar">
@@ -3979,7 +3989,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       #page-price-alerts .pa-alert-dir.below{background:rgba(232,85,85,.1);color:var(--red);}
       #page-price-alerts .pa-alert-price{font-family:DM Mono,monospace;font-size:16px;font-weight:700;color:var(--text);margin-left:auto;}
       #page-price-alerts .pa-alert-meta{font-size:10px;color:var(--text3);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-      #page-price-alerts .pa-alert-note{font-size:11px;color:var(--text2);margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-style:italic;}
+      #page-price-alerts .pa-alert-note{font-size:11px;color:var(--text2);margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-style:italic;white-space:pre-wrap;}
       #page-price-alerts .pa-alert-actions{display:flex;gap:5px;margin-left:auto;}
       #page-price-alerts .pa-current-price{font-family:DM Mono,monospace;font-size:11px;color:var(--text3);}
       #page-price-alerts .pa-progress-bar{height:3px;background:var(--bg4);border-radius:2px;margin-top:8px;overflow:hidden;}
@@ -4614,7 +4624,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             </div>
             <div class="pa-field">
               <label>Note <span style="color:var(--text3);font-size:10px">(optional – sent with alert)</span></label>
-              <input type="text" id="pa-note" placeholder="e.g. Watch for breakout, check 1H structure">
+              <textarea id="pa-note" rows="2" style="min-height:44px;resize:vertical" placeholder="e.g. Watch for breakout, check 1H structure"></textarea>
             </div>
             <button class="btn btn-primary" id="pa-add-btn" style="width:100%" onclick="paAddAlert()">
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
@@ -24798,7 +24808,7 @@ async function wlSetAlert(watchlistId, itemId){
   var targetEl = document.getElementById('pa-target');
   if(targetEl) targetEl.value = it.price || '';
   var noteEl = document.getElementById('pa-note');
-  if(noteEl) noteEl.value = 'Watchlist '+w.name;
+  if(noteEl) noteEl.value = 'Watchlist - '+w.name+(it.comment?'\n\n'+it.comment:'');
   nav('price-alerts', document.getElementById('nav-price-alerts'));
   if(it.price){
     paAddAlert();
@@ -24823,6 +24833,31 @@ nav = function(id, btn){
   _wlNavOriginal(id, btn);
   if(id === 'watchlist') wlInit();
 };
+// ── Scroll-to-top button ──────────────────────────────────────────
+// .main scrolls internally on desktop (overflow-y:auto) but on narrow/mobile
+// layouts it switches to overflow-y:visible and the window itself scrolls
+// instead (see the ≤600px media query). We track whichever is active so the
+// button's show/hide threshold and click-to-top both work in either mode.
+(function(){
+  var btn = document.getElementById('scroll-top-btn');
+  var mainEl = document.querySelector('.main');
+  if(!btn || !mainEl) return;
+  var mainScrolls = true;
+  function refreshMode(){ mainScrolls = getComputedStyle(mainEl).overflowY !== 'visible'; }
+  function update(){
+    var top = mainScrolls ? mainEl.scrollTop : (window.pageYOffset || document.documentElement.scrollTop || 0);
+    var viewportH = mainScrolls ? mainEl.clientHeight : window.innerHeight;
+    if(top > viewportH) btn.classList.add('show'); else btn.classList.remove('show');
+  }
+  window.scrollToTop = function(){
+    mainEl.scrollTo({top:0,behavior:'smooth'});
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+  refreshMode(); update();
+  mainEl.addEventListener('scroll', update, {passive:true});
+  window.addEventListener('scroll', update, {passive:true});
+  window.addEventListener('resize', function(){ refreshMode(); update(); });
+})();
 </script>
 </body>
 </html>
