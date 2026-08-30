@@ -718,11 +718,14 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .strategy-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:5px;background:var(--bg3)}
 .strat-card{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg3);transition:border-color .12s,background .12s}
 .strat-card:hover{background:var(--bg4);border-color:var(--border2)}
+.strat-card.active{border-color:var(--accent);background:rgba(77,127,255,.08)}
 .strat-card-bar{width:3px;height:28px;border-radius:2px;flex-shrink:0}
 .strat-card-name{flex:1;font-size:13px;font-weight:500;color:var(--text);outline:none;cursor:text;border-radius:3px;padding:1px 4px;margin-left:-4px;transition:background .1s}
 .strat-card-name:focus{background:var(--bg2);color:var(--text)}
 .strat-card-actions{display:flex;gap:3px;opacity:0;transition:opacity .12s}
 .strat-card:hover .strat-card-actions{opacity:1}
+/* Asset Types list only: edit/delete are always visible, not hover-revealed like Strategies/Error Types */
+#asset-type-list .strat-card-actions{opacity:1}
 /* ── Backup: export/import controls on page-backup ── */
 .backup-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 .backup-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px}
@@ -969,10 +972,6 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .ai-collapse-toolbar-label{font-size:10px;color:var(--text3);margin-right:2px}
 .ai-coach-body{padding:12px;display:flex;flex-direction:column;gap:8px}
 /* ── Pairs tab bar: instrument tab strip used in Price Alerts / Calculator ── */
-.pairs-tab{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:var(--radius);font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text3);transition:all .12s;white-space:nowrap;font-family:inherit}
-.pairs-tab:hover{background:var(--bg4);color:var(--text);border-color:var(--border2)}
-.pairs-tab.active{color:#fff;border-color:transparent}
-.pairs-tab .pairs-tab-count{font-size:9px;font-weight:700;opacity:.75;font-family:DM Mono,monospace}
 /* ── Pair chips: selectable instrument chips ── */
 .pair-chip-group{margin-bottom:10px}
 .pair-chip-group-label{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;display:flex;align-items:center;gap:5px}
@@ -5825,41 +5824,30 @@ document.addEventListener('DOMContentLoaded',function(){
       <div style="display:flex;flex-direction:column;gap:10px;min-height:0">
         <!-- Section header -->
         <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--border)">
-          <div style="display:flex;align-items:center;gap:6px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
-            <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">Asset Types</span>
-          </div>
-          <span style="font-size:10px;color:var(--text3);font-style:italic">click name to rename</span>
+          <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">Asset Types</span>
         </div>
-        <!-- List -->
-        <div id="asset-type-list" style="flex:1;overflow-y:auto;min-height:60px"></div>
         <!-- Add row -->
-        <div style="display:flex;gap:7px;padding-top:8px;border-top:1px solid var(--border);flex-shrink:0">
+        <div style="display:flex;gap:7px;flex-shrink:0">
           <input type="text" id="new-asset-type-inp" placeholder="e.g. Forex Major, Crypto…" style="flex:1;font-size:12px" onkeydown="if(event.key==='Enter')addAssetType()">
           <button class="btn btn-primary btn-sm" onclick="addAssetType()">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add
           </button>
         </div>
+        <!-- List -->
+        <div id="asset-type-list" style="flex:1;overflow-y:auto;min-height:60px"></div>
       </div>
       <!-- ── Right: Pairs / Instruments + Fees ── -->
       <div style="display:flex;flex-direction:column;gap:10px;min-width:0;min-height:0">
         <!-- Section header -->
         <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid var(--border)">
-          <div style="display:flex;align-items:center;gap:6px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-            <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">Pairs / Instruments</span>
-          </div>
+          <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">Pairs</span>
           <span id="pairs-total-count" style="font-size:10px;font-weight:600;color:var(--text3);font-family:DM Mono,monospace;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:1px 7px"></span>
         </div>
-        <!-- Asset type filter tabs -->
-        <div id="pairs-tab-bar" style="display:flex;gap:4px;flex-wrap:wrap;min-height:24px;flex-shrink:0"></div>
         <!-- Hidden legacy select kept for JS compat -->
         <select id="asset-type-filter" onchange="renderPairList()" style="display:none"><option value="">All types</option></select>
-        <!-- Chip grid -->
-        <div id="pair-list" style="flex:1;overflow-y:auto;min-height:60px;max-height:140px"></div>
         <!-- Add pair row -->
         <div id="add-pair-row" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:9px 10px;display:flex;flex-direction:column;gap:7px;flex-shrink:0">
-          <div style="font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase">Add pair to <span id="add-pair-type-label" style="color:var(--accent)">—</span></div>
+          <div style="display:none">Add pair to <span id="add-pair-type-label" style="color:var(--accent)">—</span></div>
           <div style="display:flex;gap:6px;align-items:center">
             <input type="text" id="new-pair-inp" placeholder="e.g. EUR/USD" style="flex:1;font-size:12px" onkeydown="if(event.key==='Enter')addPair()">
             <select id="new-pair-type-sel" style="font-size:11px;padding:5px 8px;min-width:90px;display:none"></select>
@@ -5868,16 +5856,21 @@ document.addEventListener('DOMContentLoaded',function(){
             </button>
           </div>
         </div>
-        <!-- Fees editor (shown for active tab) -->
-        <div id="asset-fees-panel" style="display:none;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:10px;flex-shrink:0">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <!-- Chip grid -->
+        <div id="pair-list" style="flex:1;overflow-y:auto;min-height:60px;max-height:140px"></div>
+        <!-- Fees editor (shown for active tab) — collapsed by default, click header to expand -->
+        <div id="asset-fees-panel" style="display:none;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:10px;flex-shrink:0;margin-top:auto">
+          <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleFeesPanel()">
             <div style="display:flex;align-items:center;gap:6px">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               <span style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em">Fees — <span id="fees-panel-type-name" style="color:var(--accent)"></span></span>
             </div>
-            <button class="btn btn-ghost btn-sm" style="font-size:9px;padding:2px 7px" onclick="resetFeesToDefaults()">Reset defaults</button>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button class="btn btn-ghost btn-sm" style="font-size:9px;padding:2px 7px" onclick="event.stopPropagation();resetFeesToDefaults()">Reset defaults</button>
+              <svg id="fees-panel-chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .15s;flex-shrink:0"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr;gap:6px" id="fees-editor-rows"></div>
+          <div style="display:none;grid-template-columns:1fr;gap:6px;margin-top:8px" id="fees-editor-rows"></div>
         </div>
       </div>
     </div>
@@ -15368,6 +15361,7 @@ async function openAssetManager(){
   var saved=await getAssets();
   _assetsDraft=JSON.parse(JSON.stringify(saved));
   _activePairsTab=''; // will auto-pick first tab in renderPairList
+  _feesPanelExpanded=false; // fees panel starts collapsed every time the modal opens
   var ind=document.getElementById('asset-modal-dirty');
   if(ind)ind.style.display='none';
   await renderAssetTypeList();
@@ -15380,22 +15374,39 @@ function closeAssetModal(){
 }
 // Tracks the currently active tab in the pairs column
 var _activePairsTab = '';
+// Tracks whether the Fees panel is expanded — collapsed by default to avoid eating vertical space
+var _feesPanelExpanded = false;
+function toggleFeesPanel(){
+  _feesPanelExpanded=!_feesPanelExpanded;
+  _applyFeesPanelExpandState();
+}
+function _applyFeesPanelExpandState(){
+  var rows=document.getElementById('fees-editor-rows');
+  var chev=document.getElementById('fees-panel-chev');
+  if(!rows)return;
+  rows.style.display=_feesPanelExpanded?'grid':'none';
+  if(chev)chev.style.transform=_feesPanelExpanded?'rotate(180deg)':'';
+}
 async function renderAssetTypeList(){
   var assets=_assetsDraft!==null?_assetsDraft:await getAssets();
+  // Keep _activePairsTab valid (defaults to the first asset type) — this drives which
+  // type's pairs show on the right, replacing the old separate pill-tab row.
+  if(_activePairsTab&&!assets.find(function(a){return a.name===_activePairsTab;})) _activePairsTab='';
+  if(!_activePairsTab&&assets.length) _activePairsTab=assets[0].name;
   var el=document.getElementById('asset-type-list');
   if(!assets.length){
     el.innerHTML='<div style="text-align:center;padding:20px 0 12px;color:var(--text3);font-size:12px">No asset types yet.</div>';
   } else {
     el.innerHTML='<div style="display:flex;flex-direction:column;gap:5px">'+assets.map(function(at,i){
-      var color=STRAT_COLORS[i%STRAT_COLORS.length];
       var count=at.pairs.length;
-      return'<div class="strat-card" style="cursor:default">'
-        +'<div class="strat-card-bar" style="background:'+color+'"></div>'
-        +'<span contenteditable="true" id="ate-'+i+'" class="strat-card-name" onblur="updateAssetTypeName('+i+',this.textContent.trim())" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur()}">'+escHtml(at.name)+'</span>'
-        +'<span style="font-size:10px;font-weight:700;color:var(--text3);font-family:DM Mono,monospace;flex-shrink:0;margin-right:4px">'+count+' pair'+(count!==1?'s':'')+'</span>'
+      var isActive=at.name===_activePairsTab;
+      var nameEsc=escHtml(at.name).replace(/'/g,"\\'");
+      return'<div class="strat-card'+(isActive?' active':'')+'" style="cursor:pointer" onclick="setPairsTab(\''+nameEsc+'\')">'
+        +'<span contenteditable="false" id="ate-'+i+'" class="strat-card-name" style="cursor:pointer" onblur="finishAssetTypeEdit('+i+',this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur()}" onclick="event.stopPropagation();if(this.contentEditable!==\'true\')setPairsTab(\''+nameEsc+'\')">'+escHtml(at.name)+'</span>'
+        +'<span title="'+count+' pair'+(count!==1?'s':'')+'" style="font-size:9px;font-weight:700;font-family:DM Mono,monospace;background:var(--bg4);border:1px solid var(--border2);color:var(--text3);border-radius:10px;padding:1px 6px;line-height:1.5;flex-shrink:0;margin-right:4px">'+count+'</span>'
         +'<div class="strat-card-actions">'
-        +'<button class="btn btn-ghost btn-sm btn-icon" title="Rename" onclick="var n=document.getElementById(\'ate-'+i+'\');n.focus();var r=window.getSelection();var rng=document.createRange();rng.selectNodeContents(n);r.removeAllRanges();r.addRange(rng)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>'
-        +'<button class="btn btn-danger btn-sm btn-icon" title="Delete" onclick="deleteAssetType('+i+')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>'
+        +'<button class="btn btn-ghost btn-sm btn-icon" title="Rename" onclick="event.stopPropagation();startAssetTypeEdit('+i+')"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+        +'<button class="btn btn-danger btn-sm btn-icon" title="Delete" onclick="event.stopPropagation();deleteAssetType('+i+')"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>'
         +'</div></div>';
     }).join('')+'</div>';
   }
@@ -15403,31 +15414,29 @@ async function renderAssetTypeList(){
   var opts='<option value="">All types</option>'+assets.map(function(at){return'<option value="'+escHtml(at.name)+'">'+escHtml(at.name)+'</option>'}).join('');
   document.getElementById('asset-type-filter').innerHTML=opts;
   document.getElementById('new-pair-type-sel').innerHTML=assets.map(function(at){return'<option value="'+escHtml(at.name)+'">'+escHtml(at.name)+'</option>'}).join('');
-  // sync tab bar
-  _renderPairsTabBar(assets);
 }
-function _renderPairsTabBar(assets){
-  var bar=document.getElementById('pairs-tab-bar');
-  if(!bar)return;
-  if(!assets||!assets.length){bar.innerHTML='<span style="font-size:11px;color:var(--text3);font-style:italic">Add an asset type first</span>';return;}
-  // If active tab no longer exists, reset to first
-  if(_activePairsTab&&!assets.find(function(a){return a.name===_activePairsTab;})) _activePairsTab='';
-  if(!_activePairsTab&&assets.length) _activePairsTab=assets[0].name;
-  bar.innerHTML=assets.map(function(at,i){
-    var color=STRAT_COLORS[i%STRAT_COLORS.length];
-    var isActive=at.name===_activePairsTab;
-    return'<button class="pairs-tab'+(isActive?' active':'')+'" style="'+(isActive?'background:'+color+';':'')+'border-color:'+(isActive?color:'')+';" onclick="setPairsTab(\''+escHtml(at.name).replace(/'/g,"\\'")+'\')">'
-      +escHtml(at.name)
-      +'<span class="pairs-tab-count">'+at.pairs.length+'</span>'
-      +'</button>';
-  }).join('');
+// Enter rename mode for asset type at idx — invoked only from the explicit Rename button now,
+// clicking the row itself just selects it (see setPairsTab).
+function startAssetTypeEdit(idx){
+  var n=document.getElementById('ate-'+idx);
+  if(!n)return;
+  n.contentEditable='true';
+  n.focus();
+  var r=window.getSelection();var rng=document.createRange();rng.selectNodeContents(n);r.removeAllRanges();r.addRange(rng);
 }
+// Commit the rename on blur/Enter and drop back out of edit mode
+function finishAssetTypeEdit(idx,el){
+  el.contentEditable='false';
+  updateAssetTypeName(idx,el.textContent.trim());
+}
+// Select which asset type's pairs show on the right (replaces the old separate pill-tab row —
+// clicking a row in the left list now drives the right-hand pairs view directly).
 function setPairsTab(name){
   _activePairsTab=name;
   var assets=_assetsDraft!==null?_assetsDraft:null;
-  if(assets){_renderPairsTabBar(assets);_renderPairChips(assets);_updateAddPairLabel(assets);renderAssetFeesPanel(assets);}
+  if(assets){renderAssetTypeList();_renderPairChips(assets);_updateAddPairLabel(assets);renderAssetFeesPanel(assets);}
   else{getAssets().then(function(assets){
-    _renderPairsTabBar(assets);
+    renderAssetTypeList();
     _renderPairChips(assets);
     _updateAddPairLabel(assets);
     renderAssetFeesPanel(assets);
@@ -15468,7 +15477,7 @@ function renderAssetFeesPanel(assets){
     return '<div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">'
       + '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap">'
       +   '<input type="checkbox" id="fee-en-'+fd.key+'" '+(f.enabled?'checked':'')+' onchange="updateDraftFee(\''+fd.key+'\')" style="cursor:pointer">'
-      +   '<span style="font-size:10px;font-weight:700;color:var(--text2)">' + fd.icon + ' ' + fd.label + '</span>'
+      +   '<span style="font-size:10px;font-weight:700;color:var(--text2)">' + fd.label + '</span>'
       + '</label>'
       + '<div style="position:relative" title="'+escHtml(fd.hint)+'">'
       +   '<input type="number" id="fee-val-'+fd.key+'" value="'+parseFloat(f.value||0)+'" step="any" min="0" style="width:100%;font-size:11px;padding-right:2px;font-family:DM Mono,monospace" '+(f.enabled?'':'disabled')+' oninput="updateDraftFee(\''+fd.key+'\')">'
@@ -15479,6 +15488,7 @@ function renderAssetFeesPanel(assets){
   if(hiddenCount > 0){
     rowsEl.innerHTML += '<div style="font-size:9px;color:var(--text3);padding:6px 2px 0;line-height:1.4;font-style:italic">Margin interest / short-borrow / regulatory fees aren\'t separate real-world charges for '+escHtml(at.name)+' — already folded into Overnight/Swap above, or not applicable to this instrument.</div>';
   }
+  _applyFeesPanelExpandState();
 }
 function updateDraftFee(feeKey){
   if(_assetsDraft === null) return;
@@ -15557,7 +15567,6 @@ function _renderPairChips(assets){
 // Refresh every piece of the "pairs" column in the asset modal (tab bar, chips, add-row label, fees panel) from current draft/saved state
 async function renderPairList(){
   var assets=_assetsDraft!==null?_assetsDraft:await getAssets();
-  _renderPairsTabBar(assets);
   _renderPairChips(assets);
   _updateAddPairLabel(assets);
   renderAssetFeesPanel(assets);
@@ -15575,16 +15584,15 @@ async function addAssetType(){
   _activePairsTab=name; // auto-switch to the new tab
   await renderAssetTypeList();await renderPairList();
 }
-// Delete an asset type, but only if no trade (live or archived) references its name or any of its pairs
+// Delete an asset type, but only if it has no pairs left in it, and no trade (live or archived) references its name
 async function deleteAssetType(idx){
   var assets=_assetsDraft!==null?_assetsDraft:await getAssets();
   var at=assets[idx];
+  if(at.pairs.length){toast('Cannot delete "'+at.name+'" — remove its '+at.pairs.length+' pair'+(at.pairs.length>1?'s':'')+' first','err');return;}
   var trades=await dbGetAll('trades');
   var usingType=trades.filter(function(t){return t.assetType===at.name;});
-  var usingPair=trades.filter(function(t){return at.pairs.includes(t.pair);});
-  var total=new Set([...usingType.map(function(t){return t.id;}), ...usingPair.map(function(t){return t.id;})]).size;
-  if(total){toast('Cannot delete "'+at.name+'" — used in '+total+' trade'+(total>1?'s':'')+' (including archived)','err');return;}
-  if(!confirm('Delete "'+at.name+'" and all its pairs?'))return;
+  if(usingType.length){toast('Cannot delete "'+at.name+'" — used in '+usingType.length+' trade'+(usingType.length>1?'s':'')+' (including archived)','err');return;}
+  if(!confirm('Delete "'+at.name+'"?'))return;
   if(_activePairsTab===at.name)_activePairsTab=''; // will auto-pick next
   assets.splice(idx,1);
   if(_assetsDraft!==null){_assetsDraft=assets;_assetsDraftDirty();}
