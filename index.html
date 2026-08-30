@@ -4832,7 +4832,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       #page-watchlist .wl-dir-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
       #page-watchlist .wl-dir-btn.above-on{background:rgba(52,201,122,.1);border-color:rgba(52,201,122,.3);color:var(--green);}
       #page-watchlist .wl-dir-btn.below-on{background:rgba(232,85,85,.1);border-color:rgba(232,85,85,.3);color:var(--red);}
-      #page-watchlist .wl-watch-list{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+      #page-watchlist .wl-watch-list{display:flex;flex-direction:column;gap:8px;}
       /* Row-actions: shared icon-button row for both the watchlist selector list and item cards — mirrors pa-row-actions in Price Alerts */
       #page-watchlist .wl-row-actions{display:flex;gap:3px;align-items:center;margin-left:auto;flex-shrink:0;}
       /* Compact expandable item card — mirrors pa-alert-card in Price Alerts */
@@ -4938,7 +4938,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <div class="wl-detail-title" id="wl-detail-name"></div>
             <div class="wl-detail-goal" id="wl-detail-goal"></div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-              <span style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)">Items</span>
+              <span style="display:flex;align-items:center;gap:7px;">
+                <span style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)">Items</span>
+                <span id="wl-item-count-badge" style="display:none;font-size:9px;font-weight:700;background:var(--accent);color:#fff;border-radius:10px;padding:1px 6px;letter-spacing:.03em;font-family:DM Mono,monospace;"></span>
+              </span>
               <span style="display:flex;gap:6px;">
                 <button class="btn btn-ghost btn-sm" onclick="wlExpandAllItems()" title="Expand all items">Expand all</button>
                 <button class="btn btn-ghost btn-sm" onclick="wlCollapseAllItems()" title="Collapse all items">Collapse all</button>
@@ -8718,7 +8721,7 @@ var NAV_SECTIONS=['overview','trades','manage','market-tools','analysis'];
 var NAV_COLLAPSE_KEY='tj-nav-collapsed';
 var NAV_DEFAULT_COLLAPSED={overview:false,trades:true,manage:true,'market-tools':true,analysis:true};
 function getNavCollapseState(){
-  try{var saved=JSON.parse(localStorage.getItem(NAV_COLLAPSE_KEY)||'null');if(saved)return saved;}catch(e){}
+  try{var saved=JSON.parse(localStorage.getItem(NAV_COLLAPSE_KEY)||'null');if(saved)return Object.assign({},NAV_DEFAULT_COLLAPSED,saved);}catch(e){}
   return Object.assign({},NAV_DEFAULT_COLLAPSED);
 }
 function setNavCollapseState(state){try{localStorage.setItem(NAV_COLLAPSE_KEY,JSON.stringify(state));}catch(e){}}
@@ -24502,6 +24505,11 @@ async function wlRenderDetail(){
   if(body)body.style.display='';
   document.getElementById('wl-detail-name').textContent = w.name;
   document.getElementById('wl-detail-goal').textContent = w.goal || 'No goal set for this watchlist.';
+  var itemBadge = document.getElementById('wl-item-count-badge');
+  if(itemBadge){
+    if(w.items.length > 0){ itemBadge.style.display='inline'; itemBadge.textContent=w.items.length; }
+    else itemBadge.style.display='none';
+  }
   wlRenderItems(w);
 }
 // ── Compact card list with per-item expand state — items are expanded by default; track only collapsed ids ──
