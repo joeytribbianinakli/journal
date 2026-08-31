@@ -25041,6 +25041,8 @@ async function wlSetAlert(watchlistId, itemId){
   var noteEl = document.getElementById('pa-note');
   if(noteEl) noteEl.value = 'Watchlist - '+w.name+(it.comment?'\n\n'+it.comment:'');
   _paPendingSource = 'watchlist'; // tag whatever gets submitted next from this pre-filled form as watchlist-sourced
+  paToggleSourceChip('watchlist'); // switch to the Watchlist source chip so the new alert is visible
+  paSetFilter('active'); // switch to the Active status tab so it isn't hidden under All/Fired
   // Add BEFORE nav(): nav('price-alerts') triggers paInit(), which kicks off an
   // async CloudMonitor pull (cmLoadAlerts) that can race with a same-tick add
   // and overwrite its source tag. Adding first avoids that race entirely.
