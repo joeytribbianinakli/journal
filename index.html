@@ -3838,6 +3838,17 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <label>Take Profit <span style="color:var(--text3);font-size:10px">(optional)</span></label>
             <input type="number" id="calc-tp" step="any" placeholder="optional" oninput="calcCalc()">
           </div>
+          <div class="partial-tp-section" style="margin-top:-3px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase">Partial TPs <span style="font-size:9px;font-weight:500;color:var(--text3);text-transform:none;letter-spacing:0">(optional)</span></div>
+              <button class="partial-tp-add-btn" onclick="calcAddPartialTP()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add partial
+              </button>
+            </div>
+            <div id="calc-partial-tp-list"></div>
+            <div id="calc-ptp-validation" style="display:none;font-size:10px;margin-top:4px;font-weight:600"></div>
+          </div>
           <div class="calc-field">
             <label>Leverage</label>
             <select id="calc-leverage" onchange="calcCalc()"></select>
@@ -15810,6 +15821,65 @@ var calcInfoOpen = true;
 var calcUseMargin = false; // false = cap to balance (safe), true = allow leveraged position
 var calcLastUnits = 0; // units (not lots) from the most recent calcCalc() run
 var calcLastRR = 0;   // RR ratio from the most recent calcCalc() run (0 if no TP set)
+// ══ Calculator Partial TPs ═══════════════════════════
+// Mirrors Log Trade's _partialTPs, but priced in % of the (not-yet-known) position size rather
+// than absolute qty, since size here is an OUTPUT of the calc, not an input. calcCalc() weighs
+// each row's R-multiple by its % to produce a blended reward; calcLogTrade() converts % → qty
+// (using calcLastUnits) when handing off to the Log Trade form.
+var _calcPartialTPs = []; // [{id, price, pct}]
+function calcAddPartialTP(){
+  var id='cptp-'+(Date.now().toString(36)+Math.random().toString(36).slice(2,5));
+  _calcPartialTPs.push({id:id, price:'', pct:''});
+  calcRenderPartialTPs();
+}
+function calcRemovePartialTP(id){
+  _calcPartialTPs=_calcPartialTPs.filter(function(p){return p.id!==id;});
+  calcRenderPartialTPs();
+}
+function _calcPtpSync(id,field,val){
+  var p=_calcPartialTPs.find(function(x){return x.id===id;});
+  if(p){p[field]=val;calcCalc();}
+}
+function calcClearPartialTPs(){
+  _calcPartialTPs=[];
+  calcRenderPartialTPs();
+}
+function calcRenderPartialTPs(){
+  var list=document.getElementById('calc-partial-tp-list');
+  var tpInput=document.getElementById('calc-tp');
+  if(!list)return;
+  if(_calcPartialTPs.length===0){
+    list.innerHTML='';
+    if(tpInput){
+      if(tpInput._partialModeActive){tpInput.value=tpInput._savedVal||'';tpInput._savedVal='';tpInput._partialModeActive=false;}
+      tpInput.disabled=false;tpInput.style.opacity='';tpInput.style.cursor='';
+    }
+    var vEl=document.getElementById('calc-ptp-validation');if(vEl)vEl.style.display='none';
+    calcCalc();
+    return;
+  }
+  if(tpInput){
+    tpInput.disabled=true;tpInput.style.opacity='0.45';tpInput.style.cursor='not-allowed';
+    if(!tpInput._partialModeActive){tpInput._savedVal=tpInput.value;tpInput.value='';tpInput._partialModeActive=true;}
+  }
+  var html='';
+  _calcPartialTPs.forEach(function(p,i){
+    html+='<div class="partial-tp-row" id="calc-row-'+p.id+'">'
+      +'<span class="partial-tp-label">#'+(i+1)+'</span>'
+      +'<input type="number" step="any" placeholder="TP price" value="'+escHtml(String(p.price||''))+'" oninput="_calcPtpSync(\''+p.id+'\',\'price\',this.value)" style="max-width:110px">'
+      +'<div style="position:relative;display:flex;align-items:center;max-width:70px;flex-shrink:0">'
+        +'<input type="number" step="any" min="0" max="100" placeholder="%" value="'+escHtml(String(p.pct||''))+'" oninput="_calcPtpSync(\''+p.id+'\',\'pct\',this.value)" style="width:100%;padding-right:18px">'
+        +'<span style="position:absolute;right:7px;font-size:11px;font-weight:700;color:var(--text3);pointer-events:none">%</span>'
+      +'</div>'
+      +'<span id="calc-ptp-qty-'+p.id+'" style="font-size:10px;color:var(--text3);white-space:nowrap;flex-shrink:0">—</span>'
+      +'<button class="btn btn-ghost btn-sm btn-icon" onclick="calcRemovePartialTP(\''+p.id+'\')" title="Remove partial" style="color:var(--red);flex-shrink:0">'
+        +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+      +'</button>'
+    +'</div>';
+  });
+  list.innerHTML=html;
+  calcCalc();
+}
 // Flip between margin-aware sizing (leverage allowed) and the safe 1:1 balance cap, then recalc
 function calcToggleMarginMode(){
   calcUseMargin=!calcUseMargin;
@@ -16423,6 +16493,16 @@ async function calcLogTrade(){
   document.getElementById('f-type-val').value=tradeType;
   var skippedCb=document.getElementById('f-skipped');
   if(skippedCb){skippedCb.checked=calcIsSkipped;onSkippedChange();}
+  // Carry calculator partial TPs (% of position) over to Log Trade's partial rows (qty), converting
+  // % → absolute qty now that calcLastUnits (the computed position size) is known.
+  var validCalcPartials=_calcPartialTPs.filter(function(p){return parseFloat(p.price)>0&&parseFloat(p.pct)>0;});
+  if(validCalcPartials.length){
+    _partialTPs=validCalcPartials.map(function(p){
+      var qty=calcLastUnits*(parseFloat(p.pct)/100);
+      return{id:'ptp-'+(Date.now().toString(36)+Math.random().toString(36).slice(2,5)),price:p.price,qty:parseFloat(qty.toFixed(4)),pct:parseFloat(p.pct)};
+    });
+    renderPartialTPs();
+  }
   // Apply full trade flowlist state — renderChecklist is async (IDB), await it then apply synchronously.
   if(capturedChecklistState){
     await renderChecklist();
@@ -16552,6 +16632,12 @@ function calcReset(){
     var el=document.getElementById(id);
     if(el)el.value='';
   });
+  // Clear partial TPs
+  _calcPartialTPs=[];
+  var tpEl=document.getElementById('calc-tp');
+  if(tpEl){tpEl.disabled=false;tpEl.style.opacity='';tpEl.style.cursor='';tpEl._partialModeActive=false;tpEl._savedVal='';}
+  var ptpList=document.getElementById('calc-partial-tp-list');if(ptpList)ptpList.innerHTML='';
+  var ptpV=document.getElementById('calc-ptp-validation');if(ptpV)ptpV.style.display='none';
   // Reset direction to long
   calcSetDir('long');
   // Reset margin mode to off
@@ -16724,7 +16810,46 @@ function calcCalc(){
   // R:R
   var rrBox=document.getElementById('calc-rr-box');
   var tpSection=document.getElementById('calc-tp-section');
-  if(tpVal&&entry&&slDist>0){
+  var validPartials=_calcPartialTPs.filter(function(p){return parseFloat(p.price)>0&&parseFloat(p.pct)>0;});
+  var ptpSum=validPartials.reduce(function(s,p){return s+parseFloat(p.pct);},0);
+  var ptpVEl=document.getElementById('calc-ptp-validation');
+  if(_calcPartialTPs.length>0&&ptpVEl){
+    ptpVEl.style.display='';
+    var ptpDiff=Math.abs(ptpSum-100);
+    if(ptpDiff<0.01){ptpVEl.style.color='var(--green)';ptpVEl.textContent='✓ Partial % sums to 100%';}
+    else if(ptpSum<100){ptpVEl.style.color='var(--amber)';ptpVEl.textContent='⚠ '+calcFmt(ptpSum,1)+'% allocated — '+calcFmt(100-ptpSum,1)+'% unallocated (excluded from reward)';}
+    else{ptpVEl.style.color='var(--red)';ptpVEl.textContent='✕ '+calcFmt(ptpSum,1)+'% allocated — exceeds 100% by '+calcFmt(ptpSum-100,1)+'%';}
+  } else if(ptpVEl){ptpVEl.style.display='none';}
+  if(validPartials.length&&entry&&slDist>0){
+    // Blended reward: each partial's R-multiple (its own TP distance ÷ SL distance) weighted
+    // by the % of the position it closes — same weighting logic as computePartialPL() in the
+    // Log Trade tab, just expressed in % of size instead of absolute qty (size isn't known yet).
+    var blendedRR=0;
+    validPartials.forEach(function(p){
+      var pPrice=parseFloat(p.price),pct=parseFloat(p.pct);
+      var pDist=Math.abs(pPrice-entry);
+      blendedRR+=(pDist/slDist)*(pct/100);
+      var qty_i=size*(pct/100);
+      var qDec=bType==='shares'?0:(bType==='lots'||!bType?2:4);
+      var qEl=document.getElementById('calc-ptp-qty-'+p.id);
+      if(qEl)qEl.textContent='≈'+calcFmt(qty_i,qDec)+' ('+calcFmt(pct,pct%1===0?0:1)+'%)';
+    });
+    calcLastRR=parseFloat(blendedRR.toFixed(2));
+    var tpUsd=blendedRR*actualRiskUsd;
+    var tpPct=(tpUsd/balance)*100;
+    document.getElementById('calc-rr-loss').textContent='-$'+calcFmt(actualRiskUsd,2);
+    document.getElementById('calc-rr-loss-pct').textContent='-'+calcFmt(actualRiskPct,2)+'%';
+    document.getElementById('calc-rr-win').textContent='+$'+calcFmt(tpUsd,2);
+    document.getElementById('calc-rr-win-pct').textContent='+'+calcFmt(tpPct,2)+'%';
+    document.getElementById('calc-rr-ratio').textContent='1 : '+calcFmt(blendedRR,2);
+    rrBox.style.display='block';
+    document.getElementById('calc-out-tp-usd').textContent='+$'+calcFmt(tpUsd,2);
+    document.getElementById('calc-out-tp-pct').textContent='+'+calcFmt(tpPct,2)+'%';
+    document.getElementById('calc-tp-dist-label').textContent='Blended (weighted by %)';
+    document.getElementById('calc-out-tp-dist').textContent=calcFmt(ptpSum,1)+'% allocated';
+    document.getElementById('calc-out-tp-breakeven').textContent='—';
+    tpSection.style.display='block';
+  } else if(tpVal&&entry&&slDist>0){
     var tpDist=Math.abs(tpVal-entry);
     var tpTicks=tpDist/pip;
     var rr=tpDist/slDist;
