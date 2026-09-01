@@ -4061,6 +4061,8 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       #page-price-alerts .pa-row-main .pa-alert-symbol{padding:2px 6px;font-size:11px;}
       #page-price-alerts .pa-row-main .pa-alert-dir{padding:1px 6px;font-size:9px;flex-shrink:0;}
       #page-price-alerts .pa-row-main .pa-alert-price{font-size:13px;margin-left:0;}
+      #page-price-alerts .pa-row-current-price{font-family:DM Mono,monospace;font-size:12px;color:var(--text3);white-space:nowrap;flex-shrink:0;}
+      #page-price-alerts .pa-row-arrow{color:var(--border2);flex-shrink:0;}
       #page-price-alerts .pa-row-inline-bar{flex:1;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;min-width:24px;}
       #page-price-alerts .pa-row-inline-bar .pa-progress-fill{height:100%;border-radius:2px;transition:width .5s;}
       #page-price-alerts .pa-row-mini-status{font-size:9px;color:var(--text3);white-space:nowrap;flex-shrink:0;font-family:DM Mono,monospace;}
@@ -21812,7 +21814,6 @@ async function paRender(){
     html += '<svg class="pa-group-chev" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
     html += '</div>';
     html += '<div class="pa-group-cards">';
-    html += '<div class="pa-tickers-row" id="pa-tickers-' + assetType + '"></div>';
     group.forEach(function(a){
     var price  = _paPrices[a.symbol];
     var f = paComputePriceFields(a, price);
@@ -21828,6 +21829,11 @@ async function paRender(){
     html += '<div class="pa-row-main" onclick="paToggleCard(\'' + a.id + '\', event)">';
     html += '<span class="pa-alert-symbol">' + escHtml(a.symbol) + '</span>';
     html += '<span class="pa-alert-dir ' + dirClass + '">' + dirLabel + '</span>';
+    if(!a.fired){
+      var rowCurLabel = f.hasPrice ? paFmtPrice(price) : (f.isFailed ? '\u2014' : '\u2026');
+      html += '<span class="pa-row-current-price" data-pa-price-compact="' + a.id + '" title="Current price">' + rowCurLabel + '</span>';
+      html += '<svg class="pa-row-arrow" viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+    }
     html += '<span class="pa-alert-price">' + (a.targetStr || paFmtPrice(a.target)) + '</span>';
     if(!a.fired){
       html += '<div class="pa-row-inline-bar" data-pa-bar="' + a.id + '"><div class="pa-progress-fill" style="width:' + (f.hasPrice ? f.fillW : 0) + '%;background:' + f.fillColor + '"></div></div>';
@@ -21846,24 +21852,21 @@ async function paRender(){
     // ── Detail section (hidden until expanded) — full meta, note, provider chain, fired info ──
     html += '<div class="pa-detail">';
     html += '<div class="pa-alert-meta">';
-    html += '<span>Created on: ' + escHtml(createdStr) + '</span>';
+    html += '<span class="pa-ticker-badge">Created on: ' + escHtml(createdStr) + '</span>';
     if(a.fired){
       // Fired alert: show the price at trigger time, not the live price.
       // paUpdatePrices skips these spans so this value is never overwritten.
       if(typeof a.firedPrice === 'number'){
         html += '<span class="pa-current-price" data-pa-price-fired="' + a.id + '">Triggered: ' + paFmtPrice(a.firedPrice) + '</span>';
       }
-      html += '<span class="pa-pct-label" style="font-size:10px;font-weight:700;color:var(--green)">TARGET HIT</span>';
+      html += '<span class="pa-pct-label pa-ticker-badge" style="font-weight:700;color:var(--green)">TARGET HIT</span>';
     } else if(f.hasPrice){
-      html += '<span class="pa-current-price" data-pa-price="' + a.id + '">Current: ' + paFmtPrice(price) + '</span>';
-      if(f.pct) html += '<span class="pa-pct-label" data-pa-pct="' + a.id + '" style="font-size:10px;font-weight:600;color:' + (f.pct==='TARGET HIT'?'var(--green)':(f.fillColor==='var(--amber)'?'var(--amber)':'var(--text3)')) + '">' + f.pct + '</span>';
-      else       html += '<span class="pa-pct-label" data-pa-pct="' + a.id + '" style="font-size:10px;font-weight:600;"></span>';
+      if(f.pct) html += '<span class="pa-pct-label pa-ticker-badge" data-pa-pct="' + a.id + '" style="font-weight:600;color:' + (f.pct==='TARGET HIT'?'var(--green)':(f.fillColor==='var(--amber)'?'var(--amber)':'var(--text3)')) + '">' + f.pct + '</span>';
+      else       html += '<span class="pa-pct-label pa-ticker-badge" data-pa-pct="' + a.id + '" style="font-weight:600;"></span>';
     } else if(f.isFailed){
-      html += '<span class="pa-current-price" data-pa-price="' + a.id + '" style="font-size:10px;color:var(--red);font-style:italic" title="All price providers failed for this symbol. Check your API keys or try again later.">⚠ Price unavailable</span>';
-      html += '<span class="pa-pct-label" data-pa-pct="' + a.id + '"></span>';
+      html += '<span class="pa-pct-label pa-ticker-badge" data-pa-pct="' + a.id + '"></span>';
     } else {
-      html += '<span class="pa-current-price" data-pa-price="' + a.id + '" style="font-size:10px;color:var(--text3);font-style:italic">Fetching price…</span>';
-      html += '<span class="pa-pct-label" data-pa-pct="' + a.id + '"></span>';
+      html += '<span class="pa-pct-label pa-ticker-badge" data-pa-pct="' + a.id + '"></span>';
     }
     html += '</div>'; // .pa-alert-meta
     if(a.note){
@@ -21920,6 +21923,26 @@ function paUpdatePrices(){
         priceEl.style.fontStyle = 'italic';
         priceEl.style.color = 'var(--text3)';
         priceEl.title = '';
+      }
+    }
+    // Compact current-price shown in the collapsed row (next to the target price)
+    var priceCompactEl = document.querySelector('[data-pa-price-compact="' + a.id + '"]');
+    if(priceCompactEl){
+      if(f.hasPrice){
+        priceCompactEl.textContent = paFmtPrice(price);
+        priceCompactEl.style.fontStyle = '';
+        priceCompactEl.style.color = '';
+        priceCompactEl.title = 'Current price';
+      } else if(f.isFailed){
+        priceCompactEl.textContent = '\u2014';
+        priceCompactEl.style.fontStyle = 'italic';
+        priceCompactEl.style.color = 'var(--red)';
+        priceCompactEl.title = 'Price unavailable';
+      } else {
+        priceCompactEl.textContent = '\u2026';
+        priceCompactEl.style.fontStyle = 'italic';
+        priceCompactEl.style.color = 'var(--text3)';
+        priceCompactEl.title = 'Fetching price\u2026';
       }
     }
     // % away / TARGET HIT label
