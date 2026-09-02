@@ -101,6 +101,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .streak-row+.streak-row{border-top:1px solid var(--border)}
 .streak-row .streak-val{font-weight:700;font-family:DM Mono,monospace;font-size:12px}
 .streak-val.pos{color:var(--green)}.streak-val.neg{color:var(--red)}
+/* ── Habit streak banner: daily "showed up and logged a session" tracker.
+   Deliberately separate from win/loss streaks above — this counts consistency
+   (did you log *something*, win/loss/skip all count) not trading performance,
+   so it can't be discouraged by a losing run. Sits at the very top of the
+   Dashboard so it's the first thing seen each visit (habit-tracker visibility). ── */
+.habit-streak-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;background:linear-gradient(135deg,rgba(232,160,48,.09),var(--bg2) 60%);border:1px solid rgba(232,160,48,.22);border-radius:var(--radius-lg);padding:13px 18px;margin-bottom:14px}
+.habit-streak-banner.hs-zero{background:var(--bg2);border-color:var(--border)}
+.hs-flame{width:28px;height:28px;flex-shrink:0;filter:drop-shadow(0 0 5px rgba(232,160,48,.35))}
+.hs-zero .hs-flame{filter:none;opacity:.5}
+.streak-mini-strip{display:flex;gap:3px;align-items:flex-end}
+.streak-mini-day{width:10px;height:16px;border-radius:3px;background:var(--bg4);border:1px solid var(--border2);flex-shrink:0;transition:background .15s}
+.streak-mini-day.hit{background:var(--amber);border-color:var(--amber)}
+.streak-mini-day.today{outline:2px solid var(--accent);outline-offset:1px}
+@media(max-width:700px){.habit-streak-banner{padding:11px 14px}.streak-mini-strip{order:3;width:100%;justify-content:space-between}.streak-mini-day{width:100%;height:12px}}
+/* Streak-specific toast: slightly warmer + a small pop so the reward reads as
+   distinct from routine "Saved ✓" confirmations (it's a bonus, not a status message) ── */
+.toast-dot.streak{background:var(--amber);box-shadow:0 0 0 3px rgba(232,160,48,.18)}
+.toast.streak-toast{animation:toastPop .38s cubic-bezier(.34,1.56,.64,1)}
+@keyframes toastPop{0%{transform:scale(.85) translateY(8px);opacity:0}60%{transform:scale(1.03) translateY(0)}100%{transform:scale(1) translateY(0)}}
 .stat-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
 .stat-value{font-size:22px;font-weight:600;font-family:DM Mono,monospace;line-height:1;letter-spacing:-.02em}
 .stat-value.pos{color:var(--green)}.stat-value.neg{color:var(--red)}
@@ -389,6 +408,7 @@ table.data tbody tr:hover td{background:var(--bg3);color:var(--text)}
 .cal-cell.week-style .cal-pl-footer-meta span{font-size:8px;color:var(--text3)}
 /* ── Option pills: colored selectable chips used throughout the Log Trade form (bias, rating, error type, etc.) — add new colors here as .opt-<color>/.opt-<color>.selected pairs ── */
 .opt-group{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.opt-group-v{flex-direction:column;align-items:flex-start}
 .opt-pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .12s;user-select:none;opacity:.5}
 .opt-pill:hover{opacity:.8}
 .opt-pill.selected{opacity:1;font-weight:600}
@@ -431,6 +451,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .flabel{font-size:10px;font-weight:600;color:var(--text2);letter-spacing:.04em}
 .frow-inline{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .frow-inline .frow{flex:1;min-width:130px;margin-bottom:0}
+/* ── .fbox: bordered container for grouping related fields vertically (Log Trade classification/trade-plan) ── */
+.fbox{border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px}
+.fbox .frow{margin-bottom:18px}
+.fbox .frow-inline{margin-bottom:18px}
+.fbox .frow:last-child,.fbox .frow-inline:last-child{margin-bottom:0}
 /* Computed strip */
 .computed-strip{display:flex;gap:10px;flex-wrap:wrap;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);margin-top:4px;width:100%}
 .computed-strip>div{width:100%}
@@ -1404,6 +1429,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
           </div>
         </div>
       </div>
+      <!-- Habit streak: consecutive days a session was logged (win, loss, or skipped —
+           showing up counts). Kept independent of the filters above on purpose. -->
+      <div class="habit-streak-banner" id="dash-habit-streak"></div>
       <div class="stats-grid dash-top-stats">
         <div class="card" style="grid-column:5;grid-row:1/3;display:flex;flex-direction:column">
           <div class="card-header" style="justify-content:center;gap:6px;padding:6px 10px">
@@ -2522,7 +2550,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         </div>
         <div class="form-section">
           <div class="fsec-title">Identity</div>
-          <!-- Row 1: Trade #, Asset type, Pair, Session -->
+          <!-- Row 1: Trade #, Asset type, Logged at, Pair -->
           <div class="frow-inline">
             <div class="frow" style="max-width:80px">
               <label class="flabel">Trade #</label>
@@ -2542,104 +2570,114 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
                 <option value="">— select pair —</option>
               </select>
             </div>
-            <div class="frow" style="flex:1.5">
+          </div>
+          <!-- Row 2: User rating, Session, Strategy (same line; rating width matches Trade #) -->
+          <div class="frow-inline" style="margin-top:10px">
+            <div class="frow" style="max-width:80px">
+              <label class="flabel">User rating <span style="color:var(--red);margin-left:2px">*</span></label>
+              <select id="f-rating"><option value="">— select —</option><option>⭐</option><option>⭐⭐</option><option>⭐⭐⭐</option><option>⭐⭐⭐⭐</option><option>⭐⭐⭐⭐⭐</option></select>
+            </div>
+            <div class="frow" style="flex:1">
               <label class="flabel">Session <span style="color:var(--red);margin-left:2px">*</span></label>
               <select id="f-session" onchange="onSessionChange()"><option value="">— select session —</option></select>
             </div>
-          </div>
-        </div>
-        <div class="form-section">
-          <div class="fsec-title">Classification</div>
-          <!-- Row 1: Strategy (full width) -->
-          <div class="frow-inline">
             <div class="frow" style="flex:1">
               <label class="flabel">Strategy <span style="color:var(--red);margin-left:2px">*</span></label>
               <select id="f-strategy"></select>
             </div>
           </div>
-          <!-- Row 2: Entry model (full width) -->
-          <div class="frow-inline" style="margin-top:10px">
-            <div class="frow" style="flex:1">
-              <label class="flabel">Entry model <span style="color:var(--red);margin-left:2px">*</span></label>
-              <div class="opt-group" id="opt-model">
-                <span class="opt-pill opt-blue" data-val="S&D - Continuation" onclick="pickOpt(this,'f-model-val')">S&amp;D - Continuation</span>
-                <span class="opt-pill opt-purple" data-val="S&D - Reversals" onclick="pickOpt(this,'f-model-val')">S&amp;D - Reversals</span>
-              </div>
-              <input type="hidden" id="f-model-val" value="">
-            </div>
-          </div>
-          <!-- Row 3: Type | LTF Entry | Entry method (aligned on same row) -->
-          <div class="frow-inline" style="margin-top:10px">
-            <div class="frow" style="min-width:120px">
-              <label class="flabel">Type <span style="color:var(--red);margin-left:2px">*</span></label>
-              <div class="opt-group" id="opt-type">
-                <span class="opt-pill opt-green" data-val="Long" onclick="pickOpt(this,'f-type-val');recalc()">Long</span>
-                <span class="opt-pill opt-red" data-val="Short" onclick="pickOpt(this,'f-type-val');recalc()">Short</span>
-              </div>
-              <input type="hidden" id="f-type-val" value="">
-            </div>
-            <div class="frow" style="flex:2">
-              <label class="flabel">LTF Entry (H → M → L) <span style="color:var(--red);margin-left:2px">*</span></label>
-              <div class="opt-group" id="opt-ltf">
-                <span class="opt-pill opt-teal" data-val="15m → 5m → 1m" onclick="pickOpt(this,'f-ltf-val')">15m → 5m → 1m</span>
-                <span class="opt-pill opt-amber" data-val="1h → 15m → 5m" onclick="pickOpt(this,'f-ltf-val')">1h → 15m → 5m</span>
-                <span class="opt-pill opt-green" data-val="4h → 1h → 15m" onclick="pickOpt(this,'f-ltf-val')">4h → 1h → 15m</span>
-                <span class="opt-pill opt-blue" data-val="D → 4h → 1h" onclick="pickOpt(this,'f-ltf-val')">D → 4h → 1h</span>
-                <span class="opt-pill opt-purple" data-val="W → D → 4h" onclick="pickOpt(this,'f-ltf-val')">W → D → 4h</span>
-              </div>
-              <input type="hidden" id="f-ltf-val" value="">
-            </div>
-            <div class="frow" style="flex:1">
-              <label class="flabel">Entry method <span style="color:var(--red);margin-left:2px">*</span></label>
-              <div class="opt-group" id="opt-method">
-                <span class="opt-pill opt-blue" data-val="Instant" onclick="pickOpt(this,'f-method-val')">Instant</span>
-                <span class="opt-pill opt-amber" data-val="Confirmation" onclick="pickOpt(this,'f-method-val')">Confirmation</span>
-              </div>
-              <input type="hidden" id="f-method-val" value="">
-            </div>
-          </div>
-          <!-- Row 3: Rating | Error type -->
-          <div class="frow-inline" style="margin-top:10px">
-            <div class="frow" style="min-width:110px">
-              <label class="flabel">User rating <span style="color:var(--red);margin-left:2px">*</span></label>
-              <select id="f-rating"><option value="">— select —</option><option>⭐</option><option>⭐⭐</option><option>⭐⭐⭐</option><option>⭐⭐⭐⭐</option><option>⭐⭐⭐⭐⭐</option></select>
-            </div>
-            <div class="frow" style="flex:1;min-width:220px">
-              <label class="flabel">Error type(s) <button type="button" class="btn btn-ghost btn-sm" style="padding:0 4px;font-size:10px;height:auto;font-weight:600;color:var(--text3);letter-spacing:.04em" onclick="openErrorTypeManager()">manage</button></label>
-              <div class="opt-group" id="opt-error"></div>
-              <input type="hidden" id="f-error-val" value="">
-            </div>
-          </div>
-          <!-- TRADE PLAN (moved from Analysis tab) -->
-          <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
-            <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px">Trade plan</div>
-            <div class="frow-inline">
-              <div class="frow">
-                <label class="flabel">Exit criteria <span style="color:var(--red);margin-left:2px">*</span></label>
-                <div class="opt-group" id="opt-exit-a">
-                  <span class="opt-pill opt-green" data-val="TP" onclick="pickOptDeselectable(this,'tp-exit-a-val')">TP</span>
-                  <span class="opt-pill opt-red" data-val="SL" onclick="pickOptDeselectable(this,'tp-exit-a-val')">SL</span>
-                  <span class="opt-pill opt-amber" data-val="TSL" onclick="pickOptDeselectable(this,'tp-exit-a-val')">TSL</span>
-                  <span class="opt-pill opt-blue" data-val="Partial" onclick="pickOptDeselectable(this,'tp-exit-a-val')">Partial</span>
-                  <span class="opt-pill opt-gray" data-val="Manual" onclick="pickOptDeselectable(this,'tp-exit-a-val')">Manual</span>
+        </div>
+        <div class="form-section">
+          <div class="fsec-title">Classification</div>
+          <!-- Three boxes in one row: Box 1 (Entry model/Type/Entry method/LTF Entry), Box 2 (Trade plan: Exit criteria/SL/TP), Box 3 (Error types). All option pills stacked vertically (opt-group-v). -->
+          <div class="frow-inline">
+            <div class="fbox" style="flex:0 0 auto">
+              <div class="frow-inline">
+                <div class="frow" style="flex:0 0 auto;min-width:150px;justify-content:space-between;margin-bottom:0">
+                  <div class="frow" style="min-width:0">
+                    <label class="flabel">Entry model <span style="color:var(--red);margin-left:2px">*</span></label>
+                    <div class="opt-group opt-group-v" id="opt-model">
+                      <span class="opt-pill opt-blue" data-val="S&D - Continuation" onclick="pickOpt(this,'f-model-val')">S&amp;D - Continuation</span>
+                      <span class="opt-pill opt-purple" data-val="S&D - Reversals" onclick="pickOpt(this,'f-model-val')">S&amp;D - Reversals</span>
+                    </div>
+                    <input type="hidden" id="f-model-val" value="">
+                  </div>
+                  <div class="frow-inline" style="border-top:1px solid var(--border);padding-top:10px">
+                    <div class="frow" style="flex:0 0 auto;min-width:60px">
+                      <label class="flabel">Type <span style="color:var(--red);margin-left:2px">*</span></label>
+                      <div class="opt-group opt-group-v" id="opt-type">
+                        <span class="opt-pill opt-green" data-val="Long" onclick="pickOpt(this,'f-type-val');recalc()">Long</span>
+                        <span class="opt-pill opt-red" data-val="Short" onclick="pickOpt(this,'f-type-val');recalc()">Short</span>
+                      </div>
+                      <input type="hidden" id="f-type-val" value="">
+                    </div>
+                    <div class="frow" style="flex:0 0 auto;min-width:115px">
+                      <label class="flabel">Entry method <span style="color:var(--red);margin-left:2px">*</span></label>
+                      <div class="opt-group opt-group-v" id="opt-method">
+                        <span class="opt-pill opt-blue" data-val="Instant" onclick="pickOpt(this,'f-method-val')">Instant</span>
+                        <span class="opt-pill opt-amber" data-val="Confirmation" onclick="pickOpt(this,'f-method-val')">Confirmation</span>
+                      </div>
+                      <input type="hidden" id="f-method-val" value="">
+                    </div>
+                  </div>
                 </div>
-                <input type="hidden" id="tp-exit-a-val" value="">
-              </div>
-              <div class="frow">
-                <label class="flabel">SL placement <span style="color:var(--red);margin-left:2px">*</span></label>
-                <div class="opt-group" id="opt-slplace">
-                  <span class="opt-pill opt-amber" data-val="Confirmation" onclick="pickOpt(this,'tp-slplace-val')">Confirmation</span>
-                  <span class="opt-pill opt-purple" data-val="Zone" onclick="pickOpt(this,'tp-slplace-val')">Zone</span>
+                <div class="frow" style="flex:0 0 auto;min-width:150px;border-left:1px solid var(--border);padding-left:14px">
+                  <label class="flabel">LTF Entry (H → M → L) <span style="color:var(--red);margin-left:2px">*</span></label>
+                  <div class="opt-group opt-group-v" id="opt-ltf">
+                    <span class="opt-pill opt-teal" data-val="15m → 5m → 1m" onclick="pickOpt(this,'f-ltf-val')">15m → 5m → 1m</span>
+                    <span class="opt-pill opt-amber" data-val="1h → 15m → 5m" onclick="pickOpt(this,'f-ltf-val')">1h → 15m → 5m</span>
+                    <span class="opt-pill opt-green" data-val="4h → 1h → 15m" onclick="pickOpt(this,'f-ltf-val')">4h → 1h → 15m</span>
+                    <span class="opt-pill opt-blue" data-val="D → 4h → 1h" onclick="pickOpt(this,'f-ltf-val')">D → 4h → 1h</span>
+                    <span class="opt-pill opt-purple" data-val="W → D → 4h" onclick="pickOpt(this,'f-ltf-val')">W → D → 4h</span>
+                  </div>
+                  <input type="hidden" id="f-ltf-val" value="">
                 </div>
-                <input type="hidden" id="tp-slplace-val" value="">
               </div>
-              <div class="frow">
-                <label class="flabel">TP placement <span style="color:var(--red);margin-left:2px">*</span></label>
-                <div class="opt-group" id="opt-tpplace">
-                  <span class="opt-pill opt-teal" data-val="Swing H/L" onclick="pickOpt(this,'tp-tpplace-val')">Swing H/L</span>
-                  <span class="opt-pill opt-green" data-val="Zone" onclick="pickOpt(this,'tp-tpplace-val')">Zone</span>
+            </div>
+            <div class="fbox" style="flex:0 0 auto">
+              <div class="frow-inline">
+                <div class="frow" style="flex:0 0 auto;min-width:85px;margin-bottom:0">
+                  <label class="flabel">Exit criteria <span style="color:var(--red);margin-left:2px">*</span></label>
+                  <div class="opt-group opt-group-v" id="opt-exit-a">
+                    <span class="opt-pill opt-green" data-val="TP" onclick="pickOptDeselectable(this,'tp-exit-a-val')">TP</span>
+                    <span class="opt-pill opt-red" data-val="SL" onclick="pickOptDeselectable(this,'tp-exit-a-val')">SL</span>
+                    <span class="opt-pill opt-amber" data-val="TSL" onclick="pickOptDeselectable(this,'tp-exit-a-val')">TSL</span>
+                    <span class="opt-pill opt-blue" data-val="Partial" onclick="pickOptDeselectable(this,'tp-exit-a-val')">Partial</span>
+                    <span class="opt-pill opt-gray" data-val="Manual" onclick="pickOptDeselectable(this,'tp-exit-a-val')">Manual</span>
+                  </div>
+                  <input type="hidden" id="tp-exit-a-val" value="">
                 </div>
-                <input type="hidden" id="tp-tpplace-val" value="">
+                <div class="frow" style="flex:0 0 auto;min-width:110px;justify-content:space-between;border-left:1px solid var(--border);padding-left:14px">
+                  <div class="frow" style="min-width:0">
+                    <label class="flabel">SL placement <span style="color:var(--red);margin-left:2px">*</span></label>
+                    <div class="opt-group opt-group-v" id="opt-slplace">
+                      <span class="opt-pill opt-amber" data-val="Confirmation" onclick="pickOpt(this,'tp-slplace-val')">Confirmation</span>
+                      <span class="opt-pill opt-purple" data-val="Zone" onclick="pickOpt(this,'tp-slplace-val')">Zone</span>
+                    </div>
+                    <input type="hidden" id="tp-slplace-val" value="">
+                  </div>
+                  <div class="frow" style="min-width:0;border-top:1px solid var(--border);padding-top:10px">
+                    <label class="flabel">TP placement <span style="color:var(--red);margin-left:2px">*</span></label>
+                    <div class="opt-group opt-group-v" id="opt-tpplace">
+                      <span class="opt-pill opt-teal" data-val="Swing H/L" onclick="pickOpt(this,'tp-tpplace-val')">Swing H/L</span>
+                      <span class="opt-pill opt-green" data-val="Zone" onclick="pickOpt(this,'tp-tpplace-val')">Zone</span>
+                    </div>
+                    <input type="hidden" id="tp-tpplace-val" value="">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="fbox" style="flex:0 0 auto">
+              <div class="frow-inline">
+                <div class="frow" style="flex:0 0 auto;min-width:100px">
+                  <label class="flabel">Error type(s) <button type="button" class="btn btn-ghost btn-sm" style="padding:0 4px;font-size:10px;height:auto;font-weight:600;color:var(--text3);letter-spacing:.04em" onclick="openErrorTypeManager()">manage</button></label>
+                  <div class="opt-group opt-group-v" id="opt-error"></div>
+                </div>
+                <div class="frow" style="flex:0 0 auto;min-width:100px">
+                  <label class="flabel">&nbsp;</label>
+                  <div class="opt-group opt-group-v" id="opt-error-2"></div>
+                </div>
+                <input type="hidden" id="f-error-val" value="">
               </div>
             </div>
           </div>
@@ -2764,13 +2802,23 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         </div>
         <div class="form-section">
           <div class="fsec-title">Trade / Risk management</div>
-          <div class="frow">
-            <label class="flabel">SL trailing</label>
-            <div class="opt-group" id="opt-trail">
-              <span class="opt-pill opt-gray" data-val="No" onclick="pickOpt(this,'f-trail-val');toggleTrailDetail()">No</span>
-              <span class="opt-pill opt-green" data-val="Yes" onclick="pickOpt(this,'f-trail-val');toggleTrailDetail()">Yes</span>
+          <div class="fbox" style="flex:0 0 auto;max-width:220px">
+            <div class="frow">
+              <label class="flabel">SL trailing</label>
+              <div class="opt-group" id="opt-trail">
+                <span class="opt-pill opt-gray" data-val="No" onclick="pickOpt(this,'f-trail-val');toggleTrailDetail()">No</span>
+                <span class="opt-pill opt-green" data-val="Yes" onclick="pickOpt(this,'f-trail-val');toggleTrailDetail()">Yes</span>
+              </div>
+              <input type="hidden" id="f-trail-val" value="">
             </div>
-            <input type="hidden" id="f-trail-val" value="">
+            <div class="frow" style="margin-top:12px">
+              <label class="flabel">TP changed</label>
+              <div class="opt-group">
+                <span class="opt-pill opt-gray" data-val="No" onclick="pickOpt(this,'f-tpchg-val');toggleTpDetail()">No</span>
+                <span class="opt-pill opt-amber" data-val="Yes" onclick="pickOpt(this,'f-tpchg-val');toggleTpDetail()">Yes</span>
+              </div>
+              <input type="hidden" id="f-tpchg-val" value="">
+            </div>
           </div>
           <div class="cond-box" id="trail-box">
             <div class="cond-box-label">SL Trailing details</div>
@@ -2778,14 +2826,6 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <input type="hidden" id="trail-trigger" value="Manual">
             <input type="hidden" id="trail-count" value="">
             <input type="hidden" id="trail-final-sl" value="">
-          </div>
-          <div class="frow" style="margin-top:12px">
-            <label class="flabel">TP changed</label>
-            <div class="opt-group">
-              <span class="opt-pill opt-gray" data-val="No" onclick="pickOpt(this,'f-tpchg-val');toggleTpDetail()">No</span>
-              <span class="opt-pill opt-amber" data-val="Yes" onclick="pickOpt(this,'f-tpchg-val');toggleTpDetail()">Yes</span>
-            </div>
-            <input type="hidden" id="f-tpchg-val" value="">
           </div>
           <div class="cond-box" id="tp-change-box">
             <div class="cond-box-label">TP change details</div>
@@ -6413,10 +6453,13 @@ async function updateErrorType(idx,name){
 // single-value "-val" hidden inputs used elsewhere, just multi-valued).
 function toggleErrorPill(pill){
   pill.classList.toggle('selected');
-  var grp=pill.closest('.opt-group');
   var hidden=document.getElementById('f-error-val');
-  if(hidden&&grp){
-    var vals=Array.from(grp.querySelectorAll('.opt-pill.selected')).map(function(p){return p.dataset.val;});
+  if(hidden){
+    var vals=[];
+    ['opt-error','opt-error-2'].forEach(function(gid){
+      var g=document.getElementById(gid);
+      if(g)vals=vals.concat(Array.from(g.querySelectorAll('.opt-pill.selected')).map(function(p){return p.dataset.val;}));
+    });
     hidden.value=vals.join(',');
   }
 }
@@ -6425,25 +6468,33 @@ function toggleErrorPill(pill){
 function setErrorPills(list){
   if(typeof list==='string')list=list.split(',').filter(Boolean);
   list=list||[];
-  var grp=document.getElementById('opt-error');
   var hidden=document.getElementById('f-error-val');
-  if(grp)grp.querySelectorAll('.opt-pill').forEach(function(p){p.classList.toggle('selected',list.indexOf(p.dataset.val)!==-1);});
+  ['opt-error','opt-error-2'].forEach(function(gid){
+    var grp=document.getElementById(gid);
+    if(grp)grp.querySelectorAll('.opt-pill').forEach(function(p){p.classList.toggle('selected',list.indexOf(p.dataset.val)!==-1);});
+  });
   if(hidden)hidden.value=list.join(',');
 }
 // Non-green color classes cycle for error pills — green is reserved elsewhere in the app for
 // "Clean"/good outcomes, so keeping errors out of that color avoids confusing the two.
 var ERR_PILL_COLORS=['opt-red','opt-amber','opt-purple','opt-blue','opt-gray'];
+// Error pills split across two columns: first ERR_COL1_SIZE types render into #opt-error,
+// the rest (including any newly added via the manager) flow into #opt-error-2.
+var ERR_COL1_SIZE=5;
 async function populateErrorTypeSelect(){
   var types=await getErrorTypes();
   var grp=document.getElementById('opt-error');
+  var grp2=document.getElementById('opt-error-2');
   var hidden=document.getElementById('f-error-val');
   if(!grp)return;
   var cur=hidden?hidden.value.split(',').filter(Boolean):[];
-  grp.innerHTML=types.map(function(s,i){
+  function pillHtml(s,i){
     var cls=ERR_PILL_COLORS[i%ERR_PILL_COLORS.length];
     var sel=cur.indexOf(s)!==-1?' selected':'';
     return'<span class="opt-pill '+cls+sel+'" data-val="'+escHtml(s)+'" onclick="toggleErrorPill(this)">'+escHtml(s)+'</span>';
-  }).join('');
+  }
+  grp.innerHTML=types.slice(0,ERR_COL1_SIZE).map(pillHtml).join('');
+  if(grp2)grp2.innerHTML=types.slice(ERR_COL1_SIZE).map(function(s,i){return pillHtml(s,i+ERR_COL1_SIZE);}).join('');
   // Drop any selections that no longer exist in the list (e.g. after a rename elsewhere)
   if(hidden)hidden.value=cur.filter(function(v){return types.indexOf(v)!==-1;}).join(',');
   await populateErrorFilterSelect();
@@ -7947,7 +7998,7 @@ async function generateDemoTrades(sessionId,sessionStartDate,sessionEndDate,star
   if(!winExitCrits.length)winExitCrits=allExitCrits;
   if(!lossExitCrits.length)lossExitCrits=allExitCrits;
   var ratings=selectVals('f-rating');
-  var errors=pillVals('opt-error');
+  var errors=pillVals('opt-error').concat(pillVals('opt-error-2'));
   var biasOptions=['bull','bear','neutral'];
   var narrativeTemplates=['Price swept liquidity at the low before reversing bullish.','Strong impulsive move away from the zone, confirmed on LTF.','Mitigation of the daily FVG with bullish reaction.','Clean break of structure to the upside after consolidation.','Price rejected the daily order block with engulfing candle.','Bearish BOS on 4h confirmed the short bias.','Premium array aligned with weekly bearish OB.'];
   var ledToTradeTemplates=['1. Clear BOS on 4H\n2. LTF confirmation via 15m engulf\n3. Volume spike at zone','1. HTF bearish bias\n2. Price in premium\n3. FVG fill entry','1. Structure aligned across all TFs\n2. Clean order block\n3. Confluence of indicators'];
@@ -10028,6 +10079,7 @@ async function saveTrade(){
     await rebalanceSession(sessionsToRebalance);
   }
   toast(editingId?'Trade updated ✓':'Trade saved ✓','ok');
+  if(!editingId) _dashMaybeCelebrateStreak(); // reward the rep itself — fires once per day, win/loss/skip all count
   cancelEdit();clearForm();updateSidebarStats();
   nav('history',document.querySelector('.nav-item[onclick*="nav(\'history\'"]'));
   // Auto-sync to GitHub (runs silently in background)
@@ -10074,7 +10126,7 @@ async function clearForm(skipCancelEdit){
   var wlh2=document.getElementById('f-winloss');if(wlh2)wlh2.value='';
   document.getElementById('trail-trigger').selectedIndex=0;document.getElementById('tpchg-dir').selectedIndex=0;
   // Reset opt pills - clear all selections (no defaults)
-  ['opt-type','opt-model','opt-method','opt-ltf','opt-trail','opt-criteria','opt-slplace','opt-tpplace','opt-exit-a','opt-error'].forEach(function(gid){
+  ['opt-type','opt-model','opt-method','opt-ltf','opt-trail','opt-criteria','opt-slplace','opt-tpplace','opt-exit-a','opt-error','opt-error-2'].forEach(function(gid){
     var grp=document.getElementById(gid);if(!grp)return;
     grp.querySelectorAll('.opt-pill').forEach(function(p){p.classList.remove('selected')});
   });
@@ -10766,6 +10818,97 @@ function curvePointRadius(n){
 }
 function curvePointHoverRadius(n){
   return curvePointRadius(n) + 3;
+}
+// ── Dashboard: habit streak (consecutive days a session was logged) ──
+// This is deliberately independent of win/loss — Atomic Habits' "never miss twice" /
+// habit-tracker idea only works if showing up counts on its own, regardless of outcome.
+// A skipped trade (news on the zone, rules not met) still counts: the backtesting rep
+// happened. Uses ALL trades (unfiltered by the dashboard's own filter bar) since the
+// question is "did I do a session that day", not "how did my EURUSD trades do".
+function _dashLoggedDaySet(allTrades){
+  var days=new Set();
+  allTrades.forEach(function(t){
+    var raw=t.loggedAt||t.savedAt||t.entryTime;
+    if(!raw)return;
+    var d=new Date(raw);
+    if(isNaN(d))return;
+    days.add(_dashDayKey(d));
+  });
+  return days;
+}
+function _dashDayKey(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function _dashCalcHabitStreak(daySet){
+  var today=new Date(); today.setHours(0,0,0,0);
+  var todayHit=daySet.has(_dashDayKey(today));
+  var cur=0, cursor=new Date(today);
+  if(!todayHit) cursor.setDate(cursor.getDate()-1); // grace: don't zero the streak just because today isn't logged *yet*
+  while(daySet.has(_dashDayKey(cursor))){ cur++; cursor.setDate(cursor.getDate()-1); }
+  var sorted=Array.from(daySet).sort(),best=0,run=0,prev=null;
+  sorted.forEach(function(k){
+    var d=new Date(k+'T00:00:00');
+    run = (prev && Math.round((d-prev)/86400000)===1) ? run+1 : 1;
+    if(run>best)best=run;
+    prev=d;
+  });
+  return {current:cur,best:Math.max(best,cur),todayHit:todayHit};
+}
+function _dashRenderHabitStreak(allTrades){
+  var el=document.getElementById('dash-habit-streak');
+  if(!el)return;
+  var days=_dashLoggedDaySet(allTrades);
+  var s=_dashCalcHabitStreak(days);
+  el.classList.toggle('hs-zero', s.current===0);
+  var strip='';
+  for(var i=13;i>=0;i--){
+    var d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-i);
+    var hit=days.has(_dashDayKey(d));
+    strip+='<div class="streak-mini-day'+(hit?' hit':'')+(i===0?' today':'')+'" title="'+_dashDayKey(d)+(hit?' — session logged':' — no session')+'"></div>';
+  }
+  var msg = s.current===0
+    ? 'Log a session today to start your streak'
+    : (s.todayHit
+        ? 'You\'ve shown up '+s.current+' day'+(s.current===1?'':'s')+' in a row'
+        : s.current+' day'+(s.current===1?'':'s')+' streak — log a session today to keep it alive');
+  el.innerHTML=
+    '<div style="display:flex;align-items:center;gap:14px;min-width:0">'+
+      '<svg class="hs-flame" viewBox="0 0 24 24"><path fill="'+(s.current>0?'var(--amber)':'var(--text3)')+'" d="M12 2c1.8 3 .5 4.7-.6 6.4C10.3 9.9 9.5 11.2 9.5 13a2.5 2.5 0 0 0 5 0c0-.9-.3-1.5-.7-2.1.9.4 1.7 1.5 1.7 3.1a5 5 0 0 1-10 0c0-2.6 1.3-4.4 2.8-6.2C9.6 5.8 11 4.2 12 2z"/></svg>'+
+      '<div style="min-width:0">'+
+        '<div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap">'+
+          '<span style="font-size:23px;font-weight:800;font-family:DM Mono,monospace;color:'+(s.current>0?'var(--amber)':'var(--text)')+'">'+s.current+'</span>'+
+          '<span style="font-size:12px;color:var(--text2);font-weight:600">day'+(s.current===1?'':'s')+' streak</span>'+
+          (s.best>s.current?'<span style="font-size:10px;color:var(--text3)">· best '+s.best+'</span>':'')+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--text3);margin-top:2px">'+msg+'</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="streak-mini-strip" title="Last 14 days">'+strip+'</div>';
+}
+// Fires at most once per calendar day (tracked in localStorage) — the first save of the
+// day gets a small celebratory toast, independent of whether that trade won, lost, or
+// was skipped. Immediate + reliable reward for the rep itself, not the outcome, is the
+// point: it's what keeps the backtesting habit reinforcing itself session to session.
+function _dashMaybeCelebrateStreak(){
+  try{
+    var todayKey=_dashDayKey(new Date());
+    if(localStorage.getItem('tj-habit-last-celebrated-day')===todayKey)return;
+    localStorage.setItem('tj-habit-last-celebrated-day',todayKey);
+    dbGetAllCached('trades').then(function(allTrades){
+      var s=_dashCalcHabitStreak(_dashLoggedDaySet(allTrades));
+      if(s.current>0) _showStreakToast(s.current);
+    }).catch(function(){});
+  }catch(e){}
+}
+function _showStreakToast(n){
+  var wrap=document.getElementById('toast-wrap');
+  if(!wrap)return;
+  var el=document.createElement('div');
+  el.className='toast streak-toast';
+  el.innerHTML='<div class="toast-dot streak"></div>🔥 '+n+' day'+(n===1?'':'s')+' streak — session logged';
+  wrap.appendChild(el);
+  requestAnimationFrame(function(){el.classList.add('show')});
+  setTimeout(function(){el.classList.remove('show');setTimeout(function(){el.remove()},300)},4200);
 }
 // ── Dashboard: Streaks mini-cards (current / best win / worst loss) ─
 function _dashRenderStreaksMini(trades){
@@ -11921,6 +12064,7 @@ async function _renderDashboardImpl(){
   document.getElementById('dash-stat-rr').innerHTML='<div class="stat-label">Avg RR · PF</div><div class="stat-value '+(avgRR!=null?(avgRR>=0?'pos':'neg'):'')+'">'+( avgRR!=null?avgRR.toFixed(2)+'R':'—')+'</div><div class="stat-sub">PF: '+pf+'</div>';
   document.getElementById('dash-stat-hold').innerHTML='<div class="stat-label">Avg hold time</div><div class="stat-value" style="font-size:20px">'+durDisplay+'</div><div class="stat-sub">'+durSub+'</div>';
   _dashRenderStreaksMini(trades);
+  _dashRenderHabitStreak(allTrades);
   _dashLastTrades=trades;
   var dashFilterSig=JSON.stringify([sesF,atF,pairF,stratF,skipF,demoOn]);
   if(_dashMiniCalFilterSig!==dashFilterSig){
