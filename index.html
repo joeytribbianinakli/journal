@@ -409,6 +409,13 @@ table.data tbody tr:hover td{background:var(--bg3);color:var(--text)}
 /* ── Option pills: colored selectable chips used throughout the Log Trade form (bias, rating, error type, etc.) — add new colors here as .opt-<color>/.opt-<color>.selected pairs ── */
 .opt-group{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
 .opt-group-v{flex-direction:column;align-items:flex-start}
+/* ── Classification box: LTF Entry / Exit criteria are taller pill columns sitting next to a
+   shorter two-row column (Entry method / TP placement). #opt-ltf and #opt-exit-a get their
+   min-height set at runtime (see alignClassificationColumns in the Option pills JS section) so
+   their LAST pill lines up with the last pill of their reference column; space-between then
+   distributes the pills to fill that height. Purely additive — with no inline min-height set
+   yet, these behave exactly like any other .opt-group-v. ── */
+#opt-ltf,#opt-exit-a{justify-content:space-between}
 .opt-pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .12s;user-select:none;opacity:.5}
 .opt-pill:hover{opacity:.8}
 .opt-pill.selected{opacity:1;font-weight:600}
@@ -7419,6 +7426,53 @@ function setOptPill(groupId,val){
     p.classList.toggle('selected',p.dataset.val===val);
   });
 }
+// ── Classification box: keep the LAST pill of a taller column level with the LAST pill of the
+// shorter column beside it — LTF Entry -> Entry method's Confirmation, Exit criteria -> TP
+// placement's Zone. Nothing here is a fixed row count or pixel offset: each pair is measured
+// live off the actual rendered pills, so adding/removing an option from either column (LTF
+// Entry, Exit criteria, Entry method, or TP placement) keeps the two columns aligned without
+// any code change. If a future column pairing needs the same treatment, add it to this list —
+// don't hand-tune margins/padding for it.
+var CLASSIFICATION_ALIGN_PAIRS=[
+  {target:'opt-ltf',ref:'opt-method'},   // LTF Entry  -> last pill of Entry method (Confirmation)
+  {target:'opt-exit-a',ref:'opt-tpplace'} // Exit criteria -> last pill of TP placement (Zone)
+];
+function alignClassificationColumns(){
+  CLASSIFICATION_ALIGN_PAIRS.forEach(function(pair){
+    var target=document.getElementById(pair.target);
+    var ref=document.getElementById(pair.ref);
+    if(!target||!ref)return;
+    target.style.minHeight=''; // reset first so we always measure the natural, unadjusted layout
+    var refPills=ref.querySelectorAll('.opt-pill');
+    if(!refPills.length)return;
+    var refRect=refPills[refPills.length-1].getBoundingClientRect();
+    var targetRect=target.getBoundingClientRect();
+    // Skip silently if either column isn't actually laid out yet (e.g. its tab/page is hidden)
+    if((refRect.width===0&&refRect.height===0)||(targetRect.width===0&&targetRect.height===0))return;
+    var needed=refRect.bottom-targetRect.top;
+    if(needed>targetRect.height)target.style.minHeight=needed+'px';
+  });
+}
+function scheduleAlignClassificationColumns(){
+  // Give layout (fonts, DOM updates, tab-visibility toggles) a frame to settle first
+  requestAnimationFrame(function(){requestAnimationFrame(alignClassificationColumns);});
+}
+window.addEventListener('resize',function(){
+  clearTimeout(window._classAlignResizeT);
+  window._classAlignResizeT=setTimeout(scheduleAlignClassificationColumns,120);
+});
+document.addEventListener('DOMContentLoaded',function(){
+  scheduleAlignClassificationColumns();
+  // Re-run if pills are ever added to/removed from either side of a pair (e.g. options edited later)
+  if(window.MutationObserver){
+    CLASSIFICATION_ALIGN_PAIRS.forEach(function(pair){
+      [pair.target,pair.ref].forEach(function(id){
+        var el=document.getElementById(id);
+        if(el)new MutationObserver(scheduleAlignClassificationColumns).observe(el,{childList:true});
+      });
+    });
+  }
+});
 // ══ Sessions ══════════════════════════════════════
 var editingSessionId=null;
 // ── Session types ──────────────────────────────────────────────────────
@@ -8839,6 +8893,7 @@ function nav(id,btn){
       var fb = document.getElementById('log-flow-banner');
       if(fb) fb.style.display = 'none';
     }
+    scheduleAlignClassificationColumns();
   }
   if(id==='history'){populateSessionSelects().then(function(){populateFilters();restoreHistFilterPrefs();renderHistory();});}
   if(id==='sessions')renderSessionsList();
