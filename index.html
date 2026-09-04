@@ -555,6 +555,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .img-paste-zone svg{width:18px;height:18px;stroke:var(--text3);fill:none;stroke-width:1.5}
 .img-paste-zone p{font-size:10px;color:var(--text3);line-height:1.5}
 .img-paste-zone kbd{background:var(--bg4);border:1px solid var(--border2);border-radius:3px;padding:1px 4px;font-size:9px;font-family:DM Mono,monospace;color:var(--text2)}
+/* ── Keyboard shortcuts reference modal ── */
+.sc-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:7px 0;font-size:12px;color:var(--text2);border-bottom:1px solid var(--border)}
+.sc-row:last-of-type{border-bottom:none}
+.sc-row kbd,#shortcuts-modal kbd{background:var(--bg4);border:1px solid var(--border2);border-bottom-width:2px;border-radius:4px;padding:2px 6px;font-size:10.5px;font-family:'DM Mono',monospace;color:var(--text);white-space:nowrap}
 .img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:7px;margin-bottom:7px}
 .img-thumb{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);aspect-ratio:16/10}
 .img-thumb img{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer;transition:opacity .12s}
@@ -2544,6 +2548,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         <button class="form-tab" onclick="switchTab(1,this)">Checklist</button>
         <button class="form-tab" onclick="switchTab(2,this)">Analysis</button>
         <button class="form-tab" onclick="switchTab(3,this)">Reflection</button>
+        <button type="button" class="btn btn-ghost btn-icon btn-sm" style="margin-left:auto;flex-shrink:0" onclick="openShortcutsModal()" title="Keyboard shortcuts (?)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M6 16h12"/></svg>
+        </button>
       </div>
       <!-- TAB 0: Trade info -->
       <div class="form-step active" id="tab-0">
@@ -2919,7 +2926,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
             <svg class="ah-toggle" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
           <div class="analysis-body open">
-            <div class="frow"><label class="flabel">Setup description <span style="color:var(--red);margin-left:2px">*</span></label><textarea id="setup-notes">1. Trading within a </textarea></div>
+            <div class="frow"><label class="flabel">Setup description <span style="color:var(--red);margin-left:2px">*</span></label><textarea id="setup-notes">1. Range: 
+2. Idea: 
+3. TP: 
+4. Other info: </textarea></div>
             <div class="screenshots-group" style="margin-top:10px">
               <div class="screenshots-group-hdr"><span class="screenshots-group-title">Screenshots (optional)</span><span style="font-size:10px;color:var(--text3)"><kbd>Ctrl+V</kbd></span></div>
               <div class="img-grid" id="imgs-setup"></div>
@@ -3099,11 +3109,34 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       <!-- TAB 3: Reflection -->
       <div class="form-step" id="tab-3">
         <div class="form-section">
-          <div class="fsec-title">Emotions</div>
+          <div class="fsec-title" style="display:flex;align-items:center;justify-content:space-between">
+            <span>Emotions</span>
+            <button type="button" class="add-tf-btn" onclick="showAddEmotionTag(event)">+ Add emotion</button>
+          </div>
+          <div id="add-emotion-row" class="tf-input-row" style="display:none;margin-bottom:10px">
+            <input type="text" id="emotion-tag-inp" placeholder="e.g. Confident" maxlength="24">
+            <button class="btn btn-sm btn-primary" onclick="addEmotionTag()">Add</button>
+            <button class="btn btn-sm btn-ghost" onclick="hideAddEmotionTag()">Cancel</button>
+          </div>
           <div class="frow-inline">
-            <div class="frow"><label class="flabel">Before placing trade <span style="color:var(--red);margin-left:2px">*</span></label><textarea id="emo-before">1. </textarea></div>
-            <div class="frow"><label class="flabel">After placing trade <span style="color:var(--red);margin-left:2px">*</span></label><textarea id="emo-after">1. </textarea></div>
-            <div class="frow"><label class="flabel">After trade completed <span style="color:var(--red);margin-left:2px">*</span></label><textarea id="emo-complete">1. </textarea></div>
+            <div class="frow">
+              <label class="flabel">Before placing trade <span style="color:var(--red);margin-left:2px">*</span></label>
+              <div class="opt-group" id="opt-emo-before"></div>
+              <input type="text" class="emo-note-inp" id="emo-note-before" placeholder="add detail (optional)" oninput="onEmotionNoteInput('before')" style="margin-top:6px;font-size:11px;padding:5px 8px">
+              <input type="hidden" id="emo-before" value="">
+            </div>
+            <div class="frow">
+              <label class="flabel">After placing trade <span style="color:var(--red);margin-left:2px">*</span></label>
+              <div class="opt-group" id="opt-emo-after"></div>
+              <input type="text" class="emo-note-inp" id="emo-note-after" placeholder="add detail (optional)" oninput="onEmotionNoteInput('after')" style="margin-top:6px;font-size:11px;padding:5px 8px">
+              <input type="hidden" id="emo-after" value="">
+            </div>
+            <div class="frow">
+              <label class="flabel">After trade completed <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;font-size:9.5px">(required to close the trade)</span></label>
+              <div class="opt-group" id="opt-emo-complete"></div>
+              <input type="text" class="emo-note-inp" id="emo-note-complete" placeholder="add detail (optional)" oninput="onEmotionNoteInput('complete')" style="margin-top:6px;font-size:11px;padding:5px 8px">
+              <input type="hidden" id="emo-complete" value="">
+            </div>
           </div>
         </div>
         <div class="form-section">
@@ -5862,6 +5895,37 @@ document.addEventListener('DOMContentLoaded',function(){
     </div>
   </div>
 </div>
+<!-- Keyboard shortcuts reference — opened via the ⌨ button on the Log Trade tab bar, or
+     the '?' key anywhere outside a text field. Purely a reference list; nothing here writes
+     data, so it's as low-risk as a modal gets. -->
+<div class="modal-overlay" id="shortcuts-modal" onclick="document.getElementById('shortcuts-modal').classList.remove('open')">
+  <div class="modal-box" style="max-width:400px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Keyboard shortcuts</h3>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="document.getElementById('shortcuts-modal').classList.remove('open')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div id="sc-list"></div>
+      <div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin:16px 0 6px">Also built in (not customizable)</div>
+      <div class="sc-row"><span>Close a modal / lightbox</span><span><kbd>Esc</kbd></span></div>
+      <div class="sc-row"><span>Prev / next trade <span style="color:var(--text3)">(trade detail open)</span></span><span><kbd>←</kbd> <kbd>→</kbd></span></div>
+      <div style="font-size:10.5px;color:var(--text3);margin-top:14px;line-height:1.5">On Mac, <kbd>Ctrl</kbd> also works as <kbd>⌘</kbd> for the shortcuts above.</div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="toggleShortcutsCustomize()" style="padding:0;font-size:11px;font-weight:600;color:var(--text3)">Customize (JSON) ▾</button>
+        <div id="sc-customize-box" style="display:none;margin-top:10px">
+          <div style="font-size:10.5px;color:var(--text3);margin-bottom:6px;line-height:1.5">
+            Each entry is <code style="font-size:10px">{"action":"…","keys":"…"}</code>. Available actions: <span id="sc-action-ref" style="color:var(--text2);font-family:'DM Mono',monospace"></span>. "keys" is modifiers + key joined with <code style="font-size:10px">+</code>, e.g. <code style="font-size:10px">ctrl+enter</code>, <code style="font-size:10px">alt+arrowleft</code>, or a bare character like <code style="font-size:10px">?</code>. Add extra entries to bind more combos — even for the same action.
+          </div>
+          <textarea id="sc-json-editor" style="width:100%;min-height:140px;font-family:'DM Mono',monospace;font-size:11px;line-height:1.5"></textarea>
+          <div style="display:flex;gap:7px;margin-top:8px">
+            <button class="btn btn-primary btn-sm" onclick="saveShortcutsConfig()">Save</button>
+            <button class="btn btn-ghost btn-sm" onclick="resetShortcutsConfig()">Reset to defaults</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- Low setup-rating confirmation modal (replaces native confirm() for clProceedGate) -->
 <div class="modal-overlay" id="sr-warn-modal" onclick="closeSrWarnModal(false)">
   <div class="modal-box" style="max-width:400px" onclick="event.stopPropagation()">
@@ -6517,6 +6581,97 @@ async function populateErrorFilterSelect(){
   sel.innerHTML='<option value="">All trades</option><option value="__clean__">Clean (no error)</option>'
     +types.map(function(s){return'<option value="'+escHtml(s)+'">'+escHtml(s)+'</option>'}).join('');
   if(cur==='__clean__'||types.indexOf(cur)!==-1)sel.value=cur;
+}
+// ══ Emotion tags (Reflection tab) ══════════════════════════════
+// Same idea as Error type(s) above — a small settings-backed vocabulary the user can
+// extend — but applied to three independent multi-select fields (before/after/complete)
+// that all draw from ONE shared tag list, so adding "Confident" once makes it available
+// everywhere. Each field's hidden input (emo-before/emo-after/emo-complete) keeps holding
+// a plain string — same id, same .value contract saveTrade/editTrade/snapshot restore
+// already expect — so nothing outside this block needed to change. The string format is
+// "Tag, Tag — optional detail"; anything that doesn't parse as a known-tag list (i.e. every
+// trade logged before this UI existed) is treated as legacy free text and shown in the
+// detail field untouched rather than discarded, so no past journal entry is ever lost.
+var DEFAULT_EMOTION_TAGS=['Calm','FOMO','Anxious','Procrastination'];
+async function getEmotionTags(){return await getSetting('emotionTags',DEFAULT_EMOTION_TAGS.slice());}
+var EMO_PILL_COLORS=['opt-blue','opt-teal','opt-amber','opt-purple','opt-green','opt-gray','opt-red'];
+function _emoParse(raw,knownTags){
+  raw=(raw||'').trim();
+  if(!raw)return{tags:[],note:''};
+  var parts=raw.split(' — ');
+  var left=parts[0],note=parts.length>1?parts.slice(1).join(' — '):'';
+  var candidates=left.split(',').map(function(s){return s.trim();}).filter(Boolean);
+  var allKnown=candidates.length>0&&candidates.every(function(c){return knownTags.indexOf(c)!==-1;});
+  if(allKnown)return{tags:candidates,note:note};
+  return{tags:[],note:raw}; // legacy/free-text entry — preserved as-is, not parsed as tags
+}
+function _emoBuild(tags,note){
+  var s=tags.join(', ');
+  return note?(s?s+' — '+note:note):s;
+}
+async function populateEmotionPills(){
+  var tags=await getEmotionTags();
+  ['before','after','complete'].forEach(function(field){
+    var grp=document.getElementById('opt-emo-'+field);
+    if(!grp)return;
+    var hidden=document.getElementById('emo-'+field);
+    var parsed=_emoParse(hidden?hidden.value:'',tags);
+    grp.innerHTML=tags.map(function(t,i){
+      var cls=EMO_PILL_COLORS[i%EMO_PILL_COLORS.length];
+      var sel=parsed.tags.indexOf(t)!==-1?' selected':'';
+      return'<span class="opt-pill '+cls+sel+'" data-val="'+escHtml(t)+'" onclick="toggleEmotionPill(this,\''+field+'\')">'+escHtml(t)+'</span>';
+    }).join('');
+    var noteEl=document.getElementById('emo-note-'+field);
+    if(noteEl)noteEl.value=parsed.note;
+  });
+}
+// Re-syncs chip highlighting + detail text from the hidden input's current value, without
+// re-fetching the tag list from IndexedDB — used after editTrade()/snapshot-restore set the
+// hidden input directly, since those don't go through populateEmotionPills(). Reads the known
+// tag set straight off the already-rendered pills, so it's synchronous and safe to call anytime.
+function renderEmotionGroupFromValue(field){
+  var grp=document.getElementById('opt-emo-'+field);
+  var hidden=document.getElementById('emo-'+field);
+  if(!grp||!hidden)return;
+  var knownTags=Array.from(grp.querySelectorAll('.opt-pill')).map(function(p){return p.dataset.val;});
+  var parsed=_emoParse(hidden.value,knownTags);
+  grp.querySelectorAll('.opt-pill').forEach(function(p){p.classList.toggle('selected',parsed.tags.indexOf(p.dataset.val)!==-1);});
+  var noteEl=document.getElementById('emo-note-'+field);
+  if(noteEl)noteEl.value=parsed.note;
+}
+function toggleEmotionPill(pill,field){
+  var grp=pill.closest('.opt-group');
+  var hidden=document.getElementById('emo-'+field);
+  if(!grp||!hidden)return;
+  var knownTags=Array.from(grp.querySelectorAll('.opt-pill')).map(function(p){return p.dataset.val;});
+  var parsed=_emoParse(hidden.value,knownTags);
+  var val=pill.dataset.val,idx=parsed.tags.indexOf(val);
+  if(idx===-1)parsed.tags.push(val);else parsed.tags.splice(idx,1);
+  pill.classList.toggle('selected');
+  hidden.value=_emoBuild(parsed.tags,parsed.note);
+}
+function onEmotionNoteInput(field){
+  var grp=document.getElementById('opt-emo-'+field);
+  var hidden=document.getElementById('emo-'+field);
+  var noteEl=document.getElementById('emo-note-'+field);
+  if(!grp||!hidden||!noteEl)return;
+  var knownTags=Array.from(grp.querySelectorAll('.opt-pill')).map(function(p){return p.dataset.val;});
+  var parsed=_emoParse(hidden.value,knownTags);
+  hidden.value=_emoBuild(parsed.tags,noteEl.value.trim());
+}
+function showAddEmotionTag(e){if(e)e.stopPropagation();document.getElementById('add-emotion-row').style.display='flex';document.getElementById('emotion-tag-inp').focus();}
+function hideAddEmotionTag(){document.getElementById('add-emotion-row').style.display='none';document.getElementById('emotion-tag-inp').value='';}
+async function addEmotionTag(){
+  var inp=document.getElementById('emotion-tag-inp');
+  var name=(inp.value||'').trim();
+  if(!name)return;
+  var tags=await getEmotionTags();
+  if(tags.some(function(t){return t.toLowerCase()===name.toLowerCase();})){toast('Already exists','err');return;}
+  tags.push(name);
+  await setSetting('emotionTags',tags);
+  hideAddEmotionTag();
+  await populateEmotionPills();
+  toast('Emotion added ✓','ok');
 }
 // ══ Checklist editor ══════════════════════════════
 // The checklist (array of {section, items[]}) is edited via an in-memory draft
@@ -9596,6 +9751,18 @@ function computePartialPL(entry, sl, qty, type, acct, riskDollar, pair){
 function recalc(){
   var entry=parseFloat(document.getElementById('f-entry').value)||0;
   var slPrice=parseFloat(document.getElementById('f-sl-price').value)||0;
+  // Auto-detect direction from Entry vs SL — SL below entry can only be a Long, SL above
+  // entry can only be a Short, so there's no reason to make the user click the pill
+  // themselves once both prices are in. Only touches the pill when it would actually
+  // change the direction (never fights a value that already agrees), and does nothing
+  // when entry/SL are equal or either is still blank, since direction is genuinely
+  // ambiguous then. Read fresh below via f-type-val, so the rest of this function always
+  // sees the corrected direction in the same pass.
+  if(entry&&slPrice&&entry!==slPrice){
+    var _autoType=slPrice<entry?'Long':'Short';
+    var _curTypeEl=document.getElementById('f-type-val');
+    if(_curTypeEl&&_curTypeEl.value!==_autoType){setOptPill('opt-type',_autoType);_curTypeEl.value=_autoType;}
+  }
   var exit=parseFloat(document.getElementById('f-exit').value)||0;
   var qty=parseFloat(document.getElementById('f-qty').value)||0;
   var riskpct=parseFloat(document.getElementById('f-riskpct').value)||0;
@@ -9985,13 +10152,18 @@ async function saveTrade(){
   if(!planIf){toast('Trade plan "if" is required (Analysis tab)','err');switchTab(2,null);return;}
   var planIfThen=document.getElementById('plan-if-then').value.trim();
   if(!planIfThen){toast('Trade plan "then" is required (Analysis tab)','err');switchTab(2,null);return;}
-  // Tab 3 (Reflection) — all emotions + lessons mandatory
+  // Tab 3 (Reflection) — before/after-entry emotions are always required (you already know
+  // how you felt going in, whether or not the trade has closed yet). "After trade completed"
+  // is required only when this save actually represents a completed trade (see the combined
+  // exit-details check above — _exitFieldsCount is 4 when exit price/date/time/criteria are
+  // all filled in, 0 for a still-pending trade) — you can't honestly answer that one yet
+  // while the trade is still running.
   var emoBefore=document.getElementById('emo-before').value.trim();
   if(!emoBefore){toast('Emotion before trade is required (Reflection tab)','err');switchTab(3,null);return;}
   var emoAfter=document.getElementById('emo-after').value.trim();
   if(!emoAfter){toast('Emotion after placing trade is required (Reflection tab)','err');switchTab(3,null);return;}
   var emoComplete=document.getElementById('emo-complete').value.trim();
-  if(!emoComplete){toast('Emotion after trade completed is required (Reflection tab)','err');switchTab(3,null);return;}
+  if(_exitFieldsCount===4&&!emoComplete){toast('Emotion after trade completed is required to close out this trade (Reflection tab)','err');switchTab(3,null);return;}
   var mistakes=document.getElementById('l-mistakes').value.trim();
   if(!mistakes){toast('Mistakes field is required (Reflection tab)','err');switchTab(3,null);return;}
   var lessons=document.getElementById('l-lessons').value.trim();
@@ -10165,8 +10337,8 @@ async function clearForm(skipCancelEdit){
     'plan-if-then','plan-elseif-then','tp-rr-a'];
   textIds.forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   // Restore pre-filled defaults for analysis/reflection textareas
-  var prefilledDefaults={'led-to-trade':'1. ','issues-notes':'1. ','post-analysis':'1. ','f-news':'1. ',
-    'emo-before':'1. ','emo-after':'1. ','emo-complete':'1. ','l-mistakes':'1. ','l-lessons':'1. ','l-good':'1. ',
+  var prefilledDefaults={'setup-notes':'1. Range: \n2. Idea: \n3. TP: \n4. Other info: ','led-to-trade':'1. ','issues-notes':'1. ','post-analysis':'1. ','f-news':'1. ',
+    'emo-before':'','emo-after':'','emo-complete':'','l-mistakes':'1. ','l-lessons':'1. ','l-good':'1. ',
     'plan-if':'<price provides a confirmation>','plan-elseif':'<the price breaks the zone>'};
   Object.keys(prefilledDefaults).forEach(function(id){var el=document.getElementById(id);if(el)el.value=prefilledDefaults[id];});
   var setupEl=document.getElementById('setup-notes');if(setupEl)setupEl.value='1. Trading within a ';
@@ -10181,10 +10353,11 @@ async function clearForm(skipCancelEdit){
   var wlh2=document.getElementById('f-winloss');if(wlh2)wlh2.value='';
   document.getElementById('trail-trigger').selectedIndex=0;document.getElementById('tpchg-dir').selectedIndex=0;
   // Reset opt pills - clear all selections (no defaults)
-  ['opt-type','opt-model','opt-method','opt-ltf','opt-trail','opt-criteria','opt-slplace','opt-tpplace','opt-exit-a','opt-error','opt-error-2'].forEach(function(gid){
+  ['opt-type','opt-model','opt-method','opt-ltf','opt-trail','opt-criteria','opt-slplace','opt-tpplace','opt-exit-a','opt-error','opt-error-2','opt-emo-before','opt-emo-after','opt-emo-complete'].forEach(function(gid){
     var grp=document.getElementById(gid);if(!grp)return;
     grp.querySelectorAll('.opt-pill').forEach(function(p){p.classList.remove('selected')});
   });
+  ['emo-note-before','emo-note-after','emo-note-complete'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('f-type-val').value='';
   document.getElementById('f-model-val').value='';
   document.getElementById('f-method-val').value='';
@@ -10294,6 +10467,7 @@ async function editTrade(id){
   if(trade.news&&trade.news!=='1. ')_autoExpandAnalysisSection('f-news');
   s('plan-if',trade.planIf);s('plan-if-then',trade.planIfThen);s('plan-elseif',trade.planElseIf);s('plan-elseif-then',trade.planElseIfThen);
   s('emo-before',trade.emoBefore);s('emo-after',trade.emoAfter);s('emo-complete',trade.emoComplete);
+  ['before','after','complete'].forEach(renderEmotionGroupFromValue);
   s('l-mistakes',trade.mistakes);s('l-lessons',trade.lessons);s('l-good',trade.good);
   setChecklist_state(trade.checklist);setBiasFromData(trade.biasNarrative);
   // Restore skipped state
@@ -10909,6 +11083,21 @@ function _dashCalcHabitStreak(daySet){
   });
   return {current:cur,best:Math.max(best,cur),todayHit:todayHit};
 }
+// Trades logged today (any status — win/loss/skip all count, same as the streak logic
+// above). Used only to append a small "· N logged today" note onto the existing subtitle
+// line in _dashRenderHabitStreak — deliberately NOT a new element, so the banner's size
+// never changes; the note just appears once there's something to report and disappears
+// (rather than showing "0") when there isn't.
+function _dashTodayTradeCount(allTrades){
+  var todayKey=_dashDayKey(new Date()),n=0;
+  allTrades.forEach(function(t){
+    var raw=t.loggedAt||t.savedAt||t.entryTime;
+    if(!raw)return;
+    var d=new Date(raw);
+    if(!isNaN(d)&&_dashDayKey(d)===todayKey)n++;
+  });
+  return n;
+}
 function _dashRenderHabitStreak(allTrades){
   var el=document.getElementById('dash-habit-streak');
   if(!el)return;
@@ -10926,6 +11115,8 @@ function _dashRenderHabitStreak(allTrades){
     : (s.todayHit
         ? 'You\'ve shown up '+s.current+' day'+(s.current===1?'':'s')+' in a row'
         : s.current+' day'+(s.current===1?'':'s')+' streak — log a session today to keep it alive');
+  var todayCount=_dashTodayTradeCount(allTrades);
+  if(todayCount>0) msg += ' · '+todayCount+' logged today';
   el.innerHTML=
     '<div style="display:flex;align-items:center;gap:14px;min-width:0">'+
       '<svg class="hs-flame" viewBox="0 0 24 24"><path fill="'+(s.current>0?'var(--amber)':'var(--text3)')+'" d="M12 2c1.8 3 .5 4.7-.6 6.4C10.3 9.9 9.5 11.2 9.5 13a2.5 2.5 0 0 0 5 0c0-.9-.3-1.5-.7-2.1.9.4 1.7 1.5 1.7 3.1a5 5 0 0 1-10 0c0-2.6 1.3-4.4 2.8-6.2C9.6 5.8 11 4.2 12 2z"/></svg>'+
@@ -14261,7 +14452,7 @@ async function refreshUI(){
   // renderHistory()/renderDashboard() below score every trade's setup rating straight from
   // these in-memory caches (see computeSetupScoreInfo), not from a fresh read.
   await Promise.all([loadSetupRatingsCache(),loadClAllItemsCache()]);
-  await Promise.all([renderDashboard(),updateSidebarStats(),populateSessionSelects(),renderHistory(),populatePairSelect(),populateStrategySelect(),populateErrorTypeSelect()]);
+  await Promise.all([renderDashboard(),updateSidebarStats(),populateSessionSelects(),renderHistory(),populatePairSelect(),populateStrategySelect(),populateErrorTypeSelect(),populateEmotionPills(),loadShortcutsConfig()]);
   // Watchlists live in the same generic 'settings' store as everything else refreshUI()
   // covers, so a pull/restore/merge that changed them needs the page re-rendered too if open.
   if(_currentPage==='watchlist'&&typeof wlInit==='function')wlInit();
@@ -15063,7 +15254,7 @@ if(!window._tjKeydownListenerRegistered){
     closeDetail();return;
   }
   if(document.getElementById('retro-view-overlay').classList.contains('open')){closeRetroView();return;}
-  var modalIds=['theme-modal','col-manager-modal','session-modal','strategy-modal','asset-modal'];
+  var modalIds=['theme-modal','col-manager-modal','session-modal','strategy-modal','asset-modal','shortcuts-modal'];
   for(var i=0;i<modalIds.length;i++){
     var m=document.getElementById(modalIds[i]);
     if(m&&m.classList.contains('open')){
@@ -15081,7 +15272,7 @@ if(!window._tjKeydownListenerRegistered){
 // numbered line (e.g. after "3. " with nothing typed) drops the numbering instead of
 // piling up empty items — mirrors the list behavior in Word/Google Docs/Notion.
 var AUTO_NUMBER_TEXTAREA_IDS=['setup-notes','led-to-trade','why-skipped-notes','issues-notes',
-  'post-analysis','f-news','emo-before','emo-after','emo-complete','l-mistakes','l-lessons','l-good'];
+  'post-analysis','f-news','l-mistakes','l-lessons','l-good'];
 if(!window._tjAutoNumberListenerRegistered){
   window._tjAutoNumberListenerRegistered=true;
   document.addEventListener('keydown',function(e){
@@ -15111,6 +15302,147 @@ if(!window._tjAutoNumberListenerRegistered){
     el.dispatchEvent(new Event('input',{bubbles:true}));
   });
 }
+// ══ Keyboard shortcuts (configurable) ══════════════
+// A small JSON config drives the global keydown listener instead of hardcoded key combos,
+// so bindings can be changed (or new ones added) from the Shortcuts modal's "Customize"
+// panel without touching this file. Each entry is {action, keys}: "action" must be one of
+// the ids in SHORTCUT_ACTIONS below — an unrecognized id (e.g. a typo from hand-editing the
+// JSON) is silently skipped rather than breaking the list, so a bad edit can't lock the
+// person out of their own shortcuts. "keys" is a '+'-joined spec such as "ctrl+enter" or
+// "alt+arrowright" — modifiers ('ctrl' also matches Cmd on Mac, plus 'alt'/'shift') in any
+// order, then the key itself (KeyboardEvent.key, e.g. 'arrowleft'/'enter', or a literal
+// character like '?'). Multiple entries may point at the same action to bind more than one
+// combo to it. Persisted via getSetting/setSetting under 'keyboardShortcuts'.
+var SHORTCUT_ACTIONS={
+  saveTrade:{label:'Save trade',scope:'log',fn:function(){saveTrade();}},
+  nextTab:{label:'Next tab',scope:'log',fn:function(){_scStepTab(1);}},
+  prevTab:{label:'Previous tab',scope:'log',fn:function(){_scStepTab(-1);}},
+  showShortcuts:{label:'Show this list',scope:'global',fn:function(){openShortcutsModal();}},
+  newTrade:{label:'New trade',scope:'global',fn:function(){startNewTrade();}},
+  goDashboard:{label:'Go to Dashboard',scope:'global',fn:function(){var b=document.querySelector('.nav-item[onclick*="nav(\'dashboard\'"]');nav('dashboard',b);}},
+  goHistory:{label:'Go to History',scope:'global',fn:function(){var b=document.querySelector('.nav-item[onclick*="nav(\'history\'"]');nav('history',b);}}
+};
+var DEFAULT_SHORTCUTS=[
+  {action:'saveTrade',keys:'ctrl+enter'},
+  {action:'nextTab',keys:'alt+arrowright'},
+  {action:'prevTab',keys:'alt+arrowleft'},
+  {action:'showShortcuts',keys:'?'}
+];
+var _scConfig=DEFAULT_SHORTCUTS.slice(); // overwritten by loadShortcutsConfig() at init once IndexedDB is available
+async function loadShortcutsConfig(){
+  var saved=await getSetting('keyboardShortcuts',null);
+  _scConfig=(Array.isArray(saved)&&saved.length)?saved:DEFAULT_SHORTCUTS.slice();
+}
+function _scStepTab(dir){
+  var tabs=document.querySelectorAll('.form-tab');
+  var curIdx=0;
+  tabs.forEach(function(t,i){if(t.classList.contains('active'))curIdx=i;});
+  var nextIdx=Math.min(tabs.length-1,Math.max(0,curIdx+dir));
+  if(nextIdx!==curIdx)switchTab(nextIdx,tabs[nextIdx]);
+}
+function _scParseSpec(spec){
+  var parts=(spec||'').toLowerCase().split('+').map(function(s){return s.trim();}).filter(Boolean);
+  var out={ctrl:false,alt:false,shift:false,key:''};
+  parts.forEach(function(p){
+    if(p==='ctrl'||p==='cmd'||p==='meta')out.ctrl=true;
+    else if(p==='alt')out.alt=true;
+    else if(p==='shift')out.shift=true;
+    else out.key=p;
+  });
+  return out;
+}
+function _scMatches(e,spec){
+  var p=_scParseSpec(spec);
+  if(!p.key)return false;
+  if(p.ctrl!==(e.ctrlKey||e.metaKey))return false;
+  if(p.alt!==e.altKey)return false;
+  if(p.shift&&!e.shiftKey)return false; // only enforce Shift when the spec explicitly asks for it
+  return e.key.toLowerCase()===p.key;
+}
+var KEY_DISPLAY_LABELS={arrowright:'→',arrowleft:'←',arrowup:'↑',arrowdown:'↓',enter:'Enter',escape:'Esc',' ':'Space'};
+function _scKeyDisplay(spec){
+  return(spec||'').toLowerCase().split('+').map(function(s){return s.trim();}).filter(Boolean).map(function(p){
+    if(p==='ctrl')return'Ctrl';
+    if(p==='alt')return'Alt';
+    if(p==='shift')return'Shift';
+    if(KEY_DISPLAY_LABELS[p])return KEY_DISPLAY_LABELS[p];
+    return p.length===1?p.toUpperCase():(p.charAt(0).toUpperCase()+p.slice(1));
+  });
+}
+function openShortcutsModal(){renderShortcutsList();document.getElementById('shortcuts-modal').classList.add('open');}
+function renderShortcutsList(){
+  var el=document.getElementById('sc-list');
+  if(!el)return;
+  var groups={log:[],global:[]};
+  _scConfig.forEach(function(entry){
+    var meta=SHORTCUT_ACTIONS[entry.action];
+    if(!meta)return; // unrecognized action id — skip rather than break the whole list
+    (groups[meta.scope]||groups.global).push({label:meta.label,keys:entry.keys});
+  });
+  function rows(list){
+    return list.map(function(r){
+      var kbds=_scKeyDisplay(r.keys).map(function(k){return'<kbd>'+escHtml(k)+'</kbd>';}).join(' + ');
+      return'<div class="sc-row"><span>'+escHtml(r.label)+'</span><span>'+kbds+'</span></div>';
+    }).join('');
+  }
+  var html='';
+  if(groups.log.length)html+='<div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Log Trade form</div>'+rows(groups.log);
+  if(groups.global.length)html+='<div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin:16px 0 6px">Everywhere</div>'+rows(groups.global);
+  el.innerHTML=html||'<div style="font-size:11px;color:var(--text3)">No shortcuts configured.</div>';
+}
+function toggleShortcutsCustomize(){
+  var box=document.getElementById('sc-customize-box');
+  if(!box)return;
+  var opening=box.style.display==='none'||!box.style.display;
+  box.style.display=opening?'block':'none';
+  if(opening){
+    var ta=document.getElementById('sc-json-editor');
+    if(ta)ta.value=JSON.stringify(_scConfig,null,2);
+    var ref=document.getElementById('sc-action-ref');
+    if(ref)ref.textContent=Object.keys(SHORTCUT_ACTIONS).join(', ');
+  }
+}
+async function saveShortcutsConfig(){
+  var ta=document.getElementById('sc-json-editor');
+  if(!ta)return;
+  var parsed;
+  try{parsed=JSON.parse(ta.value);}catch(e){toast('Invalid JSON — check for a missing comma or bracket','err');return;}
+  if(!Array.isArray(parsed)){toast('Config must be a JSON array of {action, keys}','err');return;}
+  var valid=parsed.every(function(x){return x&&typeof x.keys==='string'&&typeof x.action==='string';});
+  if(!valid){toast('Each entry needs an "action" and a "keys" string','err');return;}
+  var unknown=parsed.filter(function(x){return!SHORTCUT_ACTIONS[x.action];}).map(function(x){return x.action;});
+  _scConfig=parsed;
+  await setSetting('keyboardShortcuts',_scConfig);
+  renderShortcutsList();
+  toast(unknown.length?('Saved (unrecognized action'+(unknown.length>1?'s':'')+' ignored: '+unknown.join(', ')+')'):'Shortcuts saved ✓','ok');
+}
+async function resetShortcutsConfig(){
+  _scConfig=DEFAULT_SHORTCUTS.slice();
+  await setSetting('keyboardShortcuts',_scConfig);
+  renderShortcutsList();
+  var ta=document.getElementById('sc-json-editor');
+  if(ta)ta.value=JSON.stringify(_scConfig,null,2);
+  toast('Reset to defaults ✓','ok');
+}
+if(!window._tjShortcutsListenerRegistered){
+  window._tjShortcutsListenerRegistered=true;
+  document.addEventListener('keydown',function(e){
+    var tag=(document.activeElement&&document.activeElement.tagName)||'';
+    var typing=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(document.activeElement&&document.activeElement.isContentEditable);
+    for(var i=0;i<_scConfig.length;i++){
+      var entry=_scConfig[i];
+      var meta=SHORTCUT_ACTIONS[entry.action];
+      if(!meta)continue;
+      if(meta.scope==='log'&&_currentPage!=='log')continue;
+      var spec=_scParseSpec(entry.keys);
+      // A modifier-less spec (like '?') is skipped while typing so it doesn't steal a literal
+      // keystroke from a note; Ctrl/Alt combos are safe to fire even mid-typing since they
+      // don't type a character, and that's often exactly when you'd want to use one.
+      if(typing&&!spec.ctrl&&!spec.alt)continue;
+      if(_scMatches(e,entry.keys)){e.preventDefault();meta.fn();return;}
+    }
+  });
+}
 // ══ Init ══════════════════════════════════════════
 // App bootstrap, runs once after the IndexedDB connection opens. Order matters: theme is
 // applied first (avoids a flash of the wrong theme), then selects/dropdowns are populated
@@ -15132,6 +15464,8 @@ openDB().then(async function(){
   await populatePairSelect();
   await populateStrategySelect();
   await populateErrorTypeSelect();
+  await populateEmotionPills();
+  await loadShortcutsConfig();
   await populateSessionSelects();
   await populateFilters();
   restoreHistFilterPrefs();
@@ -16804,6 +17138,7 @@ function restoreLogFormSnapshot(snap){
   }
   // Error type(s) — multi-select pills, restored separately from the single-value optPillMap above
   if(snap['f-error-val']!==undefined) setErrorPills(snap['f-error-val']);
+  ['before','after','complete'].forEach(function(field){if(snap['emo-'+field]!==undefined) renderEmotionGroupFromValue(field);});
   // Pair change updates asset-type display and pair-dependent UI
   if(snap['f-pair']){
     var ps=document.getElementById('f-pair');
@@ -16877,6 +17212,13 @@ function calcCalc(){
   var entry=parseFloat(document.getElementById('calc-entry').value)||0;
   var slVal=parseFloat(document.getElementById('calc-sl').value)||0;
   var tpVal=parseFloat(document.getElementById('calc-tp').value)||0;
+  // Auto-detect direction from Entry vs SL, same rule as the Log Trade form — see recalc()
+  // for the full rationale. Guarded so it only calls calcSetDir() (which itself calls back
+  // into calcCalc()) when the direction would actually change, so this can't recurse forever.
+  if(entry&&slVal&&entry!==slVal){
+    var _autoDir=slVal<entry?'long':'short';
+    if(_autoDir!==calcDirection){calcSetDir(_autoDir);return;}
+  }
   var leverage=parseInt(document.getElementById('calc-leverage').value)||inst.defLev;
   if(!balance||!riskPct||!entry||!slVal){
     document.getElementById('calc-out-size').textContent='—';
