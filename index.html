@@ -5936,14 +5936,14 @@ document.addEventListener('DOMContentLoaded',function(){
 <div class="modal-overlay" id="break-modal" onclick="skipBreak()">
   <div class="modal-box" style="max-width:360px;text-align:center" onclick="event.stopPropagation()">
     <div id="break-prompt-view">
-      <div style="font-size:30px;margin-bottom:6px">🎉</div>
+      <svg width="40" height="40" viewBox="0 0 24 24" style="margin-bottom:8px"><circle cx="12" cy="12" r="10" fill="var(--green)" opacity="0.15"/><path d="M8 12.4l2.6 2.6L16.2 9" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <h3 style="margin-bottom:6px">Trade logged</h3>
       <p style="font-size:12.5px;color:var(--text3);line-height:1.5;margin-bottom:14px">That's a full trade closed out and journaled. Take a break before the next one — read a page, stretch, look away from the screen.</p>
-      <div style="display:flex;gap:5px;justify-content:center;margin-bottom:14px">
-        <button type="button" class="btn btn-ghost btn-sm break-dur-btn" data-min="3" onclick="setBreakDuration(3)">3 min</button>
-        <button type="button" class="btn btn-ghost btn-sm break-dur-btn" data-min="5" onclick="setBreakDuration(5)">5 min</button>
-        <button type="button" class="btn btn-ghost btn-sm break-dur-btn" data-min="10" onclick="setBreakDuration(10)">10 min</button>
-        <button type="button" class="btn btn-ghost btn-sm break-dur-btn" data-min="15" onclick="setBreakDuration(15)">15 min</button>
+      <div class="opt-group" style="justify-content:center;margin-bottom:14px">
+        <span class="opt-pill opt-blue break-dur-btn" data-min="3" onclick="setBreakDuration(3)">3 min</span>
+        <span class="opt-pill opt-blue break-dur-btn" data-min="5" onclick="setBreakDuration(5)">5 min</span>
+        <span class="opt-pill opt-blue break-dur-btn" data-min="10" onclick="setBreakDuration(10)">10 min</span>
+        <span class="opt-pill opt-blue break-dur-btn" data-min="15" onclick="setBreakDuration(15)">15 min</span>
       </div>
       <div class="frow" style="text-align:left;margin-bottom:14px">
         <label class="flabel">Reward message <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional — shows during the break)</span></label>
@@ -5961,7 +5961,7 @@ document.addEventListener('DOMContentLoaded',function(){
       <button class="btn btn-ghost" onclick="skipBreak()">End break early</button>
     </div>
     <div id="break-done-view" style="display:none">
-      <div style="font-size:30px;margin-bottom:6px">✓</div>
+      <svg width="40" height="40" viewBox="0 0 24 24" style="margin-bottom:8px"><circle cx="12" cy="12" r="10" fill="var(--green)" opacity="0.15"/><path d="M8 12.4l2.6 2.6L16.2 9" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <h3 style="margin-bottom:6px">Break's over</h3>
       <p id="break-done-message" style="font-size:12.5px;color:var(--text3);line-height:1.5;margin-bottom:18px">Ready for the next setup whenever you are.</p>
       <button class="btn btn-primary" onclick="closeBreakDone()">Continue</button>
@@ -15375,9 +15375,7 @@ function setBreakDuration(min){
 }
 function _renderBreakDurationPicker(){
   document.querySelectorAll('.break-dur-btn').forEach(function(b){
-    var active=parseInt(b.dataset.min,10)===_breakMinutes;
-    b.classList.toggle('btn-primary',active);
-    b.classList.toggle('btn-ghost',!active);
+    b.classList.toggle('selected',parseInt(b.dataset.min,10)===_breakMinutes);
   });
   var startBtn=document.getElementById('break-start-btn');
   if(startBtn)startBtn.textContent='Start '+_breakMinutes+' min break';
