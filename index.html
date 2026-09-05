@@ -2548,7 +2548,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
         <button class="form-tab" onclick="switchTab(1,this)">Checklist</button>
         <button class="form-tab" onclick="switchTab(2,this)">Analysis</button>
         <button class="form-tab" onclick="switchTab(3,this)">Reflection</button>
-        <button type="button" class="btn btn-ghost btn-icon btn-sm" style="margin-left:auto;flex-shrink:0" onclick="openShortcutsModal()" title="Keyboard shortcuts (?)">
+        <button type="button" class="btn btn-ghost btn-icon btn-sm" style="margin-left:auto;flex-shrink:0" onclick="offerBreak()" title="Preview the post-trade break timer">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg>
+        </button>
+        <button type="button" class="btn btn-ghost btn-icon btn-sm" style="flex-shrink:0" onclick="openShortcutsModal()" title="Keyboard shortcuts (?)">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M6 16h12"/></svg>
         </button>
       </div>
@@ -5923,6 +5926,45 @@ document.addEventListener('DOMContentLoaded',function(){
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+<!-- Post-trade break prompt — offered only when a NEW (non-edit) save is actually a completed
+     trade (has exit details), matching "reward myself after completing and journaling a
+     trade" exactly. Three simple views swapped by display:none/block rather than three
+     separate modals, so there's only one overlay to manage. -->
+<div class="modal-overlay" id="break-modal" onclick="skipBreak()">
+  <div class="modal-box" style="max-width:360px;text-align:center" onclick="event.stopPropagation()">
+    <div id="break-prompt-view">
+      <div style="font-size:30px;margin-bottom:6px">🎉</div>
+      <h3 style="margin-bottom:6px">Trade logged</h3>
+      <p style="font-size:12.5px;color:var(--text3);line-height:1.5;margin-bottom:14px">That's a full trade closed out and journaled. Take a break before the next one — read a page, stretch, look away from the screen.</p>
+      <div style="display:flex;gap:5px;justify-content:center;margin-bottom:14px">
+        <button type="button" class="btn btn-ghost btn-sm break-dur-btn" data-min="3" onclick="setBreakDuration(3)">3 min</button>
+        <button type="button" class="btn btn-ghost btn-sm break-dur-btn" data-min="5" onclick="setBreakDuration(5)">5 min</button>
+        <button type="button" class="btn btn-ghost btn-sm break-dur-btn" data-min="10" onclick="setBreakDuration(10)">10 min</button>
+        <button type="button" class="btn btn-ghost btn-sm break-dur-btn" data-min="15" onclick="setBreakDuration(15)">15 min</button>
+      </div>
+      <div class="frow" style="text-align:left;margin-bottom:14px">
+        <label class="flabel">Reward message <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional — shows during the break)</span></label>
+        <input type="text" id="break-message-inp" placeholder="e.g. Read a page of Atomic Habits" maxlength="80">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button class="btn btn-primary" id="break-start-btn" onclick="startBreak()">Start break</button>
+        <button class="btn btn-ghost" onclick="skipBreak()">Skip, keep going</button>
+      </div>
+    </div>
+    <div id="break-timer-view" style="display:none">
+      <div id="break-timer-display" style="font-family:'DM Mono',monospace;font-weight:800;font-size:38px;color:var(--amber);margin:10px 0">5:00</div>
+      <div id="break-active-message" style="display:none;font-size:13px;font-weight:600;color:var(--text);background:rgba(232,160,48,.1);border:1px solid rgba(232,160,48,.25);border-radius:var(--radius);padding:9px 12px;margin-bottom:14px"></div>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:16px">Step away from the screen — this tab will chime (and notify you, if allowed) when time's up.</p>
+      <button class="btn btn-ghost" onclick="skipBreak()">End break early</button>
+    </div>
+    <div id="break-done-view" style="display:none">
+      <div style="font-size:30px;margin-bottom:6px">✓</div>
+      <h3 style="margin-bottom:6px">Break's over</h3>
+      <p id="break-done-message" style="font-size:12.5px;color:var(--text3);line-height:1.5;margin-bottom:18px">Ready for the next setup whenever you are.</p>
+      <button class="btn btn-primary" onclick="closeBreakDone()">Continue</button>
     </div>
   </div>
 </div>
@@ -10307,6 +10349,10 @@ async function saveTrade(){
   }
   toast(editingId?'Trade updated ✓':'Trade saved ✓','ok');
   if(!editingId) _dashMaybeCelebrateStreak(); // reward the rep itself — fires once per day, win/loss/skip all count
+  // Completed-trade break prompt — offered only for a brand-new save (not an edit) of a
+  // trade that's actually closing out (has exit details), matching "reward yourself after
+  // completing and journaling a trade" exactly rather than firing on every pending entry.
+  if(!editingId&&_exitFieldsCount===4) offerBreak();
   cancelEdit();clearForm();updateSidebarStats();
   nav('history',document.querySelector('.nav-item[onclick*="nav(\'history\'"]'));
   // Auto-sync to GitHub (runs silently in background)
@@ -10341,7 +10387,6 @@ async function clearForm(skipCancelEdit){
     'emo-before':'','emo-after':'','emo-complete':'','l-mistakes':'1. ','l-lessons':'1. ','l-good':'1. ',
     'plan-if':'<price provides a confirmation>','plan-elseif':'<the price breaks the zone>'};
   Object.keys(prefilledDefaults).forEach(function(id){var el=document.getElementById(id);if(el)el.value=prefilledDefaults[id];});
-  var setupEl=document.getElementById('setup-notes');if(setupEl)setupEl.value='1. Trading within a ';
   document.getElementById('f-acct').value='5000'; // will be overwritten by onSessionChange after populateSessionSelects
   document.getElementById('f-riskpct').value='1';
   document.getElementById('f-trr').value='';
@@ -14452,7 +14497,7 @@ async function refreshUI(){
   // renderHistory()/renderDashboard() below score every trade's setup rating straight from
   // these in-memory caches (see computeSetupScoreInfo), not from a fresh read.
   await Promise.all([loadSetupRatingsCache(),loadClAllItemsCache()]);
-  await Promise.all([renderDashboard(),updateSidebarStats(),populateSessionSelects(),renderHistory(),populatePairSelect(),populateStrategySelect(),populateErrorTypeSelect(),populateEmotionPills(),loadShortcutsConfig()]);
+  await Promise.all([renderDashboard(),updateSidebarStats(),populateSessionSelects(),renderHistory(),populatePairSelect(),populateStrategySelect(),populateErrorTypeSelect(),populateEmotionPills(),loadShortcutsConfig(),loadBreakSettings()]);
   // Watchlists live in the same generic 'settings' store as everything else refreshUI()
   // covers, so a pull/restore/merge that changed them needs the page re-rendered too if open.
   if(_currentPage==='watchlist'&&typeof wlInit==='function')wlInit();
@@ -15254,11 +15299,12 @@ if(!window._tjKeydownListenerRegistered){
     closeDetail();return;
   }
   if(document.getElementById('retro-view-overlay').classList.contains('open')){closeRetroView();return;}
-  var modalIds=['theme-modal','col-manager-modal','session-modal','strategy-modal','asset-modal','shortcuts-modal'];
+  var modalIds=['theme-modal','col-manager-modal','session-modal','strategy-modal','asset-modal','shortcuts-modal','break-modal'];
   for(var i=0;i<modalIds.length;i++){
     var m=document.getElementById(modalIds[i]);
     if(m&&m.classList.contains('open')){
       m.classList.remove('open');
+      if(modalIds[i]==='break-modal'&&typeof _breakInterval!=='undefined'&&_breakInterval){clearInterval(_breakInterval);_breakInterval=null;try{document.title=_origTitle;}catch(e){}}
       // Discard session modal input changes by re-rendering (no save occurred)
       return;
     }
@@ -15301,6 +15347,143 @@ if(!window._tjAutoNumberListenerRegistered){
     el.selectionStart=el.selectionEnd=newPos;
     el.dispatchEvent(new Event('input',{bubbles:true}));
   });
+}
+// ══ Post-trade break prompt ══════════════════════════
+// See saveTrade()'s call to offerBreak() for exactly when this fires (new + completed
+// trades only). Three views inside one modal, swapped via display:none/block. Duration and
+// the reward message are persisted via getSetting/setSetting — the same settings mechanism
+// the shortcuts config uses — so both are remembered next time rather than resetting.
+var _breakInterval=null,_breakSecondsLeft=300,_breakMinutes=5,_breakMessage='',_origTitle=document.title,_breakAudioCtx=null;
+async function loadBreakSettings(){
+  _breakMinutes=await getSetting('breakMinutes',5);
+  _breakMessage=await getSetting('breakMessage','');
+}
+function offerBreak(){
+  var m=document.getElementById('break-modal');if(!m)return;
+  document.getElementById('break-prompt-view').style.display='';
+  document.getElementById('break-timer-view').style.display='none';
+  document.getElementById('break-done-view').style.display='none';
+  _renderBreakDurationPicker();
+  var msgInp=document.getElementById('break-message-inp');
+  if(msgInp)msgInp.value=_breakMessage;
+  m.classList.add('open');
+}
+function setBreakDuration(min){
+  _breakMinutes=min;
+  setSetting('breakMinutes',min); // fire-and-forget, same pattern used elsewhere for small preferences
+  _renderBreakDurationPicker();
+}
+function _renderBreakDurationPicker(){
+  document.querySelectorAll('.break-dur-btn').forEach(function(b){
+    var active=parseInt(b.dataset.min,10)===_breakMinutes;
+    b.classList.toggle('btn-primary',active);
+    b.classList.toggle('btn-ghost',!active);
+  });
+  var startBtn=document.getElementById('break-start-btn');
+  if(startBtn)startBtn.textContent='Start '+_breakMinutes+' min break';
+}
+function startBreak(){
+  document.getElementById('break-prompt-view').style.display='none';
+  document.getElementById('break-timer-view').style.display='';
+  _breakSecondsLeft=_breakMinutes*60;
+  _updateBreakDisplay();
+  // Reward message — shown alongside the countdown for the rest of the break. Whatever's
+  // typed becomes the new default for next time too, so a recurring reward doesn't need
+  // retyping, but it's still editable every time.
+  var msgInp=document.getElementById('break-message-inp');
+  _breakMessage=msgInp?msgInp.value.trim():'';
+  setSetting('breakMessage',_breakMessage);
+  var msgEl=document.getElementById('break-active-message');
+  if(msgEl){
+    if(_breakMessage){msgEl.textContent='🎁 '+_breakMessage;msgEl.style.display='';}
+    else msgEl.style.display='none';
+  }
+  // Create/resume the AudioContext here, inside the click handler — browsers require sound
+  // to be unlocked by a real user gesture. Doing it now (rather than when the countdown
+  // later hits zero, with no fresh gesture) is what lets the end-of-break chime actually
+  // play instead of getting silently blocked.
+  try{
+    if(!_breakAudioCtx)_breakAudioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(_breakAudioCtx.state==='suspended')_breakAudioCtx.resume();
+  }catch(e){}
+  // Same gesture also doubles as the moment to ask for notification permission — needed so
+  // the end-of-break alert can reach you even if you've switched to a different tab or app
+  // entirely (a chime alone can be easy to miss/mute). Only asks once; if you've already
+  // said yes or no, this is a no-op either way.
+  try{
+    if(typeof Notification!=='undefined'&&Notification.permission==='default')Notification.requestPermission();
+  }catch(e){}
+  _playBreakStartChime();
+  clearInterval(_breakInterval);
+  _breakInterval=setInterval(function(){
+    _breakSecondsLeft--;
+    _updateBreakDisplay();
+    if(_breakSecondsLeft<=0){
+      clearInterval(_breakInterval);_breakInterval=null;
+      document.getElementById('break-timer-view').style.display='none';
+      document.getElementById('break-done-view').style.display='';
+      var doneMsgEl=document.getElementById('break-done-message');
+      if(doneMsgEl)doneMsgEl.textContent=_breakMessage?('Hope you enjoyed: '+_breakMessage):'Ready for the next setup whenever you are.';
+      try{document.title='✓ Break over — '+_origTitle;}catch(e){}
+      _playBreakChime();
+      // If the tab isn't visible right now, a chime can be easy to miss (muted, in another
+      // room, headphones on something else) — fall back to a real OS-level notification.
+      try{
+        if(document.hidden&&typeof Notification!=='undefined'&&Notification.permission==='granted'){
+          new Notification('Break\u2019s over ✓',{body:_breakMessage||'Ready for the next setup whenever you are.'});
+        }
+      }catch(e){}
+    }
+  },1000);
+}
+function _updateBreakDisplay(){
+  var mnt=Math.floor(_breakSecondsLeft/60),sec=_breakSecondsLeft%60;
+  var el=document.getElementById('break-timer-display');
+  if(el)el.textContent=mnt+':'+(sec<10?'0':'')+sec;
+}
+// A single soft, low tone at the moment the break begins — deliberately quieter/lower than
+// the end chime so the two are easy to tell apart by ear alone.
+function _playBreakStartChime(){
+  try{
+    var ctx=_breakAudioCtx||new(window.AudioContext||window.webkitAudioContext)();
+    var now=ctx.currentTime;
+    var osc=ctx.createOscillator(),gain=ctx.createGain();
+    osc.type='sine';osc.frequency.value=520;
+    gain.gain.setValueAtTime(0,now);
+    gain.gain.linearRampToValueAtTime(0.18,now+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001,now+0.4);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);osc.stop(now+0.45);
+  }catch(e){}
+}
+// A brighter two-note chime for the end of the break — no audio file to bundle, so it works
+// in a single self-contained HTML file with no extra assets or network request. Resumes the
+// AudioContext first in case a background/inactive tab suspended it during the countdown.
+function _playBreakChime(){
+  try{
+    var ctx=_breakAudioCtx||new(window.AudioContext||window.webkitAudioContext)();
+    if(ctx.state==='suspended')ctx.resume();
+    var now=ctx.currentTime;
+    [880,660].forEach(function(freq,i){
+      var osc=ctx.createOscillator(),gain=ctx.createGain();
+      osc.type='sine';osc.frequency.value=freq;
+      var start=now+i*0.28;
+      gain.gain.setValueAtTime(0,start);
+      gain.gain.linearRampToValueAtTime(0.25,start+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001,start+0.45);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);osc.stop(start+0.5);
+    });
+  }catch(e){}
+}
+function skipBreak(){
+  clearInterval(_breakInterval);_breakInterval=null;
+  var m=document.getElementById('break-modal');if(m)m.classList.remove('open');
+  try{document.title=_origTitle;}catch(e){}
+}
+function closeBreakDone(){
+  var m=document.getElementById('break-modal');if(m)m.classList.remove('open');
+  try{document.title=_origTitle;}catch(e){}
 }
 // ══ Keyboard shortcuts (configurable) ══════════════
 // A small JSON config drives the global keydown listener instead of hardcoded key combos,
@@ -15466,6 +15649,7 @@ openDB().then(async function(){
   await populateErrorTypeSelect();
   await populateEmotionPills();
   await loadShortcutsConfig();
+  await loadBreakSettings();
   await populateSessionSelects();
   await populateFilters();
   restoreHistFilterPrefs();
@@ -20844,7 +21028,7 @@ function aiComputeMetrics(trades,sessions){
   // Plan quality (setup notes + trade plan fields filled)
   var planFields=['setupNotes','ledToTrade','tpCriteria','planIf','planIfThen'];
   var planScores=taken.map(function(t){
-    var filled=planFields.filter(function(f){return t[f]&&t[f].trim()&&t[f].trim()!=='1. '&&t[f].trim()!=='1. Trading within a ';}).length;
+    var filled=planFields.filter(function(f){return t[f]&&t[f].trim()&&t[f].trim()!=='1. '&&t[f].trim()!=='1. Trading within a '&&t[f].trim()!=='1. Range: \n2. Idea: \n3. TP: \n4. Other info:';}).length;
     return filled/planFields.length;
   });
   var avgPlan=planScores.reduce(function(a,v){return a+v;},0)/planScores.length;
