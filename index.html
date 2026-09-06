@@ -559,6 +559,41 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .sc-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:7px 0;font-size:12px;color:var(--text2);border-bottom:1px solid var(--border)}
 .sc-row:last-of-type{border-bottom:none}
 .sc-row kbd,#shortcuts-modal kbd{background:var(--bg4);border:1px solid var(--border2);border-bottom-width:2px;border-radius:4px;padding:2px 6px;font-size:10.5px;font-family:'DM Mono',monospace;color:var(--text);white-space:nowrap}
+/* ── Break-duration chips: dedicated style (not .opt-pill) since .opt-pill's compact 11px/
+   3px-padding sizing plus its opacity-based unselected state washes borders out to near-
+   invisible against a light background — looked broken here rather than just "dimmed". Both
+   states always keep a clearly visible, solid-alpha border at a size matching the modal's
+   other buttons. ── */
+.break-dur-btn{display:inline-flex;align-items:center;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border2);background:var(--bg3);color:var(--text2);transition:all .12s;user-select:none}
+.break-dur-btn:hover{border-color:var(--text3)}
+.break-dur-btn.selected{border-color:var(--accent);background:rgba(77,127,255,.12);color:var(--accent)}
+/* ── Floating trade tracker: a session-goal counter that sits on top of every page (it's a
+   sibling of the .page containers, not inside one), draggable, and remembers where you left
+   it. Inspired by the visual "paperclip strategy" / habit-tracker idea from Atomic Habits
+   ch.16 — dots fill in one at a time as trades complete today, which is the point: watching
+   the row fill up is the reward, separate from anything about win/loss. ── */
+.trade-tracker{position:fixed;bottom:20px;left:20px;z-index:200;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 6px 20px rgba(0,0,0,.22);min-width:168px;user-select:none}
+.trade-tracker.tt-hit{border-color:rgba(60,180,110,.5)}
+.tt-header{display:flex;align-items:center;gap:4px;padding:7px 9px;cursor:grab;border-bottom:1px solid var(--border)}
+.tt-header:active{cursor:grabbing}
+.tt-title{flex:1;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.tt-icon-btn{background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 3px;font-size:13px;line-height:1;border-radius:4px}
+.tt-icon-btn:hover{color:var(--text);background:var(--bg3)}
+.tt-body{padding:10px 11px 11px}
+.trade-tracker.tt-collapsed .tt-body{display:none}
+.tt-dots{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px;max-width:220px}
+.tt-dot{width:13px;height:13px;border-radius:50%;background:var(--bg4);border:1.5px solid var(--border2);transition:all .2s;flex-shrink:0}
+.tt-dot.filled{background:var(--green);border-color:var(--green)}
+.tt-bar-track{width:100%;height:8px;border-radius:4px;background:var(--bg4);border:1px solid var(--border2);overflow:hidden;margin-bottom:7px}
+.tt-bar-fill{height:100%;background:var(--green);border-radius:4px;transition:width .25s}
+.tt-count-row{display:flex;align-items:center;gap:6px}
+.tt-count{font-size:12px;color:var(--text2);font-weight:600;cursor:pointer;border-bottom:1px dashed var(--border2)}
+.tt-count:hover{color:var(--text)}
+.trade-tracker.tt-hit .tt-count{color:var(--green);border-bottom-color:transparent}
+.tt-goal-edit{display:flex;gap:5px;align-items:center}
+.tt-goal-edit input{width:46px;padding:3px 6px;font-size:11px}
+.tt-hit-msg{font-size:11px;color:var(--green);font-weight:600;margin-top:5px;display:none}
+.trade-tracker.tt-hit .tt-hit-msg{display:block}
 .img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:7px;margin-bottom:7px}
 .img-thumb{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);aspect-ratio:16/10}
 .img-thumb img{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer;transition:opacity .12s}
@@ -5935,15 +5970,16 @@ document.addEventListener('DOMContentLoaded',function(){
      separate modals, so there's only one overlay to manage. -->
 <div class="modal-overlay" id="break-modal" onclick="skipBreak()">
   <div class="modal-box" style="max-width:360px;text-align:center" onclick="event.stopPropagation()">
+   <div class="modal-body">
     <div id="break-prompt-view">
       <svg width="40" height="40" viewBox="0 0 24 24" style="margin-bottom:8px"><circle cx="12" cy="12" r="10" fill="var(--green)" opacity="0.15"/><path d="M8 12.4l2.6 2.6L16.2 9" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <h3 style="margin-bottom:6px">Trade logged</h3>
       <p style="font-size:12.5px;color:var(--text3);line-height:1.5;margin-bottom:14px">That's a full trade closed out and journaled. Take a break before the next one — read a page, stretch, look away from the screen.</p>
-      <div class="opt-group" style="justify-content:center;margin-bottom:14px">
-        <span class="opt-pill opt-blue break-dur-btn" data-min="3" onclick="setBreakDuration(3)">3 min</span>
-        <span class="opt-pill opt-blue break-dur-btn" data-min="5" onclick="setBreakDuration(5)">5 min</span>
-        <span class="opt-pill opt-blue break-dur-btn" data-min="10" onclick="setBreakDuration(10)">10 min</span>
-        <span class="opt-pill opt-blue break-dur-btn" data-min="15" onclick="setBreakDuration(15)">15 min</span>
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:14px;flex-wrap:wrap">
+        <span class="break-dur-btn" data-min="3" onclick="setBreakDuration(3)">3 min</span>
+        <span class="break-dur-btn" data-min="5" onclick="setBreakDuration(5)">5 min</span>
+        <span class="break-dur-btn" data-min="10" onclick="setBreakDuration(10)">10 min</span>
+        <span class="break-dur-btn" data-min="15" onclick="setBreakDuration(15)">15 min</span>
       </div>
       <div class="frow" style="text-align:left;margin-bottom:14px">
         <label class="flabel">Reward message <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional — shows during the break)</span></label>
@@ -5966,6 +6002,7 @@ document.addEventListener('DOMContentLoaded',function(){
       <p id="break-done-message" style="font-size:12.5px;color:var(--text3);line-height:1.5;margin-bottom:18px">Ready for the next setup whenever you are.</p>
       <button class="btn btn-primary" onclick="closeBreakDone()">Continue</button>
     </div>
+   </div>
   </div>
 </div>
 <!-- Low setup-rating confirmation modal (replaces native confirm() for clProceedGate) -->
@@ -6147,6 +6184,47 @@ document.addEventListener('DOMContentLoaded',function(){
   </div>
 </div>
 <div class="toast-wrap" id="toast-wrap"></div>
+<!-- Floating session-goal tracker — sibling of the page containers so it stays visible
+     regardless of which page is active. See loadTrackerSettings()/renderTracker() below. -->
+<div class="trade-tracker" id="trade-tracker">
+  <div class="tt-header" id="tt-drag-handle">
+    <span class="tt-title">Session goal</span>
+    <button type="button" class="tt-icon-btn" onclick="endTrackerSession()" id="tt-end-btn" title="End session" style="display:none">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+    </button>
+    <button type="button" class="tt-icon-btn" onclick="toggleTrackerCollapse()" id="tt-collapse-btn" title="Collapse">–</button>
+  </div>
+  <div class="tt-body" id="tt-body">
+    <div id="tt-inactive" style="display:none;text-align:center;padding:2px 0">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">No active session</div>
+      <button type="button" class="btn btn-primary btn-sm" onclick="offerTrackerSessionStart()">Start session</button>
+    </div>
+    <div id="tt-active-content">
+      <div class="tt-dots" id="tt-dots"></div>
+      <div class="tt-bar-track" id="tt-bar-track" style="display:none"><div class="tt-bar-fill" id="tt-bar-fill" style="width:0%"></div></div>
+      <div class="tt-count-row" id="tt-count-row"></div>
+      <div class="tt-hit-msg" id="tt-hit-msg"></div>
+    </div>
+  </div>
+</div>
+<!-- Prompt shown when the app opens with no active tracker session (or one just rolled
+     past midnight) — a session is an explicit start/end, never silently assumed. -->
+<div class="modal-overlay" id="tracker-session-modal" onclick="dismissTrackerSessionPrompt()">
+  <div class="modal-box" style="max-width:340px;text-align:center" onclick="event.stopPropagation()">
+   <div class="modal-body">
+    <h3 style="margin-bottom:6px">Start a backtesting session?</h3>
+    <p style="font-size:12.5px;color:var(--text3);line-height:1.5;margin-bottom:16px">Set a goal for this sitting. The tracker follows along and resets fresh next time you start one.</p>
+    <div class="frow" style="text-align:left;margin-bottom:16px">
+      <label class="flabel">Trades to complete</label>
+      <input type="number" min="1" max="999" id="tracker-session-goal-inp" value="3">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="btn btn-primary" onclick="startTrackerSession()">Start session</button>
+      <button class="btn btn-ghost" onclick="dismissTrackerSessionPrompt()">Not now</button>
+    </div>
+   </div>
+  </div>
+</div>
 <script>
 // ── Utility: debounce ────────────────────────────
 function debounce(fn, ms){ var t; return function(){ clearTimeout(t); t = setTimeout(fn, ms); }; }
@@ -10349,6 +10427,7 @@ async function saveTrade(){
   }
   toast(editingId?'Trade updated ✓':'Trade saved ✓','ok');
   if(!editingId) _dashMaybeCelebrateStreak(); // reward the rep itself — fires once per day, win/loss/skip all count
+  renderTracker(); // refresh the floating goal widget immediately, regardless of which page you land on next
   // Completed-trade break prompt — offered only for a brand-new save (not an edit) of a
   // trade that's actually closing out (has exit details), matching "reward yourself after
   // completing and journaling a trade" exactly rather than firing on every pending entry.
@@ -10643,7 +10722,7 @@ async function deleteTrade(id){
   await dbDelete('trades',id);
   // Rebalance the session this trade belonged to so its currentEquity reflects the removal
   if(sourceSessionId)await rebalanceSession(sourceSessionId);
-  toast('Trade deleted','ok');renderHistory();renderDashboard();updateSidebarStats();closeDetail();
+  toast('Trade deleted','ok');renderHistory();renderDashboard();updateSidebarStats();closeDetail();renderTracker();
   ghAutoSync();
 }
 // ══ History columns ════════════════════════════════
@@ -11142,6 +11221,242 @@ function _dashTodayTradeCount(allTrades){
     if(!isNaN(d)&&_dashDayKey(d)===todayKey)n++;
   });
   return n;
+}
+// ══ Floating session-goal tracker ════════════════════
+// Persistent widget (see the "trade-tracker" div, a sibling of .page so it survives page
+// navigation). Tracks a discrete backtesting SESSION (a single sitting) rather than a
+// calendar day, since the person may run several sittings in one day — each gets its own
+// fresh goal and its own "goal hit" moment. A session is explicitly started/ended (see
+// offerTrackerSessionStart/startTrackerSession/endTrackerSession); it also force-ends at
+// the next midnight even if left open, so "today" always means today (see
+// _checkTrackerMidnightRollover, polled every minute). Progress counts only trades that
+// actually CLOSED OUT (has exitPrice) and were logged after the session started — a pending
+// entry isn't "completed" yet.
+var _trackerGoal=3,_trackerCollapsed=false,_trackerSessionActive=false,_trackerSessionStartedAt=null;
+var TRACKER_HIT_MESSAGES=[
+  "🎯 Goal crushed — that's disciplined, consistent work.",
+  "🎯 Nailed it. You showed up and did the reps.",
+  "🎯 That's exactly what a solid process looks like.",
+  "🎯 Done. The compounding starts with sessions like this.",
+  "🎯 Great session. This is how an edge gets found.",
+  "🎯 You did what you set out to do. Well earned."
+];
+async function loadTrackerSettings(){
+  _trackerGoal=await getSetting('trackerGoal',3);
+  _trackerCollapsed=await getSetting('trackerCollapsed',false);
+  _trackerSessionActive=await getSetting('trackerSessionActive',false);
+  _trackerSessionStartedAt=await getSetting('trackerSessionStartedAt',null);
+  applyTrackerCollapsedState();
+  applyTrackerPosition(await getSetting('trackerPos',null));
+  await _checkTrackerMidnightRollover(); // may clear _trackerSessionActive if it's a new day
+  // No auto-prompt here on purpose — starting a session is always a deliberate click on the
+  // widget's own "Start session" button (see offerTrackerSessionStart), never something that
+  // pops up unprompted on page load/refresh.
+}
+function applyTrackerPosition(pos){
+  var el=document.getElementById('trade-tracker');
+  if(!el||!pos||typeof pos.left!=='number'||typeof pos.top!=='number')return;
+  var l=Math.max(4,Math.min(window.innerWidth-60,pos.left));
+  var t=Math.max(4,Math.min(window.innerHeight-40,pos.top));
+  el.style.left=l+'px';el.style.top=t+'px';el.style.right='auto';el.style.bottom='auto';
+}
+function applyTrackerCollapsedState(){
+  var el=document.getElementById('trade-tracker'),btn=document.getElementById('tt-collapse-btn');
+  if(!el)return;
+  el.classList.toggle('tt-collapsed',_trackerCollapsed);
+  if(btn)btn.textContent=_trackerCollapsed?'+':'–';
+}
+function toggleTrackerCollapse(){
+  _trackerCollapsed=!_trackerCollapsed;
+  setSetting('trackerCollapsed',_trackerCollapsed);
+  applyTrackerCollapsedState();
+}
+// A session can't silently span two calendar days — polled every minute (see the interval
+// near the drag handler below) plus checked once on load, so "reset daily at midnight" holds
+// even if the tab is left open straight through it.
+async function _checkTrackerMidnightRollover(){
+  if(!_trackerSessionActive||!_trackerSessionStartedAt)return;
+  var startedDay=_dashDayKey(new Date(_trackerSessionStartedAt));
+  var todayDay=_dashDayKey(new Date());
+  if(startedDay!==todayDay){
+    _trackerSessionActive=false;
+    await setSetting('trackerSessionActive',false);
+    renderTracker(); // widget drops to "No active session" — starting the next one is manual
+  }
+}
+function offerTrackerSessionStart(){
+  var m=document.getElementById('tracker-session-modal');
+  if(!m)return;
+  var inp=document.getElementById('tracker-session-goal-inp');
+  if(inp)inp.value=_trackerGoal||3;
+  m.classList.add('open');
+}
+function dismissTrackerSessionPrompt(){
+  var m=document.getElementById('tracker-session-modal');
+  if(m)m.classList.remove('open');
+}
+async function startTrackerSession(){
+  var inp=document.getElementById('tracker-session-goal-inp');
+  var val=inp?parseInt(inp.value,10):NaN;
+  if(!val||val<1)val=3;
+  _trackerGoal=val;
+  _trackerSessionActive=true;
+  _trackerSessionStartedAt=new Date().toISOString();
+  await Promise.all([
+    setSetting('trackerGoal',val),
+    setSetting('trackerSessionActive',true),
+    setSetting('trackerSessionStartedAt',_trackerSessionStartedAt)
+  ]);
+  dismissTrackerSessionPrompt();
+  renderTracker();
+}
+async function endTrackerSession(){
+  _trackerSessionActive=false;
+  await setSetting('trackerSessionActive',false);
+  renderTracker();
+}
+function _trackerSessionCompletedCount(allTrades){
+  if(!_trackerSessionActive||!_trackerSessionStartedAt)return 0;
+  var startMs=new Date(_trackerSessionStartedAt).getTime();
+  var n=0;
+  allTrades.forEach(function(t){
+    var raw=t.loggedAt||t.savedAt||t.entryTime;
+    if(!raw)return;
+    var d=new Date(raw);
+    if(!isNaN(d)&&d.getTime()>=startMs&&t.exitPrice)n++;
+  });
+  return n;
+}
+// Deterministic per-session pick (not Math.random()) so the same message stays put across
+// re-renders within one session instead of changing every time the widget refreshes.
+function _pickTrackerMessage(seed){
+  seed=seed||'x';
+  var h=0;
+  for(var i=0;i<seed.length;i++)h=(h*31+seed.charCodeAt(i))>>>0;
+  return TRACKER_HIT_MESSAGES[h%TRACKER_HIT_MESSAGES.length];
+}
+async function renderTracker(){
+  var allTrades=[];
+  try{allTrades=await dbGetAllCached('trades');}catch(e){}
+  _updateTrackerDOM(_trackerSessionCompletedCount(allTrades));
+}
+function _updateTrackerDOM(completed){
+  var widget=document.getElementById('trade-tracker');
+  var inactiveEl=document.getElementById('tt-inactive'),activeEl=document.getElementById('tt-active-content'),
+      endBtn=document.getElementById('tt-end-btn');
+  var dotsEl=document.getElementById('tt-dots'),barTrack=document.getElementById('tt-bar-track'),
+      barFill=document.getElementById('tt-bar-fill'),countRow=document.getElementById('tt-count-row'),
+      hitMsgEl=document.getElementById('tt-hit-msg');
+  if(!widget)return;
+  if(!_trackerSessionActive){
+    widget.classList.remove('tt-hit');
+    if(inactiveEl)inactiveEl.style.display='';
+    if(activeEl)activeEl.style.display='none';
+    if(endBtn)endBtn.style.display='none';
+    return;
+  }
+  if(inactiveEl)inactiveEl.style.display='none';
+  if(activeEl)activeEl.style.display='';
+  if(endBtn)endBtn.style.display='';
+  if(!dotsEl||!countRow)return;
+  var goal=_trackerGoal||0;
+  var hit=goal>0&&completed>=goal;
+  widget.classList.toggle('tt-hit',hit);
+  if(goal>0&&goal<=20){
+    dotsEl.style.display='';if(barTrack)barTrack.style.display='none';
+    var html='';
+    for(var i=0;i<goal;i++)html+='<div class="tt-dot'+(i<completed?' filled':'')+'"></div>';
+    dotsEl.innerHTML=html;
+  } else if(goal>20){
+    dotsEl.style.display='none';if(barTrack)barTrack.style.display='';
+    if(barFill)barFill.style.width=Math.min(100,(completed/goal)*100)+'%';
+  } else {
+    dotsEl.style.display='none';if(barTrack)barTrack.style.display='none';
+  }
+  countRow.innerHTML='<span class="tt-count" onclick="editTrackerGoal()" title="Click to change your goal">'+completed+' / '+(goal||'—')+' trades this session</span>';
+  if(hit){
+    var msg=_pickTrackerMessage(_trackerSessionStartedAt);
+    if(hitMsgEl)hitMsgEl.textContent=msg;
+    _maybeCelebrateTrackerGoal(msg);
+  }
+}
+function editTrackerGoal(){
+  var countRow=document.getElementById('tt-count-row');
+  if(!countRow)return;
+  countRow.innerHTML='<div class="tt-goal-edit"><input type="number" min="1" max="999" id="tt-goal-inp" value="'+(_trackerGoal||3)+'"><button type="button" class="tt-icon-btn" onclick="saveTrackerGoal()" title="Save">✓</button></div>';
+  var inp=document.getElementById('tt-goal-inp');
+  if(inp){
+    inp.focus();inp.select();
+    inp.onkeydown=function(e){if(e.key==='Enter')saveTrackerGoal();};
+  }
+}
+async function saveTrackerGoal(){
+  var inp=document.getElementById('tt-goal-inp');
+  var val=inp?parseInt(inp.value,10):NaN;
+  if(!val||val<1)val=3;
+  _trackerGoal=val;
+  await setSetting('trackerGoal',val);
+  renderTracker();
+}
+// Fires at most once per SESSION (keyed by the session's start timestamp, not the calendar
+// day) — renderTracker() may re-check "is the goal hit" many times within one session (every
+// save, every page load), but the person should only see this once per sitting. A new
+// session naturally gets a fresh celebratory moment when it hits its own goal.
+function _maybeCelebrateTrackerGoal(msg){
+  try{
+    var key='tj-tracker-goal-celebrated-session';
+    if(localStorage.getItem(key)===_trackerSessionStartedAt)return;
+    localStorage.setItem(key,_trackerSessionStartedAt);
+    toast(msg,'ok');
+  }catch(e){}
+}
+if(!window._ttMidnightCheckRegistered){
+  window._ttMidnightCheckRegistered=true;
+  setInterval(_checkTrackerMidnightRollover,60000);
+}
+if(!window._ttDragRegistered){
+  window._ttDragRegistered=true;
+  (function(){
+    var dragging=false,offsetX=0,offsetY=0,widget=null;
+    function start(e){
+      widget=document.getElementById('trade-tracker');
+      if(!widget)return;
+      dragging=true;
+      var rect=widget.getBoundingClientRect();
+      var p=e.touches?e.touches[0]:e;
+      offsetX=p.clientX-rect.left;offsetY=p.clientY-rect.top;
+      document.addEventListener('mousemove',move);
+      document.addEventListener('mouseup',stop);
+      document.addEventListener('touchmove',move,{passive:false});
+      document.addEventListener('touchend',stop);
+    }
+    function move(e){
+      if(!dragging||!widget)return;
+      if(e.cancelable)e.preventDefault();
+      var p=e.touches?e.touches[0]:e;
+      var x=p.clientX-offsetX,y=p.clientY-offsetY;
+      x=Math.max(4,Math.min(window.innerWidth-widget.offsetWidth-4,x));
+      y=Math.max(4,Math.min(window.innerHeight-widget.offsetHeight-4,y));
+      widget.style.left=x+'px';widget.style.top=y+'px';
+      widget.style.right='auto';widget.style.bottom='auto';
+    }
+    function stop(){
+      if(widget){
+        var rect=widget.getBoundingClientRect();
+        setSetting('trackerPos',{left:rect.left,top:rect.top});
+      }
+      dragging=false;widget=null;
+      document.removeEventListener('mousemove',move);
+      document.removeEventListener('mouseup',stop);
+      document.removeEventListener('touchmove',move);
+      document.removeEventListener('touchend',stop);
+    }
+    var handle=document.getElementById('tt-drag-handle');
+    if(handle){
+      handle.addEventListener('mousedown',start);
+      handle.addEventListener('touchstart',start,{passive:true});
+    }
+  })();
 }
 function _dashRenderHabitStreak(allTrades){
   var el=document.getElementById('dash-habit-streak');
@@ -14497,7 +14812,7 @@ async function refreshUI(){
   // renderHistory()/renderDashboard() below score every trade's setup rating straight from
   // these in-memory caches (see computeSetupScoreInfo), not from a fresh read.
   await Promise.all([loadSetupRatingsCache(),loadClAllItemsCache()]);
-  await Promise.all([renderDashboard(),updateSidebarStats(),populateSessionSelects(),renderHistory(),populatePairSelect(),populateStrategySelect(),populateErrorTypeSelect(),populateEmotionPills(),loadShortcutsConfig(),loadBreakSettings()]);
+  await Promise.all([renderDashboard(),updateSidebarStats(),populateSessionSelects(),renderHistory(),populatePairSelect(),populateStrategySelect(),populateErrorTypeSelect(),populateEmotionPills(),loadShortcutsConfig(),loadBreakSettings(),loadTrackerSettings().then(renderTracker)]);
   // Watchlists live in the same generic 'settings' store as everything else refreshUI()
   // covers, so a pull/restore/merge that changed them needs the page re-rendered too if open.
   if(_currentPage==='watchlist'&&typeof wlInit==='function')wlInit();
@@ -15299,7 +15614,7 @@ if(!window._tjKeydownListenerRegistered){
     closeDetail();return;
   }
   if(document.getElementById('retro-view-overlay').classList.contains('open')){closeRetroView();return;}
-  var modalIds=['theme-modal','col-manager-modal','session-modal','strategy-modal','asset-modal','shortcuts-modal','break-modal'];
+  var modalIds=['theme-modal','col-manager-modal','session-modal','strategy-modal','asset-modal','shortcuts-modal','break-modal','tracker-session-modal'];
   for(var i=0;i<modalIds.length;i++){
     var m=document.getElementById(modalIds[i]);
     if(m&&m.classList.contains('open')){
@@ -15648,6 +15963,8 @@ openDB().then(async function(){
   await populateEmotionPills();
   await loadShortcutsConfig();
   await loadBreakSettings();
+  await loadTrackerSettings();
+  await renderTracker();
   await populateSessionSelects();
   await populateFilters();
   restoreHistFilterPrefs();
