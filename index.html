@@ -594,6 +594,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .tt-goal-edit input{width:46px;padding:3px 6px;font-size:11px}
 .tt-hit-msg{font-size:11px;color:var(--green);font-weight:600;margin-top:5px;display:none}
 .trade-tracker.tt-hit .tt-hit-msg{display:block}
+/* Optional session deadline countdown — shown under the count row only when a time limit was
+   set at session start. Amber while a break has it paused, red once time's run out. */
+.tt-timer{font-size:11px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text3);margin-top:5px}
+.tt-timer.tt-timer-paused{color:var(--amber)}
+.tt-timer.tt-timer-overdue{color:var(--red)}
 .img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:7px;margin-bottom:7px}
 .img-thumb{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);aspect-ratio:16/10}
 .img-thumb img{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer;transition:opacity .12s}
@@ -5585,6 +5590,11 @@ function fxsOnConfirmChange(){
 }
 function fxsProceedToChecklist(skip){
   _flowActive=true;
+  // Carry the date picked for the economic-calendar check through to the Log Trade form's
+  // entry-date field (see calcLogTrade) — only the date; entry time is untouched since this
+  // page only ever collects a date, never a time.
+  var fxsDateInp=document.getElementById('fxs-date-input');
+  _flowFxsDate=(fxsDateInp&&fxsDateInp.value)?fxsDateInp.value:null;
   // Navigate to pre-checklist as step 2
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   var btn=document.getElementById('nav-pre-checklist');if(btn)btn.classList.add('active');
@@ -6203,6 +6213,7 @@ document.addEventListener('DOMContentLoaded',function(){
       <div class="tt-dots" id="tt-dots"></div>
       <div class="tt-bar-track" id="tt-bar-track" style="display:none"><div class="tt-bar-fill" id="tt-bar-fill" style="width:0%"></div></div>
       <div class="tt-count-row" id="tt-count-row"></div>
+      <div class="tt-timer" id="tt-timer" style="display:none"></div>
       <div class="tt-hit-msg" id="tt-hit-msg"></div>
     </div>
   </div>
@@ -6217,6 +6228,10 @@ document.addEventListener('DOMContentLoaded',function(){
     <div class="frow" style="text-align:left;margin-bottom:16px">
       <label class="flabel">Trades to complete</label>
       <input type="number" min="1" max="999" id="tracker-session-goal-inp" value="3">
+    </div>
+    <div class="frow" style="text-align:left;margin-bottom:16px">
+      <label class="flabel">Time limit (minutes) <span style="color:var(--text3);font-weight:400">— optional</span></label>
+      <input type="number" min="1" max="999" id="tracker-session-deadline-inp" placeholder="No limit">
     </div>
     <div style="display:flex;gap:8px;justify-content:center">
       <button class="btn btn-primary" onclick="startTrackerSession()">Start session</button>
@@ -9146,6 +9161,7 @@ function nav(id,btn){
     _pendingChecklistState=null;
     _flowCalcSnapshot=null;
     _flowLogSnapshot=null;
+    _flowFxsDate=null;
     flowUpdateStepIndicators();
     var calcBanner=document.getElementById('calc-flow-banner');
     if(calcBanner)calcBanner.style.display='none';
@@ -11233,6 +11249,11 @@ function _dashTodayTradeCount(allTrades){
 // actually CLOSED OUT (has exitPrice) and were logged after the session started — a pending
 // entry isn't "completed" yet.
 var _trackerGoal=3,_trackerCollapsed=false,_trackerSessionActive=false,_trackerSessionStartedAt=null;
+// Optional per-session deadline (minutes). _trackerDeadlinePausedMs accumulates time spent on
+// completed breaks; _trackerDeadlinePauseStartedAt is set while a break is currently running
+// (see startBreak/_pauseTrackerDeadline/_resumeTrackerDeadline below) so the countdown freezes
+// for the break's duration instead of ticking through it.
+var _trackerDeadlineMinutes=null,_trackerDeadlinePausedMs=0,_trackerDeadlinePauseStartedAt=null,_trackerDeadlineInterval=null;
 var TRACKER_HIT_MESSAGES=[
   "🎯 Goal crushed — that's disciplined, consistent work.",
   "🎯 Nailed it. You showed up and did the reps.",
@@ -11246,12 +11267,20 @@ async function loadTrackerSettings(){
   _trackerCollapsed=await getSetting('trackerCollapsed',false);
   _trackerSessionActive=await getSetting('trackerSessionActive',false);
   _trackerSessionStartedAt=await getSetting('trackerSessionStartedAt',null);
+  _trackerDeadlineMinutes=await getSetting('trackerDeadlineMinutes',null);
+  _trackerDeadlinePausedMs=await getSetting('trackerDeadlinePausedMs',0);
+  _trackerDeadlinePauseStartedAt=await getSetting('trackerDeadlinePauseStartedAt',null);
+  // The break modal itself isn't persisted across a reload — if the page was refreshed mid-
+  // break, that break is gone with no "resume" click left to fire. Don't leave the deadline
+  // stuck paused forever with nothing left to unpause it.
+  if(_trackerDeadlinePauseStartedAt)_resumeTrackerDeadline();
   applyTrackerCollapsedState();
   applyTrackerPosition(await getSetting('trackerPos',null));
   await _checkTrackerMidnightRollover(); // may clear _trackerSessionActive if it's a new day
   // No auto-prompt here on purpose — starting a session is always a deliberate click on the
   // widget's own "Start session" button (see offerTrackerSessionStart), never something that
   // pops up unprompted on page load/refresh.
+  _ensureTrackerDeadlineTicking();
 }
 function applyTrackerPosition(pos){
   var el=document.getElementById('trade-tracker');
@@ -11280,8 +11309,15 @@ async function _checkTrackerMidnightRollover(){
   var todayDay=_dashDayKey(new Date());
   if(startedDay!==todayDay){
     _trackerSessionActive=false;
-    await setSetting('trackerSessionActive',false);
+    _trackerDeadlineMinutes=null;_trackerDeadlinePausedMs=0;_trackerDeadlinePauseStartedAt=null;
+    await Promise.all([
+      setSetting('trackerSessionActive',false),
+      setSetting('trackerDeadlineMinutes',null),
+      setSetting('trackerDeadlinePausedMs',0),
+      setSetting('trackerDeadlinePauseStartedAt',null)
+    ]);
     renderTracker(); // widget drops to "No active session" — starting the next one is manual
+    _ensureTrackerDeadlineTicking();
   }
 }
 function offerTrackerSessionStart(){
@@ -11289,6 +11325,8 @@ function offerTrackerSessionStart(){
   if(!m)return;
   var inp=document.getElementById('tracker-session-goal-inp');
   if(inp)inp.value=_trackerGoal||3;
+  var deadlineInp=document.getElementById('tracker-session-deadline-inp');
+  if(deadlineInp)deadlineInp.value=_trackerDeadlineMinutes||'';
   m.classList.add('open');
 }
 function dismissTrackerSessionPrompt(){
@@ -11299,21 +11337,37 @@ async function startTrackerSession(){
   var inp=document.getElementById('tracker-session-goal-inp');
   var val=inp?parseInt(inp.value,10):NaN;
   if(!val||val<1)val=3;
+  var deadlineInp=document.getElementById('tracker-session-deadline-inp');
+  var deadlineVal=deadlineInp?parseInt(deadlineInp.value,10):NaN;
+  _trackerDeadlineMinutes=(deadlineVal&&deadlineVal>0)?deadlineVal:null;
+  _trackerDeadlinePausedMs=0;
+  _trackerDeadlinePauseStartedAt=null;
   _trackerGoal=val;
   _trackerSessionActive=true;
   _trackerSessionStartedAt=new Date().toISOString();
   await Promise.all([
     setSetting('trackerGoal',val),
     setSetting('trackerSessionActive',true),
-    setSetting('trackerSessionStartedAt',_trackerSessionStartedAt)
+    setSetting('trackerSessionStartedAt',_trackerSessionStartedAt),
+    setSetting('trackerDeadlineMinutes',_trackerDeadlineMinutes),
+    setSetting('trackerDeadlinePausedMs',0),
+    setSetting('trackerDeadlinePauseStartedAt',null)
   ]);
   dismissTrackerSessionPrompt();
   renderTracker();
+  _ensureTrackerDeadlineTicking();
 }
 async function endTrackerSession(){
   _trackerSessionActive=false;
-  await setSetting('trackerSessionActive',false);
+  _trackerDeadlineMinutes=null;_trackerDeadlinePausedMs=0;_trackerDeadlinePauseStartedAt=null;
+  await Promise.all([
+    setSetting('trackerSessionActive',false),
+    setSetting('trackerDeadlineMinutes',null),
+    setSetting('trackerDeadlinePausedMs',0),
+    setSetting('trackerDeadlinePauseStartedAt',null)
+  ]);
   renderTracker();
+  _ensureTrackerDeadlineTicking();
 }
 function _trackerSessionCompletedCount(allTrades){
   if(!_trackerSessionActive||!_trackerSessionStartedAt)return 0;
@@ -11397,6 +11451,49 @@ async function saveTrackerGoal(){
   _trackerGoal=val;
   await setSetting('trackerGoal',val);
   renderTracker();
+}
+// ── Session deadline countdown ────────────────────────
+// Starts/stops the 1s display tick — separate from renderTracker()'s trade-count updates,
+// since the clock needs to move even when no trade is being saved. Safe to call any time the
+// active/deadline state changes; it just tears down and re-evaluates whether a tick is needed.
+function _ensureTrackerDeadlineTicking(){
+  clearInterval(_trackerDeadlineInterval);_trackerDeadlineInterval=null;
+  if(_trackerSessionActive&&_trackerDeadlineMinutes)_trackerDeadlineInterval=setInterval(_updateTrackerTimerDOM,1000);
+  _updateTrackerTimerDOM();
+}
+function _updateTrackerTimerDOM(){
+  var el=document.getElementById('tt-timer');
+  if(!el)return;
+  if(!_trackerSessionActive||!_trackerDeadlineMinutes){el.style.display='none';return;}
+  var now=Date.now();
+  var startMs=new Date(_trackerSessionStartedAt).getTime();
+  var pausedMs=_trackerDeadlinePausedMs+(_trackerDeadlinePauseStartedAt?(now-_trackerDeadlinePauseStartedAt):0);
+  var remainingMs=_trackerDeadlineMinutes*60000-(now-startMs-pausedMs);
+  var overdue=remainingMs<0;
+  var absMs=Math.abs(remainingMs);
+  var mnt=Math.floor(absMs/60000),sec=Math.floor((absMs%60000)/1000);
+  var paused=!!_trackerDeadlinePauseStartedAt;
+  el.style.display='';
+  el.textContent=(paused?'⏸ paused ':(overdue?'⏰ +':'⏱ '))+mnt+':'+(sec<10?'0':'')+sec;
+  el.classList.toggle('tt-timer-paused',paused);
+  el.classList.toggle('tt-timer-overdue',!paused&&overdue);
+}
+// Called from the break flow (startBreak) / resumed from skipBreak, the auto-complete branch
+// of the break countdown, and the Escape-key break-modal close — i.e. every way a break can
+// end, whether it finishes on its own or gets cut short manually.
+function _pauseTrackerDeadline(){
+  if(!_trackerSessionActive||!_trackerDeadlineMinutes||_trackerDeadlinePauseStartedAt)return;
+  _trackerDeadlinePauseStartedAt=Date.now();
+  setSetting('trackerDeadlinePauseStartedAt',_trackerDeadlinePauseStartedAt);
+  _updateTrackerTimerDOM();
+}
+function _resumeTrackerDeadline(){
+  if(!_trackerDeadlinePauseStartedAt)return;
+  _trackerDeadlinePausedMs+=Date.now()-_trackerDeadlinePauseStartedAt;
+  _trackerDeadlinePauseStartedAt=null;
+  setSetting('trackerDeadlinePausedMs',_trackerDeadlinePausedMs);
+  setSetting('trackerDeadlinePauseStartedAt',null);
+  _updateTrackerTimerDOM();
 }
 // Fires at most once per SESSION (keyed by the session's start timestamp, not the calendar
 // day) — renderTracker() may re-check "is the goal hit" many times within one session (every
@@ -15619,7 +15716,7 @@ if(!window._tjKeydownListenerRegistered){
     var m=document.getElementById(modalIds[i]);
     if(m&&m.classList.contains('open')){
       m.classList.remove('open');
-      if(modalIds[i]==='break-modal'&&typeof _breakInterval!=='undefined'&&_breakInterval){clearInterval(_breakInterval);_breakInterval=null;try{document.title=_origTitle;}catch(e){}}
+      if(modalIds[i]==='break-modal'&&typeof _breakInterval!=='undefined'&&_breakInterval){clearInterval(_breakInterval);_breakInterval=null;_resumeTrackerDeadline();try{document.title=_origTitle;}catch(e){}}
       // Discard session modal input changes by re-rendering (no save occurred)
       return;
     }
@@ -15698,6 +15795,7 @@ function _renderBreakDurationPicker(){
 function startBreak(){
   document.getElementById('break-prompt-view').style.display='none';
   document.getElementById('break-timer-view').style.display='';
+  _pauseTrackerDeadline(); // freeze the session deadline countdown for the length of the break
   _breakSecondsLeft=_breakMinutes*60;
   _updateBreakDisplay();
   // Reward message — shown alongside the countdown for the rest of the break. Whatever's
@@ -15733,6 +15831,7 @@ function startBreak(){
     _updateBreakDisplay();
     if(_breakSecondsLeft<=0){
       clearInterval(_breakInterval);_breakInterval=null;
+      _resumeTrackerDeadline(); // break ended on its own — unfreeze the session deadline
       document.getElementById('break-timer-view').style.display='none';
       document.getElementById('break-done-view').style.display='';
       var doneMsgEl=document.getElementById('break-done-message');
@@ -15791,6 +15890,7 @@ function _playBreakChime(){
 }
 function skipBreak(){
   clearInterval(_breakInterval);_breakInterval=null;
+  _resumeTrackerDeadline(); // no-op if no break was actually running (e.g. skipped from the prompt)
   var m=document.getElementById('break-modal');if(m)m.classList.remove('open');
   try{document.title=_origTitle;}catch(e){}
 }
@@ -17159,6 +17259,8 @@ var _pendingChecklistState = null; // carries checklist state from pre-checklist
 var _flowActive = false;           // true while in pre-check → calc → log flow
 var _flowCalcSnapshot = null;      // snapshot of calc-filled log fields for re-applying on forward
 var _flowLogSnapshot = null;       // snapshot of log form fields when going back to calc mid-flow
+var _flowFxsDate = null;           // date picked on the economic-calendar step (fxs-date-input),
+                                    // carried through to Log Trade's entry-date field on arrival
 // ── Update step indicator visuals across all flow banners ──────────────────
 function flowUpdateStepIndicators(){
   var hasCalc = !!_flowCalcSnapshot;
@@ -17511,6 +17613,10 @@ async function calcLogTrade(){
   var slEl   =document.getElementById('f-sl-price');  if(slEl)    slEl.value    = sl;
   var qtyEl  =document.getElementById('f-qty');       if(qtyEl)   qtyEl.value   = calcLastUnits;
   var trrEl  =document.getElementById('f-trr');       if(trrEl&&capturedRR) trrEl.value = capturedRR;
+  // Pre-fill entry date from the economic-calendar step's date — time is left as-is since
+  // that page only ever collects a date.
+  var etimeDateEl=document.getElementById('f-etime-date');
+  if(etimeDateEl&&_flowFxsDate) etimeDateEl.value=_flowFxsDate;
   // Pair select — exact match then case-insensitive fallback
   if(pairSym){
     var pairSel=document.getElementById('f-pair');
