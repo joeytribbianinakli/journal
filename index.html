@@ -6199,6 +6199,7 @@ document.addEventListener('DOMContentLoaded',function(){
 <div class="trade-tracker" id="trade-tracker">
   <div class="tt-header" id="tt-drag-handle">
     <span class="tt-title">Session goal</span>
+    <button type="button" class="tt-icon-btn" id="tt-pause-btn" onclick="toggleTrackerTimerPause()" title="Pause timer" style="display:none;padding:2px 3px;font-size:13px"></button>
     <button type="button" class="tt-icon-btn" onclick="endTrackerSession()" id="tt-end-btn" title="End session" style="display:none">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
     </button>
@@ -6213,7 +6214,9 @@ document.addEventListener('DOMContentLoaded',function(){
       <div class="tt-dots" id="tt-dots"></div>
       <div class="tt-bar-track" id="tt-bar-track" style="display:none"><div class="tt-bar-fill" id="tt-bar-fill" style="width:0%"></div></div>
       <div class="tt-count-row" id="tt-count-row"></div>
-      <div class="tt-timer" id="tt-timer" style="display:none"></div>
+      <div class="tt-timer-row" style="display:flex;align-items:center;gap:6px">
+        <div class="tt-timer" id="tt-timer" style="display:none"></div>
+      </div>
       <div class="tt-hit-msg" id="tt-hit-msg"></div>
     </div>
   </div>
@@ -10288,6 +10291,8 @@ async function saveTrade(){
   if(!planIf){toast('Trade plan "if" is required (Analysis tab)','err');switchTab(2,null);return;}
   var planIfThen=document.getElementById('plan-if-then').value.trim();
   if(!planIfThen){toast('Trade plan "then" is required (Analysis tab)','err');switchTab(2,null);return;}
+  var biasIsSet=Object.keys(biasState.narrative||{}).some(function(tf){return biasState.narrative[tf]&&biasState.narrative[tf]!=='neutral';});
+  if(!biasIsSet){toast('Narrative bias is required — set at least one TF (Analysis tab)','err');switchTab(2,null);return;}
   // Tab 3 (Reflection) — before/after-entry emotions are always required (you already know
   // how you felt going in, whether or not the trade has closed yet). "After trade completed"
   // is required only when this save actually represents a completed trade (see the combined
@@ -11253,7 +11258,7 @@ var _trackerGoal=3,_trackerCollapsed=false,_trackerSessionActive=false,_trackerS
 // completed breaks; _trackerDeadlinePauseStartedAt is set while a break is currently running
 // (see startBreak/_pauseTrackerDeadline/_resumeTrackerDeadline below) so the countdown freezes
 // for the break's duration instead of ticking through it.
-var _trackerDeadlineMinutes=null,_trackerDeadlinePausedMs=0,_trackerDeadlinePauseStartedAt=null,_trackerDeadlineInterval=null;
+var _trackerDeadlineMinutes=null,_trackerDeadlinePausedMs=0,_trackerDeadlinePauseStartedAt=null,_trackerDeadlineInterval=null,_trackerManualPause=false;
 var TRACKER_HIT_MESSAGES=[
   "🎯 Goal crushed — that's disciplined, consistent work.",
   "🎯 Nailed it. You showed up and did the reps.",
@@ -11270,10 +11275,12 @@ async function loadTrackerSettings(){
   _trackerDeadlineMinutes=await getSetting('trackerDeadlineMinutes',null);
   _trackerDeadlinePausedMs=await getSetting('trackerDeadlinePausedMs',0);
   _trackerDeadlinePauseStartedAt=await getSetting('trackerDeadlinePauseStartedAt',null);
+  _trackerManualPause=await getSetting('trackerDeadlineManualPause',false);
   // The break modal itself isn't persisted across a reload — if the page was refreshed mid-
   // break, that break is gone with no "resume" click left to fire. Don't leave the deadline
-  // stuck paused forever with nothing left to unpause it.
-  if(_trackerDeadlinePauseStartedAt)_resumeTrackerDeadline();
+  // stuck paused forever with nothing left to unpause it. A manual pause (the tt-pause-btn)
+  // has no such expiry though, so it should survive a refresh untouched.
+  if(_trackerDeadlinePauseStartedAt&&!_trackerManualPause)_resumeTrackerDeadline();
   applyTrackerCollapsedState();
   applyTrackerPosition(await getSetting('trackerPos',null));
   await _checkTrackerMidnightRollover(); // may clear _trackerSessionActive if it's a new day
@@ -11463,8 +11470,9 @@ function _ensureTrackerDeadlineTicking(){
 }
 function _updateTrackerTimerDOM(){
   var el=document.getElementById('tt-timer');
+  var btn=document.getElementById('tt-pause-btn');
   if(!el)return;
-  if(!_trackerSessionActive||!_trackerDeadlineMinutes){el.style.display='none';return;}
+  if(!_trackerSessionActive||!_trackerDeadlineMinutes){el.style.display='none';if(btn)btn.style.display='none';return;}
   var now=Date.now();
   var startMs=new Date(_trackerSessionStartedAt).getTime();
   var pausedMs=_trackerDeadlinePausedMs+(_trackerDeadlinePauseStartedAt?(now-_trackerDeadlinePauseStartedAt):0);
@@ -11477,22 +11485,33 @@ function _updateTrackerTimerDOM(){
   el.textContent=(paused?'⏸ paused ':(overdue?'⏰ +':'⏱ '))+mnt+':'+(sec<10?'0':'')+sec;
   el.classList.toggle('tt-timer-paused',paused);
   el.classList.toggle('tt-timer-overdue',!paused&&overdue);
+  if(btn){btn.style.display='';btn.textContent=paused?'▶':'⏸';btn.title=paused?'Resume timer':'Pause timer';}
+}
+// Manual pause/resume toggle for the session deadline timer (tt-pause-btn), on top of the
+// automatic pause/resume the break flow already does.
+function toggleTrackerTimerPause(){
+  if(_trackerDeadlinePauseStartedAt)_resumeTrackerDeadline();else _pauseTrackerDeadline(true);
 }
 // Called from the break flow (startBreak) / resumed from skipBreak, the auto-complete branch
-// of the break countdown, and the Escape-key break-modal close — i.e. every way a break can
-// end, whether it finishes on its own or gets cut short manually.
-function _pauseTrackerDeadline(){
+// of the break countdown, the Escape-key break-modal close, and the manual tt-pause-btn toggle
+// above — i.e. every way the deadline clock can stop or start. `manual` marks the tt-pause-btn
+// case so loadTrackerSettings() knows not to auto-resume it on the next page load.
+function _pauseTrackerDeadline(manual){
   if(!_trackerSessionActive||!_trackerDeadlineMinutes||_trackerDeadlinePauseStartedAt)return;
   _trackerDeadlinePauseStartedAt=Date.now();
+  _trackerManualPause=!!manual;
   setSetting('trackerDeadlinePauseStartedAt',_trackerDeadlinePauseStartedAt);
+  setSetting('trackerDeadlineManualPause',_trackerManualPause);
   _updateTrackerTimerDOM();
 }
 function _resumeTrackerDeadline(){
   if(!_trackerDeadlinePauseStartedAt)return;
   _trackerDeadlinePausedMs+=Date.now()-_trackerDeadlinePauseStartedAt;
   _trackerDeadlinePauseStartedAt=null;
+  _trackerManualPause=false;
   setSetting('trackerDeadlinePausedMs',_trackerDeadlinePausedMs);
   setSetting('trackerDeadlinePauseStartedAt',null);
+  setSetting('trackerDeadlineManualPause',false);
   _updateTrackerTimerDOM();
 }
 // Fires at most once per SESSION (keyed by the session's start timestamp, not the calendar
@@ -18033,6 +18052,9 @@ function calcCalc(){
 // ══ GitHub Sync ═══════════════════════════════════
 var GH_FILE='tj_data.json';
 var GH_CONFIG_FILE='tj_config.json';       // live config (always overwritten)
+// Settings keys already stored (as named fields) in tj_config.json via ghBuildConfigPayload().
+// Kept out of tj_data.json's blanket settings dump below so they aren't duplicated across files.
+var GH_CONFIG_KEYS=['tj-theme','tj-theme-brightness','tj-theme-contrast','tj-cal-default-view','tj-mc-defaults','tj-calc-capital','tj-demo-defaults'];
 var GH_BKP_CONFIG_FILE='bkp/config_backup.json'; // single config backup (always overwritten)
 var GH_ALERTS_FILE='tjalert.json';         // live alerts (always overwritten)
 var GH_BKP_ALERTS_FILE='bkp/alerts_backup.json'; // single alerts backup (manual backup only)
@@ -18650,7 +18672,17 @@ async function ghBuildPayload(){
   var trades=await dbGetAll('trades'),images=await dbGetAll('images'),sessions=await dbGetAll('sessions');
   // Watchlists are backed up separately (bkp/watchlist_backup.json / ghBuildWatchlistPayload()) —
   // excluded here so they aren't duplicated inside tj_data.json's settings dump.
-  var settings=(await dbGetAll('settings')).filter(function(s){return s.id!=='watchlists';});
+  // Tracker* keys are the floating session-goal tracker's live state (goal, deadline, pause
+  // timestamps, on-screen position, whether a session is active) — purely local/device-specific
+  // and never meant to leave this browser, so they're excluded too. GH_CONFIG_KEYS (theme,
+  // brightness/contrast, calendar view, calc/demo defaults) already live in tj_config.json
+  // (ghBuildConfigPayload) — excluded here so they aren't stored twice.
+  var settings=(await dbGetAll('settings')).filter(function(s){
+    if(s.id==='watchlists')return false;
+    if(s.id.indexOf('tracker')===0)return false;
+    if(GH_CONFIG_KEYS.indexOf(s.id)!==-1)return false;
+    return true;
+  });
   var localData={};
   // Strip base64 data from images that have a Cloudinary URL — keeps the backup lean
   var imagesForGH=images.map(function(img){
