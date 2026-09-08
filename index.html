@@ -594,8 +594,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .tt-goal-edit input{width:46px;padding:3px 6px;font-size:11px}
 .tt-hit-msg{font-size:11px;color:var(--green);font-weight:600;margin-top:5px;display:none}
 .trade-tracker.tt-hit .tt-hit-msg{display:block}
-/* Optional session deadline countdown — shown under the count row only when a time limit was
-   set at session start. Amber while a break has it paused, red once time's run out. */
+/* Session clock, shown under the count row — a countdown when the session is time-boxed, or a
+   plain elapsed-time stopwatch when it's trade-count-bound instead (the two are exclusive).
+   Amber while a break has it paused, red once a time-boxed session's clock runs out. */
 .tt-timer{font-size:11px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text3);margin-top:5px}
 .tt-timer.tt-timer-paused{color:var(--amber)}
 .tt-timer.tt-timer-overdue{color:var(--red)}
@@ -728,10 +729,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
 .detail-overlay.review-mode .detail-panels{height:100%}
 .detail-overlay.review-mode .detail-panel-left{padding:28px 32px}
 .detail-overlay.review-mode .detail-panel-right{padding:22px}
-.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
-.di-label{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px}
+.di-label{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:1px}
 .di-val{font-size:12px;font-weight:500}
-.detail-section-title{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin:14px 0 8px;padding-top:12px;border-top:1px solid var(--border)}
+.detail-section-title{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin:10px 0 6px;padding-top:8px;border-top:1px solid var(--border)}
 /* ── Modal overlay: generic .modal-overlay/.modal-box wrapper reused by every modal in the app (theme modal, detail modal, etc.) ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:none;align-items:center;justify-content:center;padding:16px}
 .modal-overlay.open{display:flex}
@@ -4199,7 +4200,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.55}
       #page-price-alerts .pa-row-arrow{color:var(--border2);flex-shrink:0;}
       #page-price-alerts .pa-row-inline-bar{flex:1;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;min-width:24px;}
       #page-price-alerts .pa-row-inline-bar .pa-progress-fill{height:100%;border-radius:2px;transition:width .5s;}
-      #page-price-alerts .pa-row-mini-status{font-size:9px;color:var(--text3);white-space:nowrap;flex-shrink:0;font-family:DM Mono,monospace;}
+      #page-price-alerts .pa-row-mini-status{font-size:10px;color:var(--text3);white-space:nowrap;flex-shrink:0;font-family:DM Mono,monospace;}
       #page-price-alerts .pa-row-chev{color:var(--text3);flex-shrink:0;transition:transform .18s;}
       #page-price-alerts .pa-alert-card.pa-expanded .pa-row-chev{transform:rotate(180deg);}
       #page-price-alerts .pa-row-actions{display:flex;gap:3px;margin-left:2px;flex-shrink:0;}
@@ -6229,12 +6230,19 @@ document.addEventListener('DOMContentLoaded',function(){
     <h3 style="margin-bottom:6px">Start a backtesting session?</h3>
     <p style="font-size:12.5px;color:var(--text3);line-height:1.5;margin-bottom:16px">Set a goal for this sitting. The tracker follows along and resets fresh next time you start one.</p>
     <div class="frow" style="text-align:left;margin-bottom:16px">
+      <label class="flabel">Track by</label>
+      <div class="opt-group">
+        <span class="opt-pill opt-gray selected" id="tracker-mode-trades-btn" onclick="setTrackerModeChoice('trades')">Number of trades</span>
+        <span class="opt-pill opt-gray" id="tracker-mode-time-btn" onclick="setTrackerModeChoice('time')">Time limit</span>
+      </div>
+    </div>
+    <div class="frow" style="text-align:left;margin-bottom:16px" id="tracker-goal-row">
       <label class="flabel">Trades to complete</label>
       <input type="number" min="1" max="999" id="tracker-session-goal-inp" value="3">
     </div>
-    <div class="frow" style="text-align:left;margin-bottom:16px">
-      <label class="flabel">Time limit (minutes) <span style="color:var(--text3);font-weight:400">— optional</span></label>
-      <input type="number" min="1" max="999" id="tracker-session-deadline-inp" placeholder="No limit">
+    <div class="frow" style="text-align:left;margin-bottom:16px;display:none" id="tracker-deadline-row">
+      <label class="flabel">Time limit (minutes)</label>
+      <input type="number" min="1" max="999" id="tracker-session-deadline-inp" value="60">
     </div>
     <div style="display:flex;gap:8px;justify-content:center">
       <button class="btn btn-primary" onclick="startTrackerSession()">Start session</button>
@@ -11250,14 +11258,20 @@ function _dashTodayTradeCount(allTrades){
 // fresh goal and its own "goal hit" moment. A session is explicitly started/ended (see
 // offerTrackerSessionStart/startTrackerSession/endTrackerSession); it also force-ends at
 // the next midnight even if left open, so "today" always means today (see
-// _checkTrackerMidnightRollover, polled every minute). Progress counts only trades that
-// actually CLOSED OUT (has exitPrice) and were logged after the session started — a pending
-// entry isn't "completed" yet.
+// _checkTrackerMidnightRollover, polled every minute). A session is EITHER trade-count-bound
+// OR time-bound, never both (_trackerMode) — see startTrackerSession(). Progress counts a
+// trade as a completed rep once it's either CLOSED OUT (has exitPrice) or logged as skipped
+// (skipped:true) — either way you did the work of reviewing the setup — and was logged after
+// the session started; a still-pending taken trade isn't "completed" yet.
 var _trackerGoal=3,_trackerCollapsed=false,_trackerSessionActive=false,_trackerSessionStartedAt=null;
-// Optional per-session deadline (minutes). _trackerDeadlinePausedMs accumulates time spent on
-// completed breaks; _trackerDeadlinePauseStartedAt is set while a break is currently running
-// (see startBreak/_pauseTrackerDeadline/_resumeTrackerDeadline below) so the countdown freezes
-// for the break's duration instead of ticking through it.
+var _trackerMode='trades'; // 'trades' (count-bound) or 'time' (deadline-bound) — mutually exclusive per session
+var _trackerModalMode='trades'; // which mode is selected in the (not-yet-started) session-start modal
+var _trackerLastCompleted=0; // last known completed-trade count, used by the time-mode "time's up" message
+// Deadline (minutes), only used when _trackerMode==='time'. _trackerDeadlinePausedMs accumulates
+// time spent on completed breaks; _trackerDeadlinePauseStartedAt is set while a break is currently
+// running (see startBreak/_pauseTrackerDeadline/_resumeTrackerDeadline below) so the countdown
+// (or, in trades mode, the elapsed-time stopwatch) freezes for the break's duration instead of
+// ticking through it.
 var _trackerDeadlineMinutes=null,_trackerDeadlinePausedMs=0,_trackerDeadlinePauseStartedAt=null,_trackerDeadlineInterval=null,_trackerManualPause=false;
 var TRACKER_HIT_MESSAGES=[
   "🎯 Goal crushed — that's disciplined, consistent work.",
@@ -11269,6 +11283,7 @@ var TRACKER_HIT_MESSAGES=[
 ];
 async function loadTrackerSettings(){
   _trackerGoal=await getSetting('trackerGoal',3);
+  _trackerMode=await getSetting('trackerMode','trades');
   _trackerCollapsed=await getSetting('trackerCollapsed',false);
   _trackerSessionActive=await getSetting('trackerSessionActive',false);
   _trackerSessionStartedAt=await getSetting('trackerSessionStartedAt',null);
@@ -11333,27 +11348,50 @@ function offerTrackerSessionStart(){
   var inp=document.getElementById('tracker-session-goal-inp');
   if(inp)inp.value=_trackerGoal||3;
   var deadlineInp=document.getElementById('tracker-session-deadline-inp');
-  if(deadlineInp)deadlineInp.value=_trackerDeadlineMinutes||'';
+  if(deadlineInp)deadlineInp.value=_trackerDeadlineMinutes||60;
+  setTrackerModeChoice(_trackerMode==='time'?'time':'trades');
   m.classList.add('open');
+}
+// Toggles which of the two mutually-exclusive inputs is shown in the (not-yet-started)
+// session-start modal — a session is bound to EITHER a trade count OR a time limit, never both.
+function setTrackerModeChoice(mode){
+  _trackerModalMode=mode==='time'?'time':'trades';
+  var goalRow=document.getElementById('tracker-goal-row');
+  var deadlineRow=document.getElementById('tracker-deadline-row');
+  var tradesBtn=document.getElementById('tracker-mode-trades-btn');
+  var timeBtn=document.getElementById('tracker-mode-time-btn');
+  if(goalRow)goalRow.style.display=_trackerModalMode==='trades'?'':'none';
+  if(deadlineRow)deadlineRow.style.display=_trackerModalMode==='time'?'':'none';
+  if(tradesBtn)tradesBtn.classList.toggle('selected',_trackerModalMode==='trades');
+  if(timeBtn)timeBtn.classList.toggle('selected',_trackerModalMode==='time');
 }
 function dismissTrackerSessionPrompt(){
   var m=document.getElementById('tracker-session-modal');
   if(m)m.classList.remove('open');
 }
 async function startTrackerSession(){
-  var inp=document.getElementById('tracker-session-goal-inp');
-  var val=inp?parseInt(inp.value,10):NaN;
-  if(!val||val<1)val=3;
-  var deadlineInp=document.getElementById('tracker-session-deadline-inp');
-  var deadlineVal=deadlineInp?parseInt(deadlineInp.value,10):NaN;
-  _trackerDeadlineMinutes=(deadlineVal&&deadlineVal>0)?deadlineVal:null;
+  var mode=_trackerModalMode==='time'?'time':'trades';
+  if(mode==='trades'){
+    var inp=document.getElementById('tracker-session-goal-inp');
+    var val=inp?parseInt(inp.value,10):NaN;
+    if(!val||val<1)val=3;
+    _trackerGoal=val;
+    _trackerDeadlineMinutes=null; // exclusive: a trade-count session tracks elapsed time instead, no deadline
+  } else {
+    var deadlineInp=document.getElementById('tracker-session-deadline-inp');
+    var deadlineVal=deadlineInp?parseInt(deadlineInp.value,10):NaN;
+    if(!deadlineVal||deadlineVal<1)deadlineVal=60;
+    _trackerDeadlineMinutes=deadlineVal;
+    _trackerGoal=null; // exclusive: a time-boxed session has no trade-count goal to chart progress toward
+  }
+  _trackerMode=mode;
   _trackerDeadlinePausedMs=0;
   _trackerDeadlinePauseStartedAt=null;
-  _trackerGoal=val;
   _trackerSessionActive=true;
   _trackerSessionStartedAt=new Date().toISOString();
   await Promise.all([
-    setSetting('trackerGoal',val),
+    setSetting('trackerGoal',_trackerGoal),
+    setSetting('trackerMode',_trackerMode),
     setSetting('trackerSessionActive',true),
     setSetting('trackerSessionStartedAt',_trackerSessionStartedAt),
     setSetting('trackerDeadlineMinutes',_trackerDeadlineMinutes),
@@ -11384,7 +11422,9 @@ function _trackerSessionCompletedCount(allTrades){
     var raw=t.loggedAt||t.savedAt||t.entryTime;
     if(!raw)return;
     var d=new Date(raw);
-    if(!isNaN(d)&&d.getTime()>=startMs&&t.exitPrice)n++;
+    // Counts both taken trades (closed out, has exitPrice) and skipped trades (skipped:true) —
+    // either way you completed a rep of reviewing the setup this session.
+    if(!isNaN(d)&&d.getTime()>=startMs&&(t.exitPrice||t.skipped))n++;
   });
   return n;
 }
@@ -11420,6 +11460,15 @@ function _updateTrackerDOM(completed){
   if(activeEl)activeEl.style.display='';
   if(endBtn)endBtn.style.display='';
   if(!dotsEl||!countRow)return;
+  _trackerLastCompleted=completed; // remembered so the time-mode "time's up" message can report the final tally
+  if(_trackerMode==='time'){
+    // Time-boxed session: there's no trade-count goal to chart progress toward, so just show
+    // the raw tally of trades logged (taken + skipped) since the session started. Whether the
+    // clock has run out is handled by the countdown tick in _updateTrackerTimerDOM, not here.
+    dotsEl.style.display='none';if(barTrack)barTrack.style.display='none';
+    countRow.innerHTML='<span class="tt-count">'+completed+' trade'+(completed===1?'':'s')+' this session</span>';
+    return;
+  }
   var goal=_trackerGoal||0;
   var hit=goal>0&&completed>=goal;
   widget.classList.toggle('tt-hit',hit);
@@ -11436,7 +11485,7 @@ function _updateTrackerDOM(completed){
   }
   countRow.innerHTML='<span class="tt-count" onclick="editTrackerGoal()" title="Click to change your goal">'+completed+' / '+(goal||'—')+' trades this session</span>';
   if(hit){
-    var msg=_pickTrackerMessage(_trackerSessionStartedAt);
+    var msg=_pickTrackerMessage(_trackerSessionStartedAt)+' Time spent: '+_fmtTrackerElapsed(_trackerElapsedMs())+'.';
     if(hitMsgEl)hitMsgEl.textContent=msg;
     _maybeCelebrateTrackerGoal(msg);
   }
@@ -11459,45 +11508,68 @@ async function saveTrackerGoal(){
   await setSetting('trackerGoal',val);
   renderTracker();
 }
-// ── Session deadline countdown ────────────────────────
+// ── Session clock: countdown (time mode) or stopwatch (trades mode) ────────────────────────
+// Elapsed time since the session started, minus any paused (break) time — shared by both modes.
+function _trackerElapsedMs(){
+  var now=Date.now();
+  var startMs=new Date(_trackerSessionStartedAt).getTime();
+  var pausedMs=_trackerDeadlinePausedMs+(_trackerDeadlinePauseStartedAt?(now-_trackerDeadlinePauseStartedAt):0);
+  return now-startMs-pausedMs;
+}
+function _fmtTrackerElapsed(ms){
+  ms=Math.max(0,ms);
+  var mnt=Math.floor(ms/60000),sec=Math.floor((ms%60000)/1000);
+  return mnt+':'+(sec<10?'0':'')+sec;
+}
 // Starts/stops the 1s display tick — separate from renderTracker()'s trade-count updates,
 // since the clock needs to move even when no trade is being saved. Safe to call any time the
-// active/deadline state changes; it just tears down and re-evaluates whether a tick is needed.
+// active/mode state changes; it just tears down and re-evaluates whether a tick is needed.
+// Ticks whenever a session is active, regardless of mode — trades-mode sessions show an
+// elapsed-time stopwatch, time-mode sessions show the deadline countdown.
 function _ensureTrackerDeadlineTicking(){
   clearInterval(_trackerDeadlineInterval);_trackerDeadlineInterval=null;
-  if(_trackerSessionActive&&_trackerDeadlineMinutes)_trackerDeadlineInterval=setInterval(_updateTrackerTimerDOM,1000);
+  if(_trackerSessionActive)_trackerDeadlineInterval=setInterval(_updateTrackerTimerDOM,1000);
   _updateTrackerTimerDOM();
 }
 function _updateTrackerTimerDOM(){
   var el=document.getElementById('tt-timer');
   var btn=document.getElementById('tt-pause-btn');
+  var widget=document.getElementById('trade-tracker');
+  var hitMsgEl=document.getElementById('tt-hit-msg');
   if(!el)return;
-  if(!_trackerSessionActive||!_trackerDeadlineMinutes){el.style.display='none';if(btn)btn.style.display='none';return;}
-  var now=Date.now();
-  var startMs=new Date(_trackerSessionStartedAt).getTime();
-  var pausedMs=_trackerDeadlinePausedMs+(_trackerDeadlinePauseStartedAt?(now-_trackerDeadlinePauseStartedAt):0);
-  var remainingMs=_trackerDeadlineMinutes*60000-(now-startMs-pausedMs);
-  var overdue=remainingMs<0;
-  var absMs=Math.abs(remainingMs);
-  var mnt=Math.floor(absMs/60000),sec=Math.floor((absMs%60000)/1000);
+  if(!_trackerSessionActive){el.style.display='none';if(btn)btn.style.display='none';return;}
   var paused=!!_trackerDeadlinePauseStartedAt;
   el.style.display='';
-  el.textContent=(paused?'⏸ paused ':(overdue?'⏰ +':'⏱ '))+mnt+':'+(sec<10?'0':'')+sec;
   el.classList.toggle('tt-timer-paused',paused);
-  el.classList.toggle('tt-timer-overdue',!paused&&overdue);
   if(btn){btn.style.display='';btn.textContent=paused?'▶':'⏸';btn.title=paused?'Resume timer':'Pause timer';}
+  if(_trackerMode==='time'&&_trackerDeadlineMinutes){
+    var remainingMs=_trackerDeadlineMinutes*60000-_trackerElapsedMs();
+    var overdue=remainingMs<0;
+    el.textContent=(paused?'⏸ paused ':(overdue?'⏰ +':'⏱ '))+_fmtTrackerElapsed(Math.abs(remainingMs));
+    el.classList.toggle('tt-timer-overdue',!paused&&overdue);
+    if(widget)widget.classList.toggle('tt-hit',overdue);
+    if(overdue){
+      var msg="⏰ Time's up — "+_trackerLastCompleted+' trade'+(_trackerLastCompleted===1?'':'s')+' logged this session.';
+      if(hitMsgEl)hitMsgEl.textContent=msg;
+      _maybeCelebrateTrackerGoal(msg);
+    }
+  } else {
+    // Trade-count mode: no deadline, so just show elapsed time spent so far as a stopwatch.
+    el.textContent=(paused?'⏸ paused ':'⏱ ')+_fmtTrackerElapsed(_trackerElapsedMs());
+    el.classList.remove('tt-timer-overdue');
+  }
 }
-// Manual pause/resume toggle for the session deadline timer (tt-pause-btn), on top of the
-// automatic pause/resume the break flow already does.
+// Manual pause/resume toggle for the session clock (tt-pause-btn), on top of the automatic
+// pause/resume the break flow already does.
 function toggleTrackerTimerPause(){
   if(_trackerDeadlinePauseStartedAt)_resumeTrackerDeadline();else _pauseTrackerDeadline(true);
 }
 // Called from the break flow (startBreak) / resumed from skipBreak, the auto-complete branch
 // of the break countdown, the Escape-key break-modal close, and the manual tt-pause-btn toggle
-// above — i.e. every way the deadline clock can stop or start. `manual` marks the tt-pause-btn
+// above — i.e. every way the session clock can stop or start. `manual` marks the tt-pause-btn
 // case so loadTrackerSettings() knows not to auto-resume it on the next page load.
 function _pauseTrackerDeadline(manual){
-  if(!_trackerSessionActive||!_trackerDeadlineMinutes||_trackerDeadlinePauseStartedAt)return;
+  if(!_trackerSessionActive||_trackerDeadlinePauseStartedAt)return;
   _trackerDeadlinePauseStartedAt=Date.now();
   _trackerManualPause=!!manual;
   setSetting('trackerDeadlinePauseStartedAt',_trackerDeadlinePauseStartedAt);
@@ -12201,25 +12273,35 @@ async function openDetail(id,opts){
     return html;
   }());
   var leftHtml=
-    '<div class="detail-grid">'
+    '<div class="detail-section-title" style="margin-top:0;padding-top:0;border-top:none">Result</div>'
+    +'<div class="detail-grid">'
+    +'<div class="detail-item"><div class="di-label">Gross P/L ($)</div><div class="di-val mono" style="color:'+plColor+'">'+plStr+'</div></div>'
+    +'<div class="detail-item"><div class="di-label">P/L (%)</div><div class="di-val mono" style="color:'+plColor+'">'+(trade.plPct>=0?'+':'')+trade.plPct.toFixed(2)+'%</div></div>'
+    +'<div class="detail-item"><div class="di-label">Actual RR</div><div class="di-val mono">'+(trade.actualRR!=null?trade.actualRR.toFixed(2)+'R':'—')+'</div></div>'
+    +'<div class="detail-item"><div class="di-label">Target RR</div><div class="di-val mono">'+(trade.targetRR?trade.targetRR+'R':'—')+'</div></div>'
+    +'<div id="dm-fees-inject" style="grid-column:1/-1"></div>'
+    +'</div>'
+    +'<div class="detail-section-title">Price &amp; size</div>'
+    +'<div class="detail-grid">'
     +'<div class="detail-item"><div class="di-label">Entry</div><div class="di-val mono">'+trade.entryPrice+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Exit</div><div class="di-val mono">'+trade.exitPrice+'</div></div>'
     +'<div class="detail-item"><div class="di-label">SL</div><div class="di-val mono">'+(trade.stopLoss||'—')+'</div></div>'
-    +'<div class="detail-item"><div class="di-label">Target RR</div><div class="di-val mono">'+(trade.targetRR?trade.targetRR+'R':'—')+'</div></div>'
-    +'<div class="detail-item"><div class="di-label">Gross P/L ($)</div><div class="di-val mono" style="color:'+plColor+'">'+plStr+'</div></div>'
-    +'<div class="detail-item"><div class="di-label">P/L (%)</div><div class="di-val mono" style="color:'+plColor+'">'+(trade.plPct>=0?'+':'')+trade.plPct.toFixed(2)+'%</div></div>'
-    +'<div id="dm-fees-inject" style="grid-column:1/-1"></div>'
-    +'<div class="detail-item"><div class="di-label">Actual RR</div><div class="di-val mono">'+(trade.actualRR!=null?trade.actualRR.toFixed(2)+'R':'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Risk</div><div class="di-val mono">$'+trade.riskDollar+' / '+trade.riskpct+'%</div></div>'
     +'<div class="detail-item"><div class="di-label">Qty (units)</div><div class="di-val mono">'+(trade.qty||'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Position size</div><div class="di-val mono">'+(function(){var q=parseFloat(trade.qty),e=parseFloat(trade.entryPrice);return(q&&e)?'$'+calcFmt(q*e,2):'—';})()+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Acct balance</div><div class="di-val mono">'+(trade.acct?'$'+parseFloat(trade.acct).toLocaleString():'—')+'</div></div>'
-    +'<div class="detail-item"><div class="di-label">Duration</div><div class="di-val mono">'+(function(){if(!trade.durationMin)return'—';var tot=trade.durationMin,d=Math.floor(tot/1440),h=Math.floor((tot%1440)/60),m=tot%60;if(d>0)return'<span style="color:var(--purple);font-weight:700">'+d+'d'+(h>0?' '+h+'h':'')+(m>0?' '+m+'m':'')+'</span>';return(h>0?h+'h ':'')+m+'m';})()+'</div></div>'
-    +'<div class="detail-item"><div class="di-label">LTF entry</div><div class="di-val">'+(trade.ltf||'—')+'</div></div>'
-    +'<div class="detail-item"><div class="di-label">Asset type</div><div class="di-val">'+(trade.assetType||'—')+'</div></div>'
+    +'</div>'
+    +'<div class="detail-section-title">Timing</div>'
+    +'<div class="detail-grid">'
     +'<div class="detail-item"><div class="di-label">Entry date/time</div><div class="di-val mono">'+(trade.entryTime?trade.entryTime.slice(0,10)+(trade.entryTime.length>10?' '+to12h(trade.entryTime.slice(11,16)):''):'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Exit date/time</div><div class="di-val mono">'+(trade.exitTime?trade.exitTime.slice(0,10)+(trade.exitTime.length>10?' '+to12h(trade.exitTime.slice(11,16)):''):'—')+'</div></div>'
+    +'<div class="detail-item"><div class="di-label">Duration</div><div class="di-val mono">'+(function(){if(!trade.durationMin)return'—';var tot=trade.durationMin,d=Math.floor(tot/1440),h=Math.floor((tot%1440)/60),m=tot%60;if(d>0)return'<span style="color:var(--purple);font-weight:700">'+d+'d'+(h>0?' '+h+'h':'')+(m>0?' '+m+'m':'')+'</span>';return(h>0?h+'h ':'')+m+'m';})()+'</div></div>'
     +(function(){var ms=getMarketSession(trade.entryTime,trade.assetType);return'<div class="detail-item"><div class="di-label">Market session</div><div class="di-val">'+(ms?'<span class="badge '+ms.badge+'">'+ms.label+'</span>':'—')+'</div></div>';})()
+    +'</div>'
+    +'<div class="detail-section-title">Setup &amp; execution</div>'
+    +'<div class="detail-grid">'
+    +'<div class="detail-item"><div class="di-label">Asset type</div><div class="di-val">'+(trade.assetType||'—')+'</div></div>'
+    +'<div class="detail-item"><div class="di-label">LTF entry</div><div class="di-val">'+(trade.ltf||'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Model</div><div class="di-val">'+(trade.model||'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">Entry method</div><div class="di-val">'+(trade.method||'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">SL placed at</div><div class="di-val">'+(trade.tpSlPlace||'—')+'</div></div>'
@@ -12241,6 +12323,9 @@ async function openDetail(id,opts){
     +(trade.partialTPs&&trade.partialTPs.length&&trade.partialDesc?
       '<div class="detail-item" style="grid-column:1/-1"><div class="di-label">Partial TPs — how taken</div><div class="di-val js-pre">'+escHtml(trade.partialDesc)+'</div></div>'
     :'')
+    +'</div>'
+    +'<div class="detail-section-title">Review</div>'
+    +'<div class="detail-grid">'
     +'<div class="detail-item"><div class="di-label">Mistake/error</div><div class="di-val">'+(tradeErrorList(trade).join(', ')||'—')+'</div></div>'
     +'<div class="detail-item"><div class="di-label">User rating</div><div class="di-val">'+(trade.rating||'—')+'</div></div>'
     +'</div>'
@@ -14995,7 +15080,7 @@ async function applyBackupPayload(data,mode){
     // Sessions: upsert
     for(var sess of(data.sessions||[]))await dbPut('sessions',sess);
     // Settings: upsert (raw fallback — covers older backup files with no `config` block)
-    for(var setting of(data.settings||[]))await dbPut('settings',setting);
+    for(var setting of(data.settings||[])){if(setting.id&&setting.id.indexOf('tracker')===0)continue;await dbPut('settings',setting);}
     // Restore localStorage (theme, column config, etc.) — legacy shape, superseded by
     // `config`/`fx` below for files that have them, but still applied for older exports.
     if(data.localData){Object.keys(data.localData).forEach(function(k){localStorage.setItem(k,data.localData[k]);});}
@@ -18517,7 +18602,7 @@ async function ghAutoPullOnSetup(){
     for(var img of(data.images||[])){await dbPut('images',img);}
     // Sessions & settings: upsert
     for(var sess of(data.sessions||[]))await dbPut('sessions',sess);
-    for(var setting of(data.settings||[]))await dbPut('settings',setting);
+    for(var setting of(data.settings||[])){if(setting.id&&setting.id.indexOf('tracker')===0)continue;await dbPut('settings',setting);}
     // Restore localStorage prefs
     if(data.localData){Object.keys(data.localData).forEach(function(k){localStorage.setItem(k,data.localData[k]);});}
     // Pull config file (checklist, strategies, assets)
@@ -18798,7 +18883,7 @@ async function ghPull(){
     for(var img of(data.images||[])){await dbPut('images',img);imgCount++;}
     // Sessions & settings: upsert
     for(var sess of(data.sessions||[]))await dbPut('sessions',sess);
-    for(var setting of(data.settings||[]))await dbPut('settings',setting);
+    for(var setting of(data.settings||[])){if(setting.id&&setting.id.indexOf('tracker')===0)continue;await dbPut('settings',setting);}
     // Restore localStorage prefs
     if(data.localData){Object.keys(data.localData).forEach(function(k){localStorage.setItem(k,data.localData[k]);});}
     // Pull config file (checklist, strategies, assets)
@@ -19628,7 +19713,7 @@ async function ghRestoreLatestBackup(){
         for(var t of importedTrades){recomputeTradeFields(t);await dbPut('trades',t);}
         for(var img of(data.images||[]))await dbPut('images',img);
         for(var sess of(data.sessions||[]))await dbPut('sessions',sess);
-        for(var setting of(data.settings||[]))await dbPut('settings',setting);
+        for(var setting of(data.settings||[])){if(setting.id&&setting.id.indexOf('tracker')===0)continue;await dbPut('settings',setting);}
         if(data.localData){Object.keys(data.localData).forEach(function(k){localStorage.setItem(k,data.localData[k]);});}
         await syncConfigFromTrades(importedTrades);
         toast('Restored from '+latest.path,'ok');
@@ -19718,7 +19803,7 @@ async function ghRestoreSnapshot(downloadUrl,filePath){
         for(var t of importedTrades){recomputeTradeFields(t);await dbPut('trades',t);}
         for(var img of(data.images||[]))await dbPut('images',img);
         for(var sess of(data.sessions||[]))await dbPut('sessions',sess);
-        for(var setting of(data.settings||[]))await dbPut('settings',setting);
+        for(var setting of(data.settings||[])){if(setting.id&&setting.id.indexOf('tracker')===0)continue;await dbPut('settings',setting);}
         if(data.localData){Object.keys(data.localData).forEach(function(k){localStorage.setItem(k,data.localData[k]);});}
         await syncConfigFromTrades(importedTrades);
         toast('Trades restored from '+filePath,'ok');
@@ -23140,6 +23225,7 @@ async function paRender(){
     html += '<span class="pa-alert-price">' + (a.targetStr || paFmtPrice(a.target)) + '</span>';
     if(!a.fired){
       html += '<div class="pa-row-inline-bar" data-pa-bar="' + a.id + '"><div class="pa-progress-fill" style="width:' + (f.hasPrice ? f.fillW : 0) + '%;background:' + f.fillColor + '"></div></div>';
+      html += '<span class="pa-row-mini-status" data-pa-pct-compact="' + a.id + '" style="color:' + (f.pct==='TARGET HIT'?'var(--green)':(f.fillColor==='var(--amber)'?'var(--amber)':'var(--text3)')) + '">' + escHtml(f.pct) + '</span>';
     } else {
       var firedLabelColor = a.dir === 'below' ? 'var(--red)' : 'var(--green)';
       html += '<span style="flex:1;text-align:right;font-size:9px;color:' + firedLabelColor + ';font-weight:700;">✓ FIRED</span>';
@@ -23253,6 +23339,12 @@ function paUpdatePrices(){
     if(pctEl){
       pctEl.textContent = f.pct;
       pctEl.style.color = f.pct === 'TARGET HIT' ? 'var(--green)' : (f.fillColor === 'var(--amber)' ? 'var(--amber)' : 'var(--text3)');
+    }
+    // Same % away / TARGET HIT label, mirrored in the collapsed row
+    var pctCompactEl = document.querySelector('[data-pa-pct-compact="' + a.id + '"]');
+    if(pctCompactEl){
+      pctCompactEl.textContent = f.pct;
+      pctCompactEl.style.color = f.pct === 'TARGET HIT' ? 'var(--green)' : (f.fillColor === 'var(--amber)' ? 'var(--amber)' : 'var(--text3)');
     }
     // Progress bar fill
     var barWrap = document.querySelector('[data-pa-bar="' + a.id + '"]');
